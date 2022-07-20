@@ -22,18 +22,16 @@ target 'cleverApp' do
   target 'cleverAppTests' do
     inherit! :complete
     # Pods for testing
-    end
+  end
 
   # Enables Flipper.
   #
   # Note that if you have use_frameworks! enabled, Flipper will not work and
   # you should disable the next line.
-  
   use_flipper!()
+  pod 'RNReactNativeHapticFeedback', :path => '../node_modules/react-native-haptic-feedback'
   post_install do |installer|
-    installer.pods_project.targets.each do |target|
     react_native_post_install(installer)
     __apply_Xcode_12_5_M1_post_install_workaround(installer)
   end
-end
 end
