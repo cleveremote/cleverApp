@@ -11,5 +11,5 @@ socket.on('greeting-from-server', function (message) {
 });
 
 export const sendMessage = () => async dispatch => {
-    socket.emit('sendMessage', {name:'test1234'}, callback => {});
-  };
+    socket.emit('sendMessage', { name: 'test1234' }, callback => { });
+};

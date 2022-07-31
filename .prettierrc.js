@@ -3,5 +3,13 @@ module.exports = {
   bracketSameLine: true,
   bracketSpacing: false,
   singleQuote: true,
-  trailingComma: 'all'
+  trailingComma: 'none',
+  tabWidth: 4,
+  "printWidth": 80,
+  "editor.formatOnSave": true,
+  "proseWrap": "always",
+  "requireConfig": false,
+  "useTabs": true,
+  "jsxBracketSameLine": false,
+  "semi": true
 };
