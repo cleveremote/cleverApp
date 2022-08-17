@@ -1,9 +1,14 @@
-import { getProcesses, TestService, updateConfiguration } from '../../../domain/services/test.service';
+import { dispatchto, getProcesses, TestService, updateConfiguration, updateCycles, updateSequenceConfiguration } from '../../../domain/services/test.service';
 import {
     CONFIGURATION_LOAD,
+    CYCLE_LOAD,
     CONFIGURATION_SYNC,
     UPDATE_CONFIGURATION,
-    UPDATE_STATUS
+    UPDATE_STATUS,
+    SEQUENCE_SAVE,
+    SAVE_CYCLE,
+    MODULE_SAVE,
+    CLOSE_MENU
 } from '../actions/types';
 
 const initialState = {
@@ -11,7 +16,8 @@ const initialState = {
     activeUsers: 0,
     errormsg: '',
     currentUser: null,
-    configuration: null
+    configuration: null,
+    cycles: null,
 };
 
 
@@ -19,14 +25,35 @@ export default (state = initialState, action) => {
     switch (action.type) {
         case CONFIGURATION_LOAD:
         case UPDATE_CONFIGURATION:
+        case CYCLE_LOAD:
+        case SAVE_CYCLE:
             return {
                 ...state,
-                configuration: getProcesses(action.payload),
+                cycles: dispatchto(state.cycles, action.payload),
             };
+        case SEQUENCE_SAVE: {
+            return {
+                ...state,
+                sequence: updateSequenceConfiguration(action.payload)
+            };
+        }
+        case CLOSE_MENU: {
+            return {
+                ...state,
+                closeAll: action.payload
+            };
+        }
+
+        case MODULE_SAVE: {
+            return {
+                ...state,
+                module: updateSequenceConfiguration(action.payload),
+            };
+        }
         case UPDATE_STATUS:
             return {
                 ...state,
-                configuration: updateConfiguration(state.configuration,action.payload),
+                configuration: updateConfiguration(state.configuration, action.payload),
             };
         case CONFIGURATION_SYNC:
             return {

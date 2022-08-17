@@ -7,3 +7,13 @@ export const PROCESS_STATUS = 'STATUS_PROCESS';
 export const DEVICE_STATUS = 'STATUS_DEVICE';
 export const UPDATE_CONFIGURATION = 'UPDATE_CONFIGURATION';
 export const UPDATE_STATUS = 'UPDATE_STATUS';
+export const CYCLE_LOAD = 'CYCLE_LOAD';
+export const SEQUENCE_SAVE = 'SEQUENCE_SAVE';
+export const CYCLE_SAVE = 'CYCLE_SAVE';
+export const MODULE_SAVE = 'MODULE_SAVE';
+export const CLOSE_MENU = 'CLOSE_MENU';
+
+
+
+
+

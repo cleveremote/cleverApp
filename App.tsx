@@ -1,5 +1,5 @@
 import * as React from 'react';
-import { Button, Platform, Text, View } from 'react-native';
+import { Button, Platform, Text, View, StatusBar, LogBox } from 'react-native';
 import { NavigationContainer, useNavigation } from '@react-navigation/native';
 import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -7,9 +7,30 @@ import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import { Provider } from 'react-redux';
 import store from './src/module/process/infrasctructure/store/store';
-import processList from './src/app/components/processList';
-import { IconButton, NativeBaseProvider } from 'native-base';
-import processNavigation from './src/app/components/processNavigation';
+import CycleList from './src/app/screens/cycleList';
+import { Box, IconButton, NativeBaseProvider } from 'native-base';
+import CycleNavigation from './src/app/components/cycle/cycleNavigation';
+import { faCircleDot as farCircleDot } from '@fortawesome/free-regular-svg-icons';
+import { faCircleDot, faCirclePlus, faLayerGroup, faPlus } from '@fortawesome/free-solid-svg-icons';
+import { faStar as farStar } from '@fortawesome/free-regular-svg-icons';
+import { faStar } from '@fortawesome/free-solid-svg-icons';
+import { faArrowsSpin } from '@fortawesome/free-solid-svg-icons';
+
+import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
+import { OrientationType, useDeviceOrientationChange } from 'react-native-orientation-locker';
+import messaging from '@react-native-firebase/messaging';
+LogBox.ignoreLogs(['Warning: ...', 'VirtualizedLists should never be nested']); // Ignore log notification by message
+LogBox.ignoreAllLogs();
+
+export async function onAppBootstrap() {
+    // Register the device with FCM
+    console.log('je uazre là');
+    await messaging().registerDeviceForRemoteMessages();
+
+    // Get the token
+    const token = await messaging().getToken();
+    console.log('the token : ', token);
+}
 
 function DetailsScreen() {
     return (
@@ -48,17 +69,6 @@ function SettingsScreen({ navigation }) {
         <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
             <Text>Settings screen</Text>
             {settingsButton()}
-            {/* <Button title="Learn More4"
-                color="#841584"
-                accessibilityLabel="Learn more about this purple button"
-                onPress={() => {
-                    console.log('test 123');
-                    ReactNativeHapticFeedback.trigger(hapticTriggerType, hapticOptions)
-                }} /> */}
-            {/* <Button
-        title="Go to Details"
-        onPress={() => navigation.navigate('Details')}
-      /> */}
         </View>
     );
 }
@@ -73,21 +83,15 @@ function HomeStackScreen() {
     );
 }
 
-const SettingsStack = createNativeStackNavigator();
-
-function SettingsStackScreen() {
-    return (
-        <SettingsStack.Navigator >
-            <SettingsStack.Screen name="Settings" component={SettingsScreen} />
-            <SettingsStack.Screen name="Details" component={DetailsScreen} />
-        </SettingsStack.Navigator>
-    );
-}
-
 const Tab = createBottomTabNavigator();
 export default function App() {
+     onAppBootstrap();
     return (
+
+
+
         <Provider store={store}>
+            <StatusBar barStyle={'dark-content'} />
             <NavigationContainer>
                 <Tab.Navigator screenOptions={({ route }) => ({
                     activeTintColor: 'tomato',
@@ -95,20 +99,54 @@ export default function App() {
                     tabBarIcon: ({ focused, color, size }) => {
                         let iconName;
 
-                        if (route.name === 'Home') {
-                            iconName = focused
-                                ? 'ios-information-circle'
-                                : 'ios-information-circle-outline';
+                        if (route.name === 'Home_Cycles') {
+                            iconName = faArrowsSpin;
                         } else if (route.name === 'Settings') {
-                            iconName = focused ? 'ios-list-box' : 'ios-list';
+                            iconName = faLayerGroup
+                        } else {
+                            iconName = faCircleDot;
                         }
-                        return <Icon name="rocket" size={30} color="#900" />
-                        // You can return any component that you like here!
-                        //return <Icon name="facebook" size={size} color={color} />;
+                        return <FontAwesomeIcon icon={iconName} size={30} color={focused ? '#60a5fa' : 'grey'} />
                     },
                 })}
                 >
-                    <Tab.Screen  name="Cycles" component={processNavigation} /> 
+                    <Tab.Screen name="Cycles_APP" options={{
+                        // header: (props) => (
+                        //     <NativeBaseProvider>
+                        //         <Box> <Text>nadime</Text></Box>
+                        //     </NativeBaseProvider>
+                        // ),
+                        title: 'Cycles',
+                        headerTintColor: '#60a5fa',
+                        headerTitleStyle: {
+                            fontSize: 20,
+                            fontWeight: 'bold',
+                        },
+                        headerShown: false, headerRight: (props) => (
+                            <NativeBaseProvider>
+                                <Box>
+                                    <IconButton
+                                        size={30}
+                                        onPress={
+                                            () => {
+                                                ReactNativeHapticFeedback.trigger(
+                                                    'impactMedium', hapticOptions
+                                                );
+                                                // //console.log(
+                                                //     'open execution settings'
+                                                // );
+                                            }
+
+                                        }
+                                        icon={
+                                            <FontAwesomeIcon icon={faPlus} size={30} color={'#60a5fa'} style={{ marginRight: 20 }} />
+                                        }
+                                    />
+                                </Box>
+                            </NativeBaseProvider>
+
+                        )
+                    }} component={CycleNavigation} />
                     {/* options={{headerShown: false}} */}
                     <Tab.Screen name="Settings" component={SettingsScreen} />
                 </Tab.Navigator>
@@ -118,26 +156,32 @@ export default function App() {
 }
 
 export function settingsButton() {
+    // const [landscape, setLandscape] = React.useState(OrientationType.PORTRAIT);
+
+    // useDeviceOrientationChange((o) => {
+    //     //console.log('orientation',o);
+    //     setLandscape(o);
+    // });
     const navigation = useNavigation();
     return (
         <NativeBaseProvider>
- <IconButton
-            size={22}
-            onPress={() => {
-               
-                navigation.navigate('Details');
-            }}
-            icon={
-                <Icon
-                    name="cog"
-                    size={22}
-                    color='red' //cycleData.style.iconColor
-                />
-            }
-        />
+            <IconButton
+                size={22}
+                onPress={() => {
+
+                    navigation.navigate('Details');
+                }}
+                icon={
+                    <Icon
+                        name="cog"
+                        size={22}
+                        color='red' //cycleData.style.iconColor
+                    />
+                }
+            />
 
         </NativeBaseProvider>
-       
+
 
     );
 }
