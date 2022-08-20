@@ -3,9 +3,11 @@ import IO from 'socket.io-client';
 /** misc */
 
 /** Actions */
-import { CONFIGURATION_LOAD, UPDATE_STATUS, CYCLE_LOAD, SEQUENCE_SAVE, CYCLE_SAVE, MODULE_SAVE,CLOSE_MENU } from './types';
+import { CONFIGURATION_LOAD, UPDATE_STATUS, CYCLE_LOAD, SEQUENCE_SAVE, CYCLE_SAVE, MODULE_SAVE, CLOSE_MENU, PROCESS_EXECUTE, CYCLE_EXEC } from './types';
 import { WEBSITE_URL } from '../../../../../../config/websocket';
-import { TestService } from '../../../domain/services/test.service';
+import { ThunkAction } from 'redux-thunk';
+import { AnyAction } from 'redux';
+import { RootState } from '../store';
 
 /** socket configurations */
 const socket = IO(`${WEBSITE_URL}`, {
@@ -13,45 +15,38 @@ const socket = IO(`${WEBSITE_URL}`, {
 });
 socket.on('connection', () => null);
 
-export const listenerEvents = () => async dispatch => {
+export const listenerEvents = (): ThunkAction<void, RootState, unknown, AnyAction> => async dispatch => {
     socket.on('UPDATE_CONFIGURATION', message => {
         dispatch({
             type: CONFIGURATION_LOAD,
             payload: message,
         });
-    }
+    });
 
-
-
-    );
-
-    socket.on('agg/synchronize/status', message => {
+    socket.on('front/synchronize/status', message => {
         dispatch({
             type: UPDATE_STATUS,
             payload: message,
         });
     });
+
+   
+
+    
 };
 
 
-export const executeProcess =
-    ({ id, duration }) =>
-        async dispatch => {
-            socket.emit('execute', { id, duration }, response => {
-                //console.log(response.config);
-            });
-        };
+export const executeProcess = (id: string, duration: number): ThunkAction<void, RootState, unknown, AnyAction> => async dispatch => {
+    socket.emit('execute', { id, duration }, (response: any) => {
+        dispatch({
+            type: PROCESS_EXECUTE,
+            payload: response.config,
+        });
+    });
+};
 
-export const executePartialSync =
-    (data) =>
-        async dispatch => {
-            socket.emit('agg/synchronize/configuration-partial', data, response => {
-                console.log('response configuration-partial', response.status);
-            });
-        };
-
-export const loadConfiguration = () => async dispatch => {
-    socket.emit('agg/fetch/configuration', {}, response => {
+export const executePartialSync = (data: any): ThunkAction<void, RootState, unknown, AnyAction> => async dispatch => {
+    socket.emit('agg/synchronize/configuration-partial', data, (response: any) => {
         dispatch({
             type: CONFIGURATION_LOAD,
             payload: response.config,
@@ -59,8 +54,26 @@ export const loadConfiguration = () => async dispatch => {
     });
 };
 
-export const loadCycle = () => async dispatch => {
-    socket.emit('agg/fetch/configuration', {}, response => {
+export const executeCycle = (data: any): ThunkAction<void, RootState, unknown, AnyAction> => async dispatch => {
+    socket.emit('agg/execution/process', data, (response: any) => {
+        dispatch({
+            type: CYCLE_EXEC,
+            payload: response.config,
+        });
+    });
+};
+
+export const loadConfiguration = (): ThunkAction<void, RootState, unknown, AnyAction> => async dispatch => {
+    socket.emit('agg/fetch/configuration', {}, (response: any) => { //any struct element cycles ...
+        dispatch({
+            type: CONFIGURATION_LOAD,
+            payload: response.config,
+        });
+    });
+};
+
+export const loadCycle = (): ThunkAction<void, RootState, unknown, AnyAction> => async dispatch => {
+    socket.emit('agg/fetch/configuration', {}, (response: any) => {
         dispatch({
             type: CYCLE_LOAD,
             payload: response.config,
@@ -68,39 +81,30 @@ export const loadCycle = () => async dispatch => {
     });
 };
 
-export const updateSequence = (sequence) => dispatch => {
+export const updateSequence = (sequence: any): ThunkAction<void, RootState, unknown, AnyAction> => dispatch => {
     dispatch({
         type: SEQUENCE_SAVE,
         payload: sequence,
     });
 }
 
-export const updateModule = (sequence) => dispatch => {
+export const updateModule = (sequence: any): ThunkAction<void, RootState, unknown, AnyAction> => dispatch => {
     dispatch({
         type: MODULE_SAVE,
         payload: sequence,
     });
 }
-export const saveCycle = (sequence) => dispatch => {
+
+export const saveCycle = (sequence: any): ThunkAction<void, RootState, unknown, AnyAction> => dispatch => {
     dispatch({
         type: CYCLE_SAVE,
         payload: sequence,
     });
 }
 
-export const closeMenus = (exept) => dispatch => {
+export const closeMenus = (exept: string): ThunkAction<void, RootState, unknown, AnyAction> => dispatch => {
     dispatch({
         type: CLOSE_MENU,
         payload: exept,
     });
 }
-
-
-
-export const syncConfiguration =
-    ({ data }) =>
-        async dispatch => {
-            socket.emit('agg/synchronize/configuration', { data }, response => {
-                //console.log(response.config);
-            });
-        };

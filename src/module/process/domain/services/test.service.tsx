@@ -1,31 +1,35 @@
-import { useDispatch } from "react-redux";
+export const updateStatus = (prevCycles: any, statusData: any) => {
+    const cycles = [...prevCycles];
+    const status = JSON.parse(statusData);
+    if (status.type === 'CYCLE') {
 
-
-export const updateConfiguration = (currentConfiguration: any, status: any) => {
-    const test = JSON.parse(JSON.stringify(currentConfiguration));
-    test[0].name = '1234';
-
-    return test;
+       const index = cycles.findIndex(x=> x.id === status.id);
+       cycles[index] = {...cycles[index],status:status.status,progression:{startedAt:status.startedAt,duration:status.duration}};
+    }
+    return cycles;
 }
 
-export const updateSequenceConfiguration = (sequence) => {
+export const updateSequenceConfiguration = (sequence: any) => {
 
     return sequence;
 }
 
-export const updateSModuleConfiguration = (module) => {
+export const executeCycle = (sequence: any) => {
+
+    return sequence;
+}
+
+export const updateSModuleConfiguration = (module: any) => {
 
     return module;
 }
 
-
-
 export const getProcesses = (configuration: string) => {
-    const processes = [];
+    const processes: any[] = [];
     if (configuration) {
         const objConfig = JSON.parse(configuration);
 
-        objConfig.cycles.forEach(cycle => {
+        objConfig.cycles.forEach((cycle: any) => {
             processes.push(cycle);
         });
     }
@@ -33,7 +37,7 @@ export const getProcesses = (configuration: string) => {
     return processes;
 }
 
-export const updateCycles = (cycles, cycle: string) => {
+export const updateCycles = (cycles: any[], cycle: string) => {
     const previous = [...cycles];
     const processes = [];
     if (cycle) {
@@ -59,7 +63,7 @@ export const updateCycles = (cycles, cycle: string) => {
     return previous;
 }
 
-export const dispatchto = (cycles, payload) => {
+export const dispatchto = (cycles: any, payload: any) => {
     const objCycle = JSON.parse(payload)
     return objCycle.update ? updateCycles(cycles, payload) : getProcesses(payload)
 }

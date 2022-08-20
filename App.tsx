@@ -6,18 +6,11 @@ import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import { Provider } from 'react-redux';
-import store from './src/module/process/infrasctructure/store/store';
-import CycleList from './src/app/screens/cycleList';
-import { Box, IconButton, NativeBaseProvider } from 'native-base';
-import CycleNavigation from './src/app/components/cycle/cycleNavigation';
-import { faCircleDot as farCircleDot } from '@fortawesome/free-regular-svg-icons';
-import { faCircleDot, faCirclePlus, faLayerGroup, faPlus } from '@fortawesome/free-solid-svg-icons';
-import { faStar as farStar } from '@fortawesome/free-regular-svg-icons';
-import { faStar } from '@fortawesome/free-solid-svg-icons';
-import { faArrowsSpin } from '@fortawesome/free-solid-svg-icons';
-
+import { store } from './src/module/process/infrasctructure/store/store';
+import { Box, Center, CheckIcon, IconButton, NativeBaseProvider, ScrollView, Select, VStack } from 'native-base';
+import { CycleNavigation } from './src/app/navigations/cycleNavigation';
+import { faCircleDot, faLayerGroup, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
-import { OrientationType, useDeviceOrientationChange } from 'react-native-orientation-locker';
 import messaging from '@react-native-firebase/messaging';
 LogBox.ignoreLogs(['Warning: ...', 'VirtualizedLists should never be nested']); // Ignore log notification by message
 LogBox.ignoreAllLogs();
@@ -39,57 +32,34 @@ function DetailsScreen() {
         </View>
     );
 }
-const MyScreen = () => {
-    ReactNativeHapticFeedback.trigger("impactLight");
-}
 
-function HomeScreen({ navigation }) {
-    return (
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-            <Text>Home screen</Text>
-            <Button
-                title="Go to Details"
-                onPress={() => navigation.navigate('Details')}
-            />
-        </View>
-    );
-}
 const hapticOptions = {
     enableVibrateFallback: false,
     ignoreAndroidSystemSettings: true,
 };
 
-const hapticTriggerType = Platform.select({
+const hapticTriggerType: string = Platform.select({
     ios: 'notificationSuccess',
     android: 'impactMedium'
-});
+}) as string;
 
 function SettingsScreen({ navigation }) {
     return (
-        <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-            <Text>Settings screen</Text>
-            {settingsButton()}
-        </View>
-    );
-}
-
-const HomeStack = createNativeStackNavigator();
-
-function HomeStackScreen() {
-    return (
-        <HomeStack.Navigator>
-            <HomeStack.Screen name="Details" component={DetailsScreen} />
-        </HomeStack.Navigator>
+        <NativeBaseProvider>
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center',height:'50%' }} >
+                <Text>Settings screen</Text>
+                <Center flex={1} px="3">
+                    <Example />
+                </Center>
+            </View>
+        </NativeBaseProvider>
     );
 }
 
 const Tab = createBottomTabNavigator();
 export default function App() {
-     onAppBootstrap();
+    onAppBootstrap();
     return (
-
-
-
         <Provider store={store}>
             <StatusBar barStyle={'dark-content'} />
             <NavigationContainer>
@@ -99,23 +69,15 @@ export default function App() {
                     tabBarIcon: ({ focused, color, size }) => {
                         let iconName;
 
-                        if (route.name === 'Home_Cycles') {
-                            iconName = faArrowsSpin;
-                        } else if (route.name === 'Settings') {
+                        if (route.name === 'Settings') {
                             iconName = faLayerGroup
                         } else {
                             iconName = faCircleDot;
                         }
                         return <FontAwesomeIcon icon={iconName} size={30} color={focused ? '#60a5fa' : 'grey'} />
                     },
-                })}
-                >
+                })}>
                     <Tab.Screen name="Cycles_APP" options={{
-                        // header: (props) => (
-                        //     <NativeBaseProvider>
-                        //         <Box> <Text>nadime</Text></Box>
-                        //     </NativeBaseProvider>
-                        // ),
                         title: 'Cycles',
                         headerTintColor: '#60a5fa',
                         headerTitleStyle: {
@@ -125,63 +87,109 @@ export default function App() {
                         headerShown: false, headerRight: (props) => (
                             <NativeBaseProvider>
                                 <Box>
-                                    <IconButton
-                                        size={30}
-                                        onPress={
-                                            () => {
-                                                ReactNativeHapticFeedback.trigger(
-                                                    'impactMedium', hapticOptions
-                                                );
-                                                // //console.log(
-                                                //     'open execution settings'
-                                                // );
-                                            }
-
-                                        }
-                                        icon={
-                                            <FontAwesomeIcon icon={faPlus} size={30} color={'#60a5fa'} style={{ marginRight: 20 }} />
-                                        }
+                                    <IconButton size={30}
+                                        onPress={() => { ReactNativeHapticFeedback.trigger(hapticTriggerType, hapticOptions); }}
+                                        icon={<FontAwesomeIcon icon={faPlus} size={30} color={'#60a5fa'} style={{ marginRight: 20 }} />}
                                     />
                                 </Box>
                             </NativeBaseProvider>
 
                         )
                     }} component={CycleNavigation} />
-                    {/* options={{headerShown: false}} */}
-                    <Tab.Screen name="Settings" component={SettingsScreen} />
+                    <Tab.Screen name="Settings" component={SettingsScreen} options={{ headerShown: true }} />
                 </Tab.Navigator>
             </NavigationContainer>
         </Provider>
     );
 }
 
-export function settingsButton() {
-    // const [landscape, setLandscape] = React.useState(OrientationType.PORTRAIT);
+const Example = () => {
+    let [language, setLanguage] = React.useState("");
+    return  <ScrollView>
+    
+    <VStack alignItems="center" space={4}>
+        <Select paddingTop={100} _actionSheetContent={{maxHeight:'2xl'}}  minWidth={200} position="relative" accessibilityLabel="Select your favorite programming language" placeholder="Select your favorite programming language" onValueChange={itemValue => setLanguage(itemValue)} _selectedItem={{
+            bg: "cyan.600",
+            endIcon: <CheckIcon size={4} />
+        }}>
+            <Select.Item label="JavaScript" value="js"  />
+            <Select.Item label="TypeScript" value="ts" />
+            <Select.Item label="C" value="c" />
+            <Select.Item label="Python" value="py" />
+            <Select.Item label="Java" value="java" />
+            <Select.Item label="JavaScript" value="js" />
+            <Select.Item label="TypeScript" value="ts" />
+            <Select.Item label="C" value="c" />
+            <Select.Item label="Python" value="py" />
+            <Select.Item label="Java" value="java" />
+            <Select.Item label="JavaScript" value="js" />
+            <Select.Item label="TypeScript" value="ts" />
+            <Select.Item label="C" value="c" />
+            <Select.Item label="Python" value="py" />
+            <Select.Item label="Java" value="java" />
+            <Select.Item label="JavaScript" value="js" />
+            <Select.Item label="TypeScript" value="ts" />
+            <Select.Item label="C" value="c" />
+            <Select.Item label="Python" value="py" />
+            <Select.Item label="Java" value="java" />
+            <Select.Item label="JavaScript" value="js" />
+            <Select.Item label="TypeScript" value="ts" />
+            <Select.Item label="C" value="c" />
+            <Select.Item label="Python" value="py" />
+            <Select.Item label="Java" value="java" />
+            <Select.Item label="JavaScript" value="js" />
+            <Select.Item label="TypeScript" value="ts" />
+            <Select.Item label="C" value="c" />
+            <Select.Item label="Python" value="py" />
+            <Select.Item label="Java" value="java" />
+            <Select.Item label="JavaScript" value="js" />
+            <Select.Item label="TypeScript" value="ts" />
+            <Select.Item label="C" value="c" />
+            <Select.Item label="Python" value="py" />
+            <Select.Item label="Java" value="java" />
+            <Select.Item label="JavaScript" value="js" />
+            <Select.Item label="TypeScript" value="ts" />
+            <Select.Item label="C" value="c" />
+            <Select.Item label="Python" value="py" />
+            <Select.Item label="Java" value="java" />
+            <Select.Item label="JavaScript" value="js" />
+            <Select.Item label="TypeScript" value="ts" />
+            <Select.Item label="C" value="c" />
+            <Select.Item label="Python" value="py" />
+            <Select.Item label="Java" value="java" />
+            <Select.Item label="JavaScript" value="js" />
+            <Select.Item label="TypeScript" value="ts" />
+            <Select.Item label="C" value="c" />
+            <Select.Item label="Python" value="py" />
+            <Select.Item label="Java" value="java" />
+            <Select.Item label="JavaScript" value="js" />
+            <Select.Item label="TypeScript" value="ts" />
+            <Select.Item label="C" value="c" />
+            <Select.Item label="Python" value="py" />
+            <Select.Item label="Java" value="java" />
+            <Select.Item label="JavaScript" value="js" />
+            <Select.Item label="TypeScript" value="ts" />
+            <Select.Item label="C" value="c" />
+            <Select.Item label="Python" value="py" />
+            <Select.Item label="Java" value="java" />
+        </Select>
+    </VStack>
+    </ScrollView>;
+};
 
-    // useDeviceOrientationChange((o) => {
-    //     //console.log('orientation',o);
-    //     setLandscape(o);
-    // });
+export function settingsButton() {
     const navigation = useNavigation();
     return (
         <NativeBaseProvider>
             <IconButton
                 size={22}
                 onPress={() => {
-
-                    navigation.navigate('Details');
+                    navigation.navigate({ key: "Details" });
                 }}
                 icon={
-                    <Icon
-                        name="cog"
-                        size={22}
-                        color='red' //cycleData.style.iconColor
-                    />
+                    <Icon name="cog" size={22} color='red' />
                 }
             />
-
         </NativeBaseProvider>
-
-
     );
 }

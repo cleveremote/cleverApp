@@ -75,6 +75,7 @@ export type MyState = {
 
     cycleFormData: any;
     saveUnchangedData: boolean;
+    activeMenu?: string;
 };
 
 export const cycleData: CycleType = {
@@ -129,39 +130,10 @@ export const Priorities = PriorityModes.map((d) => {
     };
 })
 
-export function getColors(type: string = 'bg') {
-    let nuances: number[] = [500];
-    switch (type) {
-        case 'bg':
-            nuances = [200];
-            break;
-        case 'icon':
-            nuances = [400];
-            const iconColor = ['#f472b6', '#e879f9', '#94a3b8', '#818cf8', '#60a5fa', '#41bdf8', '#47d3ee', '#46d4bf', '#44d399', '#4ade80', '#a3e635', '#facc13', '#f9bf23', '#f7923d', '#f67171', '#FFFFFF'];
-            const colors = ['pink', 'fuchsia', 'blueGray', 'indigo', 'blue', 'lightBlue', 'cyan', 'teal', 'emerald', 'green', 'lime', 'yellow', 'amber', 'orange', 'red'];
-            const colorsAll = [];
-            colors.forEach((color) => {
-                nuances.forEach(nuance => {
-                    colorsAll.push(`${color}.${nuance}`);
-                });
-            });
-            colorsAll.push(`white`);
-            
-            return colors.map((x, i) => { return {base: x, icon: iconColor[i]} });
-        default:
-            nuances = [400];
-            break;
-    }
-    // const nuances = [500]; //50, 100, 200, 300, 400, 500, 600, 700, 800, 900
-    const colors1 = ['pink', 'fuchsia', 'blueGray', 'indigo', 'blue', 'lightBlue', 'cyan', 'teal', 'emerald', 'green', 'lime', 'yellow', 'amber', 'orange', 'red'];
-    const colorsAll1 = [];
-    colors1.forEach((color) => {
-        nuances.forEach(nuance => {
-            colorsAll1.push(`${color}.${nuance}`);
-        });
-    });
-    colorsAll1.push(`white`);
-    return colorsAll1;
+export function getColors() {
+    const iconColor = ['#f472b6', '#e879f9', '#94a3b8', '#818cf8', '#60a5fa', '#41bdf8', '#47d3ee', '#46d4bf', '#44d399', '#4ade80', '#a3e635', '#facc13', '#f9bf23', '#f7923d', '#f67171', '#FFFFFF'];
+    const colors = ['pink', 'fuchsia', 'blueGray', 'indigo', 'blue', 'lightBlue', 'cyan', 'teal', 'emerald', 'green', 'lime', 'yellow', 'amber', 'orange', 'red'];
+    return colors.map((x, i) => { return { base: x, icon: iconColor[i] } });
 }
 
 export function getPorts(alreadyAdded) {
