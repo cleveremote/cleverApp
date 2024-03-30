@@ -38,6 +38,7 @@ export type ModuleItem = {
 };
 
 export type MyProps = {
+    executeCycle: Function;
     loadConfiguration: Function;
     listenerEvents: Function;
     executePartialSync: Function;

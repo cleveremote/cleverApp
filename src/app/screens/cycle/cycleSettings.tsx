@@ -10,7 +10,7 @@ import { styles } from '../../styles/cycleStyles';
 import { DeleteItemMenu, MenuAccordion } from '../../components/common/cycleMenu';
 import { SequenceStack } from '../../components/cycle/sequenceStack';
 import { connect } from 'react-redux';
-import { saveCycle, executePartialSync } from '../../../module/process/infrasctructure/store/actions/processActions';
+import { saveCycle, executePartialSync,executeCycle } from '../../../module/process/infrasctructure/store/actions/processActions';
 import { HeaderBackButton } from '@react-navigation/elements';
 import { DragableSequences } from '../../components/common/draggableStack';
 import { navigationHeader } from '../../components/common/navigationHeaders';
@@ -133,7 +133,18 @@ export class CycleSettings extends Component<MyProps, MyState> {
             </Box>
         );
     }
-
+    private onSkip(sequenceId: string) {
+        const dto = {
+            id: sequenceId,
+            status: 'STOPPED',
+            action: 'OFF',
+            function: 'FUNCTION',
+            mode: 'MANUAL',
+            type: 'SKIP',// 'QUEUED'
+            duration: 0
+        }
+        this.props.executeCycle(dto);
+    }
     public SequencesSection() {
         return (<Box key={111}>
             <Box alignSelf={'flex-end'} my={2}>
@@ -148,7 +159,7 @@ export class CycleSettings extends Component<MyProps, MyState> {
                 DragableSequences(
                     () => { this.setState({ enableScroll: false }) },
                     (data: any[]) => this.setState({ cycleFormData: { ...this.state.cycleFormData, sequences: data }, enableScroll: true, saveUnchangedData: true }),
-                    (item: any, isActive: boolean) => <SequenceStack navigation={this.props.navigation} cycleId={this.state.cycleFormData.id} item={item} isActive={isActive} />,
+                    (item: any, isActive: boolean) => <SequenceStack navigation={this.props.navigation} cycleId={this.state.cycleFormData.id} item={item} isActive={isActive} onSkip={this.onSkip.bind(this)} />,
                     this.state.cycleFormData.sequences.filter((x: any) => x.id.indexOf('delete') < 0))
             }
         </Box>);
@@ -272,6 +283,7 @@ const mapStateToProps = (state: any) => ({
 });
 
 export default connect(mapStateToProps, {
+    executeCycle,
     saveCycle,
     executePartialSync
 })(CycleSettings);

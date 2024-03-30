@@ -48,7 +48,9 @@ class CycleList extends Component<MyProps, MyState> {
 
     public async componentDidMount() {
         const initial = Orientation.getInitialOrientation();
+        this.setState({ orientation: initial });
         if (initial === 'PORTRAIT') {
+            
             console.log("init PORTRAIT: ", initial);
         } else {
             console.log("PORTRAIT not: ", initial);
@@ -90,8 +92,34 @@ class CycleList extends Component<MyProps, MyState> {
             action: !value ? 'OFF' : 'ON',
             function: 'FUNCTION',
             mode: 'MANUAL',
-            type: 'FORCE',
+            type: 'FORCE',// 'QUEUED'
             duration: 0
+        }
+        this.props.executeCycle(dto);
+    }
+
+    private onSkip(sequenceId: string) {
+        const dto = {
+            id: sequenceId,
+            status: 'STOPPED',
+            action: 'OFF',
+            function: 'FUNCTION',
+            mode: 'MANUAL',
+            type: 'SKIP',// 'QUEUED'
+            duration: 0
+        }
+        this.props.executeCycle(dto);
+    }
+
+    private onExecute(id: string,ms:number) {
+        const dto = {
+            id: id,
+            status: 'STOPPED',
+            action: 'ON',
+            function: 'FUNCTION',
+            mode: 'MANUAL',
+            type: 'FORCE',// 'QUEUED'
+            duration: ms
         }
         this.props.executeCycle(dto);
     }
@@ -107,8 +135,9 @@ class CycleList extends Component<MyProps, MyState> {
                             orientation={this.state.orientation} 
                             closeSibillings={this.closeSibillings.bind(this)} 
                             current={this.state.activeMenu} 
-                            onSwitch={this.onSwitch.bind(this, cycle)} />
-                            
+                            onSwitch={this.onSwitch.bind(this, cycle)}
+                            onSkip={this.onSkip.bind(this)}
+                            onExecute={this.onExecute.bind(this)}/>
                         )}
                     </VStack>
                 </ScrollView>

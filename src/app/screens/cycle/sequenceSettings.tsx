@@ -111,7 +111,7 @@ export class SequenceSettings extends Component<MyProps, MyState> {
                     <MenuAccordion name={'Security'} icon={faGear} closeSibillings={this.closeSibillings.bind(this)} current={this.state.activeMenu}
                         renderElements={[
                             < Input key={13} placeholder='Max duration*' onSubmitEditing={Keyboard.dismiss} my={1} ml={10} mr={2}
-                                defaultValue={this.state.sequenceFormData?.maxDuration}
+                                defaultValue={(this.state.sequenceFormData?.maxDuration || 5000).toString()}
                                 onChangeText={value => this.setState({ sequenceFormData: { ...this.state.sequenceFormData, maxDuration: Number(value) }, saveUnchangedData: true })} />
                         ]} />
 
