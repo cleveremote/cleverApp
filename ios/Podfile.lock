@@ -753,7 +753,7 @@ SPEC CHECKSUMS:
   React-jsinspector: 55605caf04e02f9b0e05842b786f1c12dde08f4b
   React-logger: ca970551cb7eea2fd814d0d5f6fc1a471eb53b76
   react-native-orientation-locker: 851f6510d8046ea2f14aa169b1e01fcd309a94ba
-  react-native-safe-area-context: d768fdafd416b4c0bdc7bef4240c9ee53909baf3
+  react-native-safe-area-context: 6c12e3859b6f27b25de4fee8201cfb858432d8de
   React-perflogger: c9161ff0f1c769993cd11d2751e4331ff4ceb7cd
   React-RCTActionSheet: 2d885b0bea76a5254ef852939273edd8de116180
   React-RCTAnimation: 353fa4fc3c19060068832dd32e555182ec07be45
@@ -777,6 +777,6 @@ SPEC CHECKSUMS:
   Yoga: 7ab6e3ee4ce47d7b789d1cb520163833e515f452
   YogaKit: f782866e155069a2cca2517aafea43200b01fd5a
 
-PODFILE CHECKSUM: 638aca6a7e05521b93e1848b27df1ee40102dfd5
+PODFILE CHECKSUM: 14eb4f49b6ee36f358a0d5e829e685674c6723f4
 
 COCOAPODS: 1.11.3
