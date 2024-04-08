@@ -50,7 +50,6 @@ class CycleList extends Component<MyProps, MyState> {
         const initial = Orientation.getInitialOrientation();
         this.setState({ orientation: initial });
         if (initial === 'PORTRAIT') {
-            
             console.log("init PORTRAIT: ", initial);
         } else {
             console.log("PORTRAIT not: ", initial);

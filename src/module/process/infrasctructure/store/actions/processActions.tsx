@@ -46,7 +46,7 @@ export const executeProcess = (id: string, duration: number): ThunkAction<void, 
 };
 
 export const executePartialSync = (data: any): ThunkAction<void, RootState, unknown, AnyAction> => async dispatch => {
-    socket.emit('agg/synchronize/configuration-partial', data, (response: any) => {
+    socket.emit('agg/synchronize/cycle', data, (response: any) => {
         dispatch({
             type: CONFIGURATION_LOAD,
             payload: response.config,

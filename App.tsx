@@ -1,7 +1,6 @@
 import * as React from 'react';
-import { Button, Platform, Text, View, StatusBar, LogBox } from 'react-native';
+import { Platform, Text, View, StatusBar, LogBox } from 'react-native';
 import { NavigationContainer, useNavigation } from '@react-navigation/native';
-import { createNativeStackNavigator } from '@react-navigation/native-stack';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import Icon from 'react-native-vector-icons/FontAwesome5';
@@ -19,10 +18,10 @@ export async function onAppBootstrap() {
     // Register the device with FCM
     console.log('je uazre là');
     await messaging().registerDeviceForRemoteMessages();
-
+    console.log('prepare get token');
     // Get the token
     const token = await messaging().getToken();
-    console.log('the token : ', token);
+    console.log('the token1 : ', token);
 }
 
 function DetailsScreen() {
