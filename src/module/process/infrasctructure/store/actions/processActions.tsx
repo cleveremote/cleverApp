@@ -10,8 +10,12 @@ import { AnyAction } from 'redux';
 import { RootState } from '../store';
 
 /** socket configurations */
+let socket_reconnection_attempts = 3;
 const socket = IO(`${WEBSITE_URL}`, {
     forceNew: true,
+    extraHeaders: {
+        token: '123456'
+    }
 });
 socket.on('connection', () => null);
 
@@ -29,10 +33,11 @@ export const listenerEvents = (): ThunkAction<void, RootState, unknown, AnyActio
             payload: message,
         });
     });
+};
 
-   
-
-    
+export const updateToken = (): number =>{
+    console.log(count);
+  return count++
 };
 
 

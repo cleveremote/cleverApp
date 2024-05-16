@@ -5,10 +5,11 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Attach to packager",
+            "name": "Debug iOS Hermes",
             "cwd": "${workspaceFolder}",
-            "type": "reactnative",
-            "request": "attach"
+            "type": "reactnativedirect",
+            "request": "launch",
+            "platform": "ios"
         }
     ]
 }

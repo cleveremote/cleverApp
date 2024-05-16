@@ -11,17 +11,53 @@ import { CycleNavigation } from './src/app/navigations/cycleNavigation';
 import { faCircleDot, faLayerGroup, faPlus } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome'
 import messaging from '@react-native-firebase/messaging';
+
 LogBox.ignoreLogs(['Warning: ...', 'VirtualizedLists should never be nested']); // Ignore log notification by message
 LogBox.ignoreAllLogs();
 
 export async function onAppBootstrap() {
     // Register the device with FCM
     console.log('je uazre là');
+
+    
+
+    
+    // await manager.startDeviceScan(null, { legacyScan: false }, async (error, device) => {
+    //     if (error) {
+
+    //         console.error(error.message)
+    //         return
+    //     }
+    //     if (device) {
+    //         if (device.id === "50F6CA92-7A15-C5B3-F0A6-8AAA42375671") {
+    //             manager.stopDeviceScan();
+    //             const t = await manager
+    //                 .connectToDevice("50F6CA92-7A15-C5B3-F0A6-8AAA42375671")
+    //                 .then(device => {
+    //                     console.log('test device 123', device);
+    //                 })
+    //                 .catch(error => {
+    //                     console.log('test device error ', error);
+    //                 });
+    //         }
+    //         console.log("device found", device);
+    //     }
+    // });
+
+
+
+
+
+
+
+
     await messaging().registerDeviceForRemoteMessages();
     console.log('prepare get token');
     // Get the token
     const token = await messaging().getToken();
     console.log('the token1 : ', token);
+
+
 }
 
 function DetailsScreen() {
@@ -45,7 +81,7 @@ const hapticTriggerType: string = Platform.select({
 function SettingsScreen({ navigation }) {
     return (
         <NativeBaseProvider>
-            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center',height:'50%' }} >
+            <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center', height: '50%' }} >
                 <Text>Settings screen</Text>
                 <Center flex={1} px="3">
                     <Example />
@@ -104,75 +140,75 @@ export default function App() {
 
 const Example = () => {
     let [language, setLanguage] = React.useState("");
-    return  <ScrollView>
-    
-    <VStack alignItems="center" space={4}>
-        <Select paddingTop={100} _actionSheetContent={{maxHeight:'2xl'}}  minWidth={200} position="relative" accessibilityLabel="Select your favorite programming language" placeholder="Select your favorite programming language" onValueChange={itemValue => setLanguage(itemValue)} _selectedItem={{
-            bg: "cyan.600",
-            endIcon: <CheckIcon size={4} />
-        }}>
-            <Select.Item label="JavaScript" value="js"  />
-            <Select.Item label="TypeScript" value="ts" />
-            <Select.Item label="C" value="c" />
-            <Select.Item label="Python" value="py" />
-            <Select.Item label="Java" value="java" />
-            <Select.Item label="JavaScript" value="js" />
-            <Select.Item label="TypeScript" value="ts" />
-            <Select.Item label="C" value="c" />
-            <Select.Item label="Python" value="py" />
-            <Select.Item label="Java" value="java" />
-            <Select.Item label="JavaScript" value="js" />
-            <Select.Item label="TypeScript" value="ts" />
-            <Select.Item label="C" value="c" />
-            <Select.Item label="Python" value="py" />
-            <Select.Item label="Java" value="java" />
-            <Select.Item label="JavaScript" value="js" />
-            <Select.Item label="TypeScript" value="ts" />
-            <Select.Item label="C" value="c" />
-            <Select.Item label="Python" value="py" />
-            <Select.Item label="Java" value="java" />
-            <Select.Item label="JavaScript" value="js" />
-            <Select.Item label="TypeScript" value="ts" />
-            <Select.Item label="C" value="c" />
-            <Select.Item label="Python" value="py" />
-            <Select.Item label="Java" value="java" />
-            <Select.Item label="JavaScript" value="js" />
-            <Select.Item label="TypeScript" value="ts" />
-            <Select.Item label="C" value="c" />
-            <Select.Item label="Python" value="py" />
-            <Select.Item label="Java" value="java" />
-            <Select.Item label="JavaScript" value="js" />
-            <Select.Item label="TypeScript" value="ts" />
-            <Select.Item label="C" value="c" />
-            <Select.Item label="Python" value="py" />
-            <Select.Item label="Java" value="java" />
-            <Select.Item label="JavaScript" value="js" />
-            <Select.Item label="TypeScript" value="ts" />
-            <Select.Item label="C" value="c" />
-            <Select.Item label="Python" value="py" />
-            <Select.Item label="Java" value="java" />
-            <Select.Item label="JavaScript" value="js" />
-            <Select.Item label="TypeScript" value="ts" />
-            <Select.Item label="C" value="c" />
-            <Select.Item label="Python" value="py" />
-            <Select.Item label="Java" value="java" />
-            <Select.Item label="JavaScript" value="js" />
-            <Select.Item label="TypeScript" value="ts" />
-            <Select.Item label="C" value="c" />
-            <Select.Item label="Python" value="py" />
-            <Select.Item label="Java" value="java" />
-            <Select.Item label="JavaScript" value="js" />
-            <Select.Item label="TypeScript" value="ts" />
-            <Select.Item label="C" value="c" />
-            <Select.Item label="Python" value="py" />
-            <Select.Item label="Java" value="java" />
-            <Select.Item label="JavaScript" value="js" />
-            <Select.Item label="TypeScript" value="ts" />
-            <Select.Item label="C" value="c" />
-            <Select.Item label="Python" value="py" />
-            <Select.Item label="Java" value="java" />
-        </Select>
-    </VStack>
+    return <ScrollView>
+
+        <VStack alignItems="center" space={4}>
+            <Select paddingTop={100} _actionSheetContent={{ maxHeight: '2xl' }} minWidth={200} position="relative" accessibilityLabel="Select your favorite programming language" placeholder="Select your favorite programming language" onValueChange={itemValue => setLanguage(itemValue)} _selectedItem={{
+                bg: "cyan.600",
+                endIcon: <CheckIcon size={4} />
+            }}>
+                <Select.Item label="JavaScript" value="js" />
+                <Select.Item label="TypeScript" value="ts" />
+                <Select.Item label="C" value="c" />
+                <Select.Item label="Python" value="py" />
+                <Select.Item label="Java" value="java" />
+                <Select.Item label="JavaScript" value="js" />
+                <Select.Item label="TypeScript" value="ts" />
+                <Select.Item label="C" value="c" />
+                <Select.Item label="Python" value="py" />
+                <Select.Item label="Java" value="java" />
+                <Select.Item label="JavaScript" value="js" />
+                <Select.Item label="TypeScript" value="ts" />
+                <Select.Item label="C" value="c" />
+                <Select.Item label="Python" value="py" />
+                <Select.Item label="Java" value="java" />
+                <Select.Item label="JavaScript" value="js" />
+                <Select.Item label="TypeScript" value="ts" />
+                <Select.Item label="C" value="c" />
+                <Select.Item label="Python" value="py" />
+                <Select.Item label="Java" value="java" />
+                <Select.Item label="JavaScript" value="js" />
+                <Select.Item label="TypeScript" value="ts" />
+                <Select.Item label="C" value="c" />
+                <Select.Item label="Python" value="py" />
+                <Select.Item label="Java" value="java" />
+                <Select.Item label="JavaScript" value="js" />
+                <Select.Item label="TypeScript" value="ts" />
+                <Select.Item label="C" value="c" />
+                <Select.Item label="Python" value="py" />
+                <Select.Item label="Java" value="java" />
+                <Select.Item label="JavaScript" value="js" />
+                <Select.Item label="TypeScript" value="ts" />
+                <Select.Item label="C" value="c" />
+                <Select.Item label="Python" value="py" />
+                <Select.Item label="Java" value="java" />
+                <Select.Item label="JavaScript" value="js" />
+                <Select.Item label="TypeScript" value="ts" />
+                <Select.Item label="C" value="c" />
+                <Select.Item label="Python" value="py" />
+                <Select.Item label="Java" value="java" />
+                <Select.Item label="JavaScript" value="js" />
+                <Select.Item label="TypeScript" value="ts" />
+                <Select.Item label="C" value="c" />
+                <Select.Item label="Python" value="py" />
+                <Select.Item label="Java" value="java" />
+                <Select.Item label="JavaScript" value="js" />
+                <Select.Item label="TypeScript" value="ts" />
+                <Select.Item label="C" value="c" />
+                <Select.Item label="Python" value="py" />
+                <Select.Item label="Java" value="java" />
+                <Select.Item label="JavaScript" value="js" />
+                <Select.Item label="TypeScript" value="ts" />
+                <Select.Item label="C" value="c" />
+                <Select.Item label="Python" value="py" />
+                <Select.Item label="Java" value="java" />
+                <Select.Item label="JavaScript" value="js" />
+                <Select.Item label="TypeScript" value="ts" />
+                <Select.Item label="C" value="c" />
+                <Select.Item label="Python" value="py" />
+                <Select.Item label="Java" value="java" />
+            </Select>
+        </VStack>
     </ScrollView>;
 };
 

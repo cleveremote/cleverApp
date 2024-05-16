@@ -10,7 +10,7 @@ import { styles } from '../../styles/cycleStyles';
 import { DeleteItemMenu, MenuAccordion } from '../../components/common/cycleMenu';
 import { SequenceStack } from '../../components/cycle/sequenceStack';
 import { connect } from 'react-redux';
-import { saveCycle, executePartialSync,executeCycle } from '../../../module/process/infrasctructure/store/actions/processActions';
+import { saveCycle, executePartialSync, executeCycle } from '../../../module/process/infrasctructure/store/actions/processActions';
 import { HeaderBackButton } from '@react-navigation/elements';
 import { DragableSequences } from '../../components/common/draggableStack';
 import { navigationHeader } from '../../components/common/navigationHeaders';
@@ -100,9 +100,9 @@ export class CycleSettings extends Component<MyProps, MyState> {
                 <FormControl>
                     <MenuAccordion key={21} name={'General'} icon={faGear} closeSibillings={this.closeSibillings.bind(this)} current={this.state.activeMenu}
                         renderElements={[
-                            <Select _actionSheetContent={{ maxHeight: '2xl' }} placeholder="Choose cycle theme" placeholderTextColor="#000" bgColor={this.state.cycleFormData.style.fontColor}
-                                _selectedItem={{ bg: this.state.cycleFormData.style.fontColor, endIcon: <CheckIcon size="5" /> }} my={1} ml={5} mr={1}
-                                selectedValue={this.state.cycleFormData.style.fontColor.split('.')[0]}
+                            <Select _actionSheetContent={{ maxHeight: '2xl' }} placeholder="Choose cycle theme" placeholderTextColor="#000" bgColor={this.state.cycleFormData.style?.fontColor}
+                                _selectedItem={{ bg: this.state.cycleFormData.style?.fontColor, endIcon: <CheckIcon size="5" /> }} my={1} ml={5} mr={1}
+                                selectedValue={this.state.cycleFormData.style?.fontColor.split('.')[0]}
                                 onValueChange={value => {
                                     const color = getColors().find(x => x.base === value);
                                     const fontColor = color?.base + '.500';
@@ -181,10 +181,10 @@ export class CycleSettings extends Component<MyProps, MyState> {
 
     componentDidUpdate(prevProps: any, prevState: any) {
         const cycleId = this.props.route.params?.id;
-        const currentCycle = this.props.configuration.cycles.find((x: any) => x.id === cycleId) || this.state.formData;
-        const previousCycle = prevProps.configuration.cycles.find((x: any) => x.id === cycleId);
+        const currentCycle = this.props.configuration.cycles?.find((x: any) => x.id === cycleId) || this.state.formData;
+        const previousCycle = prevProps.configuration.cycles?.find((x: any) => x.id === cycleId);
 
-        if (cycleId && currentCycle && (currentCycle !== previousCycle) ) {
+        if (cycleId && currentCycle && (currentCycle !== previousCycle)) {
             const data = this.__updateCycle({ ...currentCycle });
             this.setState({ cycleFormData: data });
         }
@@ -224,7 +224,7 @@ export class CycleSettings extends Component<MyProps, MyState> {
     }
 
     public defaultCycleData() {
-        const cycleString = `{"id":"new_${Math.random()}","name":"new cycle","description":"new description","style":{"bgColor":"cyan.200","fontColor":"blue.400","iconColor":{"base":"blue","icon":"#60a5fa"}},"sequences":[],"modePriority":[{"mode":"MANUAL","priority":0},{"mode":"TRIGGER","priority":1},{"mode":"SCHEDULE","priority":2}]}`;
+        const cycleString = `{"id":"${Math.random()}","name":"new cycle","description":"new description","style":{"bgColor":"cyan.200","fontColor":"blue.400","iconColor":{"base":"blue","icon":"#60a5fa"}},"sequences":[],"modePriority":[{"mode":"MANUAL","priority":0},{"mode":"TRIGGER","priority":1},{"mode":"SCHEDULE","priority":2}]}`;
         return JSON.parse(cycleString);
     }
 
@@ -235,7 +235,7 @@ export class CycleSettings extends Component<MyProps, MyState> {
             description: formData.description,
             style: {
                 bgColor: formData.style.bgColor,
-                fontColor: formData.style.fontColor,
+                fontColor: formData.style?.fontColor,
                 iconColor: formData.style.iconColor
             },
             modePriority: formData.modePriority?.map((pr: any) => { return { mode: pr.mode, priority: pr.priority } }) || [],
@@ -257,22 +257,23 @@ export class CycleSettings extends Component<MyProps, MyState> {
         if (sequence) {
             const sequences = cycle.sequences ? [...cycle.sequences] : [];
             const index = sequence.id.split('_');
-            switch (index[0]) {
-                case 'deleted':
-                    const indexToDelete = sequences.findIndex((x: any) => x.id === index[1]);
-                    sequences[indexToDelete] = sequence;
-                    break;
-                case 'new':
+
+            if (index[0] === 'deleted') {
+                const indexToDelete = sequences.findIndex((x: any) => x.id === index[1]);
+                sequences[indexToDelete] = sequence;
+            } else {
+                const currentIndex = sequences.findIndex((x: any) => x.id === sequence.id);
+                if (currentIndex === -1) {
+                    console.log('__updateCycle add', sequence);
                     sequences.push(sequence);
-                    break;
-                default:
-                    const indexToUpdate = sequences.findIndex((x: any) => x.id === index[0]);
-                    sequences[indexToUpdate] = sequence;
-                    break;
+                } else {
+                    console.log('__updateCycle update', sequence);
+                    sequences[currentIndex] = sequence;
+                }
             }
+
             updatedCycleFormData = { ...this.state.cycleFormData, sequences: sequences };
         }
-
         return updatedCycleFormData;
     }
 }

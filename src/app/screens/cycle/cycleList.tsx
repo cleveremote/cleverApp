@@ -9,6 +9,7 @@ import { hapticOptions, navigationCycleType } from '../../data/cycleTypes';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
+import { BLEService } from './BLEService';
 
 type MyProps = {
     loadConfiguration: Function;
@@ -84,14 +85,39 @@ class CycleList extends Component<MyProps, MyState> {
         }
     }
 
-    private onSwitch(cycleData: any, value: any) {
+    private onSwitch(cycleData: any, value: any, type: string) {
+
+        BLEService.initializeBLE().then(
+            () => {
+                BLEService.scanDevices(async (device) => {
+                    console.log("scanDevices ");
+                    await BLEService.connectToDevice(device.id)
+                        .then(async () => {
+                            await BLEService.discoverAllServicesAndCharacteristicsForDevice()
+                            console.log('discoverAllServicesAndCharacteristicsForDevice');
+                        })
+                        .then(async (device)=>{
+                            await BLEService.writeCharacteristicWithResponseForDevice(
+                                '22222222-3333-4444-5555-666666666666',
+                                '22222222-3333-4444-5555-666666666669',
+                                'dGVzdCAxMzM='
+                              );
+                              console.log('writeCharacteristicWithoutResponseForDevice');
+                        });
+
+                   
+
+                }, ['22222222-3333-4444-5555-666666666666']);
+            }
+        );
+
         const dto = {
             id: cycleData.id,
             status: 'STOPPED',
             action: !value ? 'OFF' : 'ON',
             function: 'FUNCTION',
             mode: 'MANUAL',
-            type: 'FORCE',// 'QUEUED'
+            type: type,//'INIT',// 'QUEUED'
             duration: 0
         }
         this.props.executeCycle(dto);
@@ -110,14 +136,14 @@ class CycleList extends Component<MyProps, MyState> {
         this.props.executeCycle(dto);
     }
 
-    private onExecute(id: string,ms:number) {
+    private onExecute(id: string, ms: number) {
         const dto = {
             id: id,
             status: 'STOPPED',
             action: 'ON',
             function: 'FUNCTION',
             mode: 'MANUAL',
-            type: 'FORCE',// 'QUEUED'
+            type: 'INIT',// 'QUEUED'
             duration: ms
         }
         this.props.executeCycle(dto);
@@ -129,14 +155,14 @@ class CycleList extends Component<MyProps, MyState> {
                 <ScrollView alignSelf="stretch" my={1} refreshControl={<RefreshControl refreshing={this.state.refreshing} onRefresh={this.onRefresh} style={{ alignItems: 'flex-start', justifyContent: 'flex-start', alignSelf: 'flex-start' }} />}>
                     <VStack space={2} my={1} alignSelf="stretch">
                         {this.props.configuration.cycles?.map((cycle: any) =>
-                            <CycleStack cycleData={cycle} 
-                            navigation={this.props.navigation} 
-                            orientation={this.state.orientation} 
-                            closeSibillings={this.closeSibillings.bind(this)} 
-                            current={this.state.activeMenu} 
-                            onSwitch={this.onSwitch.bind(this, cycle)}
-                            onSkip={this.onSkip.bind(this)}
-                            onExecute={this.onExecute.bind(this)}/>
+                            <CycleStack cycleData={cycle}
+                                navigation={this.props.navigation}
+                                orientation={this.state.orientation}
+                                closeSibillings={this.closeSibillings.bind(this)}
+                                current={this.state.activeMenu}
+                                onSwitch={this.onSwitch.bind(this, cycle)}
+                                onSkip={this.onSkip.bind(this)}
+                                onExecute={this.onExecute.bind(this)} />
                         )}
                     </VStack>
                 </ScrollView>
