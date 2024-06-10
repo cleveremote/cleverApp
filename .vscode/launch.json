@@ -1,14 +1,13 @@
 {
-    // Utilisez IntelliSense pour en savoir plus sur les attributs possibles.
-    // Pointez pour afficher la description des attributs existants.
-    // Pour plus d'informations, visitez : https://go.microsoft.com/fwlink/?linkid=830387
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Attach to packager",
+            "name": "Attach to the React Native iOS - Experimental",
             "cwd": "${workspaceFolder}",
-            "type": "reactnative",
-            "request": "attach"
+            "type": "reactnativedirect",
+            "request": "attach",
+            "platform": "ios",
+            "port": 9221
         }
     ]
 }

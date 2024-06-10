@@ -18,12 +18,14 @@ export function SequenceStack({ navigation, isActive, item, cycleId, onSkip, sta
             const date1utc = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours(), now.getMinutes(), now.getSeconds());
             const date2utc = Date.UTC(startDate.getFullYear(), startDate.getMonth(), startDate.getDate(), startDate.getHours(), startDate.getMinutes(), startDate.getSeconds());
             //day = 1000 * 60 * 60 * 24;
-            const diff = (date1utc - date2utc)
+            const diff = (date1utc - date2utc);
+            setMiliseconds(item.progression?.duration-diff);
             const startIndex = (diff * 100) / (timerDuration);
             const step = ((100 - startIndex) / (item.progression.duration / 1000));
-            return { startIndex, step }
+            return { startIndex, step } 
         }
         if (item?.progression?.startedAt) {
+            const time = new Date(item.progression.startedAt).getTime();
             setMiliseconds(item.progression?.duration);
             const timerParams = getTimerParams(new Date(), new Date(item.progression.startedAt), item.progression.duration);
             setProgression(timerParams.startIndex > 100 ? 100 : timerParams.startIndex);

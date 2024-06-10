@@ -44,17 +44,22 @@ export class SequenceSettings extends Component<MyProps, MyState> {
             configuration: '',
             orientation: OrientationType.PORTRAIT,
             refreshing: false,
-            sequenceFormData: this.props.route.params.item || { id: 'new_' + Math.random() },
+            sequenceFormData: (this.props.route.params.item?.id && this.props.route.params.item) || this.defaultSequenceData(),
             saveUnchangedData: false,
             activeMenu: 'General'
         };
     }
 
+    public defaultSequenceData() {
+        const cycleString = `{"id":"${Math.random()}","name":"new sequence","description":"new sequence","maxDuration":50000,"modules":[]}`;
+        return JSON.parse(cycleString);
+    }
+
     public componentDidMount() {
 
         this.props.navigation.setOptions({
-            headerRight: navigationHeader.bind(this, () => this._saveSequence(true), faFloppyDisk),
-            headerLeft: () => (<HeaderBackButton onPress={() => { this.props.navigation.goBack() }} />)
+            headerRight: navigationHeader.bind(this, () => this._saveSequence(true), 'check-circle', false),
+            headerLeft: navigationHeader.bind(this, () => this.props.navigation.goBack(), 'arrow-alt-circle-left', false),
         });
 
         this.props.navigation.addListener('beforeRemove', this.checkChanges.bind(this));
@@ -77,13 +82,19 @@ export class SequenceSettings extends Component<MyProps, MyState> {
     }
 
 
-    public onRefresh() {
-        const wait = (timeout: any) => {
-            return new Promise(resolve => setTimeout(() => resolve(null), timeout));
-        };
+    public async onRefresh() {
 
-        this.setState({ refreshing: true });
-        wait(2000).then(() => this.setState({ refreshing: false }));
+        const refresh = (timeout: number): Promise<boolean> => {
+            return new Promise((resolve, reject) => {
+                setTimeout(() => {
+                    resolve(true);
+                }, timeout);
+            });
+        }
+        await refresh(2000);
+
+
+        
     }
 
     public closeSibillings(isExpended: boolean, current: string) {
@@ -111,8 +122,8 @@ export class SequenceSettings extends Component<MyProps, MyState> {
                     <MenuAccordion name={'Security'} icon={faGear} closeSibillings={this.closeSibillings.bind(this)} current={this.state.activeMenu}
                         renderElements={[
                             < Input key={13} placeholder='Max duration*' onSubmitEditing={Keyboard.dismiss} my={1} ml={10} mr={2}
-                                defaultValue={(this.state.sequenceFormData?.maxDuration || 5000).toString()}
-                                onChangeText={value => this.setState({ sequenceFormData: { ...this.state.sequenceFormData, maxDuration: Number(value) }, saveUnchangedData: true })} />
+                                defaultValue={(this.state.sequenceFormData?.maxDuration).toString()}
+                                onChangeText={value => this.setState({ sequenceFormData: { ...this.state.sequenceFormData, maxDuration: value === '' ? '' : Number(value) }, saveUnchangedData: true })} />
                         ]} />
 
                     <MenuAccordion name={'Modules'} icon={faEthernet} closeSibillings={this.closeSibillings.bind(this)} current={this.state.activeMenu}
@@ -175,8 +186,8 @@ export class SequenceSettings extends Component<MyProps, MyState> {
     }
 
     componentDidUpdate(prevProps: any, prevState: any) {
-        const currentCycle = this.props.configuration.cycles.find((x: any) => x.id === this.props.route.params.cycleId);
-        const prevCycle = prevProps.configuration.cycles.find((x: any) => x.id === this.props.route.params.cycleId);
+        const currentCycle = this.props.configuration.cycles?.find((x: any) => x.id === this.props.route.params.cycleId);
+        const prevCycle = prevProps.configuration.cycles?.find((x: any) => x.id === this.props.route.params.cycleId);
         const sequence = currentCycle?.sequences?.find((x: any) => x.id === this.state.sequenceFormData.id);
         const prevsequence = prevCycle?.sequences?.find((x: any) => x.id === this.state.sequenceFormData.id);
         if (sequence !== prevsequence) {
@@ -210,6 +221,7 @@ export class SequenceSettings extends Component<MyProps, MyState> {
 
     private _saveSequence(goBack: boolean = false) {
         this.setState({ saveUnchangedData: false }, () => {
+            console.log('_saveSequence', this.state.sequenceFormData);
             this.props.updateSequence({ cycleId: this.props.route.params.cycleId, item: this.state.sequenceFormData });
             if (goBack) {
                 this.props.navigation.goBack();
