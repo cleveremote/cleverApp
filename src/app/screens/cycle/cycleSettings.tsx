@@ -3,7 +3,7 @@ import { ScrollView, VStack, NativeBaseProvider, Box, FormControl, Input, TextAr
 import { Alert, Keyboard, RefreshControl } from 'react-native';
 import { OrientationType } from 'react-native-orientation-locker';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
-import { faFloppyDisk, faGear, faPlus, faRotateRight, faTrafficLight } from '@fortawesome/free-solid-svg-icons';
+import { faCheckCircle, faFloppyDisk, faGear, faPlus, faRotateRight, faTrafficLight } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { getColors, hapticOptions, MyProps, MyState } from '../../data/cycleTypes';
 import { styles } from '../../styles/cycleStyles';
@@ -40,8 +40,9 @@ export class CycleSettings extends Component<MyProps, MyState> {
     public componentDidMount() {
 
         this.props.navigation.setOptions({
-            headerRight: navigationHeader.bind(this, () => this._saveCycle(true), faFloppyDisk),
-            headerLeft: () => (<HeaderBackButton tintColor='#60a5fa' onPress={() => { this.props.navigation.goBack() }} />)
+            headerRight: navigationHeader.bind(this, () => this._saveCycle(true), 'check-circle',false),
+            headerLeft: navigationHeader.bind(this, () => this.props.navigation.goBack(), 'arrow-alt-circle-left',false),
+                //  (<HeaderBackButton tintColor='#60a5fa' onPress={() => { this.props.navigation.goBack() }} />)
         });
 
         this.props.navigation.addListener('beforeRemove', this.checkChanges.bind(this));

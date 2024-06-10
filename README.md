@@ -12,3 +12,10 @@ export PATH=$ANDROID_HOME/platform-tools:$PATH
 rajouter cette ligne 
 /Users/nya-perso/cleveremote/cleverApp/ios/Pods/Flipper/xplat/Flipper/FlipperTransportTypes.h
 #include <functional>
+
+
+npm run start
+select i => ios
+select d => open Dev Menu
+start debugger
+Attach to the React Native iOS - Experimental

@@ -1,57 +1,33 @@
-import IO from 'socket.io-client';
 
 /** misc */
 
 /** Actions */
 import { CONFIGURATION_LOAD, UPDATE_STATUS, CYCLE_LOAD, SEQUENCE_SAVE, CYCLE_SAVE, MODULE_SAVE, CLOSE_MENU, PROCESS_EXECUTE, CYCLE_EXEC } from './types';
-import { WEBSITE_URL } from '../../../../../../config/websocket';
+
 import { ThunkAction } from 'redux-thunk';
 import { AnyAction } from 'redux';
 import { RootState } from '../store';
+import { AuthVerify } from '../../../../../app/components/common/AuthVerify';
 
-/** socket configurations */
-let socket_reconnection_attempts = 3;
-const socket = IO(`${WEBSITE_URL}`, {
-    forceNew: true,
-    extraHeaders: {
-        token: '123456'
-    }
-});
-socket.on('connection', () => null);
 
 export const listenerEvents = (): ThunkAction<void, RootState, unknown, AnyAction> => async dispatch => {
-    socket.on('UPDATE_CONFIGURATION', message => {
-        dispatch({
-            type: CONFIGURATION_LOAD,
-            payload: message,
+    AuthVerify.socket.on('UPDATE_CONFIGURATION', message => {
+            dispatch({
+                type: CONFIGURATION_LOAD,
+                payload: message
+            });
         });
-    });
 
-    socket.on('front/synchronize/status', message => {
-        dispatch({
-            type: UPDATE_STATUS,
-            payload: message,
+        AuthVerify.socket.on('front/synchronize/status', message => {
+           dispatch({
+                type: UPDATE_STATUS,
+                payload: message,
+            });
         });
-    });
-};
-
-export const updateToken = (): number =>{
-    console.log(count);
-  return count++
-};
-
-
-export const executeProcess = (id: string, duration: number): ThunkAction<void, RootState, unknown, AnyAction> => async dispatch => {
-    socket.emit('execute', { id, duration }, (response: any) => {
-        dispatch({
-            type: PROCESS_EXECUTE,
-            payload: response.config,
-        });
-    });
 };
 
 export const executePartialSync = (data: any): ThunkAction<void, RootState, unknown, AnyAction> => async dispatch => {
-    socket.emit('agg/synchronize/cycle', data, (response: any) => {
+    AuthVerify.socket.emit('front/box/sync/cycle', data, (response: any) => {
         dispatch({
             type: CONFIGURATION_LOAD,
             payload: response.config,
@@ -60,7 +36,7 @@ export const executePartialSync = (data: any): ThunkAction<void, RootState, unkn
 };
 
 export const executeCycle = (data: any): ThunkAction<void, RootState, unknown, AnyAction> => async dispatch => {
-    socket.emit('agg/execution/process', data, (response: any) => {
+        AuthVerify.getSocket().emit('front/box/execute/process', data, (response: any) => {
         dispatch({
             type: CYCLE_EXEC,
             payload: response.config,
@@ -69,7 +45,7 @@ export const executeCycle = (data: any): ThunkAction<void, RootState, unknown, A
 };
 
 export const loadConfiguration = (): ThunkAction<void, RootState, unknown, AnyAction> => async dispatch => {
-    socket.emit('agg/fetch/configuration', {}, (response: any) => { //any struct element cycles ...
+    AuthVerify.socket.emit('front/box/fetch/configuration', {}, (response: any) => { //any struct element cycles ...
         dispatch({
             type: CONFIGURATION_LOAD,
             payload: response.config,
@@ -77,10 +53,25 @@ export const loadConfiguration = (): ThunkAction<void, RootState, unknown, AnyAc
     });
 };
 
+export const login = async (data: any) => {
+   return await AuthVerify.Login(data);
+};
+
+//not used
 export const loadCycle = (): ThunkAction<void, RootState, unknown, AnyAction> => async dispatch => {
-    socket.emit('agg/fetch/configuration', {}, (response: any) => {
+    AuthVerify.socket.emit('agg/fetch/configuration', {}, (response: any) => {
         dispatch({
             type: CYCLE_LOAD,
+            payload: response.config,
+        });
+    });
+};
+
+// not used
+export const executeProcess = (id: string, duration: number): ThunkAction<void, RootState, unknown, AnyAction> => async dispatch => {
+    AuthVerify.socket.emit('execute', { id, duration }, (response: any) => {
+        dispatch({
+            type: PROCESS_EXECUTE,
             payload: response.config,
         });
     });

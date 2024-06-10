@@ -47,7 +47,8 @@ export class ModuleSettings extends Component<MyProps, MyState> {
     public componentDidMount() {
 
         this.props.navigation.setOptions({
-            headerRight: navigationHeader.bind(this, () => this._saveModule(true, true), faFloppyDisk)
+            headerRight: navigationHeader.bind(this, () => this._saveModule(true, true), 'check-circle',false),
+            headerLeft:navigationHeader.bind(this, () => this.props.navigation.goBack(), 'arrow-alt-circle-left',false),
         });
     }
 

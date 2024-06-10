@@ -58,8 +58,8 @@ export class SequenceSettings extends Component<MyProps, MyState> {
     public componentDidMount() {
 
         this.props.navigation.setOptions({
-            headerRight: navigationHeader.bind(this, () => this._saveSequence(true), faFloppyDisk),
-            headerLeft: () => (<HeaderBackButton onPress={() => { this.props.navigation.goBack() }} />)
+            headerRight: navigationHeader.bind(this, () => this._saveSequence(true), 'check-circle', false),
+            headerLeft: navigationHeader.bind(this, () => this.props.navigation.goBack(), 'arrow-alt-circle-left', false),
         });
 
         this.props.navigation.addListener('beforeRemove', this.checkChanges.bind(this));
@@ -82,13 +82,19 @@ export class SequenceSettings extends Component<MyProps, MyState> {
     }
 
 
-    public onRefresh() {
-        const wait = (timeout: any) => {
-            return new Promise(resolve => setTimeout(() => resolve(null), timeout));
-        };
+    public async onRefresh() {
 
-        this.setState({ refreshing: true });
-        wait(2000).then(() => this.setState({ refreshing: false }));
+        const refresh = (timeout: number): Promise<boolean> => {
+            return new Promise((resolve, reject) => {
+                setTimeout(() => {
+                    resolve(true);
+                }, timeout);
+            });
+        }
+        await refresh(2000);
+
+
+        
     }
 
     public closeSibillings(isExpended: boolean, current: string) {
@@ -215,7 +221,7 @@ export class SequenceSettings extends Component<MyProps, MyState> {
 
     private _saveSequence(goBack: boolean = false) {
         this.setState({ saveUnchangedData: false }, () => {
-            console.log('_saveSequence',this.state.sequenceFormData);
+            console.log('_saveSequence', this.state.sequenceFormData);
             this.props.updateSequence({ cycleId: this.props.route.params.cycleId, item: this.state.sequenceFormData });
             if (goBack) {
                 this.props.navigation.goBack();

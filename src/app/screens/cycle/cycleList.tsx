@@ -1,5 +1,5 @@
 import React, { Component } from 'react';
-import { ScrollView, VStack, NativeBaseProvider, Box, IconButton } from 'native-base';
+import { ScrollView, VStack, NativeBaseProvider, Box, IconButton, Center, View } from 'native-base';
 import { connect } from 'react-redux';
 import { loadConfiguration, listenerEvents, executeCycle } from '../../../module/process/infrasctructure/store/actions/processActions';
 import { CycleStack } from '../../components/cycle/cycleStack';
@@ -10,6 +10,9 @@ import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import { faPlus } from '@fortawesome/free-solid-svg-icons';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import { BLEService } from './BLEService';
+import Logo from "../../../../hydrophyto.svg";
+import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
+import { navigationHeader } from '../../components/common/navigationHeaders';
 
 type MyProps = {
     loadConfiguration: Function;
@@ -38,12 +41,22 @@ class CycleList extends Component<MyProps, MyState> {
         const _t = this;
         return (
             <Box>
-                <IconButton size={30} icon={<FontAwesomeIcon icon={faPlus} size={30} color={'#60a5fa'} />}
+                <IconButton size={30} icon={<FontAwesomeIcon icon={faPlus} size={30} color={'#32404e'} />}
                     onPress={() => {
                         ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
                         _t.props.navigation.navigate('Settings')
                     }} />
             </Box>
+        );
+    }
+
+    public headerLeftCycleSettingsScreen() {
+        const _t = this;
+        return (
+            <View marginBottom={150}>
+                <Logo width={"35"} height={"35"} />
+            </View>
+
         );
     }
 
@@ -73,7 +86,11 @@ class CycleList extends Component<MyProps, MyState> {
         });
 
         this.props.navigation.setOptions({
-            headerRight: () => this.headerRightCycleSettingsScreen()
+            headerRight: navigationHeader.bind(this, () => {
+                ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
+                this.props.navigation.navigate('Settings')
+            }, 'times-circle',true),
+            headerLeft: () => this.headerLeftCycleSettingsScreen(),
         });
     }
 
@@ -86,7 +103,8 @@ class CycleList extends Component<MyProps, MyState> {
     }
 
     private onSwitch(cycleData: any, value: any, type: string) {
-
+        const Buffer = require("buffer").Buffer;
+        let encodedAuth = new Buffer("{\"test\":\"ma clé\"}").toString("base64");
         BLEService.initializeBLE().then(
             () => {
                 BLEService.scanDevices(async (device) => {
@@ -97,15 +115,16 @@ class CycleList extends Component<MyProps, MyState> {
                             console.log('discoverAllServicesAndCharacteristicsForDevice');
                         })
                         .then(async (device)=>{
-                            await BLEService.writeCharacteristicWithResponseForDevice(
+                            const t = await BLEService.writeCharacteristicWithResponseForDevice(
                                 '22222222-3333-4444-5555-666666666666',
                                 '22222222-3333-4444-5555-666666666669',
-                                'dGVzdCAxMzM='
+                                encodedAuth // binary test133
                               );
-                              console.log('writeCharacteristicWithoutResponseForDevice');
+                              console.log('bleutoouth', t);
                         });
+                       
 
-                   
+
 
                 }, ['22222222-3333-4444-5555-666666666666']);
             }
@@ -152,7 +171,7 @@ class CycleList extends Component<MyProps, MyState> {
     render() {
         return (
             <NativeBaseProvider>
-                <ScrollView alignSelf="stretch" my={1} refreshControl={<RefreshControl refreshing={this.state.refreshing} onRefresh={this.onRefresh} style={{ alignItems: 'flex-start', justifyContent: 'flex-start', alignSelf: 'flex-start' }} />}>
+                <ScrollView alignSelf="stretch" my={1} refreshControl={<RefreshControl refreshing={this.state.refreshing} onRefresh={this.onRefresh.bind(this)} style={{ alignItems: 'flex-start', justifyContent: 'flex-start', alignSelf: 'flex-start' }} />}>
                     <VStack space={2} my={1} alignSelf="stretch">
                         {this.props.configuration.cycles?.map((cycle: any) =>
                             <CycleStack cycleData={cycle}
@@ -170,12 +189,18 @@ class CycleList extends Component<MyProps, MyState> {
         );
     }
 
-    private onRefresh() {
-        const wait = (timeout: any) => {
-            return new Promise((resolve) => setTimeout(() => resolve, timeout));
-        };
-        this.setState({ refreshing: true });
-        wait(2000).then(() => this.setState({ refreshing: false }));
+    private async onRefresh() {
+        const refresh = (timeout: number): Promise<boolean> => {
+            return new Promise((resolve, reject) => {
+                this.setState({ refreshing: true });
+                setTimeout(() => {
+                    resolve(true);
+                }, timeout);
+            });
+        }
+        
+       await refresh(2000);
+       this.setState({ refreshing: false })
     }
 
 

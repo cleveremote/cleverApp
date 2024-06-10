@@ -9,6 +9,7 @@ import { closeMenus } from '../../../module/process/infrasctructure/store/action
 import { SwitchChangeEvent } from 'react-native';
 import { SequenceStack } from './sequenceStack';
 import { ModalOverrideDuration } from '../common/modalOverrideDuration';
+import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
 
 
 export function CycleStack({ cycleData, navigation, orientation, closeSibillings, current, onSwitch, onSkip, onExecute }: { cycleData: any, navigation: navigationCycleType, orientation: OrientationType, closeSibillings: Function, current: string | undefined, onSwitch: (value: boolean, type: string) => void | Promise<void>, onSkip: (sequenceId: any) => void, onExecute: (seqeunceId: string, ms: number) => void }) {
@@ -51,8 +52,15 @@ export function CycleStack({ cycleData, navigation, orientation, closeSibillings
 
 
     return (
+        
         <View>
+            
+            
+       
             <Box alignSelf="stretch" bg={bgColor} rounded="xl" shadow={3} height='45' mx={1} key={cycleData.id} borderColor={cycleData.status === 'WAITTING_CONFIRMATION' ? 'red.300' : 'black'} borderWidth={cycleData.status === 'WAITTING_CONFIRMATION' ? 2 : 0}>
+                {/* <SkeletonPlaceholder borderRadius={4}>
+                <View zIndex={99} style={{ flex: 2, alignItems: 'flex-start' }} mr={[OrientationType['LANDSCAPE-LEFT'], OrientationType['LANDSCAPE-RIGHT']].indexOf(orientation) > -1 ? 20 : 0} />
+                </SkeletonPlaceholder> */}
                 <View style={{ flexDirection: 'row' }} mt={1} mx={2}>
                     <Box zIndex={99} style={{ flex: 2, alignItems: 'flex-start' }} mr={[OrientationType['LANDSCAPE-LEFT'], OrientationType['LANDSCAPE-RIGHT']].indexOf(orientation) > -1 ? 20 : 0}>
                         <Flex direction="row">
@@ -95,10 +103,8 @@ export function CycleStack({ cycleData, navigation, orientation, closeSibillings
                         </HStack>) : <Switch mt={0.5} isChecked={cycleData.status === 'IN_PROCCESS'} onTrackColor={iconColorSwitch + ".400"} offThumbColor={iconColorSwitch + ".50"} size={'md'} onValueChange={(value) => onSwitch(value,'INIT')} />}
                     </Box>
                 </View>
-
-
             </Box>
-
+            
             {
                 cycleData.status === 'IN_PROCCESS' ?
                     cycleData.sequences.map((sequence: any) => <Box marginLeft={5} marginTop={2}>
@@ -107,6 +113,7 @@ export function CycleStack({ cycleData, navigation, orientation, closeSibillings
             }
 
         </View >
+        
     );
 }
 
