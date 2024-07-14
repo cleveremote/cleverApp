@@ -9,6 +9,7 @@ export type CyclesStackParamList = {
     Settings: undefined;
     SequenceSettings: undefined;
     Schedule: undefined;
+    Triggers: undefined;
 };
 
 export type navigationCycleType = NativeStackNavigationProp<CyclesStackParamList, 'Cycles'>;
@@ -41,7 +42,7 @@ export type MyProps = {
     executeCycle: Function;
     loadConfiguration: Function;
     listenerEvents: Function;
-    executePartialSync: Function;
+    executeCycleSync: Function;
     loadCycle: Function;
     saveCycle: Function;
     process: any;
@@ -79,46 +80,6 @@ export type MyState = {
     activeMenu?: string;
 };
 
-export const cycleData: CycleType = {
-    id: 'cycle_1',
-    sequences: [
-        {
-            id: '1',
-            key: '1',
-            name: 'sequence 1',
-            description: 'description sequence 1',
-            duration: 5000,
-            modules: [16, 19],
-        },
-        {
-            id: '6',
-            key: '6',
-            name: 'sequence 6',
-            description: 'description sequence 1',
-            duration: 5000,
-            modules: [16, 19],
-        },
-        {
-            id: '2',
-            key: '2',
-            name: 'sequence 2',
-            description: 'description sequence 1',
-            duration: 5000,
-            modules: [16, 19],
-        },
-        {
-            id: '83',
-            key: '83',
-            name: 'sequence 3',
-            description: 'description sequence 1',
-            duration: 5000,
-            modules: [16, 19],
-        }
-
-    ]
-};
-
-
 export const PriorityModes = [{ index: 0, label: 'Manual' }, { index: 1, label: 'Schedule' }, { index: 2, label: 'Trigger' }];
 export const Priorities = PriorityModes.map((d) => {
     const backgroundColor = 'white';
@@ -132,14 +93,23 @@ export const Priorities = PriorityModes.map((d) => {
 })
 
 export function getColors() {
-    const iconColor = ['#f472b6', '#e879f9', '#94a3b8', '#818cf8', '#60a5fa', '#41bdf8', '#47d3ee', '#46d4bf', '#44d399', '#4ade80', '#a3e635', '#facc13', '#f9bf23', '#f7923d', '#f67171', '#FFFFFF'];
+    const iconColors = ['#f472b6', '#e879f9', '#94a3b8', '#818cf8', '#60a5fa', '#41bdf8', '#47d3ee', '#46d4bf', '#44d399', '#4ade80', '#a3e635', '#facc13', '#f9bf23', '#f7923d', '#f67171', '#FFFFFF'];
     const colors = ['pink', 'fuchsia', 'blueGray', 'indigo', 'blue', 'lightBlue', 'cyan', 'teal', 'emerald', 'green', 'lime', 'yellow', 'amber', 'orange', 'red'];
-    return colors.map((x, i) => { return { base: x, icon: iconColor[i] } });
+
+    return colors.map((x, i) => {
+        const fontColor = x + '.500';
+        const iconColor = { icon: iconColors[i], base: x + '.500' };
+        const bgColor = x + '.200';
+        return { fontColor, iconColor, bgColor };
+
+    });
 }
 
-export function getPorts(alreadyAdded) {
-
-    const allPorts = [21, 20, 26, 16, 19, 13, 12, 6, 5, 25, 24, 22, 23, 27, 18, 17];
-    return allPorts.filter(x => alreadyAdded.indexOf(x) < 0);
+export function getPorts(alreadyAdded:number[]) {
+    console.log(alreadyAdded);
+    const allPorts = [{value:21,label:21},{value:20,label:20}, {value:26,label:26}, {value:16,label:16}, {value:19,label:19}, {value:13,label:13}, {value:12,label:12}, {value:6,label:6},{value:5,label:5}, {value:25,label:25}, {value:24,label:24}, {value:22,label:22}, {value:23,label:23}, {value:27,label:27}, {value:18,label:18}, {value:17,label:17}];
+    const filtered =  allPorts.filter(x => alreadyAdded.indexOf(x.value) < 0);
+    console.log(filtered);
+    return filtered
 }
 

@@ -3,64 +3,23 @@ import { Flex, Switch, IconButton, Box, View, Heading, Progress, HStack, Stagger
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import { OrientationType } from 'react-native-orientation-locker';
-import { hapticOptions, ICyclesProps, navigationCycleType } from '../../data/cycleTypes';
-import { useSelector, useDispatch, connect } from 'react-redux'
-import { closeMenus } from '../../../module/process/infrasctructure/store/actions/processActions';
-import { SwitchChangeEvent } from 'react-native';
+import { hapticOptions, navigationCycleType } from '../../data/cycleTypes';
 import { SequenceStack } from './sequenceStack';
 import { ModalOverrideDuration } from '../common/modalOverrideDuration';
-import SkeletonPlaceholder from 'react-native-skeleton-placeholder';
+import { Alert } from 'react-native';
 
 
-export function CycleStack({ cycleData, navigation, orientation, closeSibillings, current, onSwitch, onSkip, onExecute }: { cycleData: any, navigation: navigationCycleType, orientation: OrientationType, closeSibillings: Function, current: string | undefined, onSwitch: (value: boolean, type: string) => void | Promise<void>, onSkip: (sequenceId: any) => void, onExecute: (seqeunceId: string, ms: number) => void }) {
+export function CycleStack({ cycleData, navigation, orientation, closeSibillings, current, onSwitch, onSkip, onExecute }: Readonly<{ cycleData: any, navigation: any, orientation: OrientationType, closeSibillings: Function, current: string | undefined, onSwitch: (value: boolean, type: string) => void | Promise<void>, onSkip: (sequenceId: any) => void, onExecute: (seqeunceId: string, ms: number) => void }>) {
     const fontColor = cycleData.style.fontColor;
     const iconColorSwitch = cycleData.style.iconColor.base?.split('.')[0];
     const bgColor = cycleData.status === 'WAITTING_CONFIRMATION' ? "white" : cycleData.style.bgColor;
-    const iconColor = cycleData.style.iconColor.icon;
-    // const [progression, setProgression] = useState(0);
-    // const timerRef = React.useRef(cycleData.status === 'STOPPED' && progression >= 0);
-
-
-    // React.useEffect(() => {
-    //     if (cycleData.status === 'STOPPED') {
-    //         setProgression(0);
-    //     }
-    //     if (cycleData.progression?.step) {
-    //         const timerParams = cycleData.progression;
-    //         setProgression(timerParams.startIndex);
-
-    //         const timerId = setInterval(() => {
-    //             timerRef.current = cycleData.status === 'STOPPED';
-    //             if (timerRef.current) {
-    //                 clearInterval(timerId);
-    //                 setProgression(0);
-    //             } else {
-    //                 setProgression(progression => progression + timerParams.step);
-    //             }
-    //         }, 1000);
-
-    //         return () => {
-    //             clearInterval(timerId);
-    //             if (cycleData.status === 'STOPPED') {
-    //                 setProgression(0);
-    //             }
-
-    //         };
-    //     }
-    // }, [cycleData.status, cycleData.progression]);
-
-
-
+    const [status, setStatus] = useState(cycleData.status);
+    useEffect(() => {
+        setStatus(cycleData.status);
+    }, [cycleData.status])
     return (
-        
         <View>
-            
-            
-       
             <Box alignSelf="stretch" bg={bgColor} rounded="xl" shadow={3} height='45' mx={1} key={cycleData.id} borderColor={cycleData.status === 'WAITTING_CONFIRMATION' ? 'red.300' : 'black'} borderWidth={cycleData.status === 'WAITTING_CONFIRMATION' ? 2 : 0}>
-                {/* <SkeletonPlaceholder borderRadius={4}>
-                <View zIndex={99} style={{ flex: 2, alignItems: 'flex-start' }} mr={[OrientationType['LANDSCAPE-LEFT'], OrientationType['LANDSCAPE-RIGHT']].indexOf(orientation) > -1 ? 20 : 0} />
-                </SkeletonPlaceholder> */}
                 <View style={{ flexDirection: 'row' }} mt={1} mx={2}>
                     <Box zIndex={99} style={{ flex: 2, alignItems: 'flex-start' }} mr={[OrientationType['LANDSCAPE-LEFT'], OrientationType['LANDSCAPE-RIGHT']].indexOf(orientation) > -1 ? 20 : 0}>
                         <Flex direction="row">
@@ -68,59 +27,49 @@ export function CycleStack({ cycleData, navigation, orientation, closeSibillings
                             <Heading flex={2} mt={1} ml={2} size="sm" color={fontColor} numberOfLines={1} fontSize={15} ellipsizeMode="middle">
                                 {cycleData.name}
                             </Heading>
-                            {/* <Flex direction="row" mt={2} display={[OrientationType['PORTRAIT'], OrientationType['PORTRAIT-UPSIDEDOWN']].indexOf(orientation) > -1 && progression > 0 ? 'flex' : 'none'} style={{ flex: 2 }}>
-                                <Text color={fontColor} ml={2} >{Math.round(progression)}%</Text>
-                            </Flex> */}
-                            {/* <Flex direction="row" mt={2} display={[OrientationType['LANDSCAPE-LEFT'], OrientationType['LANDSCAPE-RIGHT']].indexOf(orientation) > -1 ? 'flex' : 'none'} style={{ flex: 2 }}>
-                                <Progress alignSelf="stretch" width={'100%'} size="xl" rounded="md" value={progression} _filledTrack={{ bg: iconColor + ".400" }} />
-                                <Text color={'grey'} ml={2} >{Math.round(progression)}</Text>
-                            </Flex> */}
                         </Flex>
                     </Box>
 
                     <Box style={{ alignItems: 'flex-end' }} >
                         {cycleData.status === 'WAITTING_CONFIRMATION' ? (<HStack space={3} alignItems="center" ml={'0'} >
-                            <IconButton size={30} icon={<Icon name="check-circle" size={25} color='green' />}
+                            <IconButton _pressed={{ _icon: { size: 35 } }} variant="unstyled" size={30} icon={<Icon name="check-circle" size={25} color='green' />}
                                 onLongPress={() => {
                                     ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
-                                    console.log('open execution settings');
-                                    onSwitch(true,'FORCE');
+                                    onSwitch(true, 'FORCE');
                                 }}
                                 onPress={() => {
                                     ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
                                     console.log('open execution settings');
                                 }} />
-                            <IconButton size={30} icon={<Icon name="times-circle" size={25} color='red' />}
+                            <IconButton _pressed={{ _icon: { size: 35 } }} variant="unstyled" size={30} icon={<Icon name="times-circle" size={25} color='red' />}
                                 onLongPress={() => {
                                     ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
-                                    onSwitch(false,'IGNORE');
+                                    onSwitch(false, 'IGNORE');
                                 }} />
-                            <IconButton size={30} icon={<Icon name="arrow-alt-circle-right" size={25} color='orange' />}
+                            <IconButton _pressed={{ _icon: { size: 35 } }} variant="unstyled" size={30} icon={<Icon name="arrow-alt-circle-right" size={25} color='orange' />}
                                 onPress={() => {
                                     ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
                                     console.log('open execution settings');
                                 }} />
-                        </HStack>) : <Switch mt={0.5} isChecked={cycleData.status === 'IN_PROCCESS'} onTrackColor={iconColorSwitch + ".400"} offThumbColor={iconColorSwitch + ".50"} size={'md'} onValueChange={(value) => onSwitch(value,'INIT')} />}
+                        </HStack>) : <Switch mt={0.5} isChecked={status === 'IN_PROCCESS'} onTrackColor={iconColorSwitch + ".400"} offThumbColor={iconColorSwitch + ".50"} size={'md'} onValueChange={(value) => { onSwitch(value, 'INIT'); setStatus(value ? 'IN_PROCCESS' : 'STOPPED'); }} />}
                     </Box>
                 </View>
             </Box>
-            
             {
                 cycleData.status === 'IN_PROCCESS' ?
-                    cycleData.sequences.map((sequence: any) => <Box marginLeft={5} marginTop={2}>
+                    cycleData.sequences.map((sequence: any, index: number) => <Box key={'sequence_' + index} marginLeft={5} marginTop={2}>
                         <SequenceStack navigation={navigation} cycleId={cycleData.id} item={sequence} isActive={false} onSkip={() => onSkip(sequence.id)} stackParent={true} />
                     </Box>) : null
             }
-
         </View >
-        
+
     );
 }
 
 
 
 
-export function MenuCycle({ navigation, cycleData, closeSibillings, current, onExecute }: { navigation: navigationCycleType, cycleData: any, closeSibillings: Function, current: string | undefined, onExecute: (seqeunceId: string, ms: number) => void }) {
+export function MenuCycle({ navigation, cycleData, closeSibillings, current, onExecute }: Readonly<{ navigation: any, cycleData: any, closeSibillings: Function, current: string | undefined, onExecute: (seqeunceId: string, ms: number) => void }>) {
     const { isOpen, onToggle } = useDisclose();
     const iconColor = cycleData.style.iconColor.icon;
     if (current !== cycleData.name && isOpen) {
@@ -133,13 +82,19 @@ export function MenuCycle({ navigation, cycleData, closeSibillings, current, onE
     };
 
     return <Box mr={isOpen ? '90' : '0'} mt={0}>
-        {cycleData.status !== 'WAITTING_CONFIRMATION' ? (<IconButton size={30} icon={<Icon size={30} name="bars" color={iconColor} />} onPress={() => {
+        {cycleData.status !== 'WAITTING_CONFIRMATION' ? (<IconButton _pressed={{ _icon: { size: 35 } }} variant="unstyled" size={30} icon={<Icon size={30} name="bars" color={iconColor} />} onPress={() => {
             ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
 
-            if (closeSibillings) {
-                closeSibillings(!isOpen, cycleData.name);
+            if (cycleData.status !== 'IN_PROCCESS') {
+                if (closeSibillings) {
+                    closeSibillings(!isOpen, cycleData.name);
+                }
+                onToggle();
+            } else {
+                Alert.alert("Cycle in process!\n to access settings please stop the process")
             }
-            onToggle();
+
+
         }} />) : <Icon size={30} name="user-check" color={iconColor} />}
         <HStack alignItems="center" >
             <Box alignItems="stretch" width={isOpen ? '90' : '0'} >
@@ -153,31 +108,29 @@ export function MenuCycle({ navigation, cycleData, closeSibillings, current, onE
                         transition: { duration: 0, stagger: { offset: 30, reverse: true } }
                     }}>
                     <HStack space={3} alignItems="center" ml={isOpen ? '35' : '0'} >
-                        <IconButton size={30} icon={<Icon name="history" size={25} color={iconColor} />}
+                        <IconButton _pressed={{ _icon: { size: 30 } }} variant="unstyled" size={30} icon={<Icon name="history" size={25} color={iconColor} />}
                             onLongPress={() => {
-                                navigation.navigate('Schedule');
                                 ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
-                                //console.log('open execution settings');
                                 onToggle();
                                 onPress();
+                                closeSibillings(false);
                             }}
                             onPress={() => {
-                                navigation.navigate('Schedule');
                                 ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
-                                //console.log('open execution settings');
+                                navigation.navigate('SchedulesStack', { screen: 'Schedules', params: { cycle: cycleData } });
                                 onToggle();
                             }} />
-                        <IconButton size={30} icon={<Icon name="cog" size={25} color={iconColor} />}
+                        <IconButton _pressed={{ _icon: { size: 30 } }} variant="unstyled" size={30} icon={<Icon name="cog" size={25} color={iconColor} />}
                             onPress={() => {
-                                navigation.navigate('Settings', cycleData);
-                                // ReactNativeHapticFeedback.trigger('impactMedium',hapticOptions);
-                                // //console.log('open execution settings');
-                            }} />
-                        <IconButton size={30} icon={<Icon name="bullseye" size={25} color={iconColor} />}
-                            onPress={() => {
-                                navigation.navigate('Settings');
                                 ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
-                                //console.log('open execution settings');
+                                closeSibillings(false);
+                                navigation.navigate('Settings', { screen: 'CycleSettingsMenu', params: cycleData });
+                            }} />
+                        <IconButton _pressed={{ _icon: { size: 30 } }} variant="unstyled" size={30} icon={<Icon name="bullseye" size={25} color={iconColor} />}
+                            onPress={() => {
+                                ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
+                                closeSibillings(false);
+                                navigation.navigate('TriggersStack', { screen: 'Triggers', params: { cycle: cycleData } });
                             }} />
                     </HStack>
                 </Stagger>
@@ -185,7 +138,6 @@ export function MenuCycle({ navigation, cycleData, closeSibillings, current, onE
         </HStack>
         <ModalOverrideDuration isOpen={isOpened}
             onClose={() => {
-                // onCancel();
                 onPress();
             }}
             onConfirm={(ms: number) => {

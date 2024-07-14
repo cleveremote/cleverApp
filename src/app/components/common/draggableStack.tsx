@@ -6,7 +6,7 @@ import { GestureHandlerRootView } from "react-native-gesture-handler";
 import { styles } from "../../styles/cycleStyles";
 import { TouchableOpacity } from 'react-native';
 
-export function DragableSequences(onDrag: Function, onDragEnd: Function, stackElement: Function, data: any[]) {
+export function DragableSequences({ onDrag = () => { }, onDragEnd, stackElement, data }: { onDrag: Function , onDragEnd: Function, stackElement: Function, data: any[] }) {
     const renderItem = ({ item, drag, isActive }: RenderItemParams<any>) => {
         isActive && ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions)
         return (

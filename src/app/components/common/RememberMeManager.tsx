@@ -2,12 +2,14 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Keychain from 'react-native-keychain';
 
 const setCredentials = async (login: string, password: string) => {
+  console.log("test123456")
   try {
     await Keychain.setGenericPassword(login, password, {
       accessControl: Keychain.ACCESS_CONTROL.BIOMETRY_ANY,
       accessible: Keychain.ACCESSIBLE.ALWAYS,
       service: login
     });
+    console.log("login123456",login)
     await AsyncStorage.setItem('boxId', login);
   } catch (error) {
     console.error('Error storing email for remembre me:', error);
