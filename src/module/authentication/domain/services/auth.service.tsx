@@ -4,7 +4,7 @@ import { jwtDecode } from 'jwt-decode';
 import { EventEmitter } from 'events';
 import { io, Socket } from "socket.io-client";
 import { DefaultEventsMap } from '@socket.io/component-emitter';
-import { WEBSITE_URL, WEBSITE_URL_LOCAL } from "../../../../../config/websocket";
+import { DEV_MODE, WEBSITE_URL, WEBSITE_URL_LOCAL } from "../../../../../config/websocket";
 import { SET_BOX_CONNECTED, SET_CONNECTED, SET_SERVER_CONNECTED } from '../../../process/infrasctructure/store/actions/types';
 import { store } from '../../../process/infrasctructure/store/store';
 
@@ -14,8 +14,23 @@ class AuthenticationService {
     private timeout: NodeJS.Timeout | undefined;;
     private timeout2: NodeJS.Timeout | undefined;;
     public socket: Socket<DefaultEventsMap, DefaultEventsMap> | undefined;
-    private isLocalRouter = true;
+    private lastStatus: boolean = false;
+
     constructor() {
+        setInterval(() => {
+            if (!this.lastStatus && this.socket?.connected) {
+                console.log("connected");
+                this.setStatusServer(true);
+
+            }
+
+            if (this.lastStatus && !this.socket?.connected) {
+                console.log("disconnected");
+                this.setStatusServer(false);
+            }
+            this.lastStatus = !!this.socket?.connected;
+
+        }, 1000);
         global.atob = decode;
     }
 
@@ -133,7 +148,11 @@ class AuthenticationService {
 
     // try first local if ok else distant
     private async setSocketServer(isLocal: boolean = true, login: string = ""): Promise<Socket> {
-        const server = isLocal ? WEBSITE_URL_LOCAL : WEBSITE_URL;
+        const boxId = login ?? await AsyncStorage.getItem('boxId');
+        let server = isLocal ? boxId.slice(-8) + ".local" : WEBSITE_URL;
+        if (DEV_MODE) {
+            server = isLocal ? WEBSITE_URL_LOCAL : WEBSITE_URL;
+        }
 
         if (this.socket) {
             this.socket.disconnect();
@@ -141,26 +160,39 @@ class AuthenticationService {
 
         this.socket = io(`${server}`, {
             forceNew: false,
-            transports: ['polling', 'websocket'],
+            transports: ['websocket'],
             auth: {
                 token: await AsyncStorage.getItem('accessToken') ?? ""
             },
             extraHeaders: {
-                boxId: await AsyncStorage.getItem('boxId') ?? login
+                boxId: login ?? await AsyncStorage.getItem('boxId')
             }
         });
 
         const connect = (socket: Socket<DefaultEventsMap, DefaultEventsMap> | undefined): Promise<{ res: boolean, error?: string, retry?: boolean }> => {
             return new Promise((resolve, reject) => {
                 socket?.on("connect_error", async (error) => {
+                    console.log(error);
                     if (socket?.active && (!login && !isLocal)) {
+                        console.log("je suis ici");
+                        resolve({ res: false, error: 'timeout', retry: true });
+                    } else if (login && isLocal) {
+                        console.log("je suis ici 1");
                         resolve({ res: false, error: 'timeout', retry: true });
                     } else {
+                        console.log("je suis ici 2");
                         this.setStatusServer(false);
                         resolve({ res: false, error: 'timeout' });
                     }
                 });
                 socket?.on("connect", () => {
+                    console.log("je suis ici 3");
+                    this.setStatusServer(true);
+                    resolve({ res: true });
+                });
+
+                socket?.on("disconnect", () => {
+
                     this.setStatusServer(true);
                     resolve({ res: true });
                 });
@@ -171,20 +203,22 @@ class AuthenticationService {
         if (!connectionRes.res && connectionRes.retry) {
             return await this.setSocketServer(!isLocal, login);
         }
+
         return this.socket;
     }
 
 
     public manageReconnexion() {
         this.socket?.on("disconnect", async (reason) => {
+            console.log("disconnect", reason)
             this.setStatusServer(false);
             if (reason !== "io client disconnect") {
                 this.socket = await this.setSocketServer();
             }
         });
-        this.socket?.on("connect", () => {
-            this.setStatusServer(true);
-        });
+        // this.socket?.on("connect", () => {
+        //     this.setStatusServer(true);
+        // });
     }
 
     public async Login(login: string, password: string, isLocal: boolean = true): Promise<{ res: boolean, error?: string }> {
@@ -243,6 +277,7 @@ class AuthenticationService {
 
     public setIsExpired(value: boolean) {
         //this.setStatusBox(!value);
+        console.log("setStatusServer", !value);
         this.setStatusServer(!value);
         this.setStatusLoggin(!value);
     }

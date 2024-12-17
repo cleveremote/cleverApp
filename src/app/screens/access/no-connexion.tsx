@@ -12,9 +12,9 @@ const hapticOptions = {
     ignoreAndroidSystemSettings: true,
 };
 
-const hapticTriggerType: string = Platform.select({
+const hapticTriggerType: string = Platform.select({ 
     ios: 'notificationSuccess',
-    android: 'impactMedium'
+    android: 'impactMedium' 
 }) as string;
 
 export function NoConnectionScreen(props: any) {

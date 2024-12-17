@@ -26,7 +26,6 @@ export const loadTriggers = (triggerId: any): ThunkAction<void, RootState, unkno
 }
 
 export const loadTrigger = (triggerId: string, cycleId: string): ThunkAction<void, RootState, unknown, AnyAction> => dispatch => {
-    console.log("{ triggerId, cycleId }",{ triggerId, cycleId })
     dispatch({
         type: TRIGGER_LOAD,
         payload: { triggerId, cycleId },

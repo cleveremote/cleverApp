@@ -1,7 +1,7 @@
 import React, { useEffect, useRef } from "react";
 import { VStack } from "native-base";
 import { connect } from 'react-redux';
-import { CycleStack } from "../../components/cycle/cycleStack";
+import CycleStack from "../../components/cycle/cycleStack";
 import { ScrollView, RefreshControl } from "react-native-gesture-handler";
 import Orientation, { OrientationType } from "react-native-orientation-locker";
 import { brandLogo, navigationHeader } from "../../components/common/navigationHeaders";
@@ -45,8 +45,6 @@ export function Cycle(props: any) {
             setOrientation(or);
         });
 
-        //props.loadCycles();;
-        //props.listenerEvents();
     }, []);
 
 
@@ -58,9 +56,8 @@ export function Cycle(props: any) {
         }
     }
 
-    const onSwitch = (cycleData: any, value: any, type: string) => {
-        setIsLoading(true);
-        const dto = {
+    const onSwitch = async (cycleData: any, value: any, type: string) => {
+         const dto = {
             id: cycleData.id,
             status: 'STOPPED',
             action: !value ? 'OFF' : 'ON',
@@ -69,14 +66,12 @@ export function Cycle(props: any) {
             type: type,//'INIT',// 'QUEUED'
             duration: 0
         }
-        props.executeCycle(dto).then(() => {
-            setIsLoading(false);
-        });
+
+        props.executeCycle(dto);
     }
 
     //override function for settinf custom execution time for all sequences .
     const onExecute = (id: string, ms: number) => {
-        setIsLoading(true);
         const dto = {
             id: id,
             status: 'STOPPED',
@@ -86,13 +81,10 @@ export function Cycle(props: any) {
             type: 'INIT',// 'QUEUED'
             duration: ms
         }
-        props.executeCycle(dto).then(() => {
-            setIsLoading(false);
-        });
+        props.executeCycle(dto)
     }
 
     const onSkip = (sequenceId: string) => {
-        setIsLoading(true);
         const dto = {
             id: sequenceId,
             status: 'STOPPED',
@@ -102,12 +94,10 @@ export function Cycle(props: any) {
             type: 'SKIP',// 'QUEUED'
             duration: 0
         }
-        props.executeCycle(dto).then(() => {
-            setIsLoading(false);
-        });
+        props.executeCycle(dto)
     }
 
- 
+
 
     const onRefresh = async () => {
         setRefreshing(true);
@@ -119,11 +109,11 @@ export function Cycle(props: any) {
 
 
     return (
-        
+
         <ScrollView scrollEnabled={true} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} style={{ alignItems: 'flex-start', justifyContent: 'flex-start', alignSelf: 'flex-start' }} />}>
-            
+
             <VStack space={2} my={1} alignSelf="stretch">
-            <Spinner visible={isLoading} color='#32404e' textStyle={styles.spinnerTextStyle} animation="fade" />
+                <Spinner visible={props.isLoading} color='#32404e' textStyle={styles.spinnerTextStyle} animation="fade" />
                 {props.cycles?.filter((x: any) => x.id.indexOf('deleted') < 0)?.map((cycle: any, index: number) =>
                     <CycleStack key={'cycle_' + index} cycleData={cycle}
                         navigation={props.navigation}
@@ -142,6 +132,7 @@ export function Cycle(props: any) {
 
 const mapStateToProps = (state: any) => ({
     cycles: state.root_cycle.cycles,
+    isLoading: state.root_cycle.isLoading,
     connected: state.status.connected,
     isBoxConnected: state.status.isBoxConnected,
 });

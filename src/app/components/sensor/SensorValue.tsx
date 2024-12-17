@@ -16,7 +16,7 @@ export function SensorValue(props: any) {
     }
     return (
         <Box style={{ justifyContent: 'center', alignItems: 'flex-end' }} rounded="xl" shadow={6} height='40px' width={'60px'} >
-           <Text style={{ fontWeight: 'bold' }} alignSelf={'center'} color={fontColor}>{getValue()?.value}{props.cycleData.unit}</Text>
+           <Text style={{ fontWeight: 'bold' }} alignSelf={'center'} color={fontColor}>{getValue()?.value || '_  '}{props.cycleData.unit}</Text>
         </Box>
     );
 }

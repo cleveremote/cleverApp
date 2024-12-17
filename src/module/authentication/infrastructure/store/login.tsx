@@ -7,11 +7,11 @@ export const login = (user: string, password: string, rememberCredentials: boole
     const res = await authenticationService.Login(user, password);
     if (res.res) {
         await saveSigninData(newProfile, user, password, rememberCredentials, profile);
-        dispatch(toggleIsLoggedIn(true));
+        dispatch(toggleIsLoggedIn(true)); 
     } else {
         return res;
     }
-
+ 
 }
 
 //Set isLoggedIn state value

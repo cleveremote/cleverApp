@@ -22,19 +22,7 @@ export function Sensor(props: any) {
         Orientation.addOrientationListener((or) => {
             setOrientation(or);
         });
-
-        //props.loadSensors();
-
     }, []);
-
-    // useEffect(() => {
-    //     console.log("listener");
-    //     if (props.isServerConnected) {
-    //         props.listenerEvents();
-    //     }
-
-    // }, [props.isServerConnected, props.isBoxConnected]);
-
 
     const closeSibillings = (isExpended: boolean, current?: string) => {
         if (isExpended) {
@@ -75,5 +63,5 @@ const mapStateToProps = (state: any) => ({
 });
 
 export default connect(mapStateToProps, {
-    loadSensors
+    loadSensors 
 })(Sensor);

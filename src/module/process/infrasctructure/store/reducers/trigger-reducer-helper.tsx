@@ -5,7 +5,6 @@ export const loadTriggers = (cycle: any) => {
 }
 
 export const loadTrigger = (triggers: any, triggerId: string, cycleId: string) => {
-    console.log("testload", triggers, triggerId, cycleId)
     if (triggerId) {
         return triggers.find((x: any) => x.id === triggerId);
     } else if (cycleId) {
@@ -33,7 +32,6 @@ export const updateTrigger = (prevTriggers: any, trigger: any) => {
         const deleteId = trigger?.id.split('_');
         const index = previous.findIndex(x => x.id === (deleteId[1] || trigger?.id))
         if (index > -1) {
-            console.log("trigger",trigger);
             previous[index] = trigger;
         } else {
             previous.push(trigger);

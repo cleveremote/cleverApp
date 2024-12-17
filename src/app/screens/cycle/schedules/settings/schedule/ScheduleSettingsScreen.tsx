@@ -61,7 +61,6 @@ export function ScheduleSettingsScreen(props: any) {
         });
         const listenerUnsubscribe = props.navigation.addListener('beforeRemove', (e: any) => { checkChanges(e) });
         isModified.current = props.schedule?.isModified;
-        console.log("test ", props.schedule);
         return () => listenerUnsubscribe();
     }, [props.schedule]);
 

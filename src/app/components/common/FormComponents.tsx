@@ -14,7 +14,7 @@ import { faBan, faCog, faTriangleExclamation } from "@fortawesome/free-solid-svg
 
 
 
-export function DateTimePickerForm({ control, placeholder, name, errors, rules = {}, disabled = false, mode, onChangeText = () => { } }: Readonly<{ control: Control<any, any>, placeholder: string, name: string, errors: FieldErrors<any>, rules?: any, disabled?: boolean, mode: string, onChangeText?: (value: any) => void }>) {
+export function DateTimePickerForm({ control, placeholder, name, errors, rules = {}, disabled = false, mode, onChangeText = () => { }, maximumDate, minimumDate }: Readonly<{ control: Control<any, any>, placeholder: string, name: string, errors: FieldErrors<any>, rules?: any, disabled?: boolean, mode: string, onChangeText?: (value: any) => void, maximumDate?: Date, minimumDate?: Date }>) {
     const [isDatePickerVisible, setDatePickerVisibility] = React.useState(false);
 
     const showDatePicker = () => {
@@ -26,10 +26,6 @@ export function DateTimePickerForm({ control, placeholder, name, errors, rules =
     };
 
     const getTimeString = (dateValue: Date) => {
-        // var date = new Date();
-        // date.setHours(0, 0, 0, 0);
-        // date = new Date(date.getTime() + dateValue);
-        // console.log('dat',dateValue)
         if (!(dateValue instanceof Date && !isNaN(dateValue.getTime()))) {
             dateValue = new Date();
             dateValue.setHours(0, 0, 0, 0);
@@ -40,6 +36,16 @@ export function DateTimePickerForm({ control, placeholder, name, errors, rules =
         const minutes = m < 10 ? `0${m}` : `${m}`;
         return `${hours}:${minutes}`
     }
+
+    const mediumTime = new Intl.DateTimeFormat('en',
+        {
+            weekday: 'long',
+            month: 'long',
+            day: 'numeric',
+            hour: 'numeric',
+            minute: 'numeric',
+            hourCycle: 'h23'
+        });
 
     const setCurrentTime = (value: any, mode: string) => {
 
@@ -67,20 +73,20 @@ export function DateTimePickerForm({ control, placeholder, name, errors, rules =
                 rules={rules}
                 render={({ field: { onChange, onBlur, value } }) => (
                     <VStack>
-                        <Text style={InputStyle.textInput}>{placeholder}</Text>
-
-
+                        <Text style={{ ...InputStyle.textInput, color: (errors[name] ? 'red' : '#32404e') }} >{placeholder}</Text>
                         <TouchableOpacity onPress={showDatePicker}>
                             <Input rounded="xl"
                                 style={InputStyle.input}
                                 placeholder={placeholder}
                                 onBlur={onBlur}
                                 isDisabled={true}
-                                value={mode === "datetime" ? value?.toString() : getTimeString(value)}
+                                value={mode === "datetime" ? mediumTime.format(value) : getTimeString(value)}
                                 pointerEvents="none" />
                         </TouchableOpacity>
 
                         <DateTimePickerModal
+                            maximumDate={maximumDate}
+                            minimumDate={minimumDate}
                             isDarkModeEnabled={false}
                             themeVariant="light"
                             display={mode === "datetime" ? 'inline' : 'spinner'}
@@ -98,7 +104,7 @@ export function DateTimePickerForm({ control, placeholder, name, errors, rules =
                 )}
                 name={name}
             />
-            {errors[name] && <Text>{errors[name]?.message as string || "unknown error"}</Text>}
+            {errors[name] && <HStack><FontAwesomeIcon icon={faTriangleExclamation} style={InputStyle.iconInputError} /><Text style={InputStyle.textInputError}>{errors[name]?.message as string || "unknown error"}</Text></HStack>}
         </>
     )
 
@@ -154,7 +160,7 @@ export function SwitchForm({ control, placeholder, name, errors, rules = {}, dis
                 )}
                 name={name}
             />
-            {errors[name] && <Text>{errors[name]?.message as string || "unknown error"}</Text>}
+            {errors[name] && <HStack><FontAwesomeIcon icon={faTriangleExclamation} style={InputStyle.iconInputError} /><Text style={InputStyle.textInputError}>{errors[name]?.message as string || "unknown error"}</Text></HStack>}
         </>
     )
 }
@@ -169,6 +175,7 @@ export function SelectColor({ control, placeholder, name, errors, rules = {}, di
                 render={({ field: { onChange, onBlur, value } }) => (
                     <VStack>
                         <Select style={InputStyle.input} rounded={'xl'}
+                            borderColor={errors[name] && "red.500"} borderWidth={errors[name] && 2}
                             key={0} placeholder={placeholder}
                             placeholderTextColor='#32404e'
                             bgColor={style?.fontColor}
@@ -184,7 +191,7 @@ export function SelectColor({ control, placeholder, name, errors, rules = {}, di
                 )}
                 name={name}
             />
-            {errors[name] && <Text>{errors[name]?.message as string || "unknown error"}</Text>}
+            {errors[name] && <HStack><FontAwesomeIcon icon={faTriangleExclamation} style={InputStyle.iconInputError} /><Text style={InputStyle.textInputError}>{errors[name]?.message as string || "unknown error"}</Text></HStack>}
         </Box>
     )
 }
@@ -198,8 +205,9 @@ export function TextAreaForm({ control, placeholder, name, errors, rules = {}, d
                 rules={rules}
                 render={({ field: { onChange, onBlur, value } }) => (
                     <VStack>
-                        <Text style={InputStyle.textInput}>{placeholder}</Text>
+                        <Text style={{ ...InputStyle.textInput, color: (errors[name] ? 'red' : '#32404e') }} >{placeholder}</Text>
                         <TextArea
+                            borderColor={errors[name] && "red.500"} borderWidth={errors[name] && 2}
                             rounded="xl"
                             style={InputStyle.input}
                             placeholder={placeholder}
@@ -217,7 +225,7 @@ export function TextAreaForm({ control, placeholder, name, errors, rules = {}, d
                 )}
                 name={name}
             />
-            {errors[name] && <Text>{errors[name]?.message as string || "unknown error"}</Text>}
+            {errors[name] && <HStack><FontAwesomeIcon icon={faTriangleExclamation} style={InputStyle.iconInputError} /><Text style={InputStyle.textInputError}>{errors[name]?.message as string || "unknown error"}</Text></HStack>}
         </>
     )
 }
@@ -259,7 +267,7 @@ export function DragableForm({ control, name, errors, rules = {}, onDragEnd = (d
                 )}
                 name={name}
             />
-            {errors[name] && <Text>{errors[name]?.message as string || "unknown error"}</Text>}
+            {errors[name] && <HStack><FontAwesomeIcon icon={faTriangleExclamation} style={InputStyle.iconInputError} /><Text style={InputStyle.textInputError}>{errors[name]?.message as string || "unknown error"}</Text></HStack>}
         </>
     )
 }
@@ -273,8 +281,9 @@ export function SelectForm({ lstData, control, placeholder, name, errors, rules 
                 rules={rules}
                 render={({ field: { onChange, onBlur, value } }) => (
                     <VStack>
-                        <Text style={InputStyle.textInput}>{placeholder}</Text>
+                        <Text style={{ ...InputStyle.textInput, color: (errors[name] ? 'red' : '#32404e') }} >{placeholder}</Text>
                         <Select defaultValue={value} _actionSheetContent={{ maxHeight: '2xl' }} placeholder={placeholder}
+                            borderColor={errors[name] && "red.500"} borderWidth={errors[name] && 2}
                             rounded="xl" fontSize={15} fontWeight={"bold"} height={'50px'}
                             _selectedItem={{ bg: "blue.400", endIcon: <CheckIcon size="5" /> }} my={1}
                             onValueChange={value => {
@@ -287,7 +296,7 @@ export function SelectForm({ lstData, control, placeholder, name, errors, rules 
                 )}
                 name={name}
             />
-            {errors[name] && <Text>{errors[name]?.message as string || "unknown error"}</Text>}
+            {errors[name] && <HStack><FontAwesomeIcon icon={faTriangleExclamation} style={InputStyle.iconInputError} /><Text style={InputStyle.textInputError}>{errors[name]?.message as string || "unknown error"}</Text></HStack>}
         </>
     )
 }

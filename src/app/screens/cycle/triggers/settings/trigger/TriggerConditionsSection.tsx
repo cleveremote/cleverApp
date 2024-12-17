@@ -19,7 +19,6 @@ function TriggerConditionsSection(props: any) {
     }, []);
 
     useEffect(() => {
-        console.log('ismodified',props.conditions);
         props.updateTrigger({ ...props.route.params.triggerData, conditions: props.conditions, isModified: !!props.conditions.find((x: any) => x.isModified) });
     }, [props.conditions]);
 

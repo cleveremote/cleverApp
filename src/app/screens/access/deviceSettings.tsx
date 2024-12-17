@@ -36,7 +36,6 @@ export function DeviceSettings(props: any) {
         await BLEService.connectToDevice(deviceId)
             .then(async () => {
                 await BLEService.discoverAllServicesAndCharacteristicsForDevice()
-                console.log('discoverAllServicesAndCharacteristicsForDevice');
             })
             .then(async (device) => {
                 await BLEService.writeCharacteristicWithResponseForDevice(
@@ -45,9 +44,8 @@ export function DeviceSettings(props: any) {
                     encodedAuth // binary test133
                 );
 
-              const t =  await BLEService.readCharacteristicForDevice('22222222-3333-4444-5555-666666666666',
+                const t = await BLEService.readCharacteristicForDevice('22222222-3333-4444-5555-666666666666',
                     '22222222-3333-4444-5555-666666666668');
-                console.log("bleutooth response",t);
             }).then(async () => {
                 await BLEService.disconnectDeviceById(deviceId);
             });
@@ -69,7 +67,7 @@ export function DeviceSettings(props: any) {
                             borderColor: '#32404e',
                             borderWidth: 7,
                         }}>
-                        <IconButton _pressed={{ _icon: { size:35} }} variant="unstyled" fontWeight={'bold'} icon={<Icon name="bluetooth-b" size={35} color='#32404e' />} />
+                        <IconButton _pressed={{ _icon: { size: 35 } }} variant="unstyled" fontWeight={'bold'} icon={<Icon name="bluetooth-b" size={35} color='#32404e' />} />
                     </View>
                 </View>
                 <VStack space={2} my={1} alignSelf="stretch" shadow={3}>
@@ -101,13 +99,6 @@ export function DeviceSettings(props: any) {
                                 onPress={async () => {
                                     setIsLoading(true);
                                     ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
-                                    if (props.route.params?.deviceId) {
-                                        console.log(props.route.params?.deviceId)
-                                        console.log(country);
-                                        console.log(ssid);
-                                        console.log(psk);
-
-                                    }
                                     await onLogin(props.route.params?.deviceId);
                                     setIsLoading(false);
                                     Alert.alert('wifi setting on box done with success');

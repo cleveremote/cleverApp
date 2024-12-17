@@ -12,13 +12,12 @@ import { updateSequence } from "../../../../../module/process/infrasctructure/st
 export function SequenceSecuritySettingsSection(props: any) {
     const [saveUnchangedData, setSaveUnchangedData] = React.useState(false);
     const defaultValues = { ...props.route.params?.sequenceData };
-    console.log("defaultValues", defaultValues);
     const { control, handleSubmit, formState: { errors } } = useForm({ defaultValues })
 
     const onSubmit = (data: any) => {
         ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
         if (saveUnchangedData) {
-            props.updateSequence({ ...data, isModified: saveUnchangedData })
+            props.updateSequence({ ...data, maxDuration: Number(data.maxDuration), isModified: saveUnchangedData })
         }
         props.navigation.goBack()
     }

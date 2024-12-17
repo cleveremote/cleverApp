@@ -16,7 +16,6 @@ export function SeqSettingsSec(props: any) {
     const { control, handleSubmit, formState: { errors }, setValue } = useForm({ defaultValues })
 
     const updateSeqeuncesOrder = (data: any) => {
-        console.log('je rentre');
         props.updateSequencesOder(data.sequences);
     }
 

@@ -78,14 +78,13 @@ export function DeviceScreen(props: any) {
                         Scan in progress ...
                     </Text>)}
 
-                </ScrollView>
+                </ScrollView> 
             </View>
 
             <VStack marginLeft="10" marginRight="10" marginBottom={5} alignSelf='center'>
                 <IconButton _pressed={{ _icon: { size:35} }} variant="unstyled" alignSelf='center' size={35} icon={<Icon name="search" size={30} color='#32404e' />}
                     onPress={async () => {
                         ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
-                        console.log('open execution settings');
                         setDevices([]);
                         const devices = await BLEService.ScanBleDevices()
                         setDevices(devices);

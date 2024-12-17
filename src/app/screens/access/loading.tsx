@@ -87,7 +87,6 @@ export function ProfilesScreen(props: any) {
                 <IconButton _pressed={{ _icon: { size:35} }} variant="unstyled" alignSelf='center' size={30} icon={<Icon name="wifi" size={25} color='#32404e' />}
                     onPress={() => {
                         ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
-                        console.log('open execution settings');
                         props.navigation.navigate('Device');
                     }} />
                 <Text style={{ color: '#32404e', fontSize: 15 }}>

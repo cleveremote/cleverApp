@@ -34,7 +34,6 @@ export const loadSchedule = (scheduleId: string, cycleId: string): ThunkAction<v
 
 export const saveSchedule = (data: any): ThunkAction<void, RootState, unknown, AnyAction> => async dispatch => {
     authenticationService.socket?.emit('front/box/sync/schedule', data, (response: any) => {
-        console.log("response.config",response.config);
         dispatch({
             type: SCHEDULE_SAVE,
             payload: response.config

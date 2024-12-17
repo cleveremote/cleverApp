@@ -18,7 +18,6 @@ function TriggerConditionGeneralSettingsSection(props: any) {
     const onSubmit = (data: any) => {
         ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
         if (saveUnchangedData) {
-            console.log(saveUnchangedData);
             props.updateCondition({ ...data, isModified: saveUnchangedData })
         }
         props.navigation.goBack()

@@ -45,7 +45,6 @@ export function ScheduleExecutionSettingsSection(props: any) {
         }
 
         if (sunState) {
-            console.log('time', data.time, parseInt(data.time));
             result.cron = { ...result.cron, sunBehavior: { sunState: data.sunState, time: convertToMs(data.after) }, after: undefined };
         } else {
             result.cron = { ...result.cron, after: convertToMs(data.after), sunBehavior: undefined };
@@ -55,9 +54,7 @@ export function ScheduleExecutionSettingsSection(props: any) {
 
     const convertToMs = (t: Date) => {
         const time = t.toLocaleTimeString();
-        console.log('ms1', time);
         let ms = Number(time.split(':')[0]) * 60 * 60 * 1000 + Number(time.split(':')[1]) * 60 * 1000;
-        console.log('ms2', ms);
         return ms;
     }
 
@@ -91,7 +88,7 @@ export function ScheduleExecutionSettingsSection(props: any) {
                     })}
                         onChangeText={(value) => { setSaveUnchangedData(true) }} />
                 ) : (
-                    <DateTimePickerForm mode={"datetime"} control={control} errors={errors} name="date" placeholder="Date*" rules={{ required: true }} onChangeText={(value) => { setSaveUnchangedData(true) }} />
+                    <DateTimePickerForm mode={"datetime"} control={control} errors={errors} name="date" placeholder="Date*" minimumDate={new Date()} rules={{ required: true }} onChangeText={(value) => { setSaveUnchangedData(true) }} />
                 )}
 
                 <HStack marginLeft="5" marginTop={2} mb={2}>

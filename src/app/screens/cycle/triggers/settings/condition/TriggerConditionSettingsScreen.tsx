@@ -17,7 +17,6 @@ function TriggerConditionSettingsScreen(props: any) {
         if (!isModified.current) {
             return;
         }
-        console.log(props.condition);
         saveCondition(props.condition, true, true);
     }
 
@@ -38,7 +37,6 @@ function TriggerConditionSettingsScreen(props: any) {
     }
 
     useEffect(() => {
-        console.log("props.route.params.condition?.triggerId || props.route.params.trigger.id",props.route.params.condition?.triggerId || props.route.params.trigger.id)
         props.loadCondition(props.route.params.condition?.id, props.route.params.condition?.triggerId || props.route.params.trigger.id)
     }, []);
 

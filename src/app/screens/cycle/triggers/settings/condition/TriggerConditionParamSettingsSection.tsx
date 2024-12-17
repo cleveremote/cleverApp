@@ -37,7 +37,7 @@ export function TriggerConditionParamSettingsSection(props: any) {
     return (
         <ScrollView automaticallyAdjustKeyboardInsets={true}>
             <Box rounded="xl" style={BoxFormStyle.boxForm}>
-                <SelectForm lstData={getDevices()} control={control} errors={errors} name="deviceId" placeholder="Sun state*" rules={{ required: true }} onValueChange={(value) => { setSaveUnchangedData(true) }} />
+                <SelectForm lstData={getDevices()} control={control} errors={errors} name="deviceId" placeholder="Sensors/Cycles" rules={{ required: true }} onValueChange={(value) => { setSaveUnchangedData(true) }} />
                 <SelectForm lstData={[{label:'<',value:'<'},{label:'>',value:'>'},{label:'=',value:'='},{label:'<=',value:'<='},{label:'>=',value:'>='}]} control={control} errors={errors} name="operator" placeholder="Operator*" rules={{ required: true }} onValueChange={(value) => { setSaveUnchangedData(true) }} />
                 <InputForm control={control} errors={errors} name="value" placeholder="Value*" rules={{ required: true }} onChangeText={(value) => { setSaveUnchangedData(true) }} />
             </Box>

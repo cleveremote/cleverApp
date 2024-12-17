@@ -121,7 +121,6 @@ class BLEServiceInstance {
          
           const found = this.scannedDevices.find(x => x === device);
           if (!found) {
-            console.log('device.serviceUUIDs[0]', device);
             this.scannedDevices.push(device);
           }
         }

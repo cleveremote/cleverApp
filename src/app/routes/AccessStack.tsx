@@ -10,10 +10,9 @@ export function AccessStack() {
 
     useEffect(() => {
         const devices = async () => {
+            //// FCM google
             await messaging().registerDeviceForRemoteMessages();
-            console.log('prepare get token');
             const token = await messaging().getToken();
-            console.log('the token1 : ', token);
         }
         devices();
     }, []);

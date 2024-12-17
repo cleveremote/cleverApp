@@ -5,7 +5,6 @@ export const loadConditions = (trigger: any) => {
 }
 
 export const loadCondition = (conditions: any, conditionId: string, triggerId: string) => {
-    console.log(conditionId,triggerId);
     if (conditionId) {
         return conditions.find((x: any) => x.id === conditionId);
     } else if (triggerId) {
@@ -25,7 +24,6 @@ export const loadCondition = (conditions: any, conditionId: string, triggerId: s
 
 export const updateCondition = (prevConditions: any, condition: any) => {
     const previous = [...prevConditions];
-    console.log("previous",previous,condition);
     if (condition) {
         const deleteId = condition?.id.split('_');
         const index = previous.findIndex(x => x.id === (deleteId[1] || condition?.id))

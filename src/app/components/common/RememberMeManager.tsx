@@ -2,14 +2,12 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Keychain from 'react-native-keychain';
 
 const setCredentials = async (login: string, password: string) => {
-  console.log("test123456")
   try {
     await Keychain.setGenericPassword(login, password, {
       accessControl: Keychain.ACCESS_CONTROL.BIOMETRY_ANY,
       accessible: Keychain.ACCESSIBLE.ALWAYS,
       service: login
     });
-    console.log("login123456",login)
     await AsyncStorage.setItem('boxId', login);
   } catch (error) {
     console.error('Error storing email for remembre me:', error);
@@ -24,7 +22,7 @@ const getCredentials = async (account: string): Promise<Keychain.UserCredentials
       service: account
     }) as Keychain.UserCredentials;
   } catch (error) {
-    console.log("Keychain couldn't be accessed!", error);
+    console.error("Keychain couldn't be accessed!", error);
   }
   return null;
 };
@@ -124,7 +122,6 @@ const deleteProfile = async (profile: string) => {
 }
 
 const saveSigninData = async (newProfile: string, account: string, password: string, rememberCredentials: boolean, profile: string): Promise<void> => {
-  console.log(newProfile, account, password, rememberCredentials, profile)
   if (rememberCredentials) {
     const exists = await getAssociationProfileAccount(newProfile);
     if (profile) {

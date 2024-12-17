@@ -7,6 +7,9 @@ export const SENSORS_LOAD = 'SENSORS_LOAD';
 export const SENSOR_SAVE = 'SENSOR_SAVE';
 
 
+/////////////Data
+export const DATA_LOAD = 'DATA_LOAD';
+
 /////////////Cycle
 export const CYCLE_STATUS = 'CYCLE_STATUS';
 export const CYCLES_LOAD = 'CYCLES_LOAD';

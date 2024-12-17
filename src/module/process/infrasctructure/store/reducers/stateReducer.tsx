@@ -9,14 +9,14 @@ const initialState = {
 
 export default (state = initialState, action: any) => {
     switch (action.type) {
-        case SET_BOX_CONNECTED:
+        case SET_BOX_CONNECTED: 
             return {
                 ...state,
                 isBoxConnected: action.payload
             };
         case SET_SERVER_CONNECTED:
             return {
-                ...state,
+                ...state, 
                 isServerConnected: action.payload
             };
         case SET_CONNECTED:

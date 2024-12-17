@@ -37,7 +37,6 @@ function SequenceSettingsScreen(props: any) {
     }
 
     useEffect(() => {
-        console.log("props.route.params 123",props.route.params.item?.id)
         props.loadSequence(props.route.params.item?.id)
     }, []);
 

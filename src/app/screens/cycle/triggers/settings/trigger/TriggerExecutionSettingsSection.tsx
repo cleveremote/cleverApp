@@ -34,7 +34,6 @@ function TriggerExecutionSettingsSection(props: any) {
         const result = { ...defValues };
         result.delay = convertToMs(data.delay);
         result.action = data.action;
-        console.log("mappingtoDto",sunState)
         if (sunState) {
             result.trigger = { ...result.trigger, sunBehavior: { sunState: data.sunState, time: convertToMs(data.time) }, timeAfter: undefined };
         } else {
@@ -51,7 +50,6 @@ function TriggerExecutionSettingsSection(props: any) {
     }
 
     useEffect(() => {
-        console.log("defaultValues 123456", props.route.params?.triggerData);
         props.navigation.setOptions({ headerLeft: () => navigationHeader(handleSubmit(onSubmit), 'arrow-alt-circle-left', false) });
     }, [saveUnchangedData])
 
@@ -59,7 +57,7 @@ function TriggerExecutionSettingsSection(props: any) {
 
         <ScrollView automaticallyAdjustKeyboardInsets={true}>
             <Box rounded="xl" style={BoxFormStyle.boxForm}>
-                <SelectForm lstData={[{ label: 'ON', value: 'ON'},{ label: 'OFF', value: 'OFF' }]} control={control} errors={errors} name="action" placeholder="Sun state*" rules={{ required: true }} onValueChange={(value) => { setSaveUnchangedData(true) }} />
+                <SelectForm lstData={[{ label: 'ON', value: 'ON'},{ label: 'OFF', value: 'OFF' }]} control={control} errors={errors} name="action" placeholder="Action*" rules={{ required: true }} onValueChange={(value) => { setSaveUnchangedData(true) }} />
                 <DateTimePickerForm mode={"time"} control={control} errors={errors} name="delay" placeholder="Disable trigger for moment" rules={{ required: true }} onChangeText={() => { setSaveUnchangedData(true) }} />
 
                 <HStack marginLeft="5" marginTop={2} mb={2}>

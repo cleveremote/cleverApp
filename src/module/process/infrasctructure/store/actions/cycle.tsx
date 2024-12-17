@@ -5,7 +5,8 @@ import {
     CYCLE_LOAD,
     CYCLE_SAVE,
     CYCLE_STATUS,
-    CYCLE_EXECUTE
+    CYCLE_EXECUTE,
+    DATA_LOAD
 } from './types';
 
 import { ThunkAction } from 'redux-thunk';
@@ -16,7 +17,7 @@ import { authenticationService } from '../../../../authentication/domain/service
 
 export const listenerEvents = (): ThunkAction<void, RootState, unknown, AnyAction> => async dispatch => {
     authenticationService.socket?.on('UPDATE_CONFIGURATION', message => {
-       dispatch({
+        dispatch({
             type: CYCLE_SAVE,
             payload: JSON.parse(message).cycle
         });
@@ -37,6 +38,28 @@ export const updateCycle = (cycle: any): ThunkAction<void, RootState, unknown, A
         payload: cycle,
     });
 }
+
+
+export const loadValues = (type: string, query?: any): ThunkAction<void, RootState, unknown, AnyAction> => async dispatch => {
+    //dispatch({ type: CYCLE_EXECUTE, payload: true });
+    authenticationService.socket?.emit('front/box/fetch/status', { type, query }, (response: any) => {
+        //dispatch({ type: CYCLE_EXECUTE, payload: false });
+        if (type !== "DATA") {
+            dispatch({
+                type: CYCLE_STATUS,
+                payload: JSON.parse(response.config),
+            });
+        } else {
+            dispatch({
+                type: DATA_LOAD,
+                payload: JSON.parse(response.config),
+            });
+        }
+
+
+
+    });
+};
 
 export const loadCycles = (): ThunkAction<void, RootState, unknown, AnyAction> => async dispatch => {
     authenticationService.socket?.emit('front/box/fetch/configuration', {}, (response: any) => {
@@ -71,18 +94,16 @@ export const saveCycle = (data: any, soft = false): ThunkAction<void, RootState,
 };
 
 export const executeCycle = (data: any): ThunkAction<void, RootState, unknown, AnyAction> => async dispatch => {
+    dispatch({ type: CYCLE_EXECUTE, payload: true });
     return new Promise((resolve, reject) => {
+
+
         if (!authenticationService.socket?.connected) {
             reject(new Error("No server connexion!"));
         }
 
         authenticationService.socket?.emit('front/box/execute/process', data, (response: any) => {
-            // if (response) {
-            //     dispatch({
-            //         type: CYCLE_EXECUTE,
-            //         payload: response.config,
-            //     });
-            // }
+            dispatch({ type: CYCLE_EXECUTE, payload: false });
             resolve(response);
         });
     })

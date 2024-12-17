@@ -53,7 +53,6 @@ function SensorSettingsScreen(props: any) {
     }, []);
 
     useEffect(() => {
-        console.log('props.sensor,',props.sensor)
         props.navigation.setOptions({
             headerLeft: () => navigationHeader(() => {
                 ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);

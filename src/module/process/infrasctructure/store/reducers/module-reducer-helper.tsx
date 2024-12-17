@@ -5,7 +5,6 @@ export const loadModules = (sequence: any) => {
 }
 
 export const updateModule = (prevModules: any, module: any) => {
-    console.log("updateModule",module);
     const previous = [...prevModules];
     if (module) {
         const moduleDto = { id: module.portNum, portNum: module.portNum, isModified: module.isModified };
@@ -17,6 +16,5 @@ export const updateModule = (prevModules: any, module: any) => {
             previous.push(moduleDto);
         }
     }
-    console.log("updateModule",previous);
     return previous;
 }

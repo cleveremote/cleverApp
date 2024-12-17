@@ -1,7 +1,6 @@
 
 
 export const loadSensors = (sensors: any) => {
-    console.log("loadSensors",sensors);
     return sensors || [];
 }
 
@@ -10,7 +9,6 @@ export const loadSensor = (sensors: any, sensorId: string) => {
 }
 
 export const updateSensor = (prevSensors: any, sensor: any) => {
-    console.log("updateSensor",sensor,prevSensors);
     const previous = [...prevSensors];
     if (sensor) {
         const deleteId = sensor?.id.split('_');

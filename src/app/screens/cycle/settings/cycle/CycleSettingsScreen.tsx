@@ -43,11 +43,8 @@ export function CycleSett(props: any) {
             ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
         }
         isModified.current = false;
-        console.log('test go back1');
         props.saveCycle(cycle);
-        console.log('test go back2',goBack);
         if (goBack) {
-            console.log('test go back3');
             props.navigation.goBack();
         }
     }
@@ -76,7 +73,6 @@ export function CycleSett(props: any) {
                 <Box alignSelf="stretch" bg='white' mt={2} mx={5} rounded="xl" >
                     <MenuAccordion key={21} name={'General'} icon={faGear}
                         onPress={() => {
-                            console.log("props.cycle", props.cycle)
                             ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
                             props.navigation.navigate('CycleGeneralSection', { cycleData: props.cycle })
                         }} />

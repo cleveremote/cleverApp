@@ -20,7 +20,6 @@ export function TriggersScreen(props: any) {
     }, []);
 
     useEffect(() => {
-        console.log('triggers: props.triggers', props.triggers);
         props.saveCycle({ ...props.route.params.cycle, triggers: props.triggers }, true);
     }, [props.triggers]);
 

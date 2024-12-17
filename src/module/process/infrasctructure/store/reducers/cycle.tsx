@@ -4,13 +4,18 @@ import {
     CYCLES_LOAD,
     CYCLE_UPDATE,
     CYCLE_LOAD,
-    CYCLE_STATUS
+    CYCLE_STATUS,
+    CYCLE_EXECUTE,
+    DATA_LOAD
 } from '../actions/types';
 import { loadCycle, loadCycles, updateCycle, updateStatus } from './cycle-reducer-helper';
 
 const initialState = {
     cycles: [],
     cycle: undefined,
+    status: [],
+    isLoading: false,
+    data:[]
 
 };
 
@@ -47,11 +52,30 @@ export default (state = initialState, action: any) => {
         }
 
         case CYCLE_STATUS: {
+            const data = Array.isArray(action.payload) ? action.payload : [action.payload];
             return {
                 ...state,
-                cycles: updateStatus(state.cycles, action.payload)
+                status: updateStatus(state.status, data)
             };
         }
+
+        case DATA_LOAD: {
+            return {
+                ...state,
+                data: action.payload
+            };
+        }
+
+
+
+        case CYCLE_EXECUTE: {
+            return {
+                ...state,
+                isLoading: action.payload
+            };
+        }
+
+
 
         default:
             return state;

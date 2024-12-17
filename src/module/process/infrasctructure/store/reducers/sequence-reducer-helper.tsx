@@ -5,7 +5,6 @@ export const loadSequences = (cycle: any) => {
 }
 
 export const loadSequence = (sequences: any, sequenceId: string) => {
-    console.log("loadSequence",sequenceId,sequences)
     if (sequenceId) {
         
         return sequences.find((x: any) => x.id === sequenceId);

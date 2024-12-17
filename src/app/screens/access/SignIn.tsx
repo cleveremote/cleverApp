@@ -43,7 +43,6 @@ export function SignIn(props: any) {
     const onLogin = async (data: any) => {
         setIsLoading(true);
         props.login(data.login, data.password, data.rememberCredentials, data.profile, props.route.params?.profile).then((res: any) => {
-            console.log('props.login')
             if (res.error) {
                 Alert.alert(res.error);
                 setIsLoading(false);
@@ -121,7 +120,7 @@ export function SignIn(props: any) {
                         ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
                         props.navigation.goBack();
                     }} />
-                <Text style={{ color: '#32404e', fontSize: 15 }}>back to profiles</Text>
+                <Text style={{ color: '#32404e', fontSize: 15 }}>back to profiles 123456</Text>
             </VStack>
 
 

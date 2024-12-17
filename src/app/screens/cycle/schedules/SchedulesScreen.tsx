@@ -21,7 +21,6 @@ export function SchedulesScreen(props: any) {
 
     useEffect(() => {
         props.saveCycle({ ...props.route.params.cycle, schedules: props.schedules }, true);
-        console.log("props.schedules", props.schedules)
     }, [props.schedules]);
 
 
