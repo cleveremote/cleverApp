@@ -42,12 +42,17 @@ export function SignIn(props: any) {
 
     const onLogin = async (data: any) => {
         setIsLoading(true);
-        props.login(data.login, data.password, data.rememberCredentials, data.profile, props.route.params?.profile).then((res: any) => {
-            if (res.error) {
-                Alert.alert(res.error);
+        props.login(data.login, data.password, data.rememberCredentials, data.profile, props.route.params?.profile)
+            .then((res: any) => {
+                if (res.error) {
+                    Alert.alert(res.error);
+                    setIsLoading(false);
+                }
+            })
+            .catch((error: any) => {
+                console.error("Error caught:", error); // If rejected, this will be executed
                 setIsLoading(false);
-            }
-        });
+            });
 
     }
 
@@ -92,7 +97,7 @@ export function SignIn(props: any) {
                                     <Text style={{ marginTop: 5, color: '#32404e', fontSize: 15 }}> Remember me</Text>
                                 </HStack>
                                 <VStack marginLeft="10" marginRight="10" marginBottom={5} alignSelf='center'>
-                                    <IconButton _pressed={{ _icon: { size:35} }} variant="unstyled" alignSelf='center' size={35} icon={<Icon name={'id-badge'} size={30} color='#32404e' />}
+                                    <IconButton _pressed={{ _icon: { size: 35 } }} variant="unstyled" alignSelf='center' size={35} icon={<Icon name={'id-badge'} size={30} color='#32404e' />}
                                         onPress={() => {
                                             ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
                                             props.navigation.goBack();
@@ -115,12 +120,12 @@ export function SignIn(props: any) {
             </View>
 
             <VStack marginLeft="10" marginRight="10" marginBottom={5} alignSelf='center'>
-                <IconButton _pressed={{ _icon: { size:35} }} variant="unstyled" alignSelf='center' size={35} icon={<Icon name={'arrow-alt-circle-left'} size={30} color='#32404e' />}
+                <IconButton _pressed={{ _icon: { size: 35 } }} variant="unstyled" alignSelf='center' size={35} icon={<Icon name={'arrow-alt-circle-left'} size={30} color='#32404e' />}
                     onPress={() => {
                         ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
-                        props.navigation.goBack();
+                        props.navigation.navigate('Profiles')
                     }} />
-                <Text style={{ color: '#32404e', fontSize: 15 }}>back to profiles 123456</Text>
+                <Text style={{ color: '#32404e', fontSize: 15 }}>back to profiles</Text>
             </VStack>
 
 

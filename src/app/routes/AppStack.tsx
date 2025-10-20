@@ -38,12 +38,14 @@ export function AppStack(props: any) {
 
     const appState = useRef(AppState.currentState);
     useEffect(() => {
-        if (props.isServerConnected && props.isBoxConnected) {
-            props.listenerEvents();
-            props.loadValues('PROCESS');
-            props.loadConfiguration();
+        
+            if (props.isServerConnected && props.isBoxConnected) {
+                props.listenerEvents();
+                props.loadValues('PROCESS');
+                props.loadConfiguration();
 
-        }
+            }
+
 
     }, [props.isServerConnected, props.isBoxConnected]);
 
@@ -53,9 +55,12 @@ export function AppStack(props: any) {
                 appState.current.match(/inactive|background/) &&
                 nextAppState === 'active'
             ) {
-                await authenticationService.executeRefresh();
-                props.loadConfiguration();
-                props.loadValues('PROCESS');
+
+               
+                    await authenticationService.executeRefresh();
+                    props.loadConfiguration();
+                    props.loadValues('PROCESS');
+
             }
 
             appState.current = nextAppState;
@@ -78,17 +83,15 @@ export function AppStack(props: any) {
     const noConnectionScreen = () => {
 
         if (props.isConnected && !props.isServerConnected) {
-            console.log("props.isConnected,props.isServerConnected",!!props.isConnected,!!props.isServerConnected)
             return (
-                <NoConnectionScreen type={"SERVER"} />
+                <NoConnectionScreen type={"SERVER"} navigation={props.navigation}/>
             )
         } else if (props.isConnected && !props.isBoxConnected) {
             return (
-                <NoConnectionScreen type={"BOX"} />
+                <NoConnectionScreen type={"BOX"} navigation={props.navigation}/>
             )
         } else {
-            console.log("Notd",props.isConnected,props.isServerConnected)
-            return (<NoConnectionScreen type={"Not Logged"} />)
+            return (<NoConnectionScreen type={"Not Logged"} navigation={props.navigation} />)
         }
 
     }
@@ -100,7 +103,7 @@ export function AppStack(props: any) {
                 (
                     <Tab.Navigator screenOptions={({ route }) => ({ tabBarActiveTintColor: '#32404e', tabBarIcon: ({ focused }) => tabBarIconCfg(focused, route) })}>
                         <Tab.Screen name="CyclesStack" options={{ headerShown: false, tabBarLabel: "Cycles", tabBarLabelStyle: { fontSize: 12, fontWeight: 'bold' }, }} component={CycleStack} />
-                         <Tab.Screen name="PlanStack" options={{ headerShown: false, tabBarLabel: "Plan", tabBarLabelStyle: { fontSize: 12, fontWeight: 'bold' } }} component={PlanStack} />
+                        <Tab.Screen name="PlanStack" options={{ headerShown: false, tabBarLabel: "Plan", tabBarLabelStyle: { fontSize: 12, fontWeight: 'bold' } }} component={PlanStack} />
                         <Tab.Screen name="Settings" options={{ headerShown: false, tabBarLabelStyle: { fontSize: 12, fontWeight: 'bold' } }} component={SettingsScreen} />
                         <Tab.Screen name="SensorsStack" options={{ headerShown: false, tabBarLabel: "Sensors", tabBarLabelStyle: { fontSize: 12, fontWeight: 'bold' } }} component={SensorStack} />
                     </Tab.Navigator>

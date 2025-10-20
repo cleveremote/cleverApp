@@ -215,7 +215,6 @@ export function PlanScreen(props: any) {
    useEffect(() => {
       const inProcessSections = getAllSequences(props.statusIn)
       let interval: NodeJS.Timeout;
-      console.log("inProcessSections", inProcessSections);
       if (inProcessSections.length) {
 
          setShowText((showText: any) => {

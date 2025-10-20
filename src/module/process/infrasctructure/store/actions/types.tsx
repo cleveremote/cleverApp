@@ -57,7 +57,7 @@ export const SET_CONNECTED = 'SET_LOGGEDIN';
 export const SET_BOX_CONNECTED = 'SET_BOX_CONNECTED';
 export const SET_SERVER_CONNECTED = 'SET_SERVER_CONNECTED';
 
-
+export const RESET_STORE = 'RESET_STORE';
 
 
 

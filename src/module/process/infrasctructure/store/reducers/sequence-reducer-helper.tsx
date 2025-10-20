@@ -6,7 +6,6 @@ export const loadSequences = (cycle: any) => {
 
 export const loadSequence = (sequences: any, sequenceId: string) => {
     if (sequenceId) {
-        
         return sequences.find((x: any) => x.id === sequenceId);
     } else {
         return {
@@ -14,6 +13,7 @@ export const loadSequence = (sequences: any, sequenceId: string) => {
             name: "new sequence",
             description: "new sequence",
             maxDuration:50000,
+            vfd:50,
             isModified: true
         }
     } 

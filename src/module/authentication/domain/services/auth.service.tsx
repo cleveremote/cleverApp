@@ -5,7 +5,7 @@ import { EventEmitter } from 'events';
 import { io, Socket } from "socket.io-client";
 import { DefaultEventsMap } from '@socket.io/component-emitter';
 import { DEV_MODE, WEBSITE_URL, WEBSITE_URL_LOCAL } from "../../../../../config/websocket";
-import { SET_BOX_CONNECTED, SET_CONNECTED, SET_SERVER_CONNECTED } from '../../../process/infrasctructure/store/actions/types';
+import { RESET_STORE, SET_BOX_CONNECTED, SET_CONNECTED, SET_SERVER_CONNECTED } from '../../../process/infrasctructure/store/actions/types';
 import { store } from '../../../process/infrasctructure/store/store';
 
 class AuthenticationService {
@@ -17,20 +17,6 @@ class AuthenticationService {
     private lastStatus: boolean = false;
 
     constructor() {
-        setInterval(() => {
-            if (!this.lastStatus && this.socket?.connected) {
-                console.log("connected");
-                this.setStatusServer(true);
-
-            }
-
-            if (this.lastStatus && !this.socket?.connected) {
-                console.log("disconnected");
-                this.setStatusServer(false);
-            }
-            this.lastStatus = !!this.socket?.connected;
-
-        }, 1000);
         global.atob = decode;
     }
 
@@ -114,9 +100,8 @@ class AuthenticationService {
                         await this.saveTokens(response);
                         // @ts-ignore: this.socket  will never be undefinied here
                         socket.auth.token = response.accessToken;
-                        socket?.disconnect();
-                        socket?.connect();
-                        //this.socket = await this.setSocketServer(true, response.accessToken);
+                        // @ts-ignore: this.socket  will never be undefinied here
+                        socket.disconnect().connect();
                         // @ts-ignore: this.socket  will never be undefinied here
                         this.dispatchExpireTokenEvent(response.accessToken);
                         resolve({ res: true });
@@ -160,6 +145,7 @@ class AuthenticationService {
 
         this.socket = io(`${server}`, {
             forceNew: false,
+            requestTimeout:1000,
             transports: ['websocket'],
             auth: {
                 token: await AsyncStorage.getItem('accessToken') ?? ""
@@ -172,29 +158,27 @@ class AuthenticationService {
         const connect = (socket: Socket<DefaultEventsMap, DefaultEventsMap> | undefined): Promise<{ res: boolean, error?: string, retry?: boolean }> => {
             return new Promise((resolve, reject) => {
                 socket?.on("connect_error", async (error) => {
-                    console.log(error);
                     if (socket?.active && (!login && !isLocal)) {
-                        console.log("je suis ici");
                         resolve({ res: false, error: 'timeout', retry: true });
                     } else if (login && isLocal) {
-                        console.log("je suis ici 1");
                         resolve({ res: false, error: 'timeout', retry: true });
                     } else {
-                        console.log("je suis ici 2");
                         this.setStatusServer(false);
                         resolve({ res: false, error: 'timeout' });
                     }
                 });
                 socket?.on("connect", () => {
-                    console.log("je suis ici 3");
+                    console.log("connect")
                     this.setStatusServer(true);
                     resolve({ res: true });
                 });
 
-                socket?.on("disconnect", () => {
-
-                    this.setStatusServer(true);
-                    resolve({ res: true });
+                socket?.on("disconnect", (reason) => {
+                    console.log("disconnect", reason)
+                    this.setStatusServer(false);
+                    if (reason !== "io client disconnect") {
+                        this.signout();
+                    }
                 });
             })
         };
@@ -213,7 +197,7 @@ class AuthenticationService {
             console.log("disconnect", reason)
             this.setStatusServer(false);
             if (reason !== "io client disconnect") {
-                this.socket = await this.setSocketServer();
+                this.signout();
             }
         });
         // this.socket?.on("connect", () => {
@@ -222,8 +206,11 @@ class AuthenticationService {
     }
 
     public async Login(login: string, password: string, isLocal: boolean = true): Promise<{ res: boolean, error?: string }> {
+        this.reset();
         this.socket = await this.setSocketServer(true, login);
-        this.manageReconnexion();
+        if(!this.socket){
+            return ({ res: false });
+        }
         const sendLogin = (): Promise<{ res: boolean, error?: string }> => {
             return new Promise((resolve, reject) => {
                 if (!this.socket?.connected) {
@@ -237,9 +224,10 @@ class AuthenticationService {
                     } else {
                         await this.saveTokens(response);
                         // @ts-ignore: this.socket  will never be undefinied here
+                        // @ts-ignore: this.socket  will never be undefinied here
                         this.socket.auth.token = response.accessToken;
-                        this.socket?.disconnect();
-                        this.socket?.connect();
+                        // @ts-ignore: this.socket  will never be undefinied here
+                        this.socket.disconnect().connect();
                         // @ts-ignore: this.socket  will never be undefinied here
 
                         this.dispatchExpireTokenEvent(response.accessToken);
@@ -276,10 +264,17 @@ class AuthenticationService {
 
 
     public setIsExpired(value: boolean) {
-        //this.setStatusBox(!value);
-        console.log("setStatusServer", !value);
         this.setStatusServer(!value);
         this.setStatusLoggin(!value);
     }
+
+    public reset() {
+        store.dispatch({
+            type: RESET_STORE
+        });
+
+    }
+
+
 }
 export const authenticationService = new AuthenticationService()

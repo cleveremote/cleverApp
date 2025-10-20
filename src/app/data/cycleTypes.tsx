@@ -105,9 +105,38 @@ export function getColors() {
     });
 }
 
-export function getPorts(alreadyAdded:number[]) {
-    const allPorts = [{value:21,label:21},{value:20,label:20}, {value:26,label:26}, {value:16,label:16}, {value:19,label:19}, {value:13,label:13}, {value:12,label:12}, {value:6,label:6},{value:5,label:5}, {value:25,label:25}, {value:24,label:24}, {value:22,label:22}, {value:23,label:23}, {value:27,label:27}, {value:18,label:18}, {value:17,label:17}];
-    const filtered =  allPorts.filter(x => alreadyAdded.indexOf(x.value) < 0);
+export function getPorts(alreadyAdded: number[]) {
+    const allPorts = [
+        //R2
+        { value: 10, label: 1 },
+        { value: 9, label: 2 },
+        { value: 11, label: 3 },
+        { value: 5, label: 4 },
+        { value: 6, label: 5 },
+        { value: 13, label: 6 },
+        { value: 19, label: 7 },
+        { value: 26, label: 8 },
+        //R1
+        { value: 24, label: 9 },
+        { value: 25, label: 10 },
+        { value: 8, label: 11 },
+        { value: 7, label: 12 },
+        { value: 12, label: 13 },
+        { value: 16, label: 14 },
+        { value: 20, label: 15 },
+        { value: 21, label: 16 },
+        //R3
+        { value: 23, label: 17 },
+        { value: 18, label: 18 },
+        { value: 2, label: 19 },
+        { value: 3, label: 20 },
+        { value: 4, label: 21 },
+        { value: 17, label: 22 },
+        { value: 27, label: 23 },
+        { value: 22, label: 24 }
+
+    ];
+    const filtered = allPorts.filter(x => alreadyAdded.indexOf(x.value) < 0);
     return filtered
 }
 

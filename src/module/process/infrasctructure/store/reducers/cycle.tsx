@@ -6,7 +6,8 @@ import {
     CYCLE_LOAD,
     CYCLE_STATUS,
     CYCLE_EXECUTE,
-    DATA_LOAD
+    DATA_LOAD,
+    RESET_STORE
 } from '../actions/types';
 import { loadCycle, loadCycles, updateCycle, updateStatus } from './cycle-reducer-helper';
 
@@ -22,7 +23,11 @@ const initialState = {
 
 export default (state = initialState, action: any) => {
     switch (action.type) {
-
+        case RESET_STORE:
+            return {
+                ...state,
+                cycles: initialState.cycles
+            };
         case CYCLES_LOAD: {
             return {
                 ...state,

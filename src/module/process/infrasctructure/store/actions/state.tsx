@@ -23,6 +23,7 @@ export const login = (user: string, password: string, rememberCredentials: boole
             type: SET_CONNECTED,
             payload: true,
         });
+        return res;
     } else {
         return res;
     }

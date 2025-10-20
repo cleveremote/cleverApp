@@ -206,9 +206,6 @@ class BLEServiceInstance {
     }
     return this.manager
       .writeCharacteristicWithResponseForDevice(this.device.id, serviceUUID, characteristicUUID, time)
-      .catch(error => {
-        this.onError(error)
-      })
   }
 
   writeCharacteristicWithoutResponseForDevice = async (serviceUUID: UUID, characteristicUUID: UUID, time: Base64) => {

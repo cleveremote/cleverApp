@@ -69,7 +69,8 @@ export function ProfilesScreen(props: any) {
                             <IconButton _pressed={{ _icon: { size:35} }} variant="unstyled" marginTop={5} style={{ transform: [{ rotate: '135deg' }] }} size={30} icon={<Icon name={'times-circle'} size={30} color='#32404e' />}
                                 onPress={async () => {
                                     ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
-                                    props.navigation.navigate('Signin');
+                                    //props.navigation.navigate('Signin');
+                                    props.navigation.navigate('Device');
                                 }} />
                             <Text style={{ color: '#32404e', fontSize: 15 }}>
                                 Add new box ...

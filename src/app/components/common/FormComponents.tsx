@@ -1,4 +1,4 @@
-import { Box, CheckIcon, Flex, HStack, Input, Select, Switch, Text, TextArea, VStack } from "native-base";
+import { Box, CheckIcon, Flex, HStack, Input, Select, Slider, Switch, Text, TextArea, VStack } from "native-base";
 import { Control, Controller, FieldErrors } from "react-hook-form";
 import { getColors } from "../../data/cycleTypes";
 import { InputStyle } from "../../styles/components/common/Input";
@@ -108,6 +108,55 @@ export function DateTimePickerForm({ control, placeholder, name, errors, rules =
         </>
     )
 
+}
+
+
+
+
+export function SliderForm({ control, placeholder, name, errors, rules = {}, disabled = false, refr, onChangeText = () => { } }: Readonly<{ control: Control<any, any>, placeholder: string, name: string, errors: FieldErrors<any>, rules?: any, disabled?: boolean, refr?: any, onChangeText?: (value: any) => void }>) {
+
+    return (
+        <>
+            <Controller
+                control={control}
+                rules={rules}
+                render={({ field: { onChange, onBlur, value } }) => (
+                    <VStack>
+                        <Text style={{ ...InputStyle.textInput, color: (errors[name] ? 'red' : '#32404e') }} >{placeholder}</Text>
+                        <Slider
+                            style={InputStyle.input}
+                            borderColor={errors[name] && "red.500"} borderWidth={errors[name] && 2}
+                            onChange={value => {
+                                onChangeText(value);
+                                onChange(value);
+                            }}
+                            value={value} minValue={0} maxValue={100} accessibilityLabel={placeholder} step={10}>
+
+                            <Slider.Track>
+                                <Slider.FilledTrack />
+                            </Slider.Track>
+                            <Slider.Thumb />
+                        </Slider>
+
+                        {/* <Input rounded="xl"
+                            style={InputStyle.input}
+                            borderColor={errors[name] && "red.500"} borderWidth={errors[name] && 2}
+                            placeholder={placeholder}
+                            onBlur={onBlur}
+                            isDisabled={disabled}
+                            ref={refr}
+                            onChangeText={value => {
+                                onChangeText(value);
+                                onChange(value);
+                            }}
+                            value={value?.toString()} /> */}
+                    </VStack>
+                )}
+                name={name}
+            />
+            {errors[name] && <HStack><FontAwesomeIcon icon={faTriangleExclamation} style={InputStyle.iconInputError} /><Text style={InputStyle.textInputError}>{errors[name]?.message as string || "unknown error"}</Text></HStack>}
+        </>
+    )
 }
 
 export function InputForm({ control, placeholder, name, errors, rules = {}, disabled = false, refr, onChangeText = () => { } }: Readonly<{ control: Control<any, any>, placeholder: string, name: string, errors: FieldErrors<any>, rules?: any, disabled?: boolean, refr?: any, onChangeText?: (value: any) => void }>) {

@@ -6,6 +6,7 @@ import Icon from 'react-native-vector-icons/FontAwesome5';
 import { deleteProfile, getAllProfiles } from "../../components/common/RememberMeManager";
 import { useFocusEffect } from "@react-navigation/native";
 import Logo from "../../../../hydrophyto.svg";
+import { authenticationService } from "../../../module/authentication/domain/services/auth.service";
 
 const hapticOptions = {
     enableVibrateFallback: false,
@@ -59,7 +60,8 @@ export function NoConnectionScreen(props: any) {
                                     <IconButton _pressed={{ _icon: { size:35} }} variant="unstyled" marginTop={5} size={30} icon={<Icon name={'redo-alt'} size={30} color='#32404e' />}
                                         onPress={async () => {
                                             ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
-                                            // props.navigation.navigate('Signin');
+                                            console.log('props',props)
+                                           await authenticationService.signout();
                                         }} />
 
                                 </VStack>

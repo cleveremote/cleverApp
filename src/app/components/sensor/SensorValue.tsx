@@ -12,7 +12,7 @@ import { connect } from 'react-redux';
 export function SensorValue(props: any) {
     const fontColor = props.cycleData.style.fontColor;
     const getValue = () => {
-        return (props.values || []).find((x: any) => x.id === props.cycleData.id);
+        return (props.values || []).find((x: any) =>(x.id === props.cycleData.id) || (x.deviceId === props.cycleData.id) );
     }
     return (
         <Box style={{ justifyContent: 'center', alignItems: 'flex-end' }} rounded="xl" shadow={6} height='40px' width={'60px'} >

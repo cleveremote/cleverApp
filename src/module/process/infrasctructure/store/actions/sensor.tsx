@@ -3,6 +3,7 @@ import {
     SENSORS_LOAD,
     SENSOR_LOAD,
     SENSOR_SAVE,
+    SENSOR_STATUS,
     SENSOR_UPDATE
 } from './types';
 
@@ -19,12 +20,16 @@ export const updateSensor = (sensor: any): ThunkAction<void, RootState, unknown,
     });
 }
 
-export const loadSensors = (): ThunkAction<void, RootState, unknown, AnyAction> => async dispatch => {
+export const loadSensors = (): ThunkAction<void, RootState, unknown, AnyAction> => async dispatch => { 
     authenticationService.socket?.emit('front/box/fetch/configuration', {}, (response: any) => {
         dispatch({
             type: SENSORS_LOAD,
             payload: JSON.parse(response.config).sensors,
         });
+         dispatch({
+                    type: SENSOR_STATUS,
+                    payload: JSON.parse(response.config).values,
+                });
     });
 };
 

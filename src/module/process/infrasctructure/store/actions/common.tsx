@@ -8,8 +8,10 @@ import { Alert } from 'react-native';
 
 
 export const listenerEvents = (): ThunkAction<void, RootState, unknown, AnyAction> => async dispatch => {
-    authenticationService.socket?.removeAllListeners();
-
+    authenticationService.socket?.off('UPDATE_CONFIGURATION');
+    authenticationService.socket?.off('front/synchronize/status');
+    authenticationService.socket?.off('front/synchronize/sensor-value');
+    authenticationService.socket?.off('server/front/box-status');
     setTimeout(() => {
         authenticationService.socket?.on('UPDATE_CONFIGURATION', message => {
             const data = JSON.parse(message)
@@ -83,6 +85,11 @@ export const loadConfiguration = (): ThunkAction<void, RootState, unknown, AnyAc
         dispatch({
             type: SENSORS_LOAD,
             payload: JSON.parse(response.config).sensors,
+        });
+
+        dispatch({
+            type: SENSOR_STATUS,
+            payload: JSON.parse(response.config).values,
         });
     });
 };
