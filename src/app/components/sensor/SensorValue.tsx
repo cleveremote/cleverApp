@@ -22,7 +22,7 @@ export function SensorValue(props: any) {
 }
 
 const mapStateToProps = (state: any) => ({
-    values: state.root_sensor.values
+    values: state.root_sensor.values 
 });
 
 export default connect(mapStateToProps, null)(SensorValue);

@@ -110,7 +110,7 @@ export function SignIn(props: any) {
                                         ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
                                         await onLogin(signinData);
                                     }} >
-                                    <Text style={{ color: 'white', fontSize: 20 }}> Signin </Text>
+                                    <Text style={{ color: 'white', fontSize: 20 }}> Sign in </Text>
                                 </Button>
                             </VStack>
                         </Box>

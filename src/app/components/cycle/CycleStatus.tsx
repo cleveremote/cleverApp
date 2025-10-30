@@ -20,6 +20,7 @@ export function SensorStatus(props: any) {
 
     useEffect(() => {
        setStatus(getStatus());
+       props.closeSibillings(true);
     }, [props.status])
     return (
             <Box style={{ alignItems: 'flex-end' }} >
@@ -41,7 +42,7 @@ export function SensorStatus(props: any) {
                         onPress={() => {
                             ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
                         }} />
-                </HStack>) : <Switch mt={0.5} isChecked={status === 'IN_PROCCESS'} onTrackColor={props.iconColorSwitch + ".400"} offThumbColor={props.iconColorSwitch + ".50"} size={'md'} onValueChange={(value) => { props.onSwitch(value, 'INIT'); setStatus(value ? 'IN_PROCCESS' : 'STOPPED'); }} />}
+                </HStack>) : <Switch mt={0.5} isChecked={status === 'IN_PROCCESS'} onTrackColor={props.iconColorSwitch + ".400"} offThumbColor={props.iconColorSwitch + ".50"} size={'md'}  onValueChange={(value) => { props.closeSibillings(true); props.onSwitch(value, 'INIT'); setStatus(value ? 'IN_PROCCESS' : 'STOPPED'); }} />}
             </Box>
     );
 }

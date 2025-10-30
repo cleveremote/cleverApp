@@ -77,7 +77,7 @@ export function ProfilesScreen(props: any) {
                             </Text>
                         </VStack>
                         <Text style={{ color: '#32404e', fontSize: 15 }}>
-                            (Long press to delete)
+                            (Long press on box to delete)
                         </Text>
                     </View>
                 </ScrollView>

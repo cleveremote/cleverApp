@@ -68,8 +68,9 @@
        style="display:inline"
        id="sel_1"
        transform="translate(-34.537797,347.60095)"
-       inkscape:label="#g4398">
-       <animate xmlns="http://www.w3.org/2000/svg" attributeType="XML" attributeName="display" values="none;inline" dur="0.8s" repeatCount="indefinite"/>
+       inkscape:label="#g4398"
+       >
+       
       <path
          inkscape:connector-curvature="0"
          id="path4158"

@@ -2,7 +2,7 @@ import { Box, CheckIcon, Flex, HStack, Input, Select, Slider, Switch, Text, Text
 import { Control, Controller, FieldErrors } from "react-hook-form";
 import { getColors } from "../../data/cycleTypes";
 import { InputStyle } from "../../styles/components/common/Input";
-import { Keyboard } from "react-native";
+import { Keyboard, Platform, Pressable } from "react-native";
 import { DragableSequences } from "./draggableStack";
 import { styles } from "../../styles/cycleStyles";
 import { SequenceStack } from "../cycle/sequenceStack";
@@ -74,15 +74,15 @@ export function DateTimePickerForm({ control, placeholder, name, errors, rules =
                 render={({ field: { onChange, onBlur, value } }) => (
                     <VStack>
                         <Text style={{ ...InputStyle.textInput, color: (errors[name] ? 'red' : '#32404e') }} >{placeholder}</Text>
-                        <TouchableOpacity onPress={showDatePicker}>
+                        <Pressable onPress={showDatePicker}>
                             <Input rounded="xl"
                                 style={InputStyle.input}
                                 placeholder={placeholder}
                                 onBlur={onBlur}
-                                isDisabled={true}
+                                editable={false}
                                 value={mode === "datetime" ? mediumTime.format(value) : getTimeString(value)}
                                 pointerEvents="none" />
-                        </TouchableOpacity>
+                        </Pressable>
 
                         <DateTimePickerModal
                             maximumDate={maximumDate}
@@ -203,7 +203,14 @@ export function SwitchForm({ control, placeholder, name, errors, rules = {}, dis
                             onValueChange={(checked) => {
                                 onChangeText(checked);
                                 onChange(checked);
-                            }} />
+                            }}
+                            style={{
+                                ...(Platform.OS === 'android' && {
+                                  transform: [{ scaleX: 1.5 }, { scaleY: 1.5 }],
+                                  marginVertical: 10, 
+                                }),
+                              }}
+                            />
                         <Text mt={3} style={{ color: '#32404e', fontSize: 15, marginLeft: 5, fontWeight: 'bold' }}>{placeholder}</Text>
                     </HStack>
                 )}

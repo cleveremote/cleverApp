@@ -31,6 +31,7 @@ export function SequenceGeneralSettingsSection(props: any) {
         <ScrollView automaticallyAdjustKeyboardInsets={true}>
             <Box rounded="xl" style={BoxFormStyle.boxForm}>
                 <InputForm control={control} errors={errors} name="name" placeholder="Name*" rules={{ required: true }} onChangeText={(value) => { setSaveUnchangedData(true) }} />
+                <InputForm control={control} errors={errors} name="mapSectionId" placeholder="map Section Id" rules={{ required: false }} onChangeText={(value) => { setSaveUnchangedData(true) }} />
                 <TextAreaForm control={control} errors={errors} name="description" placeholder="Description" onChangeText={(value) => { setSaveUnchangedData(true) }} />
             </Box>
         </ScrollView>

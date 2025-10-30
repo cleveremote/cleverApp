@@ -10,7 +10,7 @@ import { connect } from "react-redux";
 import { ParamListBase, RouteProp } from "@react-navigation/native";
 import { CycleStack } from "./CycleStack";
 import { SensorStack } from "./SensorStack";
-import { listenerEvents, loadConfiguration } from "../../module/process/infrasctructure/store/actions/common";
+import { listenerEvents, loadConfiguration, loadPlan } from "../../module/process/infrasctructure/store/actions/common";
 import { NativeBaseProvider } from "native-base";
 import { setIsConnected } from "../../module/process/infrasctructure/store/actions/state";
 import { NoConnectionScreen } from "../screens/access/no-connexion";
@@ -43,6 +43,7 @@ export function AppStack(props: any) {
                 props.listenerEvents();
                 props.loadValues('PROCESS');
                 props.loadConfiguration();
+                props.loadPlan();
 
             }
 
@@ -59,6 +60,7 @@ export function AppStack(props: any) {
                
                     await authenticationService.executeRefresh();
                     props.loadConfiguration();
+                    props.loadPlan();
                     props.loadValues('PROCESS');
 
             }
@@ -102,10 +104,10 @@ export function AppStack(props: any) {
             {props.isServerConnected && props.isBoxConnected ?
                 (
                     <Tab.Navigator screenOptions={({ route }) => ({ tabBarActiveTintColor: '#32404e', tabBarIcon: ({ focused }) => tabBarIconCfg(focused, route) })}>
-                        <Tab.Screen name="CyclesStack" options={{ headerShown: false, tabBarLabel: "Cycles", tabBarLabelStyle: { fontSize: 12, fontWeight: 'bold' }, }} component={CycleStack} />
-                        <Tab.Screen name="PlanStack" options={{ headerShown: false, tabBarLabel: "Plan", tabBarLabelStyle: { fontSize: 12, fontWeight: 'bold' } }} component={PlanStack} />
-                        <Tab.Screen name="Settings" options={{ headerShown: false, tabBarLabelStyle: { fontSize: 12, fontWeight: 'bold' } }} component={SettingsScreen} />
-                        <Tab.Screen name="SensorsStack" options={{ headerShown: false, tabBarLabel: "Sensors", tabBarLabelStyle: { fontSize: 12, fontWeight: 'bold' } }} component={SensorStack} />
+                        <Tab.Screen name="CyclesStack" options={{ headerShown: false, tabBarLabel: "Cycles",  }} component={CycleStack} />
+                        <Tab.Screen name="PlanStack" options={{ headerShown: false, tabBarLabel: "Plan" }} component={PlanStack} />
+                        <Tab.Screen name="Settings" options={{ headerShown: false,  }} component={SettingsScreen} />
+                        <Tab.Screen name="SensorsStack" options={{ headerShown: false, tabBarLabel: "Sensors", }} component={SensorStack} />
                     </Tab.Navigator>
                 ) : noConnectionScreen()
             }
@@ -119,4 +121,4 @@ const mapStateToProps = (state: any) => ({
     isServerConnected: state.status.isServerConnected
 });
 
-export default connect(mapStateToProps, { setIsConnected, loadConfiguration, loadValues, listenerEvents })(AppStack);
+export default connect(mapStateToProps, { setIsConnected, loadConfiguration, loadValues, listenerEvents,loadPlan })(AppStack);

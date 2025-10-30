@@ -60,7 +60,6 @@ export function NoConnectionScreen(props: any) {
                                     <IconButton _pressed={{ _icon: { size:35} }} variant="unstyled" marginTop={5} size={30} icon={<Icon name={'redo-alt'} size={30} color='#32404e' />}
                                         onPress={async () => {
                                             ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
-                                            console.log('props',props)
                                            await authenticationService.signout();
                                         }} />
 

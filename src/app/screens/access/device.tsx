@@ -63,7 +63,7 @@ export function DeviceScreen(props: any) {
                                     borderColor: '#0082FC',//'#32404e',
                                     borderWidth: 4,
                                 }}>
-                                <IconButton _pressed={{ _icon: { size:35} }} variant="unstyled" fontWeight={'bold'} icon={<Icon name="bluetooth-b" size={20} color='#0082FC' />}
+                                <IconButton _pressed={{ _icon: { size: 20 } }} variant="unstyled" fontWeight={'bold'} icon={<Icon name="bluetooth-b" size={18} color='#0082FC' />}
                                     onPress={async () => {
                                         ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
                                         props.navigation.navigate('deviceSettings', { deviceId: device.id, deviceName: device.localName });

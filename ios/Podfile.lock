@@ -46,9 +46,9 @@ PODS:
     - GoogleUtilities/Logger (~> 7.12)
   - FirebaseCoreExtension (10.23.0):
     - FirebaseCore (~> 10.0)
-  - FirebaseCoreInternal (10.25.0):
+  - FirebaseCoreInternal (10.29.0):
     - "GoogleUtilities/NSData+zlib (~> 7.8)"
-  - FirebaseInstallations (10.25.0):
+  - FirebaseInstallations (10.29.0):
     - FirebaseCore (~> 10.0)
     - GoogleUtilities/Environment (~> 7.8)
     - GoogleUtilities/UserDefaults (~> 7.8)
@@ -1080,6 +1080,8 @@ PODS:
     - React
   - react-native-date-picker (5.0.4):
     - React-Core
+  - react-native-network-info (5.2.1):
+    - React
   - react-native-orientation-locker (1.6.0):
     - React-Core
   - react-native-progress-view (1.4.2):
@@ -1259,6 +1261,8 @@ PODS:
     - React-Core
   - RNDateTimePicker (8.1.1):
     - React-Core
+  - RNDeviceInfo (14.1.1):
+    - React-Core
   - RNFBApp (19.1.1):
     - Firebase/CoreOnly (= 10.23.0)
     - React-Core
@@ -1349,6 +1353,7 @@ DEPENDENCIES:
   - react-native-ble-plx (from `../node_modules/react-native-ble-plx`)
   - react-native-bluetooth-classic (from `../node_modules/react-native-bluetooth-classic`)
   - react-native-date-picker (from `../node_modules/react-native-date-picker`)
+  - react-native-network-info (from `../node_modules/react-native-network-info`)
   - react-native-orientation-locker (from `../node_modules/react-native-orientation-locker`)
   - "react-native-progress-view (from `../node_modules/@react-native-community/progress-view`)"
   - react-native-safe-area-context (from `../node_modules/react-native-safe-area-context`)
@@ -1375,6 +1380,7 @@ DEPENDENCIES:
   - "RNCAsyncStorage (from `../node_modules/@react-native-async-storage/async-storage`)"
   - "RNCMaskedView (from `../node_modules/@react-native-masked-view/masked-view`)"
   - "RNDateTimePicker (from `../node_modules/@react-native-community/datetimepicker`)"
+  - RNDeviceInfo (from `../node_modules/react-native-device-info`)
   - "RNFBApp (from `../node_modules/@react-native-firebase/app`)"
   - "RNFBMessaging (from `../node_modules/@react-native-firebase/messaging`)"
   - RNGestureHandler (from `../node_modules/react-native-gesture-handler`)
@@ -1478,6 +1484,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-bluetooth-classic"
   react-native-date-picker:
     :path: "../node_modules/react-native-date-picker"
+  react-native-network-info:
+    :path: "../node_modules/react-native-network-info"
   react-native-orientation-locker:
     :path: "../node_modules/react-native-orientation-locker"
   react-native-progress-view:
@@ -1530,6 +1538,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/@react-native-masked-view/masked-view"
   RNDateTimePicker:
     :path: "../node_modules/@react-native-community/datetimepicker"
+  RNDeviceInfo:
+    :path: "../node_modules/react-native-device-info"
   RNFBApp:
     :path: "../node_modules/@react-native-firebase/app"
   RNFBMessaging:
@@ -1560,8 +1570,8 @@ SPEC CHECKSUMS:
   FirebaseAnalytics: fd35d51e6da86ef1aa2c3fe1f64ab2482cc01ba5
   FirebaseCore: 63efb128decaebb04c4033ed4e05fb0bb1cccef1
   FirebaseCoreExtension: cb88851781a24e031d1b58e0bd01eb1f46b044b5
-  FirebaseCoreInternal: 910a81992c33715fec9263ca7381d59ab3a750b7
-  FirebaseInstallations: 91950fe859846fff0fbd296180909dd273103b09
+  FirebaseCoreInternal: df84dd300b561c27d5571684f389bf60b0a5c934
+  FirebaseInstallations: 913cf60d0400ebd5d6b63a28b290372ab44590dd
   FirebaseMessaging: 1b2270e66c81bbf184f70184db1d6a736ad0def5
   Flipper: c7a0093234c4bdd456e363f2f19b2e4b27652d44
   Flipper-Boost-iOSX: fd1e2b8cbef7e662a122412d7ac5f5bea715403c
@@ -1606,6 +1616,7 @@ SPEC CHECKSUMS:
   react-native-ble-plx: c040d0123518e121bf4cda02061bf72644f68d15
   react-native-bluetooth-classic: 9c3e4da37d711a3e3b8a7e2f52e5d15d55764f4c
   react-native-date-picker: 6891317e850deae5b53d51355226e07a495aba61
+  react-native-network-info: d1290ffc0bd0709e11436f5b8d7f605dcc5c4530
   react-native-orientation-locker: 4409c5b12b65f942e75449872b4f078b6f27af81
   react-native-progress-view: fda23a769e325dd94f08439f6cfca5867fca32c0
   react-native-safe-area-context: b97eb6f9e3b7f437806c2ce5983f479f8eb5de4b
@@ -1632,6 +1643,7 @@ SPEC CHECKSUMS:
   RNCAsyncStorage: 826b603ae9c0f88b5ac4e956801f755109fa4d5c
   RNCMaskedView: 090213d32d8b3bb83a4dcb7d12c18f0152591906
   RNDateTimePicker: 430174392d275f0ffefb627d04f0f8677f667fed
+  RNDeviceInfo: 8b6fa8379062949dd79a009cf3d6b02a9c03ca59
   RNFBApp: 6d8509c5bb19b8788fee4f6a1f5d481aff20f15a
   RNFBMessaging: e1d20e5d9d3331c7120e3719ac3266ffd50d6df1
   RNGestureHandler: bc2cdb2dc42facdf34992ae364b8a728e19a3686

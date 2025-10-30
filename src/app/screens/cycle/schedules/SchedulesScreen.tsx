@@ -33,7 +33,7 @@ export function SchedulesScreen(props: any) {
                         props.navigation.navigate('ScheduleSettingsStack', { screen: 'ScheduleSettingsMenu', params: { schedule: item } });
                     }, `schedule ${element.description}`, { name: faCog, color: '#32404e' }))}
                     <VStack style={{ justifyContent: 'center', alignItems: 'center' }}>
-                        <IconButton _pressed={{ _icon: { size: 35 } }} variant="unstyled" marginTop={5} style={{ transform: [{ rotate: '135deg' }] }} size={30} icon={<Icon name={'times-circle'} size={30} color='#32404e' />}
+                        <IconButton _pressed={{ _icon: { size: 35 }, size:36 }} variant="unstyled" marginTop={5} style={{ transform: [{ rotate: '135deg' }] }} size={30} icon={<Icon name={'times-circle'} size={30} color='#32404e' />}
                             onPress={async () => {
                                 ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
                                 props.navigation.navigate('ScheduleSettingsStack', { screen: 'ScheduleSettingsMenu', params: { cycle: props.route.params.cycle } });

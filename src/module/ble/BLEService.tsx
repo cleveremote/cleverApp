@@ -83,7 +83,7 @@ class BLEServiceInstance {
       .then(() => this.showSuccessToast('Device disconnected'))
       .catch(error => {
         if (error?.code !== BleErrorCode.DeviceDisconnected) {
-          this.onError(error)
+          throw new Error(error.message)
         }
       })
 
@@ -119,7 +119,7 @@ class BLEServiceInstance {
         
         if ( index > -1) {
          
-          const found = this.scannedDevices.find(x => x === device);
+          const found = this.scannedDevices.find(x => x.id === device.id);
           if (!found) {
             this.scannedDevices.push(device);
           }
@@ -189,13 +189,14 @@ class BLEServiceInstance {
         reject(new Error(deviceNotConnectedErrorText))
         return
       }
+     this.device.requestMTU(512);
       this.manager
         .readCharacteristicForDevice(this.device.id, serviceUUID, characteristicUUID)
         .then(characteristic => {
           resolve(characteristic)
         })
         .catch(error => {
-          this.onError(error)
+          reject(new Error(error.message))
         })
     })
 

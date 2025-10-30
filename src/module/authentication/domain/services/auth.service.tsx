@@ -7,7 +7,8 @@ import { DefaultEventsMap } from '@socket.io/component-emitter';
 import { DEV_MODE, WEBSITE_URL, WEBSITE_URL_LOCAL } from "../../../../../config/websocket";
 import { RESET_STORE, SET_BOX_CONNECTED, SET_CONNECTED, SET_SERVER_CONNECTED } from '../../../process/infrasctructure/store/actions/types';
 import { store } from '../../../process/infrasctructure/store/store';
-
+import { NetworkInfo } from 'react-native-network-info';
+import { Platform } from 'react-native';
 class AuthenticationService {
     public newEvent = new EventEmitter();
     public socketChangeEvent = new EventEmitter();
@@ -131,12 +132,61 @@ class AuthenticationService {
         this.setIsExpired(true);
     }
 
+    private getBaseHostname(url: string) {
+        const match = url.match(/\/\/([^:/]+)/);
+        const t = match ? match[1].split('.')[0] : null;
+        return t;
+    }
+
+
+    private async findServer(localServer: string) {
+
+        const fetchTimeout = (url: string, ms = 5000) =>
+            Promise.race([
+                fetch(url)
+                    .then((res) => {
+                        if (!res.ok) throw new Error(`HTTP ${res.status}`);
+                        // Essaie de parser le JSON, sinon retourne le texte brut
+                        return res.json().catch(() => res.text());
+                    }),
+                new Promise((_, reject) =>
+                    setTimeout(() => reject(new Error("Timeout")), ms)
+                ),
+            ]);
+        const ip = await NetworkInfo.getIPV4Address();
+        if (ip) {
+            const rootIp = ip.replace(/\.\d+$/, '.');
+            for (let i = 1; i < 255; i++) {
+                const url = `http://${rootIp}${i}:3000/ping`;
+                try {
+                    const r = await fetchTimeout(url, 500);
+                    if (r.name === localServer) {
+                        console.log("✅ Serveur trouvé :", `http://${rootIp}${i}:5001`);
+                        return `http://${rootIp}${i}:5001`; // interrompt la boucle
+                    }
+                } catch (e) {
+                    // ignore erreurs
+                }
+            }
+        }
+
+        //console.log("❌ Aucun serveur trouvé.");
+    }
+
     // try first local if ok else distant
     private async setSocketServer(isLocal: boolean = true, login: string = ""): Promise<Socket> {
         const boxId = login ?? await AsyncStorage.getItem('boxId');
-        let server = isLocal ? boxId.slice(-8) + ".local" : WEBSITE_URL;
-        if (DEV_MODE) {
-            server = isLocal ? WEBSITE_URL_LOCAL : WEBSITE_URL;
+        //if android
+
+        let server = WEBSITE_URL;
+
+
+        
+        if (isLocal && Platform.OS === 'android') {
+            server = this.getBaseHostname(DEV_MODE ? WEBSITE_URL_LOCAL : `http://${boxId.slice(-8)}.local:5001`) ?? '';
+            server = (await this.findServer(server)) ?? '';
+        } else {
+            server = WEBSITE_URL;
         }
 
         if (this.socket) {
@@ -145,7 +195,7 @@ class AuthenticationService {
 
         this.socket = io(`${server}`, {
             forceNew: false,
-            requestTimeout:1000,
+            requestTimeout: 1000,
             transports: ['websocket'],
             auth: {
                 token: await AsyncStorage.getItem('accessToken') ?? ""
@@ -200,15 +250,12 @@ class AuthenticationService {
                 this.signout();
             }
         });
-        // this.socket?.on("connect", () => {
-        //     this.setStatusServer(true);
-        // });
     }
 
     public async Login(login: string, password: string, isLocal: boolean = true): Promise<{ res: boolean, error?: string }> {
         this.reset();
         this.socket = await this.setSocketServer(true, login);
-        if(!this.socket){
+        if (!this.socket) {
             return ({ res: false });
         }
         const sendLogin = (): Promise<{ res: boolean, error?: string }> => {
@@ -240,13 +287,6 @@ class AuthenticationService {
 
     }
 
-    private setStatusBox(value: boolean) {
-        store.dispatch({
-            type: SET_BOX_CONNECTED,
-            payload: value,
-        });
-    }
-
     private setStatusServer(value: boolean) {
         store.dispatch({
             type: SET_SERVER_CONNECTED,
@@ -261,8 +301,6 @@ class AuthenticationService {
         });
     }
 
-
-
     public setIsExpired(value: boolean) {
         this.setStatusServer(!value);
         this.setStatusLoggin(!value);
@@ -272,9 +310,7 @@ class AuthenticationService {
         store.dispatch({
             type: RESET_STORE
         });
-
     }
-
 
 }
 export const authenticationService = new AuthenticationService()

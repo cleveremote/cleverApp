@@ -8,6 +8,7 @@ import { hapticOptions } from "../../../../../data/cycleTypes";
 import { useForm } from "react-hook-form";
 import { updateTrigger } from "../../../../../../module/process/infrasctructure/store/actions/trigger";
 import { connect } from "react-redux";
+import { Platform } from "react-native";
 
 function TriggerExecutionSettingsSection(props: any) {
     const defValues = { ...props.route.params?.triggerData };
@@ -62,6 +63,12 @@ function TriggerExecutionSettingsSection(props: any) {
 
                 <HStack marginLeft="5" marginTop={2} mb={2}>
                     <Switch isChecked={sunState} onTrackColor={'#32404e'} offThumbColor={'blueGray.50'} size={'md'}
+                        style={{
+                            ...(Platform.OS === 'android' && {
+                              transform: [{ scaleX: 1.5 }, { scaleY: 1.5 }],
+                              marginVertical: 10,
+                            }),
+                          }}
                         onValueChange={(checked) => {
                             setSunState(checked);
                             if (checked) {

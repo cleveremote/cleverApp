@@ -29,24 +29,24 @@ export function DeviceSettings(props: any) {
         });
         setIsLoading(true);
         BLEService.connectToDevice(props.route.params?.deviceId)
-            .then(async () => {
-                await BLEService.discoverAllServicesAndCharacteristicsForDevice()
-            })
-            .then(async (device) => {
-                const result = await BLEService.readCharacteristicForDevice('22222222-3333-4444-5555-666666666666',
+            .then( () =>  BLEService.discoverAllServicesAndCharacteristicsForDevice()
+            )
+            .then( (device) => {
+                return BLEService.readCharacteristicForDevice('22222222-3333-4444-5555-666666666666',
                     '22222222-3333-4444-5555-666666666668');
+            })
+            .then( (result) => {
                 if (result.value) {
                     setNetworks(JSON.parse(decode(result.value)).map((x: any) => ({ label: x.name, value: x.name })));
                 }
                 setIsLoading(false);
+                 return BLEService.disconnectDeviceById(props.route.params?.deviceId);
             })
             .catch((error) => {
-                console.error("Error caught:", error);
+                Alert.alert(error.message);
                 setIsLoading(false);
             })
-            .then(async () => {
-                await BLEService.disconnectDeviceById(props.route.params?.deviceId);
-            })
+            
 
     }, []);
 
@@ -100,7 +100,7 @@ export function DeviceSettings(props: any) {
                             borderColor: '#32404e',
                             borderWidth: 7,
                         }}>
-                        <IconButton _pressed={{ _icon: { size: 35 } }} variant="unstyled" fontWeight={'bold'} icon={<Icon name="bluetooth-b" size={35} color='#32404e' />} />
+                        <IconButton variant="unstyled" fontWeight={'bold'} icon={<Icon name="wifi" size={30} color='#32404e' />} />
                     </View>
                 </View>
                 <VStack space={2} my={1} alignSelf="stretch" shadow={3}>

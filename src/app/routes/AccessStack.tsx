@@ -23,7 +23,7 @@ export function AccessStack() {
             <Stack.Navigator>
                 <Stack.Screen name="Profiles" options={{ headerShown: false }} component={ProfilesScreen} />
                 <Stack.Screen name="Device" options={{ headerShown: true, title: 'Device(s) found' }} component={DeviceScreen} />
-                <Stack.Screen name="deviceSettings" options={{ headerShown: true, title: 'Device setting' }} component={DeviceSettings} />
+                <Stack.Screen name="deviceSettings" options={{ headerShown: true, title: 'Configure connexion' }} component={DeviceSettings} />
                 <Stack.Screen name="Signin" options={{ headerShown: false }} component={SignIn} />
             </Stack.Navigator> 
         </NativeBaseProvider>

@@ -9,7 +9,7 @@ export const SENSOR_SAVE = 'SENSOR_SAVE';
 
 /////////////Data
 export const DATA_LOAD = 'DATA_LOAD';
-
+export const PLAN_LOAD = 'PLAN_LOAD';
 /////////////Cycle
 export const CYCLE_STATUS = 'CYCLE_STATUS';
 export const CYCLES_LOAD = 'CYCLES_LOAD';
