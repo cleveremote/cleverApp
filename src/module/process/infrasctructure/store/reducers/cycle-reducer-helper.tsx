@@ -1,42 +1,59 @@
-
+export const getKeys = (svg: string) => {
+	const matches = svg.match(/sel_./g);
+	const res = {} as any;
+	matches?.forEach(key => {
+		res[key] = false;
+	});
+	console.log('test1', res);
+	return Object.keys(res).map(key => ({
+		label: key,
+		value: key
+	}));
+};
 
 export const loadCycles = (cycles: any) => {
-    return cycles || [];
-}
+	return cycles || [];
+};
 
 export const loadCycle = (cycles: any, cycleId: string) => {
-    if (cycleId) {
-        return cycles.find((x: any) => x.id === cycleId);
-    } else {
-        return {
-            id: `${Math.random()}`,
-            name: "new cycle",
-            description: "new cycle",
-            style: {
-                bgColor: "cyan.200",
-                fontColor: "blue.400",
-                iconColor: { base: "blue", icon: "#60a5fa" }
-            },
-            modePriority: [{ mode: "MANUAL", priority: 0 }, { mode: "TRIGGER", priority: 1 }, { mode: "SCHEDULE", priority: 2 }],
-            sequences: [],
-            isModified: true
-        }
-    }
-}
+	if (cycleId) {
+		return cycles.find((x: any) => x.id === cycleId);
+	} else {
+		return {
+			id: `${Math.random()}`,
+			name: 'new cycle',
+			description: 'new cycle',
+			style: {
+				bgColor: 'cyan.200',
+				fontColor: 'blue.400',
+				iconColor: {base: 'blue', icon: '#60a5fa'}
+			},
+			modePriority: [
+				{mode: 'MANUAL', priority: 0},
+				{mode: 'TRIGGER', priority: 1},
+				{mode: 'SCHEDULE', priority: 2}
+			],
+			sequences: [],
+			isModified: true
+		};
+	}
+};
 
 export const updateCycle = (prevCycles: any, cycle: any) => {
-    const previous = [...prevCycles];
-    if (cycle) {
-        const deleteId = cycle?.id.split('_');
-        const index = previous.findIndex(x => x.id === (deleteId[1] || cycle?.id))
-        if (index > -1) {
-            previous[index] = cycle;
-        } else {
-            previous.push(cycle);
-        }
-    }
-    return previous;
-}
+	const previous = [...prevCycles];
+	if (cycle) {
+		const deleteId = cycle?.id.split('_');
+		const index = previous.findIndex(
+			x => x.id === (deleteId[1] || cycle?.id)
+		);
+		if (index > -1) {
+			previous[index] = cycle;
+		} else {
+			previous.push(cycle);
+		}
+	}
+	return previous;
+};
 
 // export const updateStatus = (prevCycles: any, status: any) => {
 //     const cycles = [...prevCycles];
@@ -84,14 +101,14 @@ export const updateCycle = (prevCycles: any, cycle: any) => {
 // }
 
 export const updateStatus = (prevSatus: any, status: any) => {
-    const values = [...prevSatus];
-    status.forEach((element: any) => {
-        const index = values.findIndex(x => x.id === element.id);
-        if (index > -1) {
-            values[index] = { ...element };
-        } else {
-            values.push(element);
-        }
-    });
-    return values;
-}
+	const values = [...prevSatus];
+	status.forEach((element: any) => {
+		const index = values.findIndex(x => x.id === element.id);
+		if (index > -1) {
+			values[index] = {...element};
+		} else {
+			values.push(element);
+		}
+	});
+	return values;
+};

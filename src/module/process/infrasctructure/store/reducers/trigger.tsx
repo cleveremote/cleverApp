@@ -1,52 +1,58 @@
-
 import {
-    TRIGGER_SAVE,
-    TRIGGERS_LOAD,
-    TRIGGER_UPDATE,
-    TRIGGER_LOAD
+	TRIGGER_SAVE,
+	TRIGGERS_LOAD,
+	TRIGGER_UPDATE,
+	TRIGGER_LOAD
 } from '../actions/types';
-import { loadTrigger, loadTriggers, updateTrigger } from './trigger-reducer-helper';
+import {
+	loadTrigger,
+	loadTriggers,
+	updateTrigger
+} from './trigger-reducer-helper';
 
 const initialState = {
-    triggers: [],
-    trigger: undefined,
-
+	triggers: [],
+	trigger: undefined
 };
 
-
 export default (state = initialState, action: any) => {
-    switch (action.type) {
+	switch (action.type) {
+		case TRIGGERS_LOAD: {
+			return {
+				...state,
+				triggers: loadTriggers(action.payload)
+			};
+		}
 
-        case TRIGGERS_LOAD: {
-            return {
-                ...state,
-                triggers: loadTriggers(action.payload)
-            };
-        }
+		case TRIGGER_LOAD: {
+			return {
+				...state,
+				trigger: loadTrigger(
+					state.triggers,
+					action.payload.triggerId,
+					action.payload.cycleId
+				)
+			};
+		}
 
-        case TRIGGER_LOAD: {
-            return {
-                ...state,
-                trigger: loadTrigger(state.triggers, action.payload.triggerId, action.payload.cycleId)
-            };
-        }
+		case TRIGGER_UPDATE: {
+			return {
+				...state,
+				trigger: action.payload
+			};
+		}
 
-        case TRIGGER_UPDATE: {
+		case TRIGGER_SAVE: {
+			return {
+				...state,
+				triggers: updateTrigger(
+					state.triggers,
+					JSON.parse(action.payload).trigger
+				)
+			};
+		}
 
-            return {
-                ...state,
-                trigger: action.payload
-            };
-        }
-
-        case TRIGGER_SAVE: {
-            return {
-                ...state,
-                triggers: updateTrigger(state.triggers, JSON.parse(action.payload).trigger)
-            };
-        }
-
-        default:
-            return state;
-    }
+		default:
+			return state;
+	}
 };

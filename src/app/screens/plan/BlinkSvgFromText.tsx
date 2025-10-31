@@ -1,6 +1,6 @@
-import React, { useEffect, useRef, useState } from "react";
-import { View, Animated, Easing } from "react-native";
-import { SvgXml } from "react-native-svg";
+import React, {useEffect, useRef, useState} from 'react';
+import {View, Animated, Easing} from 'react-native';
+import {SvgXml} from 'react-native-svg';
 
 const mySvg = `
 <svg viewBox="0 0 200 200">
@@ -10,40 +10,40 @@ const mySvg = `
 </svg>
 `;
 
-export default function BlinkingSvg({ elementId }) {
-  const opacity = useRef(new Animated.Value(1)).current;
-  const [svgContent, setSvgContent] = useState(mySvg);
+export default function BlinkingSvg({elementId}) {
+	const opacity = useRef(new Animated.Value(1)).current;
+	const [svgContent, setSvgContent] = useState(mySvg);
 
-  useEffect(() => {
-    // Fonction qui fait clignoter l'élément
-    const blink = () => {
-      Animated.sequence([
-        Animated.timing(opacity, {
-          toValue: 0,
-          duration: 500,
-          easing: Easing.linear,
-          useNativeDriver: true,
-        }),
-        Animated.timing(opacity, {
-          toValue: 1,
-          duration: 500,
-          easing: Easing.linear,
-          useNativeDriver: true,
-        }),
-      ]).start(() => blink());
-    };
-    blink();
-  }, [opacity]);
+	useEffect(() => {
+		// Fonction qui fait clignoter l'élément
+		const blink = () => {
+			Animated.sequence([
+				Animated.timing(opacity, {
+					toValue: 0,
+					duration: 500,
+					easing: Easing.linear,
+					useNativeDriver: true
+				}),
+				Animated.timing(opacity, {
+					toValue: 1,
+					duration: 500,
+					easing: Easing.linear,
+					useNativeDriver: true
+				})
+			]).start(() => blink());
+		};
+		blink();
+	}, [opacity]);
 
-  // On remplace l'élément SVG cible par une version avec opacity animé
-  const animatedSvg = svgContent.replace(
-    new RegExp(`id="${elementId}"([^>]*)fill="([^"]+)"`),
-    `id="${elementId}"$1fill="$2" opacity="{opacity}"`
-  );
+	// On remplace l'élément SVG cible par une version avec opacity animé
+	const animatedSvg = svgContent.replace(
+		new RegExp(`id="${elementId}"([^>]*)fill="([^"]+)"`),
+		`id="${elementId}"$1fill="$2" opacity="{opacity}"`
+	);
 
-  return (
-    <View>
-      <SvgXml xml={animatedSvg} width={200} height={200} />
-    </View>
-  );
+	return (
+		<View>
+			<SvgXml xml={animatedSvg} width={200} height={200} />
+		</View>
+	);
 }

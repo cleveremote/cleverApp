@@ -1,11 +1,9 @@
-
 /////////////Sensor
 export const SENSOR_STATUS = 'SENSOR_STATUS';
 export const SENSOR_UPDATE = 'SENSOR_UPDATE';
 export const SENSOR_LOAD = 'SENSOR_LOAD';
 export const SENSORS_LOAD = 'SENSORS_LOAD';
 export const SENSOR_SAVE = 'SENSOR_SAVE';
-
 
 /////////////Data
 export const DATA_LOAD = 'DATA_LOAD';
@@ -58,12 +56,3 @@ export const SET_BOX_CONNECTED = 'SET_BOX_CONNECTED';
 export const SET_SERVER_CONNECTED = 'SET_SERVER_CONNECTED';
 
 export const RESET_STORE = 'RESET_STORE';
-
-
-
-
-
-
-
-
-

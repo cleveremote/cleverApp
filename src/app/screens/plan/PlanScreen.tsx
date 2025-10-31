@@ -1,170 +1,215 @@
-import { FlatList, Platform } from "react-native";
-import React, { useEffect, useRef, useState } from "react";
-import { Box, HStack, Text, View } from "native-base";
-import { SvgXml } from 'react-native-svg';
-import { connect } from "react-redux";
-import { FontAwesomeIcon } from "@fortawesome/react-native-fontawesome";
-import { faCloud, faSun } from "@fortawesome/free-solid-svg-icons";
-import SequenceStack from "../../components/cycle/sequenceStack";
-import { executeCycle } from "../../../module/process/infrasctructure/store/actions/cycle";
-
-
+import {FlatList, Platform} from 'react-native';
+import React, {useEffect, useRef, useState} from 'react';
+import {Box, HStack, Text, View} from 'native-base';
+import {SvgXml} from 'react-native-svg';
+import {connect} from 'react-redux';
+import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
+import {faCloud, faSun} from '@fortawesome/free-solid-svg-icons';
+import SequenceStack from '../../components/cycle/sequenceStack';
+import {executeCycle} from '../../../module/process/infrasctructure/store/actions/cycle';
 
 const hapticOptions = {
-   enableVibrateFallback: false,
-   ignoreAndroidSystemSettings: true,
+	enableVibrateFallback: false,
+	ignoreAndroidSystemSettings: true
 };
 
 const hapticTriggerType: string = Platform.select({
-   ios: 'notificationSuccess',
-   android: 'impactMedium'
+	ios: 'notificationSuccess',
+	android: 'impactMedium'
 }) as string;
 
 export function PlanScreen(props: any) {
-   const [processes, setProcesses] = React.useState<any[]>([]);
+	const [processes, setProcesses] = React.useState<any[]>([]);
 
+	const getAllSequencesInProcess = (values: any[]) => {
+		const inProcess = values.filter(
+			x => x.status === 'IN_PROCCESS' && x.type === 'SEQUENCE'
+		);
+		return inProcess.map(x => x.mapSectionId);
+	};
 
-   const getAllSequencesInProcess = (values: any[]) => {
-      let inProcess = values.filter(x => x.status === 'IN_PROCCESS' && x.type === 'SEQUENCE');
-      return inProcess.map(x => x.mapSectionId);
-   }
+	const getProcesses = (ProcessesStatus: any[], cycles: any[]): any[] => {
+		const inProcess = ProcessesStatus.filter(
+			x => x.status === 'IN_PROCCESS' && x.type === 'SEQUENCE'
+		);
+		const cyclesInProcess = ProcessesStatus.filter(
+			x => x.status === 'IN_PROCCESS' && x.type === 'CYCLE'
+		);
+		const res = [];
+		for (let index = 0; index < cyclesInProcess.length; index++) {
+			const cycleInProcess = cyclesInProcess[index];
+			const cycle = cycles.find(x => x.id === cycleInProcess.id);
+			const sequence = cycle.sequences.find(
+				(x: {id: string}) =>
+					inProcess.map(j => j.id).indexOf(x.id) !== -1
+			);
+			if (sequence) {
+				res.push({...sequence, name: cycle.name + '/' + sequence.name});
+			}
+		}
+		return res;
+	};
 
-   const getProcesses = (ProcessesStatus: any[], cycles: any[]): any[] => {
-      let inProcess = ProcessesStatus.filter(x => x.status === 'IN_PROCCESS' && x.type === 'SEQUENCE');
-      let cyclesInProcess = ProcessesStatus.filter(x => x.status === 'IN_PROCCESS' && x.type === 'CYCLE');
-      const res = [];
-      for (let index = 0; index < cyclesInProcess.length; index++) {
-         const cycleInProcess = cyclesInProcess[index];
-         const cycle = cycles.find((x) => x.id === cycleInProcess.id);
-         const sequence = cycle.sequences.find((x: { id: string; }) => inProcess.map(j => j.id).indexOf(x.id) !== -1);
-         if (sequence) {
-            res.push({ ...sequence, name: cycle.name + '/' + sequence.name });
-         }
-      }
-      return res;
-   }
+	const getKeys = (svg: string) => {
+		const matches = svg.match(/sel_./g);
+		const res = {} as any;
+		matches?.forEach(key => {
+			res[key] = false;
+		});
+		return res;
+	};
 
+	const mysKeys = useRef(getKeys(props.plan));
+	const [showText, setShowText] = useState(mysKeys.current);
 
-   const getKeys = (svg: string) => {
-      const matches = svg.match(/sel_./g);
-      const res = {} as any;
-      matches?.forEach(key => {
-         res[key] = false;
-      });
-      console.log(res)
-      return res;
-   }
+	useEffect(() => {
+		const inProcessSections = getAllSequencesInProcess(props.statusIn);
+		setProcesses(getProcesses(props.statusIn, props.cycles));
 
-   const mysKeys = useRef(getKeys(props.plan));
-   const [showText, setShowText] = useState(mysKeys.current);
+		let interval: NodeJS.Timeout | undefined;
+		if (inProcessSections.length) {
+			setShowText((showText: any) => {
+				const res = {...showText};
+				inProcessSections.forEach(data => {
+					res[data] = true;
+				});
 
+				return res;
+			});
+		}
 
-   useEffect(() => {
-      const inProcessSections = getAllSequencesInProcess(props.statusIn)
-      setProcesses(getProcesses(props.statusIn, props.cycles));
+		return () => {
+			setShowText((showText: any) => {
+				const res = {...showText};
+				Object.entries(mysKeys.current).forEach(data => {
+					res[data[0]] = false;
+				});
 
-      let interval: NodeJS.Timeout | undefined;
-      if (inProcessSections.length) {
+				return res;
+			});
+			if (interval) {
+				clearInterval(interval);
+			}
+		};
+	}, [props.statusIn]); ///on values change ...
 
-         setShowText((showText: any) => {
-            const res = { ...showText };
-            inProcessSections.forEach((data) => {
-               res[data] = true;
-            })
+	const Plan = (props1: any) => {
+		let dup = props.plan;
+		Object.entries(mysKeys.current).forEach(data => {
+			dup = dup.replace(
+				`${data[0]}_display`,
+				props1[data[0]] ? 'inline' : 'none'
+			);
+		});
 
-            return res;
-         });
-      }
+		return (
+			<>
+				<SvgXml xml={dup} width={'100%'} height={'100%'} />
+			</>
+		);
+	};
 
-      return () => {
+	const onSkip = (sequenceId: string) => {
+		const dto = {
+			id: sequenceId,
+			status: 'STOPPED',
+			action: 'OFF',
+			function: 'FUNCTION',
+			mode: 'MANUAL',
+			type: 'SKIP', // 'QUEUED'
+			duration: 0
+		};
+		props.executeCycle(dto);
+	};
 
-         setShowText((showText: any) => {
-            const res = { ...showText };
-            Object.entries(mysKeys.current).forEach((data) => {
-               res[data[0]] = false;
-            })
+	return (
+		<View marginBottom={60}>
+			<Box alignSelf="stretch" bg={'#84adea'} shadow={3} height="60">
+				<HStack
+					justifyContent={'center'}
+					shadow={6}
+					rounded="xl"
+					color={'#32404e'}
+					marginBottom={1}>
+					<Box>
+						<FontAwesomeIcon
+							icon={faSun}
+							size={55}
+							color={'#FDB813'}
+						/>
+						<FontAwesomeIcon
+							icon={faCloud}
+							size={55}
+							color={'white'}
+							style={{
+								position: 'absolute',
+								marginLeft: 20,
+								marginTop: 10
+							}}
+						/>
+					</Box>
 
-            return res;
-         });
-         if (interval) {
-            clearInterval(interval);
-         }
-      }
+					<Text
+						style={{
+							marginLeft: 20,
+							marginTop: 15,
+							fontWeight: 'bold'
+						}}>
+						temperature : 27°
+					</Text>
+					<Text
+						style={{
+							marginLeft: 20,
+							marginTop: 15,
+							fontWeight: 'bold'
+						}}>
+						Humidity : 60%
+					</Text>
+					<Text
+						style={{
+							marginLeft: 20,
+							marginTop: 15,
+							fontWeight: 'bold'
+						}}>
+						Wind : 6 km/h
+					</Text>
+					<Text
+						style={{
+							marginLeft: 20,
+							marginTop: 15,
+							fontWeight: 'bold'
+						}}>
+						precipitation : 0%
+					</Text>
+				</HStack>
+			</Box>
 
-   }, [props.statusIn]) ///on values change ...
-
-   const Plan = (props1: any) => {
-      let dup = props.plan;
-      Object.entries(mysKeys.current).forEach((data) => {
-         dup = dup.replace(`${data[0]}_display`, props1[data[0]] ? 'inline' : 'none');
-      });
-
-      return (
-         <>
-            <SvgXml xml={dup} width={'100%'} height={'100%'} />
-         </>
-      )
-   };
-
-   const onSkip = (sequenceId: string) => {
-      const dto = {
-         id: sequenceId,
-         status: 'STOPPED',
-         action: 'OFF',
-         function: 'FUNCTION',
-         mode: 'MANUAL',
-         type: 'SKIP',// 'QUEUED'
-         duration: 0
-      }
-      props.executeCycle(dto)
-   }
-
-   return (
-      <View marginBottom={60}>
-         <Box alignSelf="stretch" bg={"#84adea"} shadow={3} height='60'>
-            <HStack justifyContent={"center"} shadow={6} rounded="xl" color={'#32404e'} marginBottom={1}>
-               <Box>
-                  <FontAwesomeIcon icon={faSun} size={55} color={"#FDB813"} />
-                  <FontAwesomeIcon icon={faCloud} size={55} color={"white"} style={{ position: 'absolute', marginLeft: 20, marginTop: 10 }} />
-               </Box>
-
-               <Text style={{ marginLeft: 20, marginTop: 15, fontWeight: "bold" }}>temperature : 27°</Text>
-               <Text style={{ marginLeft: 20, marginTop: 15, fontWeight: "bold" }}>Humidity : 60%</Text>
-               <Text style={{ marginLeft: 20, marginTop: 15, fontWeight: "bold" }}>Wind : 6 km/h</Text>
-               <Text style={{ marginLeft: 20, marginTop: 15, fontWeight: "bold" }}>precipitation : 0%</Text>
-
-            </HStack>
-
-
-
-         </Box>
-
-         <FlatList style={{ maxHeight: 100 }}
-            data={processes}
-            keyExtractor={(item, index) => index.toString()}
-            renderItem={({ item }) => (
-               <SequenceStack
-                  navigation={props.navigation}
-                  cycleId={"props.cycleData.id"}
-                  item={item}
-                  isActive={false}
-                  onSkip={() => onSkip(item.id)}
-                  stackParent={true}
-               />
-            )}
-         />
-         <Box display={'block'} width={'100%'} height={'200'} marginTop={5}>
-            {Plan(showText)}
-         </Box>
-      </View>
-   )
+			<FlatList
+				style={{maxHeight: 100}}
+				data={processes}
+				keyExtractor={(item, index) => index.toString()}
+				renderItem={({item}) => (
+					<SequenceStack
+						navigation={props.navigation}
+						cycleId={'props.cycleData.id'}
+						item={item}
+						isActive={false}
+						onSkip={() => onSkip(item.id)}
+						stackParent={true}
+					/>
+				)}
+			/>
+			<Box display={'block'} width={'100%'} height={'200'} marginTop={5}>
+				{Plan(showText)}
+			</Box>
+		</View>
+	);
 }
 
 const mapStateToProps = (state: any) => ({
-   statusIn: state.root_cycle.status,
-   cycles: state.root_cycle.cycles,
-   plan: state.root_cycle.plan
+	statusIn: state.root_cycle.status,
+	cycles: state.root_cycle.cycles,
+	plan: state.root_cycle.plan
 });
 
-
-export default connect(mapStateToProps, { executeCycle })(PlanScreen);
+export default connect(mapStateToProps, {executeCycle})(PlanScreen);
