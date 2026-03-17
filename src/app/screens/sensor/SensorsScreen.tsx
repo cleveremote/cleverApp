@@ -3,7 +3,10 @@ import {VStack} from 'native-base';
 import {connect} from 'react-redux';
 import {ScrollView, RefreshControl} from 'react-native-gesture-handler';
 import Orientation, {OrientationType} from 'react-native-orientation-locker';
-import {brandLogo} from '../../components/common/navigationHeaders';
+import {
+	brandLogo,
+	navigationHeader
+} from '../../components/common/navigationHeaders';
 import {SensorStack} from '../../components/sensor/SensorStack';
 import {loadSensors} from '../../../module/process/infrasctructure/store/actions/sensor';
 export function Sensor(props: any) {
@@ -14,7 +17,20 @@ export function Sensor(props: any) {
 	const [refreshing, setRefreshing] = React.useState<boolean>(false);
 
 	useEffect(() => {
-		props.navigation.setOptions({headerLeft: brandLogo});
+		props.navigation.setOptions({
+			headerRight: () =>
+				navigationHeader(
+					() => {
+						props.navigation.navigate('Settings', {
+							screen: 'SensorSettingsMenu',
+							params: null
+						});
+					},
+					'times-circle',
+					true
+				),
+			headerLeft: brandLogo
+		});
 
 		const initial = Orientation.getInitialOrientation();
 		setOrientation(initial);

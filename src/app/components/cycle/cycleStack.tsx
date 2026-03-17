@@ -140,6 +140,7 @@ export function MenuCycle({
 	const menuItems = [
 		{
 			name: 'history',
+			label: 'Schedules',
 			action: () => {
 				ReactNativeHapticFeedback.trigger(
 					'impactMedium',
@@ -163,6 +164,7 @@ export function MenuCycle({
 		},
 		{
 			name: 'cog',
+			label: 'Settings',
 			action: () => {
 				ReactNativeHapticFeedback.trigger(
 					'impactMedium',
@@ -177,6 +179,7 @@ export function MenuCycle({
 		},
 		{
 			name: 'bullseye',
+			label: 'Triggers',
 			action: () => {
 				ReactNativeHapticFeedback.trigger(
 					'impactMedium',
@@ -191,6 +194,7 @@ export function MenuCycle({
 		},
 		{
 			name: 'tasks',
+			label: 'Events',
 			action: () => {
 				ReactNativeHapticFeedback.trigger(
 					'impactMedium',
@@ -264,7 +268,7 @@ export function MenuCycle({
 							}
 						}}>
 						{menuItems.map((item, index) => (
-							<HStack alignItems="center" space={2}>
+							<HStack alignItems="center" space={2} width={100}>
 								<IconButton
 									mt="4"
 									key={index}
@@ -282,8 +286,8 @@ export function MenuCycle({
 									onLongPress={item.onLongPress}
 								/>
 								<Text bold color="#32404e" fontSize={14} mt="4">
-									{item.name.charAt(0).toUpperCase() +
-										item.name.slice(1)}
+									{item.label.charAt(0).toUpperCase() +
+										item.label.slice(1)}
 								</Text>
 							</HStack>
 						))}

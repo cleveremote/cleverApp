@@ -21,6 +21,7 @@ import {connect} from 'react-redux';
 export function SensorValue(props: any) {
 	const fontColor = props.cycleData.style.fontColor;
 	const getValue = () => {
+		console.log('rops.cycleData', props.values);
 		return (props.values || []).find(
 			(x: any) =>
 				x.id === props.cycleData.id || x.deviceId === props.cycleData.id

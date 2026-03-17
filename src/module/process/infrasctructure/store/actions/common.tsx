@@ -8,7 +8,9 @@ import {
 	SENSORS_LOAD,
 	CYCLE_SAVE,
 	SENSOR_SAVE,
-	PLAN_LOAD
+	PLAN_LOAD,
+	MODBUS_CONNECTIONS_LOAD,
+	MODBUS_TASKS_LOAD
 } from './types';
 import {ThunkAction} from 'redux-thunk';
 import {AnyAction} from 'redux';
@@ -116,6 +118,11 @@ export const loadConfiguration =
 			'front/box/fetch/configuration',
 			{},
 			(response: any) => {
+				console.log(
+					'JSON.parse(response.config)',
+					JSON.parse(response.config)
+				);
+
 				dispatch({
 					type: CYCLES_LOAD,
 					payload: JSON.parse(response.config).cycles
@@ -124,6 +131,16 @@ export const loadConfiguration =
 				dispatch({
 					type: SENSORS_LOAD,
 					payload: JSON.parse(response.config).sensors
+				});
+
+				dispatch({
+					type: MODBUS_CONNECTIONS_LOAD,
+					payload: JSON.parse(response.config).modbusconnections
+				});
+
+				dispatch({
+					type: MODBUS_TASKS_LOAD,
+					payload: JSON.parse(response.config).modbusTasks
 				});
 
 				dispatch({

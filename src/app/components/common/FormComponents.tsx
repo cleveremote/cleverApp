@@ -208,10 +208,10 @@ export function SliderForm({
 								onChange(value);
 							}}
 							value={value}
-							minValue={0}
+							minValue={60}
 							maxValue={100}
 							accessibilityLabel={placeholder}
-							step={10}>
+							step={1}>
 							<Slider.Track>
 								<Slider.FilledTrack />
 							</Slider.Track>

@@ -20,11 +20,11 @@ export const updateSchedule =
 	};
 
 export const loadSchedules =
-	(scheduleId: any): ThunkAction<void, RootState, unknown, AnyAction> =>
+	(cycle: any): ThunkAction<void, RootState, unknown, AnyAction> =>
 	dispatch => {
 		dispatch({
 			type: SCHEDULES_LOAD,
-			payload: scheduleId
+			payload: cycle
 		});
 	};
 

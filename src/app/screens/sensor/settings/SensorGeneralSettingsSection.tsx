@@ -5,7 +5,8 @@ import {useForm} from 'react-hook-form';
 import {BoxFormStyle} from '../../../styles/components/common/boxForm';
 import {
 	InputForm,
-	SelectColor
+	SelectColor,
+	SelectForm
 } from '../../../components/common/FormComponents';
 import {connect} from 'react-redux';
 import {updateSensor} from '../../../../module/process/infrasctructure/store/actions/sensor';
@@ -50,6 +51,13 @@ export function SensorGeneralSettingsSection(props: any) {
 		});
 	}, [saveUnchangedData]);
 
+	const getModbusTasks = () => {
+		return props.modbusTasks.map((x: any) => ({
+			label: x.label,
+			value: x.id
+		}));
+	};
+	const isScheduled = sensorData?.type === 'SCHEDULED';
 	return (
 		<Box rounded="xl" style={BoxFormStyle.boxForm}>
 			<SelectColor
@@ -78,31 +86,54 @@ export function SensorGeneralSettingsSection(props: any) {
 				<InputForm
 					control={control}
 					errors={errors}
-					name="unit"
-					placeholder="Unit"
-					disabled={true}
-				/>
-				<InputForm
-					control={control}
-					errors={errors}
-					name="type"
-					placeholder="Type"
-					disabled={true}
-				/>
-				<InputForm
-					control={control}
-					errors={errors}
 					name="description"
 					placeholder="Description"
 					onChangeText={value => {
 						setSaveUnchangedData(true);
 					}}
 				/>
+				{isScheduled && (
+					<>
+						<SelectForm
+							lstData={getModbusTasks()}
+							control={control}
+							errors={errors}
+							name="taskId"
+							placeholder="tasks"
+							rules={{required: false}}
+							onValueChange={value => {
+								setSaveUnchangedData(true);
+							}}
+						/>
+						<InputForm
+							control={control}
+							errors={errors}
+							name="cronPattern"
+							placeholder="cron pattern"
+							onChangeText={value => {
+								setSaveUnchangedData(true);
+							}}
+						/>
+					</>
+				)}
+				{!isScheduled && (
+					<InputForm
+						control={control}
+						errors={errors}
+						name="unit"
+						placeholder="Unit"
+						disabled={true}
+					/>
+				)}
 			</ScrollView>
 		</Box>
 	);
 }
 
-export default connect(null, {
+const mapStateToProps = (state: any) => ({
+	modbusTasks: state.root_modbus_task.modbusTasks
+});
+
+export default connect(mapStateToProps, {
 	updateSensor
 })(SensorGeneralSettingsSection);

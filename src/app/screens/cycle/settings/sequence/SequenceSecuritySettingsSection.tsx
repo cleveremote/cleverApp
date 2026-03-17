@@ -1,9 +1,10 @@
 import React, {useEffect} from 'react';
-import {Box, ScrollView, Slider} from 'native-base';
+import {Box, HStack, ScrollView, Slider, Text} from 'native-base';
 import {navigationHeader} from '../../../../components/common/navigationHeaders';
 import {useForm} from 'react-hook-form';
 import {
 	InputForm,
+	SelectForm,
 	SliderForm
 } from '../../../../components/common/FormComponents';
 import {BoxFormStyle} from '../../../../styles/components/common/boxForm';
@@ -15,6 +16,7 @@ import {updateSequence} from '../../../../../module/process/infrasctructure/stor
 export function SequenceSecuritySettingsSection(props: any) {
 	const [saveUnchangedData, setSaveUnchangedData] = React.useState(false);
 	const defaultValues = {...props.route.params?.sequenceData};
+	const [vfd, setVfd] = React.useState(defaultValues.vfd);
 	const {
 		control,
 		handleSubmit,
@@ -44,7 +46,12 @@ export function SequenceSecuritySettingsSection(props: any) {
 				)
 		});
 	}, [saveUnchangedData]);
-
+	const getModbusTasks = () => {
+		return props.modbusTasks.map((x: any) => ({
+			label: x.label,
+			value: x.id
+		}));
+	};
 	return (
 		<ScrollView automaticallyAdjustKeyboardInsets={true}>
 			<Box rounded="xl" style={BoxFormStyle.boxForm}>
@@ -60,21 +67,35 @@ export function SequenceSecuritySettingsSection(props: any) {
 				/>
 			</Box>
 			<Box rounded="xl" style={BoxFormStyle.boxForm}>
+				<SelectForm
+					lstData={getModbusTasks()}
+					control={control}
+					errors={errors}
+					name="taskId"
+					placeholder="tasks"
+					rules={{required: false}}
+					onValueChange={value => {
+						setSaveUnchangedData(true);
+					}}
+				/>
 				<SliderForm
 					control={control}
 					errors={errors}
 					name="vfd"
-					placeholder="VFD*"
+					placeholder={`VFD speed* → ${vfd} %`}
 					rules={{required: true}}
 					onChangeText={value => {
 						setSaveUnchangedData(true);
+						setVfd(value);
 					}}
 				/>
 			</Box>
 		</ScrollView>
 	);
 }
-
-export default connect(null, {
+const mapStateToProps = (state: any) => ({
+	modbusTasks: state.root_modbus_task.modbusTasks
+});
+export default connect(mapStateToProps, {
 	updateSequence
 })(SequenceSecuritySettingsSection);

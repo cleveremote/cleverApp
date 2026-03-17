@@ -1,9 +1,29 @@
+import {Pattern} from 'react-native-svg';
+
 export const loadSensors = (sensors: any) => {
 	return sensors || [];
 };
 
 export const loadSensor = (sensors: any, sensorId: string) => {
-	return sensors.find((x: any) => x.id === sensorId);
+	if (sensors && sensorId) {
+		return sensors.find((x: any) => x.id === sensorId);
+	} else {
+		return {
+			id: `${Math.random()}`,
+			name: 'new scheduled sensor',
+			description: 'new scheduled sensor',
+			taskId: '',
+			Pattern: '',
+			style: {
+				bgColor: 'cyan.200',
+				fontColor: 'blue.400',
+				iconColor: {base: 'blue', icon: '#60a5fa'}
+			},
+			type: 'SCHEDULED',
+			unit: 'V',
+			isModified: true
+		};
+	}
 };
 
 export const updateSensor = (prevSensors: any, sensor: any) => {
