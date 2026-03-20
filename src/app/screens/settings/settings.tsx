@@ -1,4 +1,5 @@
-import {IconButton, NativeBaseProvider, VStack, View} from 'native-base';
+import {IconButton, VStack, View} from 'native-base';
+import {GluestackUIProvider} from '@gluestack-ui/themed-native-base';
 import {Button, Platform, ScrollView, Text} from 'react-native';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import Icon from 'react-native-vector-icons/FontAwesome5';
@@ -60,7 +61,7 @@ export function SettingsScreen(props: any) {
 	};
 
 	return (
-		<NativeBaseProvider>
+		<GluestackUIProvider>
 			<View
 				style={{
 					flex: 1,
@@ -102,6 +103,6 @@ export function SettingsScreen(props: any) {
 					</ScrollView>
 				) : null}
 			</View>
-		</NativeBaseProvider>
+		</GluestackUIProvider>
 	);
 }

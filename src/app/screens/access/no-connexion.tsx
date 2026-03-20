@@ -3,11 +3,11 @@ import React, {useCallback} from 'react';
 import {
 	Box,
 	IconButton,
-	NativeBaseProvider,
 	ScrollView,
 	VStack,
 	View
 } from 'native-base';
+import {GluestackUIProvider} from '@gluestack-ui/themed-native-base';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import {
@@ -42,7 +42,7 @@ export function NoConnectionScreen(props: any) {
 	);
 
 	return (
-		<NativeBaseProvider>
+		<GluestackUIProvider>
 			<View alignItems="center" marginTop={35}>
 				<Logo width={'70'} height={'70'} />
 				<Text
@@ -114,6 +114,6 @@ export function NoConnectionScreen(props: any) {
 					</View>
 				</ScrollView>
 			</View>
-		</NativeBaseProvider>
+		</GluestackUIProvider>
 	);
 }

@@ -8,11 +8,11 @@ import {
 	HStack,
 	IconButton,
 	Input,
-	NativeBaseProvider,
 	Switch,
 	VStack,
 	View
 } from 'native-base';
+import {GluestackUIProvider} from '@gluestack-ui/themed-native-base';
 import Spinner from 'react-native-loading-spinner-overlay';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import {getSigninData} from '../../components/common/RememberMeManager';
@@ -90,7 +90,7 @@ export function SignIn(props: any) {
 	};
 
 	return (
-		<NativeBaseProvider>
+		<GluestackUIProvider>
 			<View style={{flex: 1, marginTop: 25}}>
 				<VStack space={4} alignItems="center">
 					<Spinner
@@ -285,7 +285,7 @@ export function SignIn(props: any) {
 					}}
 				/>
 			</VStack> */}
-		</NativeBaseProvider>
+		</GluestackUIProvider>
 	);
 }
 const mapStateToProps = function (state: any) {

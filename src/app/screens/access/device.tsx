@@ -2,11 +2,11 @@ import {Text} from 'react-native';
 import React, {useCallback, useEffect} from 'react';
 import {
 	IconButton,
-	NativeBaseProvider,
 	ScrollView,
 	VStack,
 	View
 } from 'native-base';
+import {GluestackUIProvider} from '@gluestack-ui/themed-native-base';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
@@ -44,7 +44,7 @@ export function DeviceScreen(props: any) {
 	);
 
 	return (
-		<NativeBaseProvider>
+		<GluestackUIProvider>
 			<View
 				style={{
 					flex: 1,
@@ -166,6 +166,6 @@ export function DeviceScreen(props: any) {
 					Scan network
 				</Text>
 			</VStack>
-		</NativeBaseProvider>
+		</GluestackUIProvider>
 	);
 }

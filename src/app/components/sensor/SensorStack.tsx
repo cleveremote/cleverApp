@@ -1,14 +1,11 @@
-import React, {useState} from 'react';
-import {
-	Flex,
-	IconButton,
-	Box,
-	View,
-	Heading,
-	HStack,
-	Stagger,
-	useDisclose
-} from 'native-base';
+import React, {useEffect, useState} from 'react';
+import Animated, {
+	useAnimatedStyle,
+	useSharedValue,
+	withSpring,
+	withTiming
+} from 'react-native-reanimated';
+import {Flex, IconButton, Box, View, Heading, HStack} from 'native-base';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import {OrientationType} from 'react-native-orientation-locker';
@@ -99,11 +96,38 @@ export function MenuSensor({
 	closeSibillings: Function;
 	current: string | undefined;
 }>) {
-	const {isOpen, onToggle} = useDisclose();
+	const [isOpen, setIsOpen] = useState(false);
+	const onToggle = () => setIsOpen(prev => !prev);
+
 	const iconColor = cycleData.style.iconColor.icon;
 	if (current !== cycleData.name && isOpen) {
 		onToggle();
 	}
+
+	const opacity = useSharedValue(0);
+	const translateX = useSharedValue(-30);
+	const scale = useSharedValue(0);
+
+	useEffect(() => {
+		if (isOpen) {
+			opacity.value = withSpring(1, {mass: 0.8});
+			translateX.value = withSpring(0, {mass: 0.8});
+			scale.value = withSpring(1, {mass: 0.8});
+		} else {
+			opacity.value = withTiming(0, {duration: 0});
+			translateX.value = withTiming(-30, {duration: 0});
+			scale.value = withTiming(0.5, {duration: 0});
+		}
+	}, [isOpen]);
+
+	const animStyle = useAnimatedStyle(() => ({
+		opacity: opacity.value,
+		transform: [
+			{translateX: translateX.value},
+			{translateY: -31},
+			{scale: scale.value}
+		]
+	}));
 
 	return (
 		<Box mr={isOpen ? '90' : '0'} mt={0}>
@@ -130,35 +154,7 @@ export function MenuSensor({
 			)}
 			<HStack alignItems="center">
 				<Box alignItems="stretch" width={isOpen ? '90' : '0'}>
-					<Stagger
-						visible={isOpen}
-						initial={{
-							opacity: 0,
-							scale: 0,
-							translateX: -30,
-							translateY: -31
-						}}
-						animate={{
-							translateX: 0,
-							translateY: -31,
-							scale: 1,
-							opacity: 1,
-							transition: {
-								type: 'spring',
-								mass: 0.8,
-								stagger: {offset: 50, reverse: true}
-							}
-						}}
-						exit={{
-							translateX: -30,
-							translateY: -31,
-							scale: 0.5,
-							opacity: 0,
-							transition: {
-								duration: 0,
-								stagger: {offset: 30, reverse: true}
-							}
-						}}>
+					<Animated.View style={animStyle}>
 						<HStack
 							space={3}
 							alignItems="center"
@@ -187,7 +183,7 @@ export function MenuSensor({
 								}}
 							/>
 						</HStack>
-					</Stagger>
+					</Animated.View>
 				</Box>
 			</HStack>
 		</Box>

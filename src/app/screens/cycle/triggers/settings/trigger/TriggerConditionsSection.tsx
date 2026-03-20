@@ -1,5 +1,6 @@
 import {useEffect} from 'react';
-import {NativeBaseProvider, VStack, Box, IconButton, Text} from 'native-base';
+import {VStack, Box, IconButton, Text} from 'native-base';
+import {GluestackUIProvider} from '@gluestack-ui/themed-native-base';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import {connect} from 'react-redux';
@@ -32,7 +33,7 @@ function TriggerConditionsSection(props: any) {
 	}, [props.conditions]);
 
 	return (
-		<NativeBaseProvider>
+		<GluestackUIProvider>
 			<VStack space={2} my={1} alignSelf="stretch" shadow={3} margin={5}>
 				<Box
 					key={111}
@@ -104,7 +105,7 @@ function TriggerConditionsSection(props: any) {
 					</VStack>
 				</Box>
 			</VStack>
-		</NativeBaseProvider>
+		</GluestackUIProvider>
 	);
 }
 

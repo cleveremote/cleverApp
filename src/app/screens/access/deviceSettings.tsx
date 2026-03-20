@@ -8,11 +8,11 @@ import {
 	CheckIcon,
 	IconButton,
 	Input,
-	NativeBaseProvider,
 	Select,
 	VStack,
 	View
 } from 'native-base';
+import {GluestackUIProvider} from '@gluestack-ui/themed-native-base';
 import Spinner from 'react-native-loading-spinner-overlay';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import {useNavigation} from '@react-navigation/native';
@@ -120,7 +120,7 @@ export function DeviceSettings(props: any) {
 	};
 
 	return (
-		<NativeBaseProvider>
+		<GluestackUIProvider>
 			<View style={{flex: 1, marginTop: 50}}>
 				<View alignItems="center">
 					<View
@@ -235,7 +235,7 @@ export function DeviceSettings(props: any) {
 					</Box>
 				</VStack>
 			</View>
-		</NativeBaseProvider>
+		</GluestackUIProvider>
 	);
 }
 

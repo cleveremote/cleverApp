@@ -4,7 +4,6 @@ import {
 	Flex,
 	Heading,
 	IconButton,
-	NativeBaseProvider,
 	ScrollView,
 	VStack,
 	View

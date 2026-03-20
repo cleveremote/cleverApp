@@ -6,8 +6,6 @@ import {
 	View,
 	Heading,
 	HStack,
-	Stagger,
-	useDisclose,
 	Text
 } from 'native-base';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';

@@ -1,5 +1,6 @@
 import React, {useEffect, useRef} from 'react';
-import {NativeBaseProvider, VStack, Box} from 'native-base';
+import {VStack, Box} from 'native-base';
+import {GluestackUIProvider} from '@gluestack-ui/themed-native-base';
 import {connect} from 'react-redux';
 import {navigationHeader} from '../../../../components/common/navigationHeaders';
 import {
@@ -94,7 +95,7 @@ export function CycleSett(props: any) {
 	}, [props.cycle]);
 
 	return (
-		<NativeBaseProvider>
+		<GluestackUIProvider>
 			<VStack alignSelf="stretch" shadow={3}>
 				<Box alignSelf="stretch" bg="white" mt={2} mx={5} rounded="xl">
 					<MenuAccordion
@@ -147,7 +148,7 @@ export function CycleSett(props: any) {
 					/>
 				</Box>
 			</VStack>
-		</NativeBaseProvider>
+		</GluestackUIProvider>
 	);
 }
 

@@ -1,5 +1,5 @@
 import React from 'react';
-import {Box, Flex, IconButton, Progress, Text} from 'native-base';
+import {Box, Flex, IconButton, Text} from 'native-base';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {IconDefinition} from '@fortawesome/free-solid-svg-icons';

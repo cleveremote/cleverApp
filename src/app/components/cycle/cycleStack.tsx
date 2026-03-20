@@ -1,17 +1,6 @@
 import React, {useEffect, useState} from 'react';
-import {
-	Flex,
-	Switch,
-	IconButton,
-	Box,
-	View,
-	Heading,
-	Progress,
-	HStack,
-	Stagger,
-	useDisclose,
-	Text
-} from 'native-base';
+import {Flex, IconButton, Box, View, Heading, HStack, Text} from 'native-base';
+import Animated, {FadeInDown, FadeOutUp} from 'react-native-reanimated';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import {OrientationType} from 'react-native-orientation-locker';
@@ -123,7 +112,8 @@ export function MenuCycle({
 	onExecute: (sequenceId: string, ms: number) => void;
 	status: any;
 }>) {
-	const {isOpen, onToggle} = useDisclose();
+	const [isOpen, setIsOpen] = useState(false);
+	const onToggle = () => setIsOpen(prev => !prev);
 	const [isOpened, setIsOpened] = useState(false);
 	const iconColor = cycleData.style.iconColor.icon;
 
@@ -140,7 +130,7 @@ export function MenuCycle({
 	const menuItems = [
 		{
 			name: 'history',
-			label: 'Schedules',
+			label: 'Schedules1',
 			action: () => {
 				ReactNativeHapticFeedback.trigger(
 					'impactMedium',
@@ -238,40 +228,19 @@ export function MenuCycle({
 			{/* Menu animé */}
 			{isOpen && (
 				<Box>
-					<Stagger
-						visible={isOpen}
-						initial={{
-							opacity: 0,
-							translateY: -60 // effet de chute
-						}}
-						animate={{
-							translateY: 0,
-							opacity: 1,
-							transition: {
-								type: 'spring',
-								damping: 10,
-								mass: 0.8,
-								stagger: {
-									offset: 25 // délai entre les icônes
-								}
-							}
-						}}
-						exit={{
-							translateY: -60,
-							opacity: 0,
-							transition: {
-								duration: 120,
-								stagger: {
-									offset: 60,
-									reverse: true // ferme du bas vers le haut
-								}
-							}
-						}}>
-						{menuItems.map((item, index) => (
+					{menuItems.map((item, index) => (
+						<Animated.View
+							key={index}
+							entering={FadeInDown.delay(index * 25)
+								.springify()
+								.damping(10)
+								.mass(0.8)}
+							exiting={FadeOutUp.delay(
+								(menuItems.length - 1 - index) * 60
+							).duration(120)}>
 							<HStack alignItems="center" space={2} width={100}>
 								<IconButton
 									mt="4"
-									key={index}
 									_pressed={{_icon: {size: 30}}}
 									variant="unstyled"
 									size={30}
@@ -290,8 +259,8 @@ export function MenuCycle({
 										item.label.slice(1)}
 								</Text>
 							</HStack>
-						))}
-					</Stagger>
+						</Animated.View>
+					))}
 				</Box>
 			)}
 

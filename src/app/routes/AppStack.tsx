@@ -25,7 +25,7 @@ import {
 	loadConfiguration,
 	loadPlan
 } from '../../module/process/infrasctructure/store/actions/common';
-import {NativeBaseProvider} from 'native-base';
+import {GluestackUIProvider} from '@gluestack-ui/themed-native-base';
 import {setIsConnected} from '../../module/process/infrasctructure/store/actions/state';
 import {NoConnectionScreen} from '../screens/access/no-connexion';
 import {loadValues} from '../../module/process/infrasctructure/store/actions/cycle';
@@ -129,7 +129,7 @@ export function AppStack(props: any) {
 
 	const Tab = createBottomTabNavigator();
 	return (
-		<NativeBaseProvider>
+		<GluestackUIProvider>
 			{props.isServerConnected && props.isBoxConnected ? (
 				<Tab.Navigator
 					screenOptions={({route}) => ({
@@ -160,7 +160,7 @@ export function AppStack(props: any) {
 			) : (
 				noConnectionScreen()
 			)}
-		</NativeBaseProvider>
+		</GluestackUIProvider>
 	);
 }
 
