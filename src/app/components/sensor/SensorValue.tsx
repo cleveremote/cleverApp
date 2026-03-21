@@ -1,19 +1,5 @@
-import React, {useState} from 'react';
-import {
-	Flex,
-	IconButton,
-	Box,
-	View,
-	Heading,
-	HStack,
-	Text
-} from 'native-base';
-import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
-import Icon from 'react-native-vector-icons/FontAwesome5';
-import {OrientationType} from 'react-native-orientation-locker';
-import {hapticOptions, navigationCycleType} from '../../data/cycleTypes';
-import {ModalOverrideDuration} from '../common/modalOverrideDuration';
-import {red} from 'react-native-reanimated/lib/typescript/reanimated2/Colors';
+import React from 'react';
+import {Text, View} from 'react-native';
 import {connect} from 'react-redux';
 
 export function SensorValue(props: any) {
@@ -26,20 +12,29 @@ export function SensorValue(props: any) {
 		);
 	};
 	return (
-		<Box
-			style={{justifyContent: 'center', alignItems: 'flex-end'}}
-			rounded="xl"
-			shadow={6}
-			height="40px"
-			width={'60px'}>
+		<View
+			style={{
+				justifyContent: 'center',
+				alignItems: 'flex-end',
+				borderRadius: 12,
+				height: 40,
+				width: 60,
+				elevation: 6,
+				shadowColor: '#000',
+				shadowOffset: {width: 0, height: 3},
+				shadowOpacity: 0.27,
+				shadowRadius: 4.65
+			}}>
 			<Text
-				style={{fontWeight: 'bold'}}
-				alignSelf={'center'}
-				color={fontColor}>
+				style={{
+					fontWeight: 'bold',
+					alignSelf: 'center',
+					color: fontColor
+				}}>
 				{getValue()?.value || '_  '}
 				{props.cycleData.unit}
 			</Text>
-		</Box>
+		</View>
 	);
 }
 

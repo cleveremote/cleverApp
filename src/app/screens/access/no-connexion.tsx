@@ -1,13 +1,5 @@
-import {Platform, Text} from 'react-native';
+import {Platform, ScrollView, Text, TouchableOpacity, View} from 'react-native';
 import React, {useCallback} from 'react';
-import {
-	Box,
-	IconButton,
-	ScrollView,
-	VStack,
-	View
-} from 'native-base';
-import {GluestackUIProvider} from '@gluestack-ui/themed-native-base';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import {
@@ -42,8 +34,8 @@ export function NoConnectionScreen(props: any) {
 	);
 
 	return (
-		<GluestackUIProvider>
-			<View alignItems="center" marginTop={35}>
+		<View>
+			<View style={{alignItems: 'center', marginTop: 35}}>
 				<Logo width={'70'} height={'70'} />
 				<Text
 					style={{
@@ -79,32 +71,27 @@ export function NoConnectionScreen(props: any) {
 								<Text style={{color: '#32404e', fontSize: 15}}>
 									please try later...
 								</Text>
-								<VStack
+								<View
 									style={{
 										justifyContent: 'center',
 										alignItems: 'center'
 									}}>
-									<IconButton
-										_pressed={{_icon: {size: 35}}}
-										variant="unstyled"
-										marginTop={5}
-										size={30}
-										icon={
-											<Icon
-												name={'redo-alt'}
-												size={30}
-												color="#32404e"
-											/>
-										}
+									<TouchableOpacity
+										style={{marginTop: 20}}
 										onPress={async () => {
 											ReactNativeHapticFeedback.trigger(
 												'impactMedium',
 												hapticOptions
 											);
 											await authenticationService.signout();
-										}}
-									/>
-								</VStack>
+										}}>
+										<Icon
+											name={'redo-alt'}
+											size={30}
+											color="#32404e"
+										/>
+									</TouchableOpacity>
+								</View>
 							</>
 						) : (
 							<Text style={{color: '#32404e', fontSize: 20}}>
@@ -114,6 +101,6 @@ export function NoConnectionScreen(props: any) {
 					</View>
 				</ScrollView>
 			</View>
-		</GluestackUIProvider>
+		</View>
 	);
 }

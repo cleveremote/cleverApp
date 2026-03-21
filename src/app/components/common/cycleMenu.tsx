@@ -1,7 +1,7 @@
-import {Box, Flex, Heading, Pressable, VStack, View} from 'native-base';
+import React, {useState} from 'react';
+import {Pressable, Text, View} from 'react-native';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import Icon from 'react-native-vector-icons/FontAwesome5';
-import React, {useState} from 'react';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {IconDefinition} from '@fortawesome/fontawesome-svg-core';
 import {ModalConfirmation} from '../modalDelete';
@@ -28,79 +28,75 @@ export function MenuAccordion({
 	const [isExpanded, setExpended] = useState(false);
 
 	return (
-		<Box>
+		<View>
 			<Pressable
-				onPress={onPress}
-				h="50px"
-				bg="white"
-				rounded="xl"
-				key={name}>
-				{({isHovered, isFocused, isPressed}) => {
-					return (
+				onPress={() => onPress()}
+				style={{height: 50, backgroundColor: 'white', borderRadius: 12}}>
+				{({pressed}) => (
+					<View
+						style={{
+							flex: 1,
+							justifyContent: 'center',
+							alignItems: 'center',
+							flexDirection: 'row',
+							transform: [{scale: pressed ? 0.99 : 1}],
+							borderBottomColor:
+								!isLast || isExpanded ? color : 'white',
+							borderBottomWidth: !isLast || isExpanded ? 1 : 0
+						}}>
+						<View
+							style={{
+								marginLeft: 10,
+								justifyContent: 'center',
+								alignItems: 'center',
+								flexDirection: 'row'
+							}}>
+							<View
+								style={{
+									width: 35,
+									height: 35,
+									borderRadius: 0.5 * 45,
+									justifyContent: 'center',
+									alignItems: 'center',
+									borderColor: color,
+									borderWidth: 2.5
+								}}>
+								<FontAwesomeIcon
+									icon={icon}
+									size={20}
+									color={color}
+								/>
+							</View>
+							<Text
+								style={{
+									fontWeight: 'bold',
+									color: color,
+									fontSize: 15,
+									marginLeft: 8
+								}}>
+								{' '}
+								{name}{' '}
+							</Text>
+						</View>
+
 						<View
 							style={{
 								flex: 1,
-								justifyContent: 'center',
-								alignItems: 'center',
-								flexDirection: 'row',
-								transform: [
-									{
-										scale: isPressed ? 0.99 : 1
-									}
-								]
-							}}
-							borderBottomColor={
-								!isLast || isExpanded ? color : 'white'
-							}
-							borderBottomWidth={!isLast || isExpanded ? 1 : 0}>
-							<VStack
-								style={{
-									marginLeft: 10,
-									justifyContent: 'center',
-									alignItems: 'center',
-									flexDirection: 'row'
-								}}
-								flexDirection={'row'}>
-								<View
-									style={{
-										width: 35,
-										height: 35,
-										borderRadius: 0.5 * 45,
-										justifyContent: 'center',
-										alignItems: 'center',
-										borderColor: color,
-										borderWidth: 2.5
-									}}>
-									<FontAwesomeIcon
-										icon={icon}
-										size={20}
-										color={color}
-									/>
-								</View>
-								<Heading color={color} fontSize={15} ml={2}>
-									{' '}
-									{name}{' '}
-								</Heading>
-							</VStack>
-
-							<Box
-								style={{flex: 1, alignItems: 'flex-end'}}
-								mr={5}>
-								<Icon
-									name={
-										isExpanded
-											? 'angle-down'
-											: 'angle-right'
-									}
-									size={20}
-									color={'grey'}
-								/>
-							</Box>
+								alignItems: 'flex-end',
+								marginRight: 20
+							}}>
+							<Icon
+								name={
+									isExpanded ? 'angle-down' : 'angle-right'
+								}
+								size={20}
+								color={'grey'}
+							/>
 						</View>
-					);
-				}}
+					</View>
+				)}
 			</Pressable>
-		</Box>
+		</View>
 	);
 }
 
@@ -125,69 +121,69 @@ export function DeleteItemMenu({
 		setOpened(!isOpened);
 	};
 	return (
-		<Box>
+		<View>
 			<Pressable
 				onLongPress={onPress}
-				h="55"
-				bg="white"
-				rounded="xl"
-				key={name}>
-				{({isHovered, isFocused, isPressed}) => {
-					return (
+				style={{height: 55, backgroundColor: 'white', borderRadius: 12}}>
+				{({pressed}) => (
+					<View
+						style={{
+							flex: 1,
+							justifyContent: 'center',
+							alignItems: 'center',
+							flexDirection: 'row',
+							transform: [{scale: pressed ? 0.99 : 1}],
+							borderBottomColor: !isLast ? color : 'white',
+							borderBottomWidth: !isLast ? 1 : 0
+						}}>
 						<View
 							style={{
 								flex: 1,
 								justifyContent: 'center',
 								alignItems: 'center',
 								flexDirection: 'row',
-								transform: [{scale: isPressed ? 0.99 : 1}]
-							}}
-							borderBottomColor={!isLast ? color : 'white'}
-							borderBottomWidth={!isLast ? 1 : 0}>
-							<VStack
+								marginLeft: 10
+							}}>
+							<View
 								style={{
-									flex: 1,
+									width: 35,
+									height: 35,
+									borderRadius: 0.5 * 45,
 									justifyContent: 'center',
 									alignItems: 'center',
-									flexDirection: 'row',
-									marginLeft: 10
-								}}
-								flexDirection={'row'}>
-								<View
-									style={{
-										width: 35,
-										height: 35,
-										borderRadius: 0.5 * 45,
-										justifyContent: 'center',
-										alignItems: 'center',
-										borderColor: color,
-										borderWidth: 2.5
-									}}>
-									<FontAwesomeIcon
-										icon={icon}
-										size={20}
-										color={color}
-									/>
-								</View>
-								<Heading
-									flex={1}
-									color={'red.600'}
-									fontSize={15}
-									ml={2}>
-									{' '}
-									{name}{' '}
-								</Heading>
-								<Heading
-									flex={2}
-									color={'red.600'}
-									fontSize={10}>
-									{' '}
-									(long press to remove){' '}
-								</Heading>
-							</VStack>
+									borderColor: color,
+									borderWidth: 2.5
+								}}>
+								<FontAwesomeIcon
+									icon={icon}
+									size={20}
+									color={color}
+								/>
+							</View>
+							<Text
+								style={{
+									flex: 1,
+									fontWeight: 'bold',
+									color: '#E53E3E',
+									fontSize: 15,
+									marginLeft: 8
+								}}>
+								{' '}
+								{name}{' '}
+							</Text>
+							<Text
+								style={{
+									flex: 2,
+									fontWeight: 'bold',
+									color: '#E53E3E',
+									fontSize: 10
+								}}>
+								{' '}
+								(long press to remove){' '}
+							</Text>
 						</View>
-					);
-				}}
+					</View>
+				)}
 			</Pressable>
 			<ModalConfirmation
 				isOpen={isOpened}
@@ -200,6 +196,6 @@ export function DeleteItemMenu({
 					onPress();
 				}}
 			/>
-		</Box>
+		</View>
 	);
 }

@@ -1,5 +1,5 @@
 import React, {useEffect} from 'react';
-import {Box, VStack} from 'native-base';
+import {View} from 'react-native';
 import {navigationHeader} from '../../../../components/common/navigationHeaders';
 import {DragableForm} from '../../../../components/common/FormComponents';
 import {useForm} from 'react-hook-form';
@@ -44,8 +44,8 @@ export function PrioritySettingsSection(props: any) {
 	}, [saveUnchangedData]);
 
 	return (
-		<VStack space={2} my={1} alignSelf="stretch" shadow={3} margin={5}>
-			<Box alignSelf="stretch" bg="white" rounded="xl" padding={2}>
+		<View style={{marginVertical: 4, alignSelf: 'stretch', margin: 20, elevation: 3, shadowColor: '#000', shadowOffset: {width: 0, height: 1}, shadowOpacity: 0.22, shadowRadius: 2.22}}>
+			<View style={{alignSelf: 'stretch', backgroundColor: 'white', borderRadius: 12, padding: 8}}>
 				<DragableForm
 					control={control}
 					errors={errors}
@@ -55,8 +55,8 @@ export function PrioritySettingsSection(props: any) {
 						setSaveUnchangedData(true);
 					}}
 				/>
-			</Box>
-		</VStack>
+			</View>
+		</View>
 	);
 }
 

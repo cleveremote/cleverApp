@@ -1,5 +1,5 @@
-import {useEffect, useState} from 'react';
-import {Box, HStack, ScrollView} from 'native-base';
+import React, {useEffect, useState} from 'react';
+import {ScrollView, View} from 'react-native';
 import {navigationHeader} from '../../../../../components/common/navigationHeaders';
 import {
 	InputForm,
@@ -45,7 +45,7 @@ export function ScheduleGeneralSettingsSection(props: any) {
 	}, [saveUnchangedData]);
 	return (
 		<ScrollView automaticallyAdjustKeyboardInsets={true}>
-			<Box rounded="xl" style={BoxFormStyle.boxForm}>
+			<View style={BoxFormStyle.boxForm}>
 				<InputForm
 					control={control}
 					errors={errors}
@@ -65,7 +65,7 @@ export function ScheduleGeneralSettingsSection(props: any) {
 						setSaveUnchangedData(true);
 					}}
 				/>
-				<HStack space={3}>
+				<View style={{flexDirection: 'row', gap: 12}}>
 					<SwitchForm
 						control={control}
 						errors={errors}
@@ -86,8 +86,8 @@ export function ScheduleGeneralSettingsSection(props: any) {
 							setSaveUnchangedData(true);
 						}}
 					/>
-				</HStack>
-			</Box>
+				</View>
+			</View>
 		</ScrollView>
 	);
 }

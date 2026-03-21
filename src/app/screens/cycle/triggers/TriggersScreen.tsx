@@ -1,6 +1,5 @@
+import {TouchableOpacity, View, Text} from 'react-native';
 import React, {useEffect} from 'react';
-import {VStack, Box, IconButton, Text} from 'native-base';
-import {GluestackUIProvider} from '@gluestack-ui/themed-native-base';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import {connect} from 'react-redux';
@@ -35,14 +34,8 @@ export function TriggersScreen(props: any) {
 	}, [props.triggers]);
 
 	return (
-		<GluestackUIProvider>
-			<VStack space={2} my={1} alignSelf="stretch" shadow={3} margin={5}>
-				<Box
-					key={111}
-					alignSelf="stretch"
-					bg="white"
-					rounded="xl"
-					padding={2}>
+			<View style={{gap: 8, marginVertical: 4, alignSelf: 'stretch', margin: 20, elevation: 3, shadowColor: '#000', shadowOffset: {width: 0, height: 1}, shadowOpacity: 0.22, shadowRadius: 2.22}}>
+				<View style={{alignSelf: 'stretch', backgroundColor: 'white', borderRadius: 12, padding: 8}}>
 					{props.triggers.map((element: any) =>
 						element.id && element.id.indexOf('deleted_') > -1
 							? null
@@ -61,24 +54,9 @@ export function TriggersScreen(props: any) {
 									{name: faCog, color: '#32404e'}
 							  )
 					)}
-					<VStack
-						style={{
-							justifyContent: 'center',
-							alignItems: 'center'
-						}}>
-						<IconButton
-							_pressed={{_icon: {size: 35}}}
-							variant="unstyled"
-							marginTop={5}
-							style={{transform: [{rotate: '135deg'}]}}
-							size={30}
-							icon={
-								<Icon
-									name={'times-circle'}
-									size={30}
-									color="#32404e"
-								/>
-							}
+					<View style={{justifyContent: 'center', alignItems: 'center'}}>
+						<TouchableOpacity
+							style={{marginTop: 20, transform: [{rotate: '135deg'}]}}
 							onPress={async () => {
 								ReactNativeHapticFeedback.trigger(
 									'impactMedium',
@@ -93,15 +71,15 @@ export function TriggersScreen(props: any) {
 										}
 									}
 								);
-							}}
-						/>
+							}}>
+							<Icon name='times-circle' size={30} color="#32404e" />
+						</TouchableOpacity>
 						<Text style={{color: '#32404e', fontSize: 15}}>
 							Add new trigger ...
 						</Text>
-					</VStack>
-				</Box>
-			</VStack>
-		</GluestackUIProvider>
+					</View>
+				</View>
+			</View>
 	);
 }
 

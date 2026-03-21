@@ -1,5 +1,5 @@
 import React, {useEffect} from 'react';
-import {Box, ScrollView} from 'native-base';
+import {ScrollView, View} from 'react-native';
 import {navigationHeader} from '../../../../components/common/navigationHeaders';
 import {
 	InputForm,
@@ -59,14 +59,14 @@ export function CycleGeneralSettingsSection(props: any) {
 	}, [saveUnchangedData]);
 
 	return (
-		<Box rounded="xl" style={BoxFormStyle.boxForm}>
+		<View style={BoxFormStyle.boxForm}>
 			<SelectColor
 				control={control}
 				errors={errors}
 				name="style"
 				placeholder="Cycle theme*"
 				rules={{required: true}}
-				style={{fontColor: cycleData?.style?.fontColor}}
+				style={{...cycleData?.style}}
 				onChangeText={value => {
 					setCycleData({...cycleData, style: JSON.parse(value)});
 					setSaveUnchangedData(true);
@@ -93,7 +93,7 @@ export function CycleGeneralSettingsSection(props: any) {
 					}}
 				/>
 			</ScrollView>
-		</Box>
+		</View>
 	);
 }
 

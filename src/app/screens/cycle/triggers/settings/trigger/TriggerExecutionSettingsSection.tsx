@@ -1,5 +1,5 @@
-import {useEffect, useState} from 'react';
-import {HStack, Switch, Text, ScrollView, Box} from 'native-base';
+import React, {useEffect, useState} from 'react';
+import {Platform, ScrollView, Switch, Text, View} from 'react-native';
 import {navigationHeader} from '../../../../../components/common/navigationHeaders';
 import {BoxFormStyle} from '../../../../../styles/components/common/boxForm';
 import {
@@ -11,7 +11,6 @@ import {hapticOptions} from '../../../../../data/cycleTypes';
 import {useForm} from 'react-hook-form';
 import {updateTrigger} from '../../../../../../module/process/infrasctructure/store/actions/trigger';
 import {connect} from 'react-redux';
-import {Platform} from 'react-native';
 
 function TriggerExecutionSettingsSection(props: any) {
 	const defValues = {...props.route.params?.triggerData};
@@ -95,7 +94,7 @@ function TriggerExecutionSettingsSection(props: any) {
 
 	return (
 		<ScrollView automaticallyAdjustKeyboardInsets={true}>
-			<Box rounded="xl" style={BoxFormStyle.boxForm}>
+			<View style={BoxFormStyle.boxForm}>
 				<SelectForm
 					lstData={[
 						{label: 'ON', value: 'ON'},
@@ -122,12 +121,10 @@ function TriggerExecutionSettingsSection(props: any) {
 					}}
 				/>
 
-				<HStack marginLeft="5" marginTop={2} mb={2}>
+				<View style={{flexDirection: 'row', marginLeft: 20, marginTop: 8, marginBottom: 8}}>
 					<Switch
-						isChecked={sunState}
-						onTrackColor={'#32404e'}
-						offThumbColor={'blueGray.50'}
-						size={'md'}
+						value={sunState}
+						trackColor={{ true: '#32404e', false: '#767577' }}
 						style={{
 							...(Platform.OS === 'android' && {
 								transform: [{scaleX: 1.5}, {scaleY: 1.5}],
@@ -160,7 +157,7 @@ function TriggerExecutionSettingsSection(props: any) {
 						}}>
 						Trigger based on (sun-state/delay){' '}
 					</Text>
-				</HStack>
+				</View>
 				{sunState ? (
 					<>
 						<SelectForm
@@ -202,7 +199,7 @@ function TriggerExecutionSettingsSection(props: any) {
 						}}
 					/>
 				)}
-			</Box>
+			</View>
 		</ScrollView>
 	);
 }

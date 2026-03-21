@@ -1,5 +1,5 @@
 import React, {useEffect} from 'react';
-import {Box, HStack, ScrollView, Slider, Text} from 'native-base';
+import {ScrollView, View} from 'react-native';
 import {navigationHeader} from '../../../../components/common/navigationHeaders';
 import {useForm} from 'react-hook-form';
 import {
@@ -46,15 +46,17 @@ export function SequenceSecuritySettingsSection(props: any) {
 				)
 		});
 	}, [saveUnchangedData]);
+
 	const getModbusTasks = () => {
 		return props.modbusTasks.map((x: any) => ({
 			label: x.label,
 			value: x.id
 		}));
 	};
+
 	return (
 		<ScrollView automaticallyAdjustKeyboardInsets={true}>
-			<Box rounded="xl" style={BoxFormStyle.boxForm}>
+			<View style={BoxFormStyle.boxForm}>
 				<InputForm
 					control={control}
 					errors={errors}
@@ -65,8 +67,8 @@ export function SequenceSecuritySettingsSection(props: any) {
 						setSaveUnchangedData(true);
 					}}
 				/>
-			</Box>
-			<Box rounded="xl" style={BoxFormStyle.boxForm}>
+			</View>
+			<View style={BoxFormStyle.boxForm}>
 				<SelectForm
 					lstData={getModbusTasks()}
 					control={control}
@@ -89,13 +91,15 @@ export function SequenceSecuritySettingsSection(props: any) {
 						setVfd(value);
 					}}
 				/>
-			</Box>
+			</View>
 		</ScrollView>
 	);
 }
+
 const mapStateToProps = (state: any) => ({
 	modbusTasks: state.root_modbus_task.modbusTasks
 });
+
 export default connect(mapStateToProps, {
 	updateSequence
 })(SequenceSecuritySettingsSection);

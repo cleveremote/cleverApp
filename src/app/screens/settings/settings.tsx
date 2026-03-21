@@ -1,6 +1,4 @@
-import {IconButton, VStack, View} from 'native-base';
-import {GluestackUIProvider} from '@gluestack-ui/themed-native-base';
-import {Button, Platform, ScrollView, Text} from 'react-native';
+import {Button, Platform, ScrollView, Text, TouchableOpacity, View} from 'react-native';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import {authenticationService} from '../../../module/authentication/domain/services/auth.service';
@@ -61,7 +59,6 @@ export function SettingsScreen(props: any) {
 	};
 
 	return (
-		<GluestackUIProvider>
 			<View
 				style={{
 					flex: 1,
@@ -69,33 +66,20 @@ export function SettingsScreen(props: any) {
 					alignItems: 'center',
 					height: '50%'
 				}}>
-				<VStack
-					marginLeft="10"
-					marginRight="10"
-					marginBottom={5}
-					alignSelf="center">
-					<IconButton
-						_pressed={{_icon: {size: 35}}}
-						variant="unstyled"
-						alignSelf="center"
-						size={30}
-						icon={
-							<Icon
-								name="sign-out-alt"
-								size={25}
-								color="#32404e"
-							/>
-						}
+				<View style={{marginLeft: 40, marginRight: 40, marginBottom: 20, alignSelf: 'center'}}>
+					<TouchableOpacity
+						style={{alignSelf: 'center'}}
 						onPress={async () => {
 							ReactNativeHapticFeedback.trigger(
 								'impactMedium',
 								hapticOptions
 							);
 							await authenticationService.signout();
-						}}
-					/>
+						}}>
+						<Icon name="sign-out-alt" size={25} color="#32404e" />
+					</TouchableOpacity>
 					<Text style={{color: '#32404e', fontSize: 15}}>logout</Text>
-				</VStack>
+				</View>
 				<Button title="Choisir un SVG" onPress={handleUpload} />
 				{svgText ? (
 					<ScrollView style={{marginTop: 20}}>
@@ -103,6 +87,5 @@ export function SettingsScreen(props: any) {
 					</ScrollView>
 				) : null}
 			</View>
-		</GluestackUIProvider>
 	);
 }

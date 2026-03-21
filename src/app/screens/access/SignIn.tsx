@@ -1,20 +1,16 @@
 import React from 'react';
-import {StyleSheet, Text, Alert} from 'react-native';
+import {
+	StyleSheet,
+	Switch,
+	Text,
+	TextInput,
+	Alert,
+	TouchableOpacity,
+	View
+} from 'react-native';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import {hapticOptions} from '../../data/cycleTypes';
-import {
-	Box,
-	Button,
-	HStack,
-	IconButton,
-	Input,
-	Switch,
-	VStack,
-	View
-} from 'native-base';
-import {GluestackUIProvider} from '@gluestack-ui/themed-native-base';
 import Spinner from 'react-native-loading-spinner-overlay';
-import Icon from 'react-native-vector-icons/FontAwesome5';
 import {getSigninData} from '../../components/common/RememberMeManager';
 import Logo from '../../../../hydrophyto.svg';
 import {connect} from 'react-redux';
@@ -84,179 +80,195 @@ export function SignIn(props: any) {
 				}
 			})
 			.catch((error: any) => {
-				console.error('Error caught:', error); // If rejected, this will be executed
+				console.error('Error caught:', error);
 				setIsLoading(false);
 			});
 	};
 
 	return (
-		<GluestackUIProvider>
-			<View style={{flex: 1, marginTop: 25}}>
-				<VStack space={4} alignItems="center">
-					<Spinner
-						visible={isLoading}
-						color="#32404e"
-						textStyle={styles.spinnerTextStyle}
-					/>
-					<View alignItems="center">
-						<Logo width={'70'} height={'70'} />
-					</View>
-					<VStack space={2} my={1} alignSelf="stretch" shadow={3}>
-						<Box
-							alignSelf="stretch"
-							bg="white"
-							mt={2}
-							mx={5}
-							rounded="xl"
-							padding={5}>
-							<VStack space={2}>
-								<Input
-									value={
-										signinData.rememberCredentials
-											? signinData.profile
-											: undefined
-									}
-									height="50"
-									placeholder="Profile"
-									style={{fontSize: 20}}
-									onChangeText={profile => {
+		<View style={{flex: 1, marginTop: 25}}>
+			<View style={{gap: 16, alignItems: 'center'}}>
+				<Spinner
+					visible={isLoading}
+					color="#32404e"
+					textStyle={styles.spinnerTextStyle}
+				/>
+				<View style={{alignItems: 'center'}}>
+					<Logo width={'70'} height={'70'} />
+				</View>
+				<View
+					style={{
+						gap: 8,
+						marginVertical: 4,
+						alignSelf: 'stretch',
+						elevation: 3,
+						shadowColor: '#000',
+						shadowOffset: {width: 0, height: 1},
+						shadowOpacity: 0.22,
+						shadowRadius: 2.22
+					}}>
+					<View
+						style={{
+							alignSelf: 'stretch',
+							backgroundColor: 'white',
+							marginTop: 8,
+							marginHorizontal: 20,
+							borderRadius: 12,
+							padding: 20
+						}}>
+						<View style={{gap: 8}}>
+							<TextInput
+								value={
+									signinData.rememberCredentials
+										? signinData.profile
+										: undefined
+								}
+								style={styles.input}
+								placeholder="Profile"
+								onChangeText={profile => {
+									setSigninData({
+										login: signinData.login,
+										password: signinData.password,
+										rememberCredentials:
+											signinData.rememberCredentials,
+										profile
+									});
+								}}
+							/>
+							<TextInput
+								value={
+									signinData.rememberCredentials
+										? signinData.login
+										: undefined
+								}
+								textContentType={'username'}
+								style={styles.input}
+								placeholder="Box id"
+								onChangeText={login => {
+									setSigninData({
+										login,
+										password: signinData.password,
+										rememberCredentials:
+											signinData.rememberCredentials,
+										profile: signinData.profile
+									});
+								}}
+							/>
+							<TextInput
+								style={styles.input}
+								placeholder="Password"
+								secureTextEntry={true}
+								textContentType={'newPassword'}
+								value={
+									signinData.rememberCredentials
+										? signinData.password
+										: undefined
+								}
+								onChangeText={password => {
+									setSigninData({
+										login: signinData.login,
+										password,
+										rememberCredentials:
+											signinData.rememberCredentials,
+										profile: signinData.profile
+									});
+								}}
+							/>
+
+							<View
+								style={{
+									flexDirection: 'row',
+									marginLeft: 40,
+									marginRight: 40,
+									alignSelf: 'center',
+									alignItems: 'center'
+								}}>
+								<Switch
+									style={{marginRight: 12}}
+									value={signinData.rememberCredentials}
+									trackColor={{
+										true: '#32404e',
+										false: '#767577'
+									}}
+									onValueChange={checked => {
 										setSigninData({
 											login: signinData.login,
 											password: signinData.password,
-											rememberCredentials:
-												signinData.rememberCredentials,
-											profile
-										});
-									}}
-								/>
-								<Input
-									value={
-										signinData.rememberCredentials
-											? signinData.login
-											: undefined
-									}
-									height="50"
-									textContentType={'username'}
-									placeholder="Box id"
-									style={{fontSize: 20}}
-									onChangeText={login => {
-										setSigninData({
-											login,
-											password: signinData.password,
-											rememberCredentials:
-												signinData.rememberCredentials,
+											rememberCredentials: checked,
 											profile: signinData.profile
 										});
 									}}
 								/>
-								<Input
-									height="50"
-									style={{fontSize: 20}}
-									placeholder="Password"
-									secureTextEntry={true}
-									textContentType={'newPassword'}
-									value={
-										signinData.rememberCredentials
-											? signinData.password
-											: undefined
+								<Text
+									style={{
+										marginTop: 5,
+										color: '#32404e',
+										fontSize: 15
+									}}>
+									{' '}
+									Remember me
+								</Text>
+							</View>
+							<View
+								style={{
+									marginLeft: 40,
+									marginRight: 40,
+									marginBottom: 20,
+									alignSelf: 'center'
+								}}>
+								{/* <IconButton
+									_pressed={{_icon: {size: 35}}}
+									variant="unstyled"
+									alignSelf="center"
+									size={35}
+									icon={
+										<Icon
+											name={'id-badge'}
+											size={30}
+											color="#32404e"
+										/>
 									}
-									onChangeText={password => {
-										setSigninData({
-											login: signinData.login,
-											password,
-											rememberCredentials:
-												signinData.rememberCredentials,
-											profile: signinData.profile
-										});
-									}}
-								/>
-
-								<HStack
-									marginLeft="10"
-									marginRight="10"
-									alignSelf="center">
-									<Switch
-										marginRight="3"
-										isChecked={
-											signinData.rememberCredentials
-										}
-										onTrackColor={'#32404e'}
-										offThumbColor={'blueGray.50'}
-										size={'md'}
-										onValueChange={checked => {
-											setSigninData({
-												login: signinData.login,
-												password: signinData.password,
-												rememberCredentials: checked,
-												profile: signinData.profile
-											});
-										}}
-									/>
-									<Text
-										style={{
-											marginTop: 5,
-											color: '#32404e',
-											fontSize: 15
-										}}>
-										{' '}
-										Remember me
-									</Text>
-								</HStack>
-								<VStack
-									marginLeft="10"
-									marginRight="10"
-									marginBottom={5}
-									alignSelf="center">
-									{/* <IconButton
-										_pressed={{_icon: {size: 35}}}
-										variant="unstyled"
-										alignSelf="center"
-										size={35}
-										icon={
-											<Icon
-												name={'id-badge'}
-												size={30}
-												color="#32404e"
-											/>
-										}
-										onPress={() => {
-											ReactNativeHapticFeedback.trigger(
-												'impactMedium',
-												hapticOptions
-											);
-											props.navigation.goBack();
-										}}
-									/>
-									<Text
-										style={{
-											color: '#32404e',
-											fontSize: 15
-										}}>
-										back to profiles
-									</Text> */}
-								</VStack>
-
-								<Button
-									alignSelf="stretch"
-									height="50"
-									backgroundColor="#32404e"
-									onPress={async () => {
+									onPress={() => {
 										ReactNativeHapticFeedback.trigger(
 											'impactMedium',
 											hapticOptions
 										);
-										await onLogin(signinData);
+										props.navigation.goBack();
+									}}
+								/>
+								<Text
+									style={{
+										color: '#32404e',
+										fontSize: 15
 									}}>
-									<Text
-										style={{color: 'white', fontSize: 20}}>
-										{' '}
-										Sign in{' '}
-									</Text>
-								</Button>
-							</VStack>
-						</Box>
-					</VStack>
-				</VStack>
+									back to profiles
+								</Text> */}
+							</View>
+
+							<TouchableOpacity
+								style={{
+									alignSelf: 'stretch',
+									height: 50,
+									backgroundColor: '#32404e',
+									justifyContent: 'center',
+									alignItems: 'center',
+									borderRadius: 6
+								}}
+								onPress={async () => {
+									ReactNativeHapticFeedback.trigger(
+										'impactMedium',
+										hapticOptions
+									);
+									await onLogin(signinData);
+								}}>
+								<Text style={{color: 'white', fontSize: 20}}>
+									{' '}
+									Sign in{' '}
+								</Text>
+							</TouchableOpacity>
+						</View>
+					</View>
+				</View>
 			</View>
 
 			{/* <VStack
@@ -285,9 +297,10 @@ export function SignIn(props: any) {
 					}}
 				/>
 			</VStack> */}
-		</GluestackUIProvider>
+		</View>
 	);
 }
+
 const mapStateToProps = function (state: any) {
 	return {
 		isConnected: state.status?.isConnected
@@ -300,50 +313,18 @@ export default connect(mapStateToProps, {
 })(SignIn);
 
 const styles = StyleSheet.create({
+	input: {
+		height: 50,
+		fontSize: 20,
+		borderWidth: 1,
+		borderColor: '#CBD5E0',
+		borderRadius: 12,
+		paddingHorizontal: 12,
+		color: '#32404e'
+	},
 	spinnerTextStyle: {
 		color: '#32404e',
 		fontSize: 15,
 		marginBottom: 50
-	},
-	centeredView: {
-		flex: 1,
-		justifyContent: 'center',
-		alignItems: 'center',
-		marginTop: 22
-	},
-	modalView: {
-		margin: 20,
-		backgroundColor: 'white',
-		borderRadius: 20,
-		padding: 35,
-		alignItems: 'center',
-		shadowColor: '#000',
-		shadowOffset: {
-			width: 0,
-			height: 2
-		},
-		shadowOpacity: 0.25,
-		shadowRadius: 4,
-		elevation: 5
-	},
-	button: {
-		borderRadius: 20,
-		padding: 10,
-		elevation: 2
-	},
-	buttonOpen: {
-		backgroundColor: '#F194FF'
-	},
-	buttonClose: {
-		backgroundColor: '#2196F3'
-	},
-	textStyle: {
-		color: 'white',
-		fontWeight: 'bold',
-		textAlign: 'center'
-	},
-	modalText: {
-		marginBottom: 15,
-		textAlign: 'center'
 	}
 });

@@ -1,17 +1,7 @@
-import {
-	Box,
-	FlatList,
-	Flex,
-	Heading,
-	IconButton,
-	ScrollView,
-	VStack,
-	View
-} from 'native-base';
-import {Platform, Text} from 'react-native';
+import React, {useCallback, useEffect, useState} from 'react';
+import {FlatList, Platform, Text, View} from 'react-native';
 import {connect} from 'react-redux';
 import Spinner from 'react-native-loading-spinner-overlay';
-import {useCallback, useEffect, useState} from 'react';
 import {loadValues} from '../../../../module/process/infrasctructure/store/actions/cycle';
 import {styles} from '../../../styles/cycleStyles';
 import {DateTimePickerForm} from '../../../components/common/FormComponents';
@@ -85,28 +75,43 @@ function EventsScreen(props: any) {
 	const renderItem = useCallback(({item}: {item: any}) => {
 		const date = new Date(item.date);
 		return (
-			<View key={item.key} my={1}>
-				<Box
-					alignSelf="stretch"
-					bg={'white'}
-					rounded="xl"
-					shadow={3}
-					height="45"
-					mx={1}>
-					<View style={{flexDirection: 'row'}} mt={1} mx={2}>
-						<Box
-							zIndex={99}
-							style={{flex: 2, alignItems: 'flex-start'}}
-							mr={0}>
-							<Flex direction="row">
-								<Heading
-									flex={2}
-									mt={1}
-									ml={2}
-									size="sm"
-									color={'balck'}
+			<View key={item.key} style={{marginVertical: 4}}>
+				<View
+					style={{
+						alignSelf: 'stretch',
+						backgroundColor: 'white',
+						borderRadius: 12,
+						elevation: 3,
+						shadowColor: '#000',
+						shadowOffset: {width: 0, height: 1},
+						shadowOpacity: 0.22,
+						shadowRadius: 2.22,
+						height: 45,
+						marginHorizontal: 4
+					}}>
+					<View
+						style={{
+							flexDirection: 'row',
+							marginTop: 4,
+							marginHorizontal: 8
+						}}>
+						<View
+							style={{
+								flex: 2,
+								alignItems: 'flex-start',
+								zIndex: 99
+							}}>
+							<View style={{flexDirection: 'row'}}>
+								<Text
+									style={{
+										flex: 2,
+										marginTop: 4,
+										marginLeft: 8,
+										fontWeight: 'bold',
+										color: 'black',
+										fontSize: 15
+									}}
 									numberOfLines={1}
-									fontSize={15}
 									ellipsizeMode="middle">
 									{date.getDate() +
 										'-' +
@@ -120,18 +125,18 @@ function EventsScreen(props: any) {
 										':' +
 										date.getSeconds()}{' '}
 									: {item.type} SWITCH {item.value}
-								</Heading>
-							</Flex>
-						</Box>
+								</Text>
+							</View>
+						</View>
 					</View>
-				</Box>
+				</View>
 			</View>
 		);
 	}, []);
 
 	return (
-		<VStack space={2} my={1} alignSelf="stretch">
-			<Box rounded="xl" style={BoxFormStyle.boxForm}>
+		<View style={{gap: 8, marginVertical: 4, alignSelf: 'stretch'}}>
+			<View style={BoxFormStyle.boxForm}>
 				<DateTimePickerForm
 					mode={'datetime'}
 					control={control}
@@ -164,7 +169,7 @@ function EventsScreen(props: any) {
 						}, 200);
 					}}
 				/>
-			</Box>
+			</View>
 			<Spinner
 				visible={props.isLoading}
 				color="#32404e"
@@ -178,7 +183,7 @@ function EventsScreen(props: any) {
 				onRefresh={() => onRefresh()}
 				refreshing={refreshing}
 			/>
-		</VStack>
+		</View>
 	);
 }
 

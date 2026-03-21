@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {Box, ScrollView} from 'native-base';
+import {ScrollView, View} from 'react-native';
 import {navigationHeader} from '../../../../../components/common/navigationHeaders';
 import {
 	InputForm,
@@ -45,7 +45,7 @@ function TriggerConditionGeneralSettingsSection(props: any) {
 
 	return (
 		<ScrollView automaticallyAdjustKeyboardInsets={true}>
-			<Box rounded="xl" style={BoxFormStyle.boxForm}>
+			<View style={BoxFormStyle.boxForm}>
 				<InputForm
 					control={control}
 					errors={errors}
@@ -65,7 +65,7 @@ function TriggerConditionGeneralSettingsSection(props: any) {
 						setSaveUnchangedData(true);
 					}}
 				/>
-			</Box>
+			</View>
 		</ScrollView>
 	);
 }

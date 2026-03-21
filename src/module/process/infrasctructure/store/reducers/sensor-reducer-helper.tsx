@@ -15,9 +15,9 @@ export const loadSensor = (sensors: any, sensorId: string) => {
 			taskId: '',
 			Pattern: '',
 			style: {
-				bgColor: 'cyan.200',
-				fontColor: 'blue.400',
-				iconColor: {base: 'blue', icon: '#60a5fa'}
+				bgColor: '#a5f3fc',
+				fontColor: '#60a5fa',
+				iconColor: {base: '#60a5fa', icon: '#60a5fa'}
 			},
 			type: 'SCHEDULED',
 			unit: 'V',

@@ -1,5 +1,4 @@
 import React, {useEffect, useRef} from 'react';
-import {VStack} from 'native-base';
 import {connect} from 'react-redux';
 import CycleStack from '../../components/cycle/cycleStack';
 import {ScrollView, RefreshControl} from 'react-native-gesture-handler';
@@ -10,7 +9,7 @@ import {
 } from '../../components/common/navigationHeaders';
 import Spinner from 'react-native-loading-spinner-overlay';
 import {styles} from '../../styles/cycleStyles';
-import {AppState} from 'react-native';
+import {AppState, View} from 'react-native';
 import {
 	executeCycle,
 	listenerEvents,
@@ -132,7 +131,7 @@ export function Cycle(props: any) {
 					}}
 				/>
 			}>
-			<VStack space={2} my={1} alignSelf="stretch">
+			<View style={{gap: 8, marginVertical: 4, alignSelf: 'stretch'}}>
 				<Spinner
 					visible={props.isLoading}
 					color="#32404e"
@@ -156,7 +155,7 @@ export function Cycle(props: any) {
 							onExecute={onExecute}
 						/>
 					))}
-			</VStack>
+			</View>
 		</ScrollView>
 	);
 }

@@ -1,6 +1,5 @@
 import React, {useEffect, useRef} from 'react';
-import {VStack, Box, FormControl} from 'native-base';
-import {GluestackUIProvider} from '@gluestack-ui/themed-native-base';
+import {View} from 'react-native';
 import {connect} from 'react-redux';
 import {navigationHeader} from '../../../../components/common/navigationHeaders';
 import {
@@ -75,11 +74,10 @@ function SequenceSettingsScreen(props: any) {
 	}, [props.sequence]);
 
 	return (
-		<GluestackUIProvider>
-			<VStack alignSelf="stretch" shadow={3}>
-				<Box alignSelf="stretch" bg="white" mt={2} mx={5} rounded="xl">
-					<Box>
-						<FormControl>
+			<View style={{alignSelf: 'stretch', elevation: 3, shadowColor: '#000', shadowOffset: {width: 0, height: 1}, shadowOpacity: 0.22, shadowRadius: 2.22}}>
+				<View style={{alignSelf: 'stretch', backgroundColor: 'white', marginTop: 8, marginHorizontal: 20, borderRadius: 12}}>
+					<View>
+						<View>
 							<MenuAccordion
 								key={21}
 								name={'General'}
@@ -139,11 +137,10 @@ function SequenceSettingsScreen(props: any) {
 									_deleteItem();
 								}}
 							/>
-						</FormControl>
-					</Box>
-				</Box>
-			</VStack>
-		</GluestackUIProvider>
+						</View>
+					</View>
+				</View>
+			</View>
 	);
 }
 

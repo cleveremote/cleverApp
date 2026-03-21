@@ -21,10 +21,21 @@
       "Bash(/Users/nya/.nvm/versions/node/v20.12.0/bin/node node_modules/.bin/react-native bundle --entry-file index.js --platform ios --dev true --bundle-output /tmp/test_bundle_dev2.js --assets-dest /tmp/test_assets2 --reset-cache)",
       "Bash(ls /Users/nya-perso/cleveremote/cleverApp/node_modules/react-native/React/Fabric/RCTThirdPartyFabricComponentsProvider.*)",
       "Bash(grep -r RCTThirdPartyFabricComponentsProvider /Users/nya-perso/cleveremote/cleverApp/ios/ --include=*.pbxproj)",
-      "Bash(python3 -:*)"
+      "Bash(python3 -:*)",
+      "Bash(xxd)",
+      "Bash(python3:*)",
+      "Bash(npm uninstall:*)",
+      "Bash(./gradlew clean:*)",
+      "Bash(npx tsc:*)",
+      "Bash(grep -v \"^$\")",
+      "Bash(grep -r \"from ''native-base''\" src/ --include=\"*.tsx\" --include=\"*.ts\" -l)",
+      "Bash(LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 cd /Users/nya-perso/cleveremote/cleverApp/ios)",
+      "Bash(gem list:*)",
+      "Bash(pod --version)"
     ],
     "additionalDirectories": [
-      "/Users/nya/Library/Developer/Xcode/DerivedData/cleverApp-gfbkyyztpeonnddfkjftehjjxboc"
+      "/Users/nya/Library/Developer/Xcode/DerivedData/cleverApp-gfbkyyztpeonnddfkjftehjjxboc",
+      "/Users/nya-perso/cleveremote/cleverApp/src/app/components/common"
     ]
   }
 }

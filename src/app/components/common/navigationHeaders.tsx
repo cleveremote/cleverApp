@@ -1,11 +1,6 @@
 import React from 'react';
-import {GestureResponderEvent} from 'react-native';
-import {Box, IconButton, View} from 'native-base';
-import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
-import {IconDefinition} from '@fortawesome/free-solid-svg-icons';
+import {GestureResponderEvent, TouchableOpacity, View} from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome5';
-import {border} from 'native-base/lib/typescript/theme/styled-system';
-import {RotateInDownLeft} from 'react-native-reanimated';
 import Logo from '../../../../hydrophyto.svg';
 
 export function navigationHeader(
@@ -14,26 +9,19 @@ export function navigationHeader(
 	rotate = false
 ) {
 	return rotate ? (
-		<Box>
-			<IconButton
-				_pressed={{_icon: {size: 35}}}
-				variant="unstyled"
+		<View>
+			<TouchableOpacity
 				style={{transform: [{rotate: '135deg'}]}}
-				size={35}
-				icon={<Icon name={icon} size={30} color="#32404e" />}
-				onPress={onPress}
-			/>
-		</Box>
+				onPress={onPress}>
+				<Icon name={icon} size={30} color="#32404e" />
+			</TouchableOpacity>
+		</View>
 	) : (
-		<Box>
-			<IconButton
-				_pressed={{_icon: {size: 35}}}
-				variant="unstyled"
-				size={35}
-				icon={<Icon name={icon} size={30} color="#32404e" />}
-				onPress={onPress}
-			/>
-		</Box>
+		<View>
+			<TouchableOpacity onPress={onPress}>
+				<Icon name={icon} size={30} color="#32404e" />
+			</TouchableOpacity>
+		</View>
 	);
 }
 

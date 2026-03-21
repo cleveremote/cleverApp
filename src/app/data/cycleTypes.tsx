@@ -102,48 +102,83 @@ export const Priorities = PriorityModes.map(d => {
 });
 
 export function getColors() {
-	const iconColors = [
-		'#f472b6',
-		'#e879f9',
-		'#94a3b8',
-		'#818cf8',
-		'#60a5fa',
-		'#41bdf8',
-		'#47d3ee',
-		'#46d4bf',
-		'#44d399',
-		'#4ade80',
-		'#a3e635',
-		'#facc13',
-		'#f9bf23',
-		'#f7923d',
-		'#f67171',
-		'#FFFFFF'
+	return [
+		{
+			fontColor: '#ec4899',
+			iconColor: {icon: '#f472b6', base: '#f472b6'},
+			bgColor: '#fbcfe8'
+		},
+		{
+			fontColor: '#d946ef',
+			iconColor: {icon: '#e879f9', base: '#e879f9'},
+			bgColor: '#f0abfc'
+		},
+		{
+			fontColor: '#64748b',
+			iconColor: {icon: '#94a3b8', base: '#94a3b8'},
+			bgColor: '#cbd5e1'
+		},
+		{
+			fontColor: '#6366f1',
+			iconColor: {icon: '#818cf8', base: '#818cf8'},
+			bgColor: '#c7d2fe'
+		},
+		{
+			fontColor: '#3b82f6',
+			iconColor: {icon: '#60a5fa', base: '#60a5fa'},
+			bgColor: '#bfdbfe'
+		},
+		{
+			fontColor: '#0ea5e9',
+			iconColor: {icon: '#41bdf8', base: '#41bdf8'},
+			bgColor: '#bae6fd'
+		},
+		{
+			fontColor: '#06b6d4',
+			iconColor: {icon: '#47d3ee', base: '#47d3ee'},
+			bgColor: '#a5f3fc'
+		},
+		{
+			fontColor: '#14b8a6',
+			iconColor: {icon: '#46d4bf', base: '#46d4bf'},
+			bgColor: '#99f6e4'
+		},
+		{
+			fontColor: '#10b981',
+			iconColor: {icon: '#44d399', base: '#44d399'},
+			bgColor: '#a7f3d0'
+		},
+		{
+			fontColor: '#22c55e',
+			iconColor: {icon: '#4ade80', base: '#4ade80'},
+			bgColor: '#bbf7d0'
+		},
+		{
+			fontColor: '#84cc16',
+			iconColor: {icon: '#a3e635', base: '#a3e635'},
+			bgColor: '#d9f99d'
+		},
+		{
+			fontColor: '#eab308',
+			iconColor: {icon: '#facc13', base: '#facc13'},
+			bgColor: '#fef08a'
+		},
+		{
+			fontColor: '#f59e0b',
+			iconColor: {icon: '#f9bf23', base: '#f9bf23'},
+			bgColor: '#fde68a'
+		},
+		{
+			fontColor: '#f97316',
+			iconColor: {icon: '#f7923d', base: '#f7923d'},
+			bgColor: '#fed7aa'
+		},
+		{
+			fontColor: '#ef4444',
+			iconColor: {icon: '#f67171', base: '#f67171'},
+			bgColor: '#fecaca'
+		}
 	];
-	const colors = [
-		'pink',
-		'fuchsia',
-		'blueGray',
-		'indigo',
-		'blue',
-		'lightBlue',
-		'cyan',
-		'teal',
-		'emerald',
-		'green',
-		'lime',
-		'yellow',
-		'amber',
-		'orange',
-		'red'
-	];
-
-	return colors.map((x, i) => {
-		const fontColor = x + '.500';
-		const iconColor = {icon: iconColors[i], base: x + '.500'};
-		const bgColor = x + '.200';
-		return {fontColor, iconColor, bgColor};
-	});
 }
 
 export function getPorts(alreadyAdded: number[]) {

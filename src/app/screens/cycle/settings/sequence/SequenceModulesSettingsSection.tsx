@@ -1,5 +1,5 @@
 import React, {useEffect} from 'react';
-import {VStack, Box, IconButton, Text, HStack} from 'native-base';
+import {View} from 'react-native';
 import {navigationHeader} from '../../../../components/common/navigationHeaders';
 import {elementStack} from '../../../../components/cycle/moduleStack';
 import Icon from 'react-native-vector-icons/FontAwesome5';
@@ -63,7 +63,7 @@ export function SequenceModulesSettingsSection(props: any) {
 	};
 
 	return (
-		<Box rounded="xl" style={BoxFormStyle.boxForm}>
+		<View style={BoxFormStyle.boxForm}>
 			{props.modules.map((module: any) =>
 				module.id && module.id.indexOf('deleted_') > -1
 					? null
@@ -76,7 +76,7 @@ export function SequenceModulesSettingsSection(props: any) {
 							{name: faMinus, color: 'red'}
 					  )
 			)}
-			<VStack style={{justifyContent: 'center', alignItems: 'center'}}>
+			<View style={{justifyContent: 'center', alignItems: 'center'}}>
 				<SelectForm
 					lstData={getPorts(
 						props.modules.map((x: any) => Number(x.portNum))
@@ -90,8 +90,8 @@ export function SequenceModulesSettingsSection(props: any) {
 						handleSubmit(onSubmit)();
 					}}
 				/>
-			</VStack>
-		</Box>
+			</View>
+		</View>
 	);
 }
 

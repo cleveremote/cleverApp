@@ -1,5 +1,5 @@
 import React, {useEffect} from 'react';
-import {Box, ScrollView} from 'native-base';
+import {ScrollView, View} from 'react-native';
 import {navigationHeader} from '../../../../components/common/navigationHeaders';
 import {BoxFormStyle} from '../../../../styles/components/common/boxForm';
 import {
@@ -43,7 +43,7 @@ export function SequenceGeneralSettingsSection(props: any) {
 
 	return (
 		<ScrollView automaticallyAdjustKeyboardInsets={true}>
-			<Box rounded="xl" style={BoxFormStyle.boxForm}>
+			<View style={BoxFormStyle.boxForm}>
 				<InputForm
 					control={control}
 					errors={errors}
@@ -84,7 +84,7 @@ export function SequenceGeneralSettingsSection(props: any) {
 						setSaveUnchangedData(true);
 					}}
 				/>
-			</Box>
+			</View>
 		</ScrollView>
 	);
 }

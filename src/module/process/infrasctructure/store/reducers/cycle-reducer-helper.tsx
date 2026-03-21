@@ -24,9 +24,9 @@ export const loadCycle = (cycles: any, cycleId: string) => {
 			name: 'new cycle',
 			description: 'new cycle',
 			style: {
-				bgColor: 'cyan.200',
-				fontColor: 'blue.400',
-				iconColor: {base: 'blue', icon: '#60a5fa'}
+				bgColor: '#a5f3fc',
+				fontColor: '#60a5fa',
+				iconColor: {base: '#60a5fa', icon: '#60a5fa'}
 			},
 			modePriority: [
 				{mode: 'MANUAL', priority: 0},

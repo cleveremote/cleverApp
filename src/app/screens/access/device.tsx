@@ -1,12 +1,5 @@
-import {Text} from 'react-native';
+import {ScrollView, Text, TouchableOpacity, View} from 'react-native';
 import React, {useCallback, useEffect} from 'react';
-import {
-	IconButton,
-	ScrollView,
-	VStack,
-	View
-} from 'native-base';
-import {GluestackUIProvider} from '@gluestack-ui/themed-native-base';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import {useFocusEffect, useNavigation} from '@react-navigation/native';
@@ -44,7 +37,7 @@ export function DeviceScreen(props: any) {
 	);
 
 	return (
-		<GluestackUIProvider>
+		<View>
 			<View
 				style={{
 					flex: 1,
@@ -72,11 +65,10 @@ export function DeviceScreen(props: any) {
 					showsHorizontalScrollIndicator={false}>
 					{devices.length ? (
 						devices.map((device, index) => (
-							<VStack
+							<View
 								key={'item_' + index}
-								marginTop={2}
 								style={{
-									display: 'flex',
+									marginTop: 8,
 									justifyContent: 'center',
 									alignItems: 'center'
 								}}>
@@ -85,23 +77,12 @@ export function DeviceScreen(props: any) {
 										width: 47,
 										height: 47,
 										borderRadius: 0.5 * 47,
-										display: 'flex',
 										justifyContent: 'center',
 										alignItems: 'center',
-										borderColor: '#0082FC', //'#32404e',
+										borderColor: '#0082FC',
 										borderWidth: 4
 									}}>
-									<IconButton
-										_pressed={{_icon: {size: 20}}}
-										variant="unstyled"
-										fontWeight={'bold'}
-										icon={
-											<Icon
-												name="bluetooth-b"
-												size={18}
-												color="#0082FC"
-											/>
-										}
+									<TouchableOpacity
 										onPress={async () => {
 											ReactNativeHapticFeedback.trigger(
 												'impactMedium',
@@ -114,8 +95,13 @@ export function DeviceScreen(props: any) {
 													deviceName: device.localName
 												}
 											);
-										}}
-									/>
+										}}>
+										<Icon
+											name="bluetooth-b"
+											size={18}
+											color="#0082FC"
+										/>
+									</TouchableOpacity>
 								</View>
 								<Text
 									style={{
@@ -126,7 +112,7 @@ export function DeviceScreen(props: any) {
 									}}>
 									device: {device.localName}
 								</Text>
-							</VStack>
+							</View>
 						))
 					) : (
 						<Text
@@ -141,17 +127,15 @@ export function DeviceScreen(props: any) {
 				</ScrollView>
 			</View>
 
-			<VStack
-				marginLeft="10"
-				marginRight="10"
-				marginBottom={5}
-				alignSelf="center">
-				<IconButton
-					_pressed={{_icon: {size: 35}}}
-					variant="unstyled"
-					alignSelf="center"
-					size={35}
-					icon={<Icon name="search" size={30} color="#32404e" />}
+			<View
+				style={{
+					marginLeft: 40,
+					marginRight: 40,
+					marginBottom: 20,
+					alignSelf: 'center',
+					alignItems: 'center'
+				}}>
+				<TouchableOpacity
 					onPress={async () => {
 						ReactNativeHapticFeedback.trigger(
 							'impactMedium',
@@ -160,12 +144,13 @@ export function DeviceScreen(props: any) {
 						setDevices([]);
 						const devices = await BLEService.ScanBleDevices();
 						setDevices(devices);
-					}}
-				/>
+					}}>
+					<Icon name="search" size={30} color="#32404e" />
+				</TouchableOpacity>
 				<Text style={{color: '#32404e', fontSize: 15}}>
 					Scan network
 				</Text>
-			</VStack>
-		</GluestackUIProvider>
+			</View>
+		</View>
 	);
 }

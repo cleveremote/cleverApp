@@ -1,5 +1,5 @@
 import React, {useEffect} from 'react';
-import {Box, ScrollView} from 'native-base';
+import {ScrollView, View} from 'react-native';
 import {navigationHeader} from '../../../components/common/navigationHeaders';
 import {useForm} from 'react-hook-form';
 import {BoxFormStyle} from '../../../styles/components/common/boxForm';
@@ -59,14 +59,14 @@ export function SensorGeneralSettingsSection(props: any) {
 	};
 	const isScheduled = sensorData?.type === 'SCHEDULED';
 	return (
-		<Box rounded="xl" style={BoxFormStyle.boxForm}>
+		<View style={BoxFormStyle.boxForm}>
 			<SelectColor
 				control={control}
 				errors={errors}
 				name="style"
 				placeholder="Sensor theme*"
 				rules={{required: true}}
-				style={{fontColor: sensorData?.style?.fontColor}}
+				style={{...sensorData?.style}}
 				onChangeText={value => {
 					setSensorData({...sensorData, style: JSON.parse(value)});
 					setSaveUnchangedData(true);
@@ -126,7 +126,7 @@ export function SensorGeneralSettingsSection(props: any) {
 					/>
 				)}
 			</ScrollView>
-		</Box>
+		</View>
 	);
 }
 

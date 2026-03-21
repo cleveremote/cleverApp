@@ -1,18 +1,16 @@
 import React, {useEffect} from 'react';
-import {StyleSheet, Text, Alert} from 'react-native';
+import {
+	ScrollView,
+	StyleSheet,
+	Text,
+	Alert,
+	TextInput,
+	TouchableOpacity,
+	View
+} from 'react-native';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import {hapticOptions} from '../../data/cycleTypes';
-import {
-	Box,
-	Button,
-	CheckIcon,
-	IconButton,
-	Input,
-	Select,
-	VStack,
-	View
-} from 'native-base';
-import {GluestackUIProvider} from '@gluestack-ui/themed-native-base';
+import {Picker} from '@react-native-picker/picker';
 import Spinner from 'react-native-loading-spinner-overlay';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import {useNavigation} from '@react-navigation/native';
@@ -110,7 +108,7 @@ export function DeviceSettings(props: any) {
 				setIsLoading(false);
 			})
 			.catch(error => {
-				console.error('Error caught:', error); // If rejected, this will be executed
+				console.error('Error caught:', error);
 				setIsLoading(false);
 				Alert.alert('Permission denied: check your password.');
 			})
@@ -120,170 +118,136 @@ export function DeviceSettings(props: any) {
 	};
 
 	return (
-		<GluestackUIProvider>
-			<View style={{flex: 1, marginTop: 50}}>
-				<View alignItems="center">
-					<View
-						style={{
-							width: 70,
-							height: 70,
-							borderRadius: 0.5 * 70,
-							display: 'flex',
-							justifyContent: 'center',
-							alignItems: 'center',
-							borderColor: '#32404e',
-							borderWidth: 7
-						}}>
-						<IconButton
-							variant="unstyled"
-							fontWeight={'bold'}
-							icon={
-								<Icon name="wifi" size={30} color="#32404e" />
-							}
-						/>
-					</View>
+		<View style={{flex: 1, marginTop: 50}}>
+			<View style={{alignItems: 'center'}}>
+				<View
+					style={{
+						width: 70,
+						height: 70,
+						borderRadius: 0.5 * 70,
+						justifyContent: 'center',
+						alignItems: 'center',
+						borderColor: '#32404e',
+						borderWidth: 7
+					}}>
+					<Icon name="wifi" size={30} color="#32404e" />
 				</View>
-				<VStack space={2} my={1} alignSelf="stretch" shadow={3}>
-					<Box
-						alignSelf="stretch"
-						bg="white"
-						mt={2}
-						mx={5}
-						rounded="xl"
-						padding={5}>
-						<VStack space={2} alignItems="center">
-							<Spinner
-								visible={isLoading}
-								color="#32404e"
-								textStyle={styles.spinnerTextStyle}
-							/>
-							<Input
-								height="50"
-								style={{fontSize: 20}}
-								placeholder="Profile"
-								value={profile}
-								onChangeText={value => {
-									setProfile(value);
-								}}
-							/>
-							<Select
-								defaultValue={''}
-								height="50"
-								fontSize={20}
-								width={'100%'}
-								placeholder="WiFi Network"
-								_selectedItem={{
-									bg: 'blue.400',
-									endIcon: <CheckIcon size="5" />
-								}}
-								my={1}
-								onValueChange={value => {
-									setSsid(value);
-								}}>
-								{networks.map((item, index) => (
-									<Select.Item
-										key={'action_' + index}
-										label={`${item.label}`}
-										value={`${item.value}`}
-									/>
-								))}
-							</Select>
-							<Input
-								height="50"
-								style={{fontSize: 20}}
-								placeholder="Psk"
-								secureTextEntry={true}
-								textContentType={'newPassword'}
-								value={psk}
-								onChangeText={value => {
-									setPsk(value);
-								}}
-							/>
-							<Input
-								height="50"
-								style={{fontSize: 20}}
-								placeholder="Password"
-								secureTextEntry={true}
-								textContentType={'newPassword'}
-								value={password}
-								onChangeText={value => {
-									setPassword(value);
-								}}
-							/>
-							<Button
-								alignSelf="stretch"
-								height="50"
-								backgroundColor={
+			</View>
+			<View
+				style={{
+					gap: 8,
+					marginVertical: 4,
+					alignSelf: 'stretch',
+					elevation: 3,
+					shadowColor: '#000',
+					shadowOffset: {width: 0, height: 1},
+					shadowOpacity: 0.22,
+					shadowRadius: 2.22
+				}}>
+				<View
+					style={{
+						alignSelf: 'stretch',
+						backgroundColor: 'white',
+						marginTop: 8,
+						marginHorizontal: 20,
+						borderRadius: 12,
+						padding: 20
+					}}>
+					<View style={{gap: 8, alignItems: 'center'}}>
+						<Spinner
+							visible={isLoading}
+							color="#32404e"
+							textStyle={styles.spinnerTextStyle}
+						/>
+						<TextInput
+							style={[
+								styles.input,
+								{width: '100%'}
+							]}
+							placeholder="Profile"
+							value={profile}
+							onChangeText={value => {
+								setProfile(value);
+							}}
+						/>
+						<Picker
+							selectedValue={ssid}
+							style={{width: '100%', height: 50}}
+							onValueChange={value => {
+								setSsid(value);
+							}}>
+							{networks.map((item: any, index: number) => (
+								<Picker.Item
+									key={'action_' + index}
+									label={`${item.label}`}
+									value={`${item.value}`}
+								/>
+							))}
+						</Picker>
+						<TextInput
+							style={[styles.input, {width: '100%'}]}
+							placeholder="Psk"
+							secureTextEntry={true}
+							textContentType={'newPassword'}
+							value={psk}
+							onChangeText={value => {
+								setPsk(value);
+							}}
+						/>
+						<TextInput
+							style={[styles.input, {width: '100%'}]}
+							placeholder="Password"
+							secureTextEntry={true}
+							textContentType={'newPassword'}
+							value={password}
+							onChangeText={value => {
+								setPassword(value);
+							}}
+						/>
+						<TouchableOpacity
+							style={{
+								alignSelf: 'stretch',
+								height: 50,
+								backgroundColor:
 									!(ssid && psk && password)
 										? '#a5a4a5'
-										: '#32404e'
-								}
-								disabled={!(ssid && psk && password)}
-								onPress={async () => {
-									ReactNativeHapticFeedback.trigger(
-										'impactMedium',
-										hapticOptions
-									);
-									await onLogin(props.route.params?.deviceId);
-								}}>
-								<Text style={{color: 'white', fontSize: 20}}>
-									{' '}
-									Configure{' '}
-								</Text>
-							</Button>
-						</VStack>
-					</Box>
-				</VStack>
+										: '#32404e',
+								justifyContent: 'center',
+								alignItems: 'center',
+								borderRadius: 6
+							}}
+							disabled={!(ssid && psk && password)}
+							onPress={async () => {
+								ReactNativeHapticFeedback.trigger(
+									'impactMedium',
+									hapticOptions
+								);
+								await onLogin(props.route.params?.deviceId);
+							}}>
+							<Text style={{color: 'white', fontSize: 20}}>
+								{' '}
+								Configure{' '}
+							</Text>
+						</TouchableOpacity>
+					</View>
+				</View>
 			</View>
-		</GluestackUIProvider>
+		</View>
 	);
 }
 
 const styles = StyleSheet.create({
+	input: {
+		height: 50,
+		fontSize: 20,
+		borderWidth: 1,
+		borderColor: '#CBD5E0',
+		borderRadius: 12,
+		paddingHorizontal: 12
+	},
 	spinnerTextStyle: {
 		color: '#32404e',
 		fontSize: 15,
 		marginBottom: 50
-	},
-	centeredView: {
-		flex: 1,
-		justifyContent: 'center',
-		alignItems: 'center',
-		marginTop: 22
-	},
-	modalView: {
-		margin: 20,
-		backgroundColor: 'white',
-		borderRadius: 20,
-		padding: 35,
-		alignItems: 'center',
-		shadowColor: '#000',
-		shadowOffset: {
-			width: 0,
-			height: 2
-		},
-		shadowOpacity: 0.25,
-		shadowRadius: 4,
-		elevation: 5
-	},
-	button: {
-		borderRadius: 20,
-		padding: 10,
-		elevation: 2
-	},
-	buttonOpen: {
-		backgroundColor: '#F194FF'
-	},
-	buttonClose: {
-		backgroundColor: '#2196F3'
-	},
-	textStyle: {
-		color: 'white',
-		fontWeight: 'bold',
-		textAlign: 'center'
-	},
-	modalText: {
-		marginBottom: 15,
-		textAlign: 'center'
 	}
 });

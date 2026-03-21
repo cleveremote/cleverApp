@@ -8,6 +8,7 @@ export const BoxFormStyle = StyleSheet.create({
 		paddingHorizontal: 10,
 		paddingVertical: 10,
 		backgroundColor: 'white',
-		justifyContent: 'flex-end'
+		justifyContent: 'flex-end',
+		borderRadius: 12
 	}
 });

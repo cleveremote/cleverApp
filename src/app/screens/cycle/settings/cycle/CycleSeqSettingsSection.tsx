@@ -1,5 +1,5 @@
+import {Text, TouchableOpacity, View} from 'react-native';
 import React, {useEffect} from 'react';
-import {IconButton, Box, VStack, Text} from 'native-base';
 import {navigationHeader} from '../../../../components/common/navigationHeaders';
 import {hapticOptions} from '../../../../data/cycleTypes';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
@@ -56,13 +56,8 @@ export function SeqSettingsSec(props: any) {
 	}, [props.sequences]);
 
 	return (
-		<VStack space={2} my={1} alignSelf="stretch" shadow={3} margin={5}>
-			<Box
-				key={111}
-				alignSelf="stretch"
-				bg="white"
-				rounded="xl"
-				padding={2}>
+		<View style={{gap: 8, marginVertical: 4, alignSelf: 'stretch', margin: 20, elevation: 3, shadowColor: '#000', shadowOffset: {width: 0, height: 1}, shadowOpacity: 0.22, shadowRadius: 2.22}}>
+			<View style={{alignSelf: 'stretch', backgroundColor: 'white', borderRadius: 12, padding: 8}}>
 				<DragableForm
 					isList={true}
 					navigation={props.navigation}
@@ -72,21 +67,9 @@ export function SeqSettingsSec(props: any) {
 					name="sequences"
 					onDragEnd={() => handleSubmit(updateSeqeuncesOrder)()}
 				/>
-				<VStack
-					style={{justifyContent: 'center', alignItems: 'center'}}>
-					<IconButton
-						_pressed={{_icon: {size: 35}}}
-						variant="unstyled"
-						marginTop={5}
-						style={{transform: [{rotate: '135deg'}]}}
-						size={30}
-						icon={
-							<Icon
-								name={'times-circle'}
-								size={30}
-								color="#32404e"
-							/>
-						}
+				<View style={{justifyContent: 'center', alignItems: 'center'}}>
+					<TouchableOpacity
+						style={{marginTop: 20, transform: [{rotate: '135deg'}]}}
 						onPress={() => {
 							ReactNativeHapticFeedback.trigger(
 								'impactMedium',
@@ -98,14 +81,15 @@ export function SeqSettingsSec(props: any) {
 									cycleId: props.route.params.cycleData.id
 								}
 							});
-						}}
-					/>
+						}}>
+						<Icon name='times-circle' size={30} color="#32404e" />
+					</TouchableOpacity>
 					<Text style={{color: '#32404e', fontSize: 15}}>
 						Add new sequence ...
 					</Text>
-				</VStack>
-			</Box>
-		</VStack>
+				</View>
+			</View>
+		</View>
 	);
 }
 

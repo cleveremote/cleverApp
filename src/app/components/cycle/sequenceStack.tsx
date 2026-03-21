@@ -1,5 +1,5 @@
 import * as React from 'react';
-import {Box, Flex, IconButton, Progress, Text} from 'native-base';
+import {Text, TouchableOpacity, View} from 'react-native';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {faCog, faForward} from '@fortawesome/free-solid-svg-icons';
@@ -67,12 +67,9 @@ export function SequenceStack({
 	const getEndTime = (duration: number) => {
 		if (duration) {
 			let seconds = duration / 1000;
-			// 2- Extract hours:
 			const hours = Math.floor(seconds / 3600);
 			seconds = seconds % 3600;
-			// 3- Extract minutes:
 			const minutes = Math.floor(seconds / 60);
-			// 4- Keep only seconds not extracted to minutes:
 			seconds = seconds % 60;
 			const t =
 				(hours < 10 ? '0' + hours : hours) +
@@ -88,11 +85,10 @@ export function SequenceStack({
 	React.useEffect(
 		() => {
 			if (stackParent) {
-				//// composant utilisé pour les sequences settings cycle
 				let timerId: any;
 				const statusData = statusIn.find((x: any) => x.id === item.id);
 				const status = statusData?.status;
-				const timerSpeed = 1000; //// increments by 1 senconds
+				const timerSpeed = 1000;
 				const startedAt = statusData?.startedAt;
 				const duration = statusData?.duration || item.maxDuration;
 				const timerParams = getTimerParams(startedAt, duration, status);
@@ -132,80 +128,101 @@ export function SequenceStack({
 	);
 
 	return (
-		<Box
-			alignSelf="stretch"
-			bg={isActive ? '#32404e' : 'white'}
-			rounded="xl"
-			shadow={3}
-			m={1}>
-			<Flex direction="row">
+		<View
+			style={{
+				alignSelf: 'stretch',
+				backgroundColor: isActive ? '#32404e' : 'white',
+				borderRadius: 12,
+				elevation: 3,
+				shadowColor: '#000',
+				shadowOffset: {width: 0, height: 1},
+				shadowOpacity: 0.22,
+				shadowRadius: 2.22,
+				margin: 4
+			}}>
+			<View style={{flexDirection: 'row'}}>
 				<Text
-					flex={1}
-					alignSelf={'flex-start'}
-					style={
-						isActive ? styles.textSequenceDrag : styles.textSequence
-					}
-					my={2}
-					ml={2}>
+					style={[
+						isActive ? styles.textSequenceDrag : styles.textSequence,
+						{flex: 1, alignSelf: 'flex-start', marginVertical: 8, marginLeft: 8}
+					]}>
 					{item.name}
 				</Text>
 
 				{stackParent ? (
-					<Box flex={3} alignSelf={'stretch'} mt={4} mr={2}>
-						<Progress
-							size="xs"
-							value={progression}
-							rounded="xl"
-							_filledTrack={{bg: '#32404e'}}
-						/>
+					<View
+						style={{
+							flex: 3,
+							alignSelf: 'stretch',
+							marginTop: 16,
+							marginRight: 8
+						}}>
+						<View
+							style={{
+								height: 4,
+								backgroundColor: '#e0e0e0',
+								borderRadius: 12,
+								overflow: 'hidden'
+							}}>
+							<View
+								style={{
+									height: '100%',
+									width: `${progression}%`,
+									backgroundColor: '#32404e',
+									borderRadius: 12
+								}}
+							/>
+						</View>
 						<Text
-							alignSelf={'center'}
-							style={
+							style={[
 								isActive
 									? styles.textSequenceDrag
-									: styles.textSequence
-							}>
+									: styles.textSequence,
+								{alignSelf: 'center'}
+							]}>
 							{miliseconds > 0
 								? 'expected end in ' + getEndTime(miliseconds)
 								: 'duration ' + getEndTime(item.maxDuration)}
 						</Text>
-					</Box>
+					</View>
 				) : null}
 
 				{stackParent && miliseconds > 0 ? (
-					<Box alignSelf={'flex-end'} my={2} mr={2}>
-						<IconButton
-							_pressed={{_icon: {size: 35}}}
-							variant="unstyled"
-							size={25}
+					<View
+						style={{
+							alignSelf: 'flex-end',
+							marginVertical: 8,
+							marginRight: 8
+						}}>
+						<TouchableOpacity
 							onLongPress={() => {
 								ReactNativeHapticFeedback.trigger(
 									'impactMedium',
 									hapticOptions
 								);
 								onSkip(item.id);
-							}}
-							icon={
-								<FontAwesomeIcon
-									icon={faForward}
-									size={24}
-									style={
-										isActive
-											? styles.textSequenceDrag
-											: styles.textSequence
-									}
-								/>
-							}
-						/>
-					</Box>
+							}}>
+							<FontAwesomeIcon
+								icon={faForward}
+								size={24}
+								style={
+									isActive
+										? styles.textSequenceDrag
+										: styles.textSequence
+								}
+							/>
+						</TouchableOpacity>
+					</View>
 				) : null}
 
 				{!stackParent ? (
-					<Box alignSelf={'flex-end'} my={2} mr={2}>
-						<IconButton
-							_pressed={{_icon: {size: 35}}}
-							variant="unstyled"
-							size={21}
+					<View
+						style={{
+							alignSelf: 'flex-end',
+							marginVertical: 8,
+							marginRight: 8
+						}}>
+						<TouchableOpacity
 							onPress={() => {
 								ReactNativeHapticFeedback.trigger(
 									'impactMedium',
@@ -215,23 +232,21 @@ export function SequenceStack({
 									screen: 'SequenceSettingsMenu',
 									params: {cycleId, item}
 								});
-							}}
-							icon={
-								<FontAwesomeIcon
-									icon={faCog}
-									size={20}
-									style={
-										isActive
-											? styles.textSequenceDrag
-											: styles.textSequence
-									}
-								/>
-							}
-						/>
-					</Box>
+							}}>
+							<FontAwesomeIcon
+								icon={faCog}
+								size={20}
+								style={
+									isActive
+										? styles.textSequenceDrag
+										: styles.textSequence
+								}
+							/>
+						</TouchableOpacity>
+					</View>
 				) : null}
-			</Flex>
-		</Box>
+			</View>
+		</View>
 	);
 }
 

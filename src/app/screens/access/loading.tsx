@@ -1,13 +1,5 @@
-import {Platform, Text} from 'react-native';
+import {Platform, ScrollView, Text, TouchableOpacity, View} from 'react-native';
 import React, {useCallback} from 'react';
-import {
-	Box,
-	IconButton,
-	ScrollView,
-	VStack,
-	View
-} from 'native-base';
-import {GluestackUIProvider} from '@gluestack-ui/themed-native-base';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import {
@@ -41,8 +33,8 @@ export function ProfilesScreen(props: any) {
 	);
 
 	return (
-		<GluestackUIProvider>
-			<View alignItems="center" marginTop={70}>
+		<View style={{flex: 1}}>
+			<View style={{alignItems: 'center', marginTop: 70}}>
 				<Logo width={'70'} height={'70'} />
 				<Text
 					style={{
@@ -64,19 +56,16 @@ export function ProfilesScreen(props: any) {
 				<ScrollView
 					showsVerticalScrollIndicator={false}
 					showsHorizontalScrollIndicator={false}>
-					<View style={{alignItems: 'center'}}>
+					<View
+						style={{alignItems: 'center', flexDirection: 'column'}}>
 						{profiles.map((profile, index) => (
-							<Box key={`profile_` + index}>
-								<IconButton
-									_pressed={{_icon: {size: 35}}}
-									variant="unstyled"
-									icon={
-										<Icon
-											name="server"
-											size={40}
-											color="#32404e"
-										/>
-									}
+							<View
+								key={`profile_` + index}
+								style={{
+									alignItems: 'center',
+									marginBottom: 20
+								}}>
+								<TouchableOpacity
 									onLongPress={async () => {
 										ReactNativeHapticFeedback.trigger(
 											'impactMedium',
@@ -95,8 +84,13 @@ export function ProfilesScreen(props: any) {
 										props.navigation.navigate('Signin', {
 											profile
 										});
-									}}
-								/>
+									}}>
+									<Icon
+										name="server"
+										size={40}
+										color="#32404e"
+									/>
+								</TouchableOpacity>
 								<Text
 									style={{
 										color: '#32404e',
@@ -105,39 +99,35 @@ export function ProfilesScreen(props: any) {
 									}}>
 									{profile}
 								</Text>
-							</Box>
+							</View>
 						))}
-						<VStack
+						<View
 							style={{
 								justifyContent: 'center',
 								alignItems: 'center'
 							}}>
-							<IconButton
-								_pressed={{_icon: {size: 35}}}
-								variant="unstyled"
-								marginTop={5}
-								style={{transform: [{rotate: '135deg'}]}}
-								size={30}
-								icon={
-									<Icon
-										name={'times-circle'}
-										size={30}
-										color="#32404e"
-									/>
-								}
+							<TouchableOpacity
+								style={{
+									marginTop: 20,
+									transform: [{rotate: '135deg'}]
+								}}
 								onPress={async () => {
 									ReactNativeHapticFeedback.trigger(
 										'impactMedium',
 										hapticOptions
 									);
-									//props.navigation.navigate('Signin');
 									props.navigation.navigate('Signin');
-								}}
-							/>
+								}}>
+								<Icon
+									name={'times-circle'}
+									size={30}
+									color="#32404e"
+								/>
+							</TouchableOpacity>
 							<Text style={{color: '#32404e', fontSize: 15}}>
 								Add new profil ...
 							</Text>
-						</VStack>
+						</View>
 						<Text style={{color: '#32404e', fontSize: 15}}>
 							(To delete long press on profile)
 						</Text>
@@ -145,29 +135,28 @@ export function ProfilesScreen(props: any) {
 				</ScrollView>
 			</View>
 
-			<VStack
-				marginLeft="10"
-				marginRight="10"
-				marginBottom={5}
-				alignSelf="center">
-				<IconButton
-					_pressed={{_icon: {size: 35}}}
-					variant="unstyled"
-					alignSelf="center"
-					size={30}
-					icon={<Icon name="wifi" size={25} color="#32404e" />}
+			<View
+				style={{
+					marginLeft: 40,
+					marginRight: 40,
+					marginBottom: 20,
+					alignSelf: 'center',
+					alignItems: 'center'
+				}}>
+				<TouchableOpacity
 					onPress={() => {
 						ReactNativeHapticFeedback.trigger(
 							'impactMedium',
 							hapticOptions
 						);
 						props.navigation.navigate('Device');
-					}}
-				/>
+					}}>
+					<Icon name="wifi" size={25} color="#32404e" />
+				</TouchableOpacity>
 				<Text style={{color: '#32404e', fontSize: 15}}>
 					Connectivity settings
 				</Text>
-			</VStack>
-		</GluestackUIProvider>
+			</View>
+		</View>
 	);
 }

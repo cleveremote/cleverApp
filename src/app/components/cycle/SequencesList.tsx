@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {Box} from 'native-base';
+import {View} from 'react-native';
 import {connect} from 'react-redux';
 import SequenceStack from './sequenceStack';
 
@@ -19,7 +19,7 @@ export function SeqeuncesList(props: any) {
 
 	return status === 'IN_PROCCESS'
 		? props.cycleData.sequences.map((sequence: any, index: number) => (
-				<Box key={'sequence_' + index} marginLeft={5} marginTop={2}>
+				<View key={'sequence_' + index} style={{marginLeft: 20, marginTop: 8}}>
 					<SequenceStack
 						navigation={props.navigation}
 						cycleId={props.cycleData.id}
@@ -28,7 +28,7 @@ export function SeqeuncesList(props: any) {
 						onSkip={() => props.onSkip(sequence.id)}
 						stackParent={true}
 					/>
-				</Box>
+				</View>
 		  ))
 		: null;
 }

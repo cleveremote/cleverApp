@@ -1,5 +1,11 @@
-import {AlertDialog, Button, Input} from 'native-base';
 import React, {useState} from 'react';
+import {
+	Modal,
+	Text,
+	TextInput,
+	TouchableOpacity,
+	View
+} from 'react-native';
 
 export function ModalOverrideDuration({
 	isOpen,
@@ -10,41 +16,77 @@ export function ModalOverrideDuration({
 	onClose: () => void;
 	onConfirm: (ms: number) => void;
 }) {
-	const cancelRef = React.useRef(null);
 	const [text, setText] = useState('');
 	return (
-		<AlertDialog
-			leastDestructiveRef={cancelRef}
-			isOpen={isOpen}
-			onClose={onClose}>
-			<AlertDialog.Content>
-				<AlertDialog.CloseButton />
-				<AlertDialog.Header>Override duration</AlertDialog.Header>
-				<AlertDialog.Body>
-					please enter duration in (ms) to override default sequences
-					duration
-					<Input
+		<Modal
+			visible={isOpen}
+			transparent
+			animationType="fade"
+			onRequestClose={onClose}>
+			<View
+				style={{
+					flex: 1,
+					justifyContent: 'center',
+					alignItems: 'center',
+					backgroundColor: 'rgba(0,0,0,0.5)'
+				}}>
+				<View
+					style={{
+						backgroundColor: 'white',
+						borderRadius: 12,
+						padding: 20,
+						width: '80%'
+					}}>
+					<Text
+						style={{
+							fontSize: 17,
+							fontWeight: 'bold',
+							marginBottom: 12
+						}}>
+						Override duration
+					</Text>
+					<Text style={{marginBottom: 8}}>
+						please enter duration in (ms) to override default
+						sequences duration
+					</Text>
+					<TextInput
 						defaultValue={text}
 						onChangeText={newText => setText(newText)}
+						style={{
+							borderWidth: 1,
+							borderColor: '#CBD5E0',
+							borderRadius: 6,
+							paddingHorizontal: 12,
+							paddingVertical: 8,
+							marginBottom: 16
+						}}
 					/>
-				</AlertDialog.Body>
-				<AlertDialog.Footer>
-					<Button.Group space={2}>
-						<Button
-							variant="unstyled"
-							colorScheme="coolGray"
+					<View
+						style={{
+							flexDirection: 'row',
+							justifyContent: 'flex-end',
+							gap: 8
+						}}>
+						<TouchableOpacity
 							onPress={onClose}
-							ref={cancelRef}>
-							Cancel
-						</Button>
-						<Button
-							colorScheme="info"
-							onPress={() => onConfirm(Number(text))}>
-							execute
-						</Button>
-					</Button.Group>
-				</AlertDialog.Footer>
-			</AlertDialog.Content>
-		</AlertDialog>
+							style={{paddingVertical: 8, paddingHorizontal: 16}}>
+							<Text style={{color: '#718096'}}>Cancel</Text>
+						</TouchableOpacity>
+						<TouchableOpacity
+							onPress={() => onConfirm(Number(text))}
+							style={{
+								paddingVertical: 8,
+								paddingHorizontal: 16,
+								backgroundColor: '#3182CE',
+								borderRadius: 6
+							}}>
+							<Text style={{color: 'white', fontWeight: 'bold'}}>
+								execute
+							</Text>
+						</TouchableOpacity>
+					</View>
+				</View>
+			</View>
+		</Modal>
 	);
 }

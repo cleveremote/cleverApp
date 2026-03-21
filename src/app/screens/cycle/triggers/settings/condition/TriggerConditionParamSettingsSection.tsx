@@ -1,5 +1,5 @@
 import {useEffect, useState} from 'react';
-import {Box, ScrollView} from 'native-base';
+import {ScrollView, View} from 'react-native';
 import {navigationHeader} from '../../../../../components/common/navigationHeaders';
 import {connect} from 'react-redux';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
@@ -58,7 +58,7 @@ export function TriggerConditionParamSettingsSection(props: any) {
 
 	return (
 		<ScrollView automaticallyAdjustKeyboardInsets={true}>
-			<Box rounded="xl" style={BoxFormStyle.boxForm}>
+			<View style={BoxFormStyle.boxForm}>
 				<SelectForm
 					lstData={getDevices()}
 					control={control}
@@ -97,7 +97,7 @@ export function TriggerConditionParamSettingsSection(props: any) {
 						setSaveUnchangedData(true);
 					}}
 				/>
-			</Box>
+			</View>
 		</ScrollView>
 	);
 }

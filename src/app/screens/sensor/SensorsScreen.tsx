@@ -1,5 +1,5 @@
 import React, {useEffect} from 'react';
-import {VStack} from 'native-base';
+import {View} from 'react-native';
 import {connect} from 'react-redux';
 import {ScrollView, RefreshControl} from 'react-native-gesture-handler';
 import Orientation, {OrientationType} from 'react-native-orientation-locker';
@@ -68,7 +68,7 @@ export function Sensor(props: any) {
 					}}
 				/>
 			}>
-			<VStack space={2} my={1} alignSelf="stretch">
+			<View style={{gap: 8, marginVertical: 4, alignSelf: 'stretch'}}>
 				{props.sensors
 					?.filter((x: any) => x.id.indexOf('deleted') < 0)
 					?.map((cycle: any, index: number) => (
@@ -81,7 +81,7 @@ export function Sensor(props: any) {
 							closeSibillings={closeSibillings}
 						/>
 					))}
-			</VStack>
+			</View>
 		</ScrollView>
 	);
 }

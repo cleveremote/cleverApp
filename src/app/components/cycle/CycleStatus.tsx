@@ -1,5 +1,5 @@
 import React, {useEffect, useState} from 'react';
-import {IconButton, Box, HStack, Switch, View} from 'native-base';
+import {Switch, TouchableOpacity, View} from 'react-native';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import {hapticOptions} from '../../data/cycleTypes';
@@ -23,16 +23,10 @@ export function SensorStatus(props: any) {
 		props.closeSibillings(true);
 	}, [props.status]);
 	return (
-		<Box style={{alignItems: 'flex-end'}}>
+		<View style={{alignItems: 'flex-end'}}>
 			{status === 'WAITTING_CONFIRMATION' ? (
-				<HStack space={3} alignItems="center" ml={'0'}>
-					<IconButton
-						_pressed={{_icon: {size: 35}}}
-						variant="unstyled"
-						size={30}
-						icon={
-							<Icon name="check-circle" size={25} color="green" />
-						}
+				<View style={{flexDirection: 'row', alignItems: 'center', gap: 12}}>
+					<TouchableOpacity
 						onLongPress={() => {
 							ReactNativeHapticFeedback.trigger(
 								'impactMedium',
@@ -45,49 +39,41 @@ export function SensorStatus(props: any) {
 								'impactMedium',
 								hapticOptions
 							);
-						}}
-					/>
-					<IconButton
-						_pressed={{_icon: {size: 35}}}
-						variant="unstyled"
-						size={30}
-						icon={
-							<Icon name="times-circle" size={25} color="red" />
-						}
+						}}>
+						<Icon name="check-circle" size={25} color="green" />
+					</TouchableOpacity>
+					<TouchableOpacity
 						onLongPress={() => {
 							ReactNativeHapticFeedback.trigger(
 								'impactMedium',
 								hapticOptions
 							);
 							props.onSwitch(false, 'IGNORE');
-						}}
-					/>
-					<IconButton
-						_pressed={{_icon: {size: 35}}}
-						variant="unstyled"
-						size={30}
-						icon={
-							<Icon
-								name="arrow-alt-circle-right"
-								size={25}
-								color="orange"
-							/>
-						}
+						}}>
+						<Icon name="times-circle" size={25} color="red" />
+					</TouchableOpacity>
+					<TouchableOpacity
 						onPress={() => {
 							ReactNativeHapticFeedback.trigger(
 								'impactMedium',
 								hapticOptions
 							);
-						}}
-					/>
-				</HStack>
+						}}>
+						<Icon
+							name="arrow-alt-circle-right"
+							size={25}
+							color="orange"
+						/>
+					</TouchableOpacity>
+				</View>
 			) : (
 				<Switch
-					mt={0.5}
-					isChecked={status === 'IN_PROCCESS'}
-					onTrackColor={props.iconColorSwitch + '.400'}
-					offThumbColor={props.iconColorSwitch + '.50'}
-					size={'md'}
+					style={{marginTop: 2}}
+					value={status === 'IN_PROCCESS'}
+					trackColor={{
+						true: props.iconColorSwitch,
+						false: '#767577'
+					}}
 					onValueChange={value => {
 						props.closeSibillings(true);
 						props.onSwitch(value, 'INIT');
@@ -95,7 +81,7 @@ export function SensorStatus(props: any) {
 					}}
 				/>
 			)}
-		</Box>
+		</View>
 	);
 }
 

@@ -1,6 +1,5 @@
 import React, {useEffect} from 'react';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
-import {GluestackUIProvider} from '@gluestack-ui/themed-native-base';
 import {ProfilesScreen} from '../screens/access/loading';
 import {DeviceSettings} from '../screens/access/deviceSettings';
 import SignIn from '../screens/access/SignIn';
@@ -18,7 +17,7 @@ export function AccessStack() {
 
 	const Stack = createNativeStackNavigator();
 	return (
-		<GluestackUIProvider>
+		<>
 			<Stack.Navigator>
 				<Stack.Screen
 					name="Profiles"
@@ -41,6 +40,6 @@ export function AccessStack() {
 					component={SignIn}
 				/>
 			</Stack.Navigator>
-		</GluestackUIProvider>
+		</>
 	);
 }

@@ -1,32 +1,154 @@
-import {
-	Box,
-	CheckIcon,
-	Flex,
-	HStack,
-	Input,
-	Select,
-	Slider,
-	Switch,
-	Text,
-	TextArea,
-	VStack
-} from 'native-base';
+import React, {useState} from 'react';
 import {Control, Controller, FieldErrors} from 'react-hook-form';
 import {getColors} from '../../data/cycleTypes';
 import {InputStyle} from '../../styles/components/common/Input';
-import {Keyboard, Platform, Pressable} from 'react-native';
+import {
+	FlatList,
+	Keyboard,
+	Modal,
+	Platform,
+	Pressable,
+	Switch,
+	Text,
+	TextInput,
+	View
+} from 'react-native';
 import {DragableSequences} from './draggableStack';
 import {styles} from '../../styles/cycleStyles';
 import {SequenceStack} from '../cycle/sequenceStack';
-import React from 'react';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import {TouchableOpacity} from 'react-native-gesture-handler';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {
 	faBan,
 	faCog,
+	faChevronDown,
 	faTriangleExclamation
 } from '@fortawesome/free-solid-svg-icons';
+import Slider from '@react-native-community/slider';
+
+function DropdownSelect<T extends {iconColor?: {base: string}}>({
+	items,
+	value,
+	getLabel,
+	getValue,
+	renderPrefix,
+	onChange,
+	hasError
+}: Readonly<{
+	items: T[];
+	value: any;
+	getLabel: (item: T) => string;
+	getValue: (item: T) => any;
+	renderPrefix?: (item: T) => React.ReactNode;
+	onChange: (value: any) => void;
+	hasError: boolean;
+}>) {
+	const [isOpen, setIsOpen] = useState(false);
+	const selectedItem = items.find(item => {
+		console.log('value', item);
+		return String(getValue(item)) === String(value);
+	});
+	const label = selectedItem ? getLabel(selectedItem) : '—';
+
+	return (
+		<>
+			<Pressable
+				onPress={() => setIsOpen(true)}
+				style={[
+					InputStyle.input,
+					{
+						borderRadius: 12,
+						borderWidth: hasError ? 2 : 1,
+						borderColor: hasError ? '#FC8181' : '#CBD5E0',
+						paddingHorizontal: 12,
+						flexDirection: 'row',
+						alignItems: 'center',
+						justifyContent: 'space-between',
+						marginVertical: 4,
+						backgroundColor:
+							selectedItem?.iconColor?.base ?? 'transparent'
+					}
+				]}>
+				<View
+					style={{
+						flexDirection: 'row',
+						alignItems: 'center',
+						gap: 8
+					}}>
+					{selectedItem && renderPrefix
+						? renderPrefix(selectedItem)
+						: null}
+					<Text
+						style={{
+							color: '#32404e',
+							fontSize: 15,
+							fontWeight: 'bold'
+						}}>
+						{label}
+					</Text>
+				</View>
+				<FontAwesomeIcon
+					icon={faChevronDown}
+					size={12}
+					color="#32404e"
+				/>
+			</Pressable>
+			<Modal visible={isOpen} transparent animationType="fade">
+				<Pressable
+					style={{
+						flex: 1,
+						backgroundColor: 'rgba(0,0,0,0.4)',
+						justifyContent: 'flex-end'
+					}}
+					onPress={() => setIsOpen(false)}>
+					<View
+						onStartShouldSetResponder={() => true}
+						style={{
+							backgroundColor: 'white',
+							borderTopLeftRadius: 16,
+							borderTopRightRadius: 16,
+							maxHeight: 320
+						}}>
+						<FlatList
+							data={items}
+							keyExtractor={(_, i) => 'opt_' + i}
+							renderItem={({item}) => (
+								<Pressable
+									onPress={() => {
+										onChange(getValue(item));
+										setIsOpen(false);
+									}}
+									style={{
+										padding: 16,
+										borderBottomWidth: 1,
+										borderBottomColor: '#E2E8F0',
+										flexDirection: 'row',
+										alignItems: 'center',
+										gap: 10
+									}}>
+									{renderPrefix ? renderPrefix(item) : null}
+									<Text
+										style={{
+											color: '#32404e',
+											fontSize: 15,
+											fontWeight:
+												String(getValue(item)) ===
+												String(value)
+													? 'bold'
+													: 'normal'
+										}}>
+										{getLabel(item)}
+									</Text>
+								</Pressable>
+							)}
+						/>
+					</View>
+				</Pressable>
+			</Modal>
+		</>
+	);
+}
 
 export function DateTimePickerForm({
 	control,
@@ -107,7 +229,7 @@ export function DateTimePickerForm({
 				control={control}
 				rules={rules}
 				render={({field: {onChange, onBlur, value}}) => (
-					<VStack>
+					<View>
 						<Text
 							style={{
 								...InputStyle.textInput,
@@ -116,9 +238,16 @@ export function DateTimePickerForm({
 							{placeholder}
 						</Text>
 						<Pressable onPress={showDatePicker}>
-							<Input
-								rounded="xl"
-								style={InputStyle.input}
+							<TextInput
+								style={[
+									InputStyle.input,
+									{
+										borderRadius: 12,
+										borderWidth: 1,
+										borderColor: '#CBD5E0',
+										paddingHorizontal: 12
+									}
+								]}
 								placeholder={placeholder}
 								onBlur={onBlur}
 								editable={false}
@@ -147,12 +276,12 @@ export function DateTimePickerForm({
 							}}
 							onCancel={hideDatePicker}
 						/>
-					</VStack>
+					</View>
 				)}
 				name={name}
 			/>
 			{errors[name] && (
-				<HStack>
+				<View style={{flexDirection: 'row', alignItems: 'center'}}>
 					<FontAwesomeIcon
 						icon={faTriangleExclamation}
 						style={InputStyle.iconInputError}
@@ -160,7 +289,7 @@ export function DateTimePickerForm({
 					<Text style={InputStyle.textInputError}>
 						{(errors[name]?.message as string) || 'unknown error'}
 					</Text>
-				</HStack>
+				</View>
 			)}
 		</>
 	);
@@ -191,7 +320,7 @@ export function SliderForm({
 				control={control}
 				rules={rules}
 				render={({field: {onChange, onBlur, value}}) => (
-					<VStack>
+					<View>
 						<Text
 							style={{
 								...InputStyle.textInput,
@@ -201,41 +330,22 @@ export function SliderForm({
 						</Text>
 						<Slider
 							style={InputStyle.input}
-							borderColor={errors[name] && 'red.500'}
-							borderWidth={errors[name] && 2}
-							onChange={value => {
+							onValueChange={value => {
 								onChangeText(value);
 								onChange(value);
 							}}
 							value={value}
-							minValue={60}
-							maxValue={100}
+							minimumValue={60}
+							maximumValue={100}
 							accessibilityLabel={placeholder}
-							step={1}>
-							<Slider.Track>
-								<Slider.FilledTrack />
-							</Slider.Track>
-							<Slider.Thumb />
-						</Slider>
-
-						{/* <Input rounded="xl"
-                            style={InputStyle.input}
-                            borderColor={errors[name] && "red.500"} borderWidth={errors[name] && 2}
-                            placeholder={placeholder}
-                            onBlur={onBlur}
-                            isDisabled={disabled}
-                            ref={refr}
-                            onChangeText={value => {
-                                onChangeText(value);
-                                onChange(value);
-                            }}
-                            value={value?.toString()} /> */}
-					</VStack>
+							step={1}
+						/>
+					</View>
 				)}
 				name={name}
 			/>
 			{errors[name] && (
-				<HStack>
+				<View style={{flexDirection: 'row', alignItems: 'center'}}>
 					<FontAwesomeIcon
 						icon={faTriangleExclamation}
 						style={InputStyle.iconInputError}
@@ -243,7 +353,7 @@ export function SliderForm({
 					<Text style={InputStyle.textInputError}>
 						{(errors[name]?.message as string) || 'unknown error'}
 					</Text>
-				</HStack>
+				</View>
 			)}
 		</>
 	);
@@ -274,7 +384,7 @@ export function InputForm({
 				control={control}
 				rules={rules}
 				render={({field: {onChange, onBlur, value}}) => (
-					<VStack>
+					<View>
 						<Text
 							style={{
 								...InputStyle.textInput,
@@ -282,14 +392,21 @@ export function InputForm({
 							}}>
 							{placeholder}
 						</Text>
-						<Input
-							rounded="xl"
-							style={InputStyle.input}
-							borderColor={errors[name] && 'red.500'}
-							borderWidth={errors[name] && 2}
+						<TextInput
+							style={[
+								InputStyle.input,
+								{
+									borderRadius: 12,
+									borderWidth: errors[name] ? 2 : 1,
+									borderColor: errors[name]
+										? '#FC8181'
+										: '#CBD5E0',
+									paddingHorizontal: 12
+								}
+							]}
 							placeholder={placeholder}
 							onBlur={onBlur}
-							isDisabled={disabled}
+							editable={!disabled}
 							ref={refr}
 							onChangeText={value => {
 								onChangeText(value);
@@ -297,12 +414,12 @@ export function InputForm({
 							}}
 							value={value?.toString()}
 						/>
-					</VStack>
+					</View>
 				)}
 				name={name}
 			/>
 			{errors[name] && (
-				<HStack>
+				<View style={{flexDirection: 'row', alignItems: 'center'}}>
 					<FontAwesomeIcon
 						icon={faTriangleExclamation}
 						style={InputStyle.iconInputError}
@@ -310,7 +427,7 @@ export function InputForm({
 					<Text style={InputStyle.textInputError}>
 						{(errors[name]?.message as string) || 'unknown error'}
 					</Text>
-				</HStack>
+				</View>
 			)}
 		</>
 	);
@@ -339,27 +456,28 @@ export function SwitchForm({
 				control={control}
 				rules={rules}
 				render={({field: {onChange, onBlur, value}}) => (
-					<HStack>
+					<View style={{flexDirection: 'row', alignItems: 'center'}}>
 						<Switch
-							mt={2}
-							isChecked={value}
-							onTrackColor={'#32404e'}
-							offThumbColor={'blueGray.50'}
-							size={'md'}
-							onValueChange={checked => {
-								onChangeText(checked);
-								onChange(checked);
-							}}
 							style={{
+								marginTop: 8,
 								...(Platform.OS === 'android' && {
 									transform: [{scaleX: 1.5}, {scaleY: 1.5}],
 									marginVertical: 10
 								})
 							}}
+							value={value}
+							trackColor={{
+								true: '#32404e',
+								false: '#767577'
+							}}
+							onValueChange={checked => {
+								onChangeText(checked);
+								onChange(checked);
+							}}
 						/>
 						<Text
-							mt={3}
 							style={{
+								marginTop: 12,
 								color: '#32404e',
 								fontSize: 15,
 								marginLeft: 5,
@@ -367,12 +485,12 @@ export function SwitchForm({
 							}}>
 							{placeholder}
 						</Text>
-					</HStack>
+					</View>
 				)}
 				name={name}
 			/>
 			{errors[name] && (
-				<HStack>
+				<View style={{flexDirection: 'row', alignItems: 'center'}}>
 					<FontAwesomeIcon
 						icon={faTriangleExclamation}
 						style={InputStyle.iconInputError}
@@ -380,7 +498,7 @@ export function SwitchForm({
 					<Text style={InputStyle.textInputError}>
 						{(errors[name]?.message as string) || 'unknown error'}
 					</Text>
-				</HStack>
+				</View>
 			)}
 		</>
 	);
@@ -406,45 +524,38 @@ export function SelectColor({
 	onChangeText?: (value: any) => void;
 }>) {
 	return (
-		<Box>
+		<View>
 			<Controller
 				control={control}
 				rules={rules}
-				render={({field: {onChange, onBlur, value}}) => (
-					<VStack>
-						<Select
-							style={InputStyle.input}
-							rounded={'xl'}
-							borderColor={errors[name] && 'red.500'}
-							borderWidth={errors[name] && 2}
-							key={0}
-							placeholder={placeholder}
-							placeholderTextColor="#32404e"
-							bgColor={style?.fontColor}
-							_selectedItem={{
-								bg: style?.fontColor,
-								endIcon: <CheckIcon size="5" />
-							}}
-							selectedValue={JSON.stringify(style)}
-							onValueChange={value => {
-								onChangeText(value);
-								onChange(value);
-							}}>
-							{getColors().map((color, index) => (
-								<Select.Item
-									label={''}
-									value={JSON.stringify(color)}
-									bgColor={color.bgColor}
-									key={'item_' + index}
+				render={({field: {onChange}}) => (
+					<View>
+						<DropdownSelect
+							items={getColors()}
+							value={JSON.stringify(style)}
+							getLabel={color => color.bgColor || ''}
+							getValue={color => JSON.stringify(color)}
+							renderPrefix={color => (
+								<View
+									style={{
+										width: '100%',
+										height: '100%',
+										backgroundColor: color.iconColor.icon
+									}}
 								/>
-							))}
-						</Select>
-					</VStack>
+							)}
+							onChange={val => {
+								onChangeText(val);
+								onChange(val);
+							}}
+							hasError={!!errors[name]}
+						/>
+					</View>
 				)}
 				name={name}
 			/>
 			{errors[name] && (
-				<HStack>
+				<View style={{flexDirection: 'row', alignItems: 'center'}}>
 					<FontAwesomeIcon
 						icon={faTriangleExclamation}
 						style={InputStyle.iconInputError}
@@ -452,9 +563,9 @@ export function SelectColor({
 					<Text style={InputStyle.textInputError}>
 						{(errors[name]?.message as string) || 'unknown error'}
 					</Text>
-				</HStack>
+				</View>
 			)}
-		</Box>
+		</View>
 	);
 }
 
@@ -481,7 +592,7 @@ export function TextAreaForm({
 				control={control}
 				rules={rules}
 				render={({field: {onChange, onBlur, value}}) => (
-					<VStack>
+					<View>
 						<Text
 							style={{
 								...InputStyle.textInput,
@@ -489,28 +600,35 @@ export function TextAreaForm({
 							}}>
 							{placeholder}
 						</Text>
-						<TextArea
-							borderColor={errors[name] && 'red.500'}
-							borderWidth={errors[name] && 2}
-							rounded="xl"
-							style={InputStyle.input}
+						<TextInput
+							multiline={true}
+							style={[
+								InputStyle.input,
+								{
+									borderRadius: 12,
+									borderWidth: errors[name] ? 2 : 1,
+									borderColor: errors[name]
+										? '#FC8181'
+										: '#CBD5E0',
+									paddingHorizontal: 12
+								}
+							]}
 							placeholder={placeholder}
 							onBlur={onBlur}
-							isDisabled={disabled}
+							editable={!disabled}
 							onChangeText={value => {
 								onChangeText(value);
 								onChange(value);
 							}}
 							value={value}
-							autoCompleteType={undefined}
 							onSubmitEditing={Keyboard.dismiss}
 						/>
-					</VStack>
+					</View>
 				)}
 				name={name}
 			/>
 			{errors[name] && (
-				<HStack>
+				<View style={{flexDirection: 'row', alignItems: 'center'}}>
 					<FontAwesomeIcon
 						icon={faTriangleExclamation}
 						style={InputStyle.iconInputError}
@@ -518,7 +636,7 @@ export function TextAreaForm({
 					<Text style={InputStyle.textInputError}>
 						{(errors[name]?.message as string) || 'unknown error'}
 					</Text>
-				</HStack>
+				</View>
 			)}
 		</>
 	);
@@ -549,7 +667,7 @@ export function DragableForm({
 				control={control}
 				rules={rules}
 				render={({field: {onChange, onBlur, value}}) => (
-					<VStack>
+					<View>
 						<DragableSequences
 							onDrag={() => {}}
 							onDragEnd={(value: any[]) => {
@@ -566,74 +684,88 @@ export function DragableForm({
 										onSkip={() => {}}
 									/>
 								) : (
-									<Box
-										alignSelf="stretch"
-										bg={isActive ? '#32404e' : 'white'}
-										rounded="xl"
-										shadow={3}
-										m={1}>
-										<Flex direction="row">
+									<View
+										style={{
+											alignSelf: 'stretch',
+											backgroundColor: isActive
+												? '#32404e'
+												: 'white',
+											borderRadius: 12,
+											elevation: 3,
+											shadowColor: '#000',
+											shadowOffset: {width: 0, height: 1},
+											shadowOpacity: 0.22,
+											shadowRadius: 2.22,
+											margin: 4
+										}}>
+										<View style={{flexDirection: 'row'}}>
 											<Text
-												flex={2}
-												alignSelf={'flex-start'}
-												style={
+												style={[
 													isActive
 														? styles.textDrag
-														: styles.text
-												}
-												m={2}>
+														: styles.text,
+													{
+														flex: 2,
+														alignSelf: 'flex-start',
+														margin: 8
+													}
+												]}>
 												{item.mode}
 											</Text>
 											<Text
-												alignSelf={'flex-end'}
-												display={
-													value.findIndex(
-														(x: any) =>
-															x.mode === item.mode
-													) === 0
-														? 'flex'
-														: 'none'
-												}
-												style={
+												style={[
 													isActive
 														? styles.textPriorityDrag
-														: styles.textPriority
-												}
-												m={2}>
+														: styles.textPriority,
+													{
+														alignSelf: 'flex-end',
+														display:
+															value.findIndex(
+																(x: any) =>
+																	x.mode ===
+																	item.mode
+															) === 0
+																? 'flex'
+																: 'none',
+														margin: 8
+													}
+												]}>
 												higher
 											</Text>
 											<Text
-												alignSelf={'flex-end'}
-												display={
-													value.findIndex(
-														(x: any) =>
-															x.mode === item.mode
-													) === 2
-														? 'flex'
-														: 'none'
-												}
-												style={
+												style={[
 													isActive
 														? styles.textPriorityDrag
-														: styles.textPriority
-												}
-												m={2}>
+														: styles.textPriority,
+													{
+														alignSelf: 'flex-end',
+														display:
+															value.findIndex(
+																(x: any) =>
+																	x.mode ===
+																	item.mode
+															) === 2
+																? 'flex'
+																: 'none',
+														margin: 8
+													}
+												]}>
 												lowest
 											</Text>
-										</Flex>
-									</Box>
+										</View>
+									</View>
 								);
 							}}
 							data={value.filter((x: any) =>
 								x.id ? x.id?.indexOf('delete') === -1 : true
 							)}
 						/>
-					</VStack>
+					</View>
 				)}
 				name={name}
 			/>
 			{errors[name] && (
-				<HStack>
+				<View style={{flexDirection: 'row', alignItems: 'center'}}>
 					<FontAwesomeIcon
 						icon={faTriangleExclamation}
 						style={InputStyle.iconInputError}
@@ -641,7 +773,7 @@ export function DragableForm({
 					<Text style={InputStyle.textInputError}>
 						{(errors[name]?.message as string) || 'unknown error'}
 					</Text>
-				</HStack>
+				</View>
 			)}
 		</>
 	);
@@ -672,7 +804,7 @@ export function SelectForm({
 				control={control}
 				rules={rules}
 				render={({field: {onChange, onBlur, value}}) => (
-					<VStack>
+					<View>
 						<Text
 							style={{
 								...InputStyle.textInput,
@@ -680,39 +812,23 @@ export function SelectForm({
 							}}>
 							{placeholder}
 						</Text>
-						<Select
-							defaultValue={value}
-							_actionSheetContent={{maxHeight: '2xl'}}
-							placeholder={placeholder}
-							borderColor={errors[name] && 'red.500'}
-							borderWidth={errors[name] && 2}
-							rounded="xl"
-							fontSize={15}
-							fontWeight={'bold'}
-							height={'50px'}
-							_selectedItem={{
-								bg: 'blue.400',
-								endIcon: <CheckIcon size="5" />
+						<DropdownSelect
+							items={lstData}
+							value={value}
+							getLabel={item => `${item.label}`}
+							getValue={item => `${item.value}`}
+							onChange={val => {
+								onChange(val);
+								onValueChange(val);
 							}}
-							my={1}
-							onValueChange={value => {
-								onChange(value);
-								onValueChange(value);
-							}}>
-							{lstData.map((item, index) => (
-								<Select.Item
-									key={'action_' + index}
-									label={`${item.label}`}
-									value={`${item.value}`}
-								/>
-							))}
-						</Select>
-					</VStack>
+							hasError={!!errors[name]}
+						/>
+					</View>
 				)}
 				name={name}
 			/>
 			{errors[name] && (
-				<HStack>
+				<View style={{flexDirection: 'row', alignItems: 'center'}}>
 					<FontAwesomeIcon
 						icon={faTriangleExclamation}
 						style={InputStyle.iconInputError}
@@ -720,7 +836,7 @@ export function SelectForm({
 					<Text style={InputStyle.textInputError}>
 						{(errors[name]?.message as string) || 'unknown error'}
 					</Text>
-				</HStack>
+				</View>
 			)}
 		</>
 	);

@@ -2,7 +2,6 @@ import * as React from 'react';
 import {Provider} from 'react-redux';
 import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {LogBox, StatusBar} from 'react-native';
-import {NativeBaseProvider} from 'native-base';
 import Routes from './src/app/routes';
 import {store} from './src/module/process/infrasctructure/store/store';
 
@@ -17,10 +16,8 @@ export default function App() {
 
 	return (
 		<Provider store={store}>
-			<NativeBaseProvider>
-				<StatusBar barStyle={'dark-content'} backgroundColor={'white'} />
-				<Routes />
-			</NativeBaseProvider>
+			<StatusBar barStyle={'dark-content'} backgroundColor={'white'} />
+			<Routes />
 		</Provider>
 	);
 }

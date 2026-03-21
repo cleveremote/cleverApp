@@ -1,6 +1,5 @@
-import {FlatList, Platform} from 'react-native';
+import {FlatList, Platform, Text, View} from 'react-native';
 import React, {useEffect, useRef, useState} from 'react';
-import {Box, HStack, Text, View} from 'native-base';
 import {SvgXml} from 'react-native-svg';
 import {connect} from 'react-redux';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
@@ -123,15 +122,10 @@ export function PlanScreen(props: any) {
 	};
 
 	return (
-		<View marginBottom={60}>
-			<Box alignSelf="stretch" bg={'#84adea'} shadow={3} height="60">
-				<HStack
-					justifyContent={'center'}
-					shadow={6}
-					rounded="xl"
-					color={'#32404e'}
-					marginBottom={1}>
-					<Box>
+		<View style={{marginBottom: 60}}>
+			<View style={{alignSelf: 'stretch', backgroundColor: '#84adea', height: 60, elevation: 3, shadowColor: '#000', shadowOffset: {width: 0, height: 1}, shadowOpacity: 0.22, shadowRadius: 2.22}}>
+				<View style={{flexDirection: 'row', justifyContent: 'center', borderRadius: 12, marginBottom: 4, elevation: 6, shadowColor: '#000', shadowOffset: {width: 0, height: 3}, shadowOpacity: 0.27, shadowRadius: 4.65}}>
+					<View>
 						<FontAwesomeIcon
 							icon={faSun}
 							size={55}
@@ -147,7 +141,7 @@ export function PlanScreen(props: any) {
 								marginTop: 10
 							}}
 						/>
-					</Box>
+					</View>
 
 					<Text
 						style={{
@@ -181,8 +175,8 @@ export function PlanScreen(props: any) {
 						}}>
 						precipitation : 0%
 					</Text>
-				</HStack>
-			</Box>
+				</View>
+			</View>
 
 			<FlatList
 				style={{maxHeight: 100}}
@@ -199,9 +193,9 @@ export function PlanScreen(props: any) {
 					/>
 				)}
 			/>
-			<Box display={'block'} width={'100%'} height={'200'} marginTop={5}>
+			<View style={{width: '100%', height: 200, marginTop: 20}}>
 				{Plan(showText)}
-			</Box>
+			</View>
 		</View>
 	);
 }
