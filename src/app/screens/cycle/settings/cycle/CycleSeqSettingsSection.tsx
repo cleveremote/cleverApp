@@ -1,5 +1,6 @@
 import {Text, TouchableOpacity, View} from 'react-native';
-import React, {useEffect} from 'react';
+import React, {useCallback, useEffect, useRef} from 'react';
+import {useFocusEffect} from '@react-navigation/native';
 import {navigationHeader} from '../../../../components/common/navigationHeaders';
 import {hapticOptions} from '../../../../data/cycleTypes';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
@@ -15,6 +16,13 @@ import {
 
 export function SeqSettingsSec(props: any) {
 	const defaultValues = {...props.route.params?.cycleData};
+	const sequencesRef = useRef(props.sequences);
+	sequencesRef.current = props.sequences;
+	const updateCycleRef = useRef(props.updateCycle);
+	updateCycleRef.current = props.updateCycle;
+	const cycleDataRef = useRef(props.route.params.cycleData);
+	cycleDataRef.current = props.route.params.cycleData;
+
 	const {
 		control,
 		handleSubmit,
@@ -24,6 +32,34 @@ export function SeqSettingsSec(props: any) {
 
 	const updateSeqeuncesOrder = (data: any) => {
 		props.updateSequencesOder(data.sequences);
+	};
+
+	useFocusEffect(
+		useCallback(() => {
+			const hasModified = !!sequencesRef.current?.find(
+				(x: any) => x.isModified
+			);
+			if (hasModified || cycleDataRef.current.isModified) {
+				updateCycleRef.current({
+					...cycleDataRef.current,
+					sequences: sequencesRef.current,
+					isModified: true
+				});
+			}
+		}, [])
+	);
+
+	const checkChanges = (e: any) => {
+		const hasModified = !!sequencesRef.current?.find(
+			(x: any) => x.isModified
+		);
+		if (hasModified || cycleDataRef.current.isModified) {
+			updateCycleRef.current({
+				...cycleDataRef.current,
+				sequences: sequencesRef.current,
+				isModified: true
+			});
+		}
 	};
 
 	useEffect(() => {
@@ -41,10 +77,12 @@ export function SeqSettingsSec(props: any) {
 					false
 				)
 		});
+
 		props.loadSequences(props.route.params.cycleData);
 	}, []);
 
 	useEffect(() => {
+		console.log('sequences updated123', props.sequences);
 		setValue('sequences', props.sequences, {shouldValidate: true});
 		props.updateCycle({
 			...props.route.params.cycleData,
@@ -53,11 +91,35 @@ export function SeqSettingsSec(props: any) {
 				props.route.params.cycleData.isModified ||
 				!!props.sequences.find((x: any) => x.isModified)
 		});
+		const listenerUnsubscribe = props.navigation.addListener(
+			'beforeRemove',
+			(e: any) => {
+				checkChanges(e);
+			}
+		);
+		return () => listenerUnsubscribe();
 	}, [props.sequences]);
 
 	return (
-		<View style={{gap: 8, marginVertical: 4, alignSelf: 'stretch', margin: 20, elevation: 3, shadowColor: '#000', shadowOffset: {width: 0, height: 1}, shadowOpacity: 0.22, shadowRadius: 2.22}}>
-			<View style={{alignSelf: 'stretch', backgroundColor: 'white', borderRadius: 12, padding: 8}}>
+		<View
+			style={{
+				gap: 8,
+				marginVertical: 4,
+				alignSelf: 'stretch',
+				margin: 20,
+				elevation: 3,
+				shadowColor: '#000',
+				shadowOffset: {width: 0, height: 1},
+				shadowOpacity: 0.22,
+				shadowRadius: 2.22
+			}}>
+			<View
+				style={{
+					alignSelf: 'stretch',
+					backgroundColor: 'white',
+					borderRadius: 12,
+					padding: 8
+				}}>
 				<DragableForm
 					isList={true}
 					navigation={props.navigation}
@@ -82,7 +144,7 @@ export function SeqSettingsSec(props: any) {
 								}
 							});
 						}}>
-						<Icon name='times-circle' size={30} color="#32404e" />
+						<Icon name="times-circle" size={30} color="#32404e" />
 					</TouchableOpacity>
 					<Text style={{color: '#32404e', fontSize: 15}}>
 						Add new sequence ...

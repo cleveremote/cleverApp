@@ -15,6 +15,7 @@ import {updateSequence} from '../../../../../module/process/infrasctructure/stor
 
 export function SequenceGeneralSettingsSection(props: any) {
 	const [saveUnchangedData, setSaveUnchangedData] = React.useState(false);
+	const isSavingRef = React.useRef(false);
 	const defaultValues = {...props.route.params?.sequenceData};
 	const {
 		control,
@@ -23,10 +24,14 @@ export function SequenceGeneralSettingsSection(props: any) {
 	} = useForm({defaultValues});
 
 	const onSubmit = (data: any) => {
-		ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
 		if (saveUnchangedData) {
 			props.updateSequence({...data, isModified: saveUnchangedData});
 		}
+	};
+
+	const onSubmitGoBack = (data: any) => {
+		ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
+		onSubmit(data);
 		props.navigation.goBack();
 	};
 
@@ -34,11 +39,27 @@ export function SequenceGeneralSettingsSection(props: any) {
 		props.navigation.setOptions({
 			headerLeft: () =>
 				navigationHeader(
-					handleSubmit(onSubmit),
+					handleSubmit(onSubmitGoBack),
 					'arrow-alt-circle-left',
 					false
 				)
 		});
+	}, [saveUnchangedData]);
+
+	useEffect(() => {
+		const listenerUnsubscribe = props.navigation.addListener(
+			'beforeRemove',
+			(e: any) => {
+				if (isSavingRef.current) return;
+				e.preventDefault();
+				isSavingRef.current = true;
+				handleSubmit(data => {
+					onSubmit(data);
+					props.navigation.dispatch(e.data.action);
+				})();
+			}
+		);
+		return () => listenerUnsubscribe();
 	}, [saveUnchangedData]);
 
 	return (

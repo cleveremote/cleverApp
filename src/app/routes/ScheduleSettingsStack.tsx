@@ -3,8 +3,6 @@ import {
 	NativeStackNavigationOptions,
 	createNativeStackNavigator
 } from '@react-navigation/native-stack';
-import {Provider} from 'react-redux';
-import {store} from '../../module/process/infrasctructure/store/store';
 import ScheduleSettingsScreen from '../screens/cycle/schedules/settings/schedule/ScheduleSettingsScreen';
 import ScheduleExecutionSettingsSection from '../screens/cycle/schedules/settings/schedule/ScheduleExecutionSettingsSection';
 import ScheduleGeneralSettingsSection from '../screens/cycle/schedules/settings/schedule/ScheduleGeneralSettingsSection';

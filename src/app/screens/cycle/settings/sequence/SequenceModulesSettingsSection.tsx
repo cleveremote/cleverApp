@@ -1,4 +1,4 @@
-import React, {useEffect} from 'react';
+import React, {useEffect, useRef} from 'react';
 import {View} from 'react-native';
 import {navigationHeader} from '../../../../components/common/navigationHeaders';
 import {elementStack} from '../../../../components/cycle/moduleStack';
@@ -18,6 +18,12 @@ import {updateSequence} from '../../../../../module/process/infrasctructure/stor
 
 export function SequenceModulesSettingsSection(props: any) {
 	const [saveUnchangedData, setSaveUnchangedData] = React.useState(false);
+	const modulesRef = useRef(props.modules);
+	modulesRef.current = props.modules;
+	const saveUnchangedDataRef = useRef(false);
+	saveUnchangedDataRef.current =
+		saveUnchangedData ||
+		!!modulesRef.current?.find((s: any) => s.isModified);
 	const defaultValues = {...props.route.params?.sequenceData};
 	const {
 		control,
@@ -26,7 +32,9 @@ export function SequenceModulesSettingsSection(props: any) {
 	} = useForm({defaultValues});
 
 	const onSubmit = (data: any) => {
+		console.log('updateModule');
 		props.updateModule({portNum: data.modules, isModified: true});
+		_saveSequence(false);
 		setSaveUnchangedData(true);
 	};
 
@@ -50,16 +58,19 @@ export function SequenceModulesSettingsSection(props: any) {
 		setSaveUnchangedData(!!props.modules.find((s: any) => s.isModified));
 	}, [saveUnchangedData, props.modules]);
 
-	const _saveSequence = () => {
+	const _saveSequence = (isGoBack = true) => {
 		ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
-		if (saveUnchangedData) {
+		console.log('sequence saveSequence');
+		if (saveUnchangedDataRef.current) {
 			props.updateSequence({
 				...props.route.params?.sequenceData,
-				modules: props.modules,
-				isModified: saveUnchangedData
+				modules: modulesRef.current,
+				isModified: true
 			});
 		}
-		props.navigation.goBack();
+		if (isGoBack) {
+			props.navigation.goBack();
+		}
 	};
 
 	return (

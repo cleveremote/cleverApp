@@ -19,6 +19,7 @@ export function CycleGeneralSettingsSection(props: any) {
 		props.route.params?.cycleData
 	);
 	const [saveUnchangedData, setSaveUnchangedData] = React.useState(false);
+	const isSavingRef = React.useRef(false);
 	const defaultValues = {...props.route.params?.cycleData};
 	const {
 		control,
@@ -43,6 +44,9 @@ export function CycleGeneralSettingsSection(props: any) {
 				isModified: saveUnchangedData
 			});
 		}
+	};
+	const onSubmitGoBack = (data: any) => {
+		onSubmit(data);
 
 		props.navigation.goBack();
 	};
@@ -51,11 +55,27 @@ export function CycleGeneralSettingsSection(props: any) {
 		props.navigation.setOptions({
 			headerLeft: () =>
 				navigationHeader(
-					handleSubmit(onSubmit),
+					handleSubmit(onSubmitGoBack),
 					'arrow-alt-circle-left',
 					false
 				)
 		});
+	}, [saveUnchangedData]);
+
+	useEffect(() => {
+		const listenerUnsubscribe = props.navigation.addListener(
+			'beforeRemove',
+			(e: any) => {
+				if (isSavingRef.current) return;
+				e.preventDefault();
+				isSavingRef.current = true;
+				handleSubmit(data => {
+					onSubmit(data);
+					props.navigation.dispatch(e.data.action);
+				})();
+			}
+		);
+		return () => listenerUnsubscribe();
 	}, [saveUnchangedData]);
 
 	return (
@@ -96,7 +116,10 @@ export function CycleGeneralSettingsSection(props: any) {
 		</View>
 	);
 }
+const mapStateToProps = (state: any) => ({
+	cycle: state.root_cycle.cycle
+});
 
-export default connect(null, {
+export default connect(mapStateToProps, {
 	updateCycle
 })(CycleGeneralSettingsSection);

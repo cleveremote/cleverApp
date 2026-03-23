@@ -21,12 +21,22 @@ import {
 
 export function CycleSett(props: any) {
 	const isModified = useRef(!props.route.params?.cycle?.id);
+	const cycleRef = useRef(props.cycle);
+	cycleRef.current = props.cycle;
 
 	const checkChanges = (e: any) => {
-		if (!isModified.current) {
+		console.log('cycleRef.current?.sequences123', cycleRef.current);
+		if (
+			!isModified.current &&
+			!cycleRef.current?.isModified &&
+			!cycleRef.current?.sequences?.find((s: any) => s.isModified)
+		) {
 			return;
 		}
-		const action = true; ////e.data.action.type !== 'POP_TO_TOP';
+		const backActions = ['GO_BACK', 'POP', 'POP_TO_TOP'];
+		if (!backActions.includes(e.data.action.type)) {
+			return;
+		}
 		e.preventDefault();
 		Alert.alert(
 			'Discard changes?',
@@ -36,20 +46,23 @@ export function CycleSett(props: any) {
 					text: 'save',
 					style: 'cancel',
 					onPress: () => {
-						saveCycle(props.cycle, true, true);
+						saveCycle(cycleRef.current, true, false);
+						props.navigation.dispatch(e.data.action);
 					}
 				},
 				{
 					text: 'Discard',
 					style: 'destructive',
-					onPress: () => props.navigation.dispatch(e.data.action)
+					onPress: () => {
+						props.navigation.dispatch(e.data.action);
+					}
 				}
 			]
 		);
 	};
 
 	const _deleteItem = () => {
-		const data = {...props.cycle, id: `deleted_${props.cycle.id}`};
+		const data = {...cycleRef.current, id: `deleted_${props.cycle.id}`};
 		saveCycle(data, true, true);
 	};
 
@@ -94,58 +107,73 @@ export function CycleSett(props: any) {
 	}, [props.cycle]);
 
 	return (
-			<View style={{alignSelf: 'stretch', elevation: 3, shadowColor: '#000', shadowOffset: {width: 0, height: 1}, shadowOpacity: 0.22, shadowRadius: 2.22}}>
-				<View style={{alignSelf: 'stretch', backgroundColor: 'white', marginTop: 8, marginHorizontal: 20, borderRadius: 12}}>
-					<MenuAccordion
-						key={21}
-						name={'General'}
-						icon={faGear}
-						onPress={() => {
-							ReactNativeHapticFeedback.trigger(
-								'impactMedium',
-								hapticOptions
-							);
-							props.navigation.navigate('CycleGeneralSection', {
-								cycleData: props.cycle
-							});
-						}}
-					/>
-					<MenuAccordion
-						key={41}
-						name={'Priority'}
-						icon={faTrafficLight}
-						onPress={() => {
-							ReactNativeHapticFeedback.trigger(
-								'impactMedium',
-								hapticOptions
-							);
-							props.navigation.navigate('CyclePrioritySection', {
-								cycleData: props.cycle
-							});
-						}}
-					/>
-					<MenuAccordion
-						key={51}
-						name={'Sequences'}
-						icon={faRotateRight}
-						onPress={() => {
-							ReactNativeHapticFeedback.trigger(
-								'impactMedium',
-								hapticOptions
-							);
-							props.navigation.navigate('CycleSequenceSection', {
-								cycleData: props.cycle
-							});
-						}}
-					/>
-					<DeleteItemMenu
-						key={61}
-						OnConfirm={() => {
-							_deleteItem();
-						}}
-					/>
-				</View>
+		<View
+			style={{
+				alignSelf: 'stretch',
+				elevation: 3,
+				shadowColor: '#000',
+				shadowOffset: {width: 0, height: 1},
+				shadowOpacity: 0.22,
+				shadowRadius: 2.22
+			}}>
+			<View
+				style={{
+					alignSelf: 'stretch',
+					backgroundColor: 'white',
+					marginTop: 8,
+					marginHorizontal: 20,
+					borderRadius: 12
+				}}>
+				<MenuAccordion
+					key={21}
+					name={'General'}
+					icon={faGear}
+					onPress={() => {
+						ReactNativeHapticFeedback.trigger(
+							'impactMedium',
+							hapticOptions
+						);
+						props.navigation.navigate('CycleGeneralSection', {
+							cycleData: props.cycle
+						});
+					}}
+				/>
+				<MenuAccordion
+					key={41}
+					name={'Priority'}
+					icon={faTrafficLight}
+					onPress={() => {
+						ReactNativeHapticFeedback.trigger(
+							'impactMedium',
+							hapticOptions
+						);
+						props.navigation.navigate('CyclePrioritySection', {
+							cycleData: props.cycle
+						});
+					}}
+				/>
+				<MenuAccordion
+					key={51}
+					name={'Sequences'}
+					icon={faRotateRight}
+					onPress={() => {
+						ReactNativeHapticFeedback.trigger(
+							'impactMedium',
+							hapticOptions
+						);
+						props.navigation.navigate('CycleSequenceSection', {
+							cycleData: props.cycle
+						});
+					}}
+				/>
+				<DeleteItemMenu
+					key={61}
+					OnConfirm={() => {
+						_deleteItem();
+					}}
+				/>
 			</View>
+		</View>
 	);
 }
 

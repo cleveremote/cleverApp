@@ -14,16 +14,38 @@ import {
 	loadTrigger,
 	saveTrigger
 } from '../../../../../../module/process/infrasctructure/store/actions/trigger';
+import cycle from '../../../../../../module/process/infrasctructure/store/reducers/cycle';
+import {saveCycle} from '../../../../../../module/process/infrasctructure/store/actions/cycle';
 
 export function TriggerSettingsScreen(props: any) {
 	const isModified = useRef(!props.route.params.trigger?.id);
+	const triggerRef = useRef(props.trigger);
+	triggerRef.current = props.trigger;
 
 	const checkChanges = (e: any) => {
-		if (!isModified.current) {
+		if (!isModified.current && !triggerRef.current?.isModified) {
 			return;
 		}
-		const action = true; ////e.data.action.type !== 'POP_TO_TOP';
+		const backActions = ['GO_BACK', 'POP', 'POP_TO_TOP'];
+		if (!backActions.includes(e.data.action.type)) {
+			return;
+		}
 		e.preventDefault();
+		const updateTrigger = (prevTriggers: any, trigger: any) => {
+			const previous = [...prevTriggers];
+			if (trigger) {
+				const deleteId = trigger?.id.split('_');
+				const index = previous.findIndex(
+					x => x.id === (deleteId[1] || trigger?.id)
+				);
+				if (index > -1) {
+					previous[index] = trigger;
+				} else {
+					previous.push(trigger);
+				}
+			}
+			return previous;
+		};
 		Alert.alert(
 			'Discard changes?',
 			'You have unsaved changes. Are you sure to discard them and leave the screen?',
@@ -32,7 +54,19 @@ export function TriggerSettingsScreen(props: any) {
 					text: 'save',
 					style: 'cancel',
 					onPress: () => {
-						saveTrigger(props.trigger, true, true);
+						saveTrigger(triggerRef.current, true, false);
+						triggerRef.current.isModified = false;
+						props.saveCycle(
+							{
+								...props.route.params.cycle,
+								triggers: updateTrigger(
+									props.route.params.cycle.triggers || [],
+									triggerRef.current
+								)
+							},
+							true
+						);
+						props.navigation.dispatch(e.data.action);
 					}
 				},
 				{
@@ -45,8 +79,33 @@ export function TriggerSettingsScreen(props: any) {
 	};
 
 	const _deleteItem = () => {
-		const data = {...props.trigger, id: `deleted_${props.trigger.id}`};
+		const data = {...triggerRef.current, id: `deleted_${props.trigger.id}`};
 		saveTrigger(data, false, true);
+		const updateTrigger = (prevTriggers: any, trigger: any) => {
+			const previous = [...prevTriggers];
+			if (trigger) {
+				const deleteId = trigger?.id.split('_');
+				const index = previous.findIndex(
+					x => x.id === (deleteId[1] || trigger?.id)
+				);
+				if (index > -1) {
+					previous[index] = trigger;
+				} else {
+					previous.push(trigger);
+				}
+			}
+			return previous;
+		};
+		props.saveCycle(
+			{
+				...props.route.params.cycle,
+				triggers: updateTrigger(
+					props.route.params.cycle.triggers || [],
+					data
+				)
+			},
+			true
+		);
 	};
 
 	const saveTrigger = (trigger: any, haptic: boolean, goBack: boolean) => {
@@ -93,72 +152,87 @@ export function TriggerSettingsScreen(props: any) {
 	}, [props.trigger]);
 
 	return (
-			<View style={{alignSelf: 'stretch', elevation: 3, shadowColor: '#000', shadowOffset: {width: 0, height: 1}, shadowOpacity: 0.22, shadowRadius: 2.22}}>
-				<View style={{alignSelf: 'stretch', backgroundColor: 'white', marginTop: 8, marginHorizontal: 20, borderRadius: 12}}>
+		<View
+			style={{
+				alignSelf: 'stretch',
+				elevation: 3,
+				shadowColor: '#000',
+				shadowOffset: {width: 0, height: 1},
+				shadowOpacity: 0.22,
+				shadowRadius: 2.22
+			}}>
+			<View
+				style={{
+					alignSelf: 'stretch',
+					backgroundColor: 'white',
+					marginTop: 8,
+					marginHorizontal: 20,
+					borderRadius: 12
+				}}>
+				<View>
 					<View>
-						<View>
-							<MenuAccordion
-								key={21}
-								name={'General'}
-								icon={faGear}
-								onPress={() => {
-									ReactNativeHapticFeedback.trigger(
-										'impactMedium',
-										hapticOptions
-									);
-									props.navigation.navigate(
-										'TriggerGeneralSettingsSection',
-										{
-											triggerData: props.trigger
-										}
-									);
-								}}
-							/>
-							<MenuAccordion
-								key={41}
-								name={'Execution'}
-								icon={faBolt}
-								onPress={() => {
-									ReactNativeHapticFeedback.trigger(
-										'impactMedium',
-										hapticOptions
-									);
-									props.navigation.navigate(
-										'TriggerExecutionSettingsSection',
-										{
-											triggerData: props.trigger
-										}
-									);
-								}}
-							/>
+						<MenuAccordion
+							key={21}
+							name={'General'}
+							icon={faGear}
+							onPress={() => {
+								ReactNativeHapticFeedback.trigger(
+									'impactMedium',
+									hapticOptions
+								);
+								props.navigation.navigate(
+									'TriggerGeneralSettingsSection',
+									{
+										triggerData: props.trigger
+									}
+								);
+							}}
+						/>
+						<MenuAccordion
+							key={41}
+							name={'Execution'}
+							icon={faBolt}
+							onPress={() => {
+								ReactNativeHapticFeedback.trigger(
+									'impactMedium',
+									hapticOptions
+								);
+								props.navigation.navigate(
+									'TriggerExecutionSettingsSection',
+									{
+										triggerData: props.trigger
+									}
+								);
+							}}
+						/>
 
-							<MenuAccordion
-								key={51}
-								name={'Conditions'}
-								icon={faCheckDouble}
-								onPress={() => {
-									ReactNativeHapticFeedback.trigger(
-										'impactMedium',
-										hapticOptions
-									);
-									props.navigation.navigate(
-										'TriggerConditionsSection',
-										{
-											triggerData: props.trigger
-										}
-									);
-								}}
-							/>
-							<DeleteItemMenu
-								key={61}
-								OnConfirm={() => {
-									_deleteItem();
-								}}
-							/>
-						</View>
+						<MenuAccordion
+							key={51}
+							name={'Conditions'}
+							icon={faCheckDouble}
+							onPress={() => {
+								ReactNativeHapticFeedback.trigger(
+									'impactMedium',
+									hapticOptions
+								);
+								props.navigation.navigate(
+									'TriggerConditionsSection',
+									{
+										triggerData: props.trigger
+									}
+								);
+							}}
+						/>
+						<DeleteItemMenu
+							key={61}
+							OnConfirm={() => {
+								_deleteItem();
+							}}
+						/>
 					</View>
 				</View>
 			</View>
+		</View>
 	);
 }
 
@@ -168,5 +242,6 @@ const mapStateToProps = (state: any) => ({
 
 export default connect(mapStateToProps, {
 	saveTrigger,
-	loadTrigger
+	loadTrigger,
+	saveCycle
 })(TriggerSettingsScreen);

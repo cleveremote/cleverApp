@@ -1,4 +1,4 @@
-import {useEffect, useState} from 'react';
+import React, {useEffect, useState} from 'react';
 import {ScrollView, View} from 'react-native';
 import {navigationHeader} from '../../../../../components/common/navigationHeaders';
 import {connect} from 'react-redux';
@@ -17,6 +17,7 @@ export function TriggerConditionParamSettingsSection(props: any) {
 	const [saveUnchangedData, setSaveUnchangedData] = useState(
 		defaultValues.isModified
 	);
+	const isSavingRef = React.useRef(false);
 
 	const {
 		control,
@@ -25,10 +26,14 @@ export function TriggerConditionParamSettingsSection(props: any) {
 	} = useForm({defaultValues});
 
 	const onSubmit = (data: any) => {
-		ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
 		if (saveUnchangedData) {
 			props.updateCondition({...data, isModified: saveUnchangedData});
 		}
+	};
+
+	const onSubmitGoBack = (data: any) => {
+		ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
+		onSubmit(data);
 		props.navigation.goBack();
 	};
 
@@ -36,11 +41,27 @@ export function TriggerConditionParamSettingsSection(props: any) {
 		props.navigation.setOptions({
 			headerLeft: () =>
 				navigationHeader(
-					handleSubmit(onSubmit),
+					handleSubmit(onSubmitGoBack),
 					'arrow-alt-circle-left',
 					false
 				)
 		});
+	}, [saveUnchangedData]);
+
+	useEffect(() => {
+		const listenerUnsubscribe = props.navigation.addListener(
+			'beforeRemove',
+			(e: any) => {
+				if (isSavingRef.current) return;
+				e.preventDefault();
+				isSavingRef.current = true;
+				handleSubmit(data => {
+					onSubmit(data);
+					props.navigation.dispatch(e.data.action);
+				})();
+			}
+		);
+		return () => listenerUnsubscribe();
 	}, [saveUnchangedData]);
 
 	const getDevices = () => {

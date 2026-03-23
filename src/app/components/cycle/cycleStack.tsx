@@ -138,6 +138,21 @@ export function MenuCycle({
 
 	const menuItems = [
 		{
+			name: 'cog',
+			label: 'Settings',
+			action: () => {
+				ReactNativeHapticFeedback.trigger(
+					'impactMedium',
+					hapticOptions
+				);
+				closeSibillings(false);
+				navigation.navigate('Settings', {
+					screen: 'CycleSettingsMenu',
+					params: cycleData
+				});
+			}
+		},
+		{
 			name: 'history',
 			label: 'Schedules',
 			action: () => {
@@ -159,21 +174,6 @@ export function MenuCycle({
 				onToggle();
 				onPress();
 				closeSibillings(false);
-			}
-		},
-		{
-			name: 'cog',
-			label: 'Settings',
-			action: () => {
-				ReactNativeHapticFeedback.trigger(
-					'impactMedium',
-					hapticOptions
-				);
-				closeSibillings(false);
-				navigation.navigate('Settings', {
-					screen: 'CycleSettingsMenu',
-					params: cycleData
-				});
 			}
 		},
 		{

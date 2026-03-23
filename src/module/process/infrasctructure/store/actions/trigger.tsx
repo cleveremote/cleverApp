@@ -41,16 +41,26 @@ export const loadTrigger =
 	};
 
 export const saveTrigger =
-	(data: any): ThunkAction<void, RootState, unknown, AnyAction> =>
+	(
+		data: any,
+		soft: boolean
+	): ThunkAction<void, RootState, unknown, AnyAction> =>
 	async dispatch => {
-		authenticationService.socket?.emit(
-			'front/box/sync/trigger',
-			data,
-			(response: any) => {
-				dispatch({
-					type: TRIGGER_SAVE,
-					payload: response.config
-				});
-			}
-		);
+		if (soft) {
+			dispatch({
+				type: TRIGGER_SAVE,
+				payload: data
+			});
+		} else {
+			authenticationService.socket?.emit(
+				'front/box/sync/trigger',
+				data,
+				(response: any) => {
+					dispatch({
+						type: TRIGGER_SAVE,
+						payload: JSON.parse(response.config).trigger
+					});
+				}
+			);
+		}
 	};

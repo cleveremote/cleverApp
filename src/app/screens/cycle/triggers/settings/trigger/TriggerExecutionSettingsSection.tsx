@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {Platform, ScrollView, Switch, Text, View} from 'react-native';
 import {navigationHeader} from '../../../../../components/common/navigationHeaders';
 import {BoxFormStyle} from '../../../../../styles/components/common/boxForm';
@@ -26,10 +26,10 @@ function TriggerExecutionSettingsSection(props: any) {
 		sunState: defValues.trigger?.sunBehavior?.sunState,
 		time: getTimeString(defValues.trigger?.sunBehavior?.time)
 	};
-	const [sunState, setSunState] = useState(
-		!!defValues.trigger?.sunBehavior?.sunState
-	);
+
+	const sunStatusRef = useRef(!!defValues.trigger?.sunBehavior?.sunState);
 	const [saveUnchangedData, setSaveUnchangedData] = useState(false);
+	const isSavingRef = React.useRef(false);
 
 	const {
 		control,
@@ -39,13 +39,17 @@ function TriggerExecutionSettingsSection(props: any) {
 	} = useForm({defaultValues});
 
 	const onSubmit = (data: any) => {
-		ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
 		if (saveUnchangedData) {
 			props.updateTrigger({
 				...mappingtoDto(data),
 				isModified: saveUnchangedData
 			});
 		}
+	};
+
+	const onSubmitGoBack = (data: any) => {
+		ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
+		onSubmit(data);
 		props.navigation.goBack();
 	};
 
@@ -53,7 +57,7 @@ function TriggerExecutionSettingsSection(props: any) {
 		const result = {...defValues};
 		result.delay = convertToMs(data.delay);
 		result.action = data.action;
-		if (sunState) {
+		if (sunStatusRef.current) {
 			result.trigger = {
 				...result.trigger,
 				sunBehavior: {
@@ -85,11 +89,27 @@ function TriggerExecutionSettingsSection(props: any) {
 		props.navigation.setOptions({
 			headerLeft: () =>
 				navigationHeader(
-					handleSubmit(onSubmit),
+					handleSubmit(onSubmitGoBack),
 					'arrow-alt-circle-left',
 					false
 				)
 		});
+	}, [saveUnchangedData]);
+
+	useEffect(() => {
+		const listenerUnsubscribe = props.navigation.addListener(
+			'beforeRemove',
+			(e: any) => {
+				if (isSavingRef.current) return;
+				e.preventDefault();
+				isSavingRef.current = true;
+				handleSubmit(data => {
+					onSubmit(data);
+					props.navigation.dispatch(e.data.action);
+				})();
+			}
+		);
+		return () => listenerUnsubscribe();
 	}, [saveUnchangedData]);
 
 	return (
@@ -121,10 +141,16 @@ function TriggerExecutionSettingsSection(props: any) {
 					}}
 				/>
 
-				<View style={{flexDirection: 'row', marginLeft: 20, marginTop: 8, marginBottom: 8}}>
+				<View
+					style={{
+						flexDirection: 'row',
+						marginLeft: 20,
+						marginTop: 8,
+						marginBottom: 8
+					}}>
 					<Switch
-						value={sunState}
-						trackColor={{ true: '#32404e', false: '#767577' }}
+						value={!!sunStatusRef.current}
+						trackColor={{true: '#32404e', false: '#767577'}}
 						style={{
 							...(Platform.OS === 'android' && {
 								transform: [{scaleX: 1.5}, {scaleY: 1.5}],
@@ -132,7 +158,7 @@ function TriggerExecutionSettingsSection(props: any) {
 							})
 						}}
 						onValueChange={checked => {
-							setSunState(checked);
+							sunStatusRef.current = !!checked;
 							if (checked) {
 								setValue('timeAfter', new Date(), {
 									shouldValidate: true
@@ -145,6 +171,7 @@ function TriggerExecutionSettingsSection(props: any) {
 									shouldValidate: true
 								});
 							}
+							setSaveUnchangedData(true);
 						}}
 					/>
 					<Text
@@ -158,7 +185,7 @@ function TriggerExecutionSettingsSection(props: any) {
 						Trigger based on (sun-state/delay){' '}
 					</Text>
 				</View>
-				{sunState ? (
+				{sunStatusRef.current ? (
 					<>
 						<SelectForm
 							lstData={[

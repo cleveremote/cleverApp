@@ -13,20 +13,50 @@ import {
 	loadCondition,
 	saveCondition
 } from '../../../../../../module/process/infrasctructure/store/actions/condition';
+import {saveTrigger} from '../../../../../../module/process/infrasctructure/store/actions/trigger';
 
 function TriggerConditionSettingsScreen(props: any) {
 	const isModified = useRef(!props.route.params.condition?.id);
+	const conditionRef = useRef(props.condition);
+	conditionRef.current = props.condition;
 
 	const checkChanges = (e: any) => {
-		if (!isModified.current) {
+		if (!isModified.current && !conditionRef.current?.isModified) {
 			return;
 		}
-		saveCondition(props.condition, true, true);
+		saveCondition(conditionRef.current, true, false);
 	};
 
 	const _deleteItem = () => {
-		const data = {...props.condition, id: `deleted_${props.condition.id}`};
+		const data = {
+			...conditionRef.current,
+			id: `deleted_${props.condition.id}`
+		};
 		saveCondition(data, false, true);
+		const updateCondition = (prevConditions: any, condition: any) => {
+			const previous = [...prevConditions];
+			if (condition) {
+				const deleteId = condition?.id.split('_');
+				const index = previous.findIndex(
+					x => x.id === (deleteId[1] || condition?.id)
+				);
+				if (index > -1) {
+					previous[index] = condition;
+				} else {
+					previous.push(condition);
+				}
+			}
+
+			return previous;
+		};
+		props.saveTrigger(
+			{
+				...props.trigger,
+				isModified: true,
+				conditions: updateCondition(props.trigger.conditions, data)
+			},
+			true
+		);
 	};
 
 	const saveCondition = (
@@ -78,62 +108,79 @@ function TriggerConditionSettingsScreen(props: any) {
 	}, [props.condition]);
 
 	return (
-			<View style={{alignSelf: 'stretch', elevation: 3, shadowColor: '#000', shadowOffset: {width: 0, height: 1}, shadowOpacity: 0.22, shadowRadius: 2.22}}>
-				<View style={{alignSelf: 'stretch', backgroundColor: 'white', marginTop: 8, marginHorizontal: 20, borderRadius: 12}}>
+		<View
+			style={{
+				alignSelf: 'stretch',
+				elevation: 3,
+				shadowColor: '#000',
+				shadowOffset: {width: 0, height: 1},
+				shadowOpacity: 0.22,
+				shadowRadius: 2.22
+			}}>
+			<View
+				style={{
+					alignSelf: 'stretch',
+					backgroundColor: 'white',
+					marginTop: 8,
+					marginHorizontal: 20,
+					borderRadius: 12
+				}}>
+				<View>
 					<View>
-						<View>
-							<MenuAccordion
-								key={21}
-								name={'General'}
-								icon={faGear}
-								onPress={() => {
-									ReactNativeHapticFeedback.trigger(
-										'impactMedium',
-										hapticOptions
-									);
-									props.navigation.navigate(
-										'TriggerConditionGeneralSettingsSection',
-										{
-											conditionData: props.condition
-										}
-									);
-								}}
-							/>
-							<MenuAccordion
-								key={41}
-								name={'Execution'}
-								icon={faBolt}
-								onPress={() => {
-									ReactNativeHapticFeedback.trigger(
-										'impactMedium',
-										hapticOptions
-									);
-									props.navigation.navigate(
-										'TriggerConditionParamSettingsSection',
-										{
-											conditionData: props.condition
-										}
-									);
-								}}
-							/>
-							<DeleteItemMenu
-								key={61}
-								OnConfirm={() => {
-									_deleteItem();
-								}}
-							/>
-						</View>
+						<MenuAccordion
+							key={21}
+							name={'General'}
+							icon={faGear}
+							onPress={() => {
+								ReactNativeHapticFeedback.trigger(
+									'impactMedium',
+									hapticOptions
+								);
+								props.navigation.navigate(
+									'TriggerConditionGeneralSettingsSection',
+									{
+										conditionData: props.condition
+									}
+								);
+							}}
+						/>
+						<MenuAccordion
+							key={41}
+							name={'Execution'}
+							icon={faBolt}
+							onPress={() => {
+								ReactNativeHapticFeedback.trigger(
+									'impactMedium',
+									hapticOptions
+								);
+								props.navigation.navigate(
+									'TriggerConditionParamSettingsSection',
+									{
+										conditionData: props.condition
+									}
+								);
+							}}
+						/>
+						<DeleteItemMenu
+							key={61}
+							OnConfirm={() => {
+								_deleteItem();
+							}}
+						/>
 					</View>
 				</View>
 			</View>
+		</View>
 	);
 }
 
 const mapStateToProps = (state: any) => ({
-	condition: state.trigger_condition.condition
+	condition: state.trigger_condition.condition,
+	trigger: state.cycle_trigger.trigger
 });
 
 export default connect(mapStateToProps, {
 	saveCondition,
-	loadCondition
+	loadCondition,
+	saveTrigger
 })(TriggerConditionSettingsScreen);

@@ -17,7 +17,8 @@ export const loadCondition = (
 			description: 'new condition',
 			deviceId: '',
 			operator: '<',
-			value: 50
+			value: 50,
+			isModified: true
 		};
 	} else {
 		return null;

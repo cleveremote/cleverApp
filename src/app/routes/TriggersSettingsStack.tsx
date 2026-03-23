@@ -3,8 +3,6 @@ import {
 	NativeStackNavigationOptions,
 	createNativeStackNavigator
 } from '@react-navigation/native-stack';
-import {Provider} from 'react-redux';
-import {store} from '../../module/process/infrasctructure/store/store';
 import TriggerSettingsScreen from '../screens/cycle/triggers/settings/trigger/TriggerSettingsScreen';
 import TriggerExecutionSettingsSection from '../screens/cycle/triggers/settings/trigger/TriggerExecutionSettingsSection';
 import TriggerGeneralSettingsSection from '../screens/cycle/triggers/settings/trigger/TriggerGeneralSettingsSection';

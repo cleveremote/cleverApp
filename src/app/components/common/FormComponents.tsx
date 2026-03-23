@@ -46,7 +46,6 @@ function DropdownSelect<T extends {iconColor?: {base: string}}>({
 }>) {
 	const [isOpen, setIsOpen] = useState(false);
 	const selectedItem = items.find(item => {
-		console.log('value', item);
 		return String(getValue(item)) === String(value);
 	});
 	const label = selectedItem ? getLabel(selectedItem) : '—';

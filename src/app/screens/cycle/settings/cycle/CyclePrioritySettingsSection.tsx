@@ -10,6 +10,7 @@ import {updateCycle} from '../../../../../module/process/infrasctructure/store/a
 
 export function PrioritySettingsSection(props: any) {
 	const [saveUnchangedData, setSaveUnchangedData] = React.useState(false);
+	const isSavingRef = React.useRef(false);
 	const defaultValues = {...props.route.params?.cycleData};
 	const {
 		control,
@@ -18,7 +19,6 @@ export function PrioritySettingsSection(props: any) {
 	} = useForm({defaultValues});
 
 	const onSubmit = (data: any) => {
-		ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
 		if (saveUnchangedData) {
 			const priorities = data.modePriority.map(
 				(x: any, index: number) => ({mode: x.mode, priority: index})
@@ -29,6 +29,11 @@ export function PrioritySettingsSection(props: any) {
 				isModified: saveUnchangedData
 			});
 		}
+	};
+
+	const onSubmitGoBack = (data: any) => {
+		ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
+		onSubmit(data);
 		props.navigation.goBack();
 	};
 
@@ -36,11 +41,27 @@ export function PrioritySettingsSection(props: any) {
 		props.navigation.setOptions({
 			headerLeft: () =>
 				navigationHeader(
-					handleSubmit(onSubmit),
+					handleSubmit(onSubmitGoBack),
 					'arrow-alt-circle-left',
 					false
 				)
 		});
+	}, [saveUnchangedData]);
+
+	useEffect(() => {
+		const listenerUnsubscribe = props.navigation.addListener(
+			'beforeRemove',
+			(e: any) => {
+				if (isSavingRef.current) return;
+				e.preventDefault();
+				isSavingRef.current = true;
+				handleSubmit(data => {
+					onSubmit(data);
+					props.navigation.dispatch(e.data.action);
+				})();
+			}
+		);
+		return () => listenerUnsubscribe();
 	}, [saveUnchangedData]);
 
 	return (
