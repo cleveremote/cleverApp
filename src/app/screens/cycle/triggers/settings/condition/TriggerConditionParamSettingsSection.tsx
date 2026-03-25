@@ -86,7 +86,7 @@ export function TriggerConditionParamSettingsSection(props: any) {
 					errors={errors}
 					name="deviceId"
 					placeholder="Sensors/Cycles"
-					rules={{required: true}}
+					rules={{required: 'Device is required'}}
 					onValueChange={value => {
 						setSaveUnchangedData(true);
 					}}
@@ -103,7 +103,7 @@ export function TriggerConditionParamSettingsSection(props: any) {
 					errors={errors}
 					name="operator"
 					placeholder="Operator*"
-					rules={{required: true}}
+					rules={{required: 'Operator is required'}}
 					onValueChange={value => {
 						setSaveUnchangedData(true);
 					}}
@@ -113,7 +113,7 @@ export function TriggerConditionParamSettingsSection(props: any) {
 					errors={errors}
 					name="value"
 					placeholder="Value*"
-					rules={{required: true}}
+					rules={{required: 'Value is required'}}
 					onChangeText={value => {
 						setSaveUnchangedData(true);
 					}}

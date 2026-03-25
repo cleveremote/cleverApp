@@ -124,7 +124,7 @@ function TriggerExecutionSettingsSection(props: any) {
 					errors={errors}
 					name="action"
 					placeholder="Action*"
-					rules={{required: true}}
+					rules={{required: 'Action is required'}}
 					onValueChange={value => {
 						setSaveUnchangedData(true);
 					}}
@@ -135,7 +135,7 @@ function TriggerExecutionSettingsSection(props: any) {
 					errors={errors}
 					name="delay"
 					placeholder="Disable trigger for moment"
-					rules={{required: true}}
+					rules={{required: 'Delay is required'}}
 					onChangeText={() => {
 						setSaveUnchangedData(true);
 					}}
@@ -196,7 +196,7 @@ function TriggerExecutionSettingsSection(props: any) {
 							errors={errors}
 							name="sunState"
 							placeholder="Sun state*"
-							rules={{required: true}}
+							rules={{required: 'Sun state is required'}}
 							onValueChange={value => {
 								setSaveUnchangedData(true);
 							}}
@@ -207,7 +207,7 @@ function TriggerExecutionSettingsSection(props: any) {
 							errors={errors}
 							name="time"
 							placeholder="After sunset / Before sunrise*"
-							rules={{required: true}}
+							rules={{required: 'Time is required'}}
 							onChangeText={() => {
 								setSaveUnchangedData(true);
 							}}
@@ -220,7 +220,7 @@ function TriggerExecutionSettingsSection(props: any) {
 						errors={errors}
 						name="timeAfter"
 						placeholder="Trigger after*"
-						rules={{required: true}}
+						rules={{required: 'Time after is required'}}
 						onChangeText={() => {
 							setSaveUnchangedData(true);
 						}}

@@ -17,7 +17,6 @@ import {DragableSequences} from './draggableStack';
 import {styles} from '../../styles/cycleStyles';
 import {SequenceStack} from '../cycle/sequenceStack';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
-import {TouchableOpacity} from 'react-native-gesture-handler';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {
 	faBan,
@@ -184,7 +183,10 @@ export function DateTimePickerForm({
 	};
 
 	const getTimeString = (dateValue: Date) => {
-		if (!(dateValue instanceof Date && !isNaN(dateValue.getTime()))) {
+		if (
+			!!dateValue &&
+			!(dateValue instanceof Date && !isNaN(dateValue.getTime()))
+		) {
 			dateValue = new Date();
 			dateValue.setHours(0, 0, 0, 0);
 		}
@@ -209,6 +211,7 @@ export function DateTimePickerForm({
 			if (mode === 'datetime') {
 				return new Date(value);
 			} else {
+				value.setHours(0, 0, 0, 0);
 				return value;
 			}
 		} else {
@@ -252,7 +255,13 @@ export function DateTimePickerForm({
 								editable={false}
 								value={
 									mode === 'datetime'
-										? mediumTime.format(value)
+										? mediumTime.format(
+												!!value &&
+													value instanceof Date &&
+													!isNaN(value.getTime())
+													? value
+													: new Date()
+										  )
 										: getTimeString(value)
 								}
 								pointerEvents="none"

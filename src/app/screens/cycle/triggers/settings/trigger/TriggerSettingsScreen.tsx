@@ -8,104 +8,39 @@ import {
 } from '../../../../../components/common/cycleMenu';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import {faBolt, faCheckDouble, faGear} from '@fortawesome/free-solid-svg-icons';
-import {Alert} from 'react-native';
 import {hapticOptions} from '../../../../../data/cycleTypes';
 import {
 	loadTrigger,
 	saveTrigger
 } from '../../../../../../module/process/infrasctructure/store/actions/trigger';
-import cycle from '../../../../../../module/process/infrasctructure/store/reducers/cycle';
 import {saveCycle} from '../../../../../../module/process/infrasctructure/store/actions/cycle';
 
 export function TriggerSettingsScreen(props: any) {
-	const isModified = useRef(!props.route.params.trigger?.id);
+	const isModified = useRef(!props.route.params.item?.id);
 	const triggerRef = useRef(props.trigger);
 	triggerRef.current = props.trigger;
+
+	const updateTrigger = (prevTriggers: any, trigger: any) => {
+		const previous = [...prevTriggers];
+		if (trigger) {
+			const deleteId = trigger?.id.split('_');
+			const index = previous.findIndex(
+				x => x.id === (deleteId[1] || trigger?.id)
+			);
+			if (index > -1) {
+				previous[index] = trigger;
+			} else {
+				previous.push(trigger);
+			}
+		}
+		return previous;
+	};
 
 	const checkChanges = (e: any) => {
 		if (!isModified.current && !triggerRef.current?.isModified) {
 			return;
 		}
-		const backActions = ['GO_BACK', 'POP', 'POP_TO_TOP'];
-		if (!backActions.includes(e.data.action.type)) {
-			return;
-		}
-		e.preventDefault();
-		const updateTrigger = (prevTriggers: any, trigger: any) => {
-			const previous = [...prevTriggers];
-			if (trigger) {
-				const deleteId = trigger?.id.split('_');
-				const index = previous.findIndex(
-					x => x.id === (deleteId[1] || trigger?.id)
-				);
-				if (index > -1) {
-					previous[index] = trigger;
-				} else {
-					previous.push(trigger);
-				}
-			}
-			return previous;
-		};
-		Alert.alert(
-			'Discard changes?',
-			'You have unsaved changes. Are you sure to discard them and leave the screen?',
-			[
-				{
-					text: 'save',
-					style: 'cancel',
-					onPress: () => {
-						saveTrigger(triggerRef.current, true, false);
-						triggerRef.current.isModified = false;
-						props.saveCycle(
-							{
-								...props.route.params.cycle,
-								triggers: updateTrigger(
-									props.route.params.cycle.triggers || [],
-									triggerRef.current
-								)
-							},
-							true
-						);
-						props.navigation.dispatch(e.data.action);
-					}
-				},
-				{
-					text: 'Discard',
-					style: 'destructive',
-					onPress: () => props.navigation.dispatch(e.data.action)
-				}
-			]
-		);
-	};
-
-	const _deleteItem = () => {
-		const data = {...triggerRef.current, id: `deleted_${props.trigger.id}`};
-		saveTrigger(data, false, true);
-		const updateTrigger = (prevTriggers: any, trigger: any) => {
-			const previous = [...prevTriggers];
-			if (trigger) {
-				const deleteId = trigger?.id.split('_');
-				const index = previous.findIndex(
-					x => x.id === (deleteId[1] || trigger?.id)
-				);
-				if (index > -1) {
-					previous[index] = trigger;
-				} else {
-					previous.push(trigger);
-				}
-			}
-			return previous;
-		};
-		props.saveCycle(
-			{
-				...props.route.params.cycle,
-				triggers: updateTrigger(
-					props.route.params.cycle.triggers || [],
-					data
-				)
-			},
-			true
-		);
+		saveTrigger(triggerRef.current, true, false);
 	};
 
 	const saveTrigger = (trigger: any, haptic: boolean, goBack: boolean) => {
@@ -117,6 +52,21 @@ export function TriggerSettingsScreen(props: any) {
 		if (goBack) {
 			props.navigation.goBack();
 		}
+	};
+
+	const _deleteItem = () => {
+		const data = {...triggerRef.current, id: `deleted_${props.trigger.id}`};
+		saveTrigger(data, false, true);
+		props.saveCycle(
+			{
+				...props.route.params.cycle,
+				triggers: updateTrigger(
+					props.route.params.cycle.triggers || [],
+					data
+				)
+			},
+			true
+		);
 	};
 
 	useEffect(() => {
@@ -147,7 +97,7 @@ export function TriggerSettingsScreen(props: any) {
 				checkChanges(e);
 			}
 		);
-		isModified.current = props.trigger?.isModified;
+		isModified.current = props.sequence?.isModified;
 		return () => listenerUnsubscribe();
 	}, [props.trigger]);
 

@@ -83,7 +83,7 @@ export function SequenceSecuritySettingsSection(props: any) {
 					errors={errors}
 					name="maxDuration"
 					placeholder="security*"
-					rules={{required: true}}
+					rules={{required: 'Security is required'}}
 					onChangeText={value => {
 						setSaveUnchangedData(true);
 					}}
@@ -106,7 +106,7 @@ export function SequenceSecuritySettingsSection(props: any) {
 					errors={errors}
 					name="vfd"
 					placeholder={`VFD speed* → ${vfd} %`}
-					rules={{required: true}}
+					rules={{required: 'VFD speed is required'}}
 					onChangeText={value => {
 						setSaveUnchangedData(true);
 						setVfd(value);

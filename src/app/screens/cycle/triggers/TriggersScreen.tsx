@@ -1,4 +1,4 @@
-import {TouchableOpacity, View, Text} from 'react-native';
+import {TouchableOpacity, View, Text, Alert} from 'react-native';
 import React, {useEffect, useRef} from 'react';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
@@ -7,12 +7,90 @@ import {navigationHeader} from '../../../components/common/navigationHeaders';
 import {elementStack} from '../../../components/cycle/moduleStack';
 import {hapticOptions} from '../../../data/cycleTypes';
 import {faCog} from '@fortawesome/free-solid-svg-icons';
-import {loadTriggers} from '../../../../module/process/infrasctructure/store/actions/trigger';
+import {
+	loadTriggers,
+	saveTrigger,
+	updateTrigger
+} from '../../../../module/process/infrasctructure/store/actions/trigger';
 import {saveCycle} from '../../../../module/process/infrasctructure/store/actions/cycle';
-import cycle from '../../../../module/process/infrasctructure/store/reducers/cycle';
 
 export function TriggersScreen(props: any) {
 	const cycleParamRef = useRef(props.route.params.cycle);
+	const triggerRef = useRef(props.trigger);
+	triggerRef.current = props.trigger;
+
+	const updateTriggerInList = (prevTriggers: any, trigger: any) => {
+		const previous = [...prevTriggers];
+		if (trigger) {
+			const deleteId = trigger?.id.split('_');
+			const index = previous.findIndex(
+				x => x.id === (deleteId[1] || trigger?.id)
+			);
+			if (index > -1) {
+				previous[index] = trigger;
+			} else {
+				previous.push(trigger);
+			}
+		}
+		return previous;
+	};
+
+	useEffect(() => {
+		const listenerUnsubscribe = props.navigation.addListener(
+			'beforeRemove',
+			(e: any) => {
+				if (!triggerRef.current?.isModified) return;
+				const backActions = ['GO_BACK', 'POP', 'POP_TO_TOP'];
+				if (!backActions.includes(e.data.action.type)) return;
+				e.preventDefault();
+				Alert.alert(
+					'Discard changes?',
+					'You have unsaved changes. Are you sure to discard them and leave the screen?',
+					[
+						{
+							text: 'save',
+							style: 'cancel',
+							onPress: () => {
+								ReactNativeHapticFeedback.trigger(
+									'impactMedium',
+									hapticOptions
+								);
+								const trigger = {
+									...triggerRef.current,
+									isModified: false
+								};
+								props.saveTrigger(trigger);
+								props.saveCycle(
+									{
+										...cycleParamRef.current,
+										triggers: updateTriggerInList(
+											cycleParamRef.current.triggers ||
+												[],
+											trigger
+										)
+									},
+									true
+								);
+								props.navigation.dispatch(e.data.action);
+							}
+						},
+						{
+							text: 'Discard',
+							style: 'destructive',
+							onPress: () => {
+								props.updateTrigger({
+									...triggerRef.current,
+									isModified: false
+								});
+								props.navigation.dispatch(e.data.action);
+							}
+						}
+					]
+				);
+			}
+		);
+		return () => listenerUnsubscribe();
+	}, []);
 
 	useEffect(() => {
 		props.navigation.setOptions({
@@ -27,7 +105,6 @@ export function TriggersScreen(props: any) {
 	}, []);
 
 	useEffect(() => {
-		console.log('triggers updated', props.triggers);
 		cycleParamRef.current = {
 			...cycleParamRef.current,
 			triggers: props.triggers
@@ -106,10 +183,13 @@ export function TriggersScreen(props: any) {
 }
 
 const mapStateToProps = (state: any) => ({
-	triggers: state.cycle_trigger.triggers
+	triggers: state.cycle_trigger.triggers,
+	trigger: state.cycle_trigger.trigger
 });
 
 export default connect(mapStateToProps, {
 	loadTriggers,
-	saveCycle
+	saveCycle,
+	saveTrigger,
+	updateTrigger
 })(TriggersScreen);

@@ -43,11 +43,10 @@ export default (state = initialState, action: any) => {
 		}
 
 		case TRIGGER_SAVE: {
-			console.log('action.payload', action.payload);
 			return {
 				...state,
-				triggers: updateTrigger(state.triggers, action.payload),
-				trigger: action.payload
+				triggers: updateTrigger(state.triggers, action.payload)
+				//trigger: action.payload
 			};
 		}
 

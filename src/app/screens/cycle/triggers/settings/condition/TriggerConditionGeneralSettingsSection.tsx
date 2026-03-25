@@ -72,7 +72,7 @@ function TriggerConditionGeneralSettingsSection(props: any) {
 					errors={errors}
 					name="name"
 					placeholder="Name*"
-					rules={{required: true}}
+					rules={{required: 'Name is required'}}
 					onChangeText={value => {
 						setSaveUnchangedData(true);
 					}}

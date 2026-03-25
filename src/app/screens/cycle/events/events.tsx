@@ -143,7 +143,7 @@ function EventsScreen(props: any) {
 					errors={errors}
 					name="startDate"
 					placeholder="Get logs from :"
-					rules={{required: true}}
+					rules={{required: 'start date is required'}}
 					maximumDate={maximumDate}
 					onChangeText={(value: any) => {
 						const now = new Date();
@@ -160,7 +160,7 @@ function EventsScreen(props: any) {
 					errors={errors}
 					name="endDate"
 					placeholder="to :"
-					rules={{required: true}}
+					rules={{required: 'end date is required'}}
 					minimumDate={minimumDate}
 					maximumDate={maximumDate}
 					onChangeText={(value: any) => {

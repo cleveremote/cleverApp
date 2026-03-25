@@ -85,7 +85,7 @@ export function CycleGeneralSettingsSection(props: any) {
 				errors={errors}
 				name="style"
 				placeholder="Cycle theme*"
-				rules={{required: true}}
+				rules={{required: 'Theme is required'}}
 				style={{...cycleData?.style}}
 				onChangeText={value => {
 					setCycleData({...cycleData, style: JSON.parse(value)});
@@ -98,7 +98,7 @@ export function CycleGeneralSettingsSection(props: any) {
 					errors={errors}
 					name="name"
 					placeholder="Name*"
-					rules={{required: true}}
+					rules={{required: 'Name is required'}}
 					onChangeText={value => {
 						setSaveUnchangedData(true);
 					}}

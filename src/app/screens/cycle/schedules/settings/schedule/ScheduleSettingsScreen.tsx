@@ -8,7 +8,6 @@ import {
 } from '../../../../../components/common/cycleMenu';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import {faBolt, faGear} from '@fortawesome/free-solid-svg-icons';
-import {Alert} from 'react-native';
 import {hapticOptions} from '../../../../../data/cycleTypes';
 import {
 	loadSchedule,
@@ -17,9 +16,10 @@ import {
 import {saveCycle} from '../../../../../../module/process/infrasctructure/store/actions/cycle';
 
 export function ScheduleSettingsScreen(props: any) {
-	const isModified = useRef(!props.route.params.schedule?.id);
+	const isModified = useRef(!props.route.params.item?.id);
 	const scheduleRef = useRef(props.schedule);
 	scheduleRef.current = props.schedule;
+
 	const updateSchedule = (prevSchedules: any, schedule: any) => {
 		const previous = [...prevSchedules];
 		if (schedule) {
@@ -35,45 +35,23 @@ export function ScheduleSettingsScreen(props: any) {
 		}
 		return previous;
 	};
+
 	const checkChanges = (e: any) => {
 		if (!isModified.current && !scheduleRef.current?.isModified) {
 			return;
 		}
-		const backActions = ['GO_BACK', 'POP', 'POP_TO_TOP'];
-		if (!backActions.includes(e.data.action.type)) {
-			return;
+		saveSchedule(scheduleRef.current, true, false);
+	};
+
+	const saveSchedule = (schedule: any, haptic: boolean, goBack: boolean) => {
+		if (haptic) {
+			ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
 		}
-		e.preventDefault();
-		Alert.alert(
-			'Discard changes?',
-			'You have unsaved changes. Are you sure to discard them and leave the screen?',
-			[
-				{
-					text: 'save',
-					style: 'cancel',
-					onPress: () => {
-						saveSchedule(scheduleRef.current, true, false);
-						scheduleRef.current.isModified = false;
-						props.saveCycle(
-							{
-								...props.route.params.cycle,
-								schedules: updateSchedule(
-									props.route.params.cycle.schedules || [],
-									scheduleRef.current
-								)
-							},
-							true
-						);
-						props.navigation.dispatch(e.data.action);
-					}
-				},
-				{
-					text: 'Discard',
-					style: 'destructive',
-					onPress: () => props.navigation.dispatch(e.data.action)
-				}
-			]
-		);
+		isModified.current = false;
+		props.saveSchedule(schedule);
+		if (goBack) {
+			props.navigation.goBack();
+		}
 	};
 
 	const _deleteItem = () => {
@@ -92,18 +70,6 @@ export function ScheduleSettingsScreen(props: any) {
 			},
 			true
 		);
-	};
-
-	const saveSchedule = (schedule: any, haptic: boolean, goBack: boolean) => {
-		if (haptic) {
-			ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
-		}
-		isModified.current = false;
-		props.saveSchedule(schedule);
-		//props.saveCycle({...props.cycle, schedules: props.schedules}, true);
-		if (goBack) {
-			props.navigation.goBack();
-		}
 	};
 
 	useEffect(() => {
@@ -132,13 +98,14 @@ export function ScheduleSettingsScreen(props: any) {
 					false
 				)
 		});
+
 		const listenerUnsubscribe = props.navigation.addListener(
 			'beforeRemove',
 			(e: any) => {
 				checkChanges(e);
 			}
 		);
-		isModified.current = props.schedule?.isModified;
+		isModified.current = props.sequence?.isModified;
 		return () => listenerUnsubscribe();
 	}, [props.schedule]);
 

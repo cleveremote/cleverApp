@@ -65,13 +65,29 @@ export function PrioritySettingsSection(props: any) {
 	}, [saveUnchangedData]);
 
 	return (
-		<View style={{marginVertical: 4, alignSelf: 'stretch', margin: 20, elevation: 3, shadowColor: '#000', shadowOffset: {width: 0, height: 1}, shadowOpacity: 0.22, shadowRadius: 2.22}}>
-			<View style={{alignSelf: 'stretch', backgroundColor: 'white', borderRadius: 12, padding: 8}}>
+		<View
+			style={{
+				marginVertical: 4,
+				alignSelf: 'stretch',
+				margin: 20,
+				elevation: 3,
+				shadowColor: '#000',
+				shadowOffset: {width: 0, height: 1},
+				shadowOpacity: 0.22,
+				shadowRadius: 2.22
+			}}>
+			<View
+				style={{
+					alignSelf: 'stretch',
+					backgroundColor: 'white',
+					borderRadius: 12,
+					padding: 8
+				}}>
 				<DragableForm
 					control={control}
 					errors={errors}
 					name="modePriority"
-					rules={{required: true}}
+					rules={{required: 'Mode priority is required'}}
 					onDragEnd={value => {
 						setSaveUnchangedData(true);
 					}}

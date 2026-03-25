@@ -1,4 +1,4 @@
-import {TouchableOpacity, View, Text} from 'react-native';
+import {TouchableOpacity, View, Text, Alert} from 'react-native';
 import React, {useEffect, useRef} from 'react';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
@@ -7,13 +7,82 @@ import {navigationHeader} from '../../../components/common/navigationHeaders';
 import {elementStack} from '../../../components/cycle/moduleStack';
 import {hapticOptions} from '../../../data/cycleTypes';
 import {faCog} from '@fortawesome/free-solid-svg-icons';
-import {loadSchedules} from '../../../../module/process/infrasctructure/store/actions/schedule';
+import {
+	loadSchedules,
+	saveSchedule,
+	updateSchedule
+} from '../../../../module/process/infrasctructure/store/actions/schedule';
 import {saveCycle} from '../../../../module/process/infrasctructure/store/actions/cycle';
+import {updateSchedule as updateScheduleInList} from '../../../../module/process/infrasctructure/store/reducers/schedule-reducer-helper';
+import {NavigationAction} from '@react-navigation/native';
 
 export function SchedulesScreen(props: any) {
 	const cycleParamRef = useRef(props.route.params.cycle);
 	const schedulesRef = useRef(props.schedules);
 	schedulesRef.current = props.schedules;
+	const scheduleRef = useRef(props.schedule);
+	scheduleRef.current = props.schedule;
+
+	useEffect(() => {
+		const listenerUnsubscribe = props.navigation.addListener(
+			'beforeRemove',
+			(e: {
+				preventDefault: () => void;
+				data: {action: NavigationAction};
+			}) => {
+				if (!scheduleRef.current?.isModified) return;
+				const backActions = ['GO_BACK', 'POP', 'POP_TO_TOP'];
+				if (!backActions.includes(e.data.action.type)) return;
+				e.preventDefault();
+				Alert.alert(
+					'Discard changes?',
+					'You have unsaved changes. Are you sure to discard them and leave the screen?',
+					[
+						{
+							text: 'save',
+							style: 'cancel',
+							onPress: () => {
+								ReactNativeHapticFeedback.trigger(
+									'impactMedium',
+									hapticOptions
+								);
+								const schedule = {
+									...scheduleRef.current,
+									isModified: false
+								};
+								props.saveSchedule(schedule);
+								props.saveCycle(
+									{
+										...cycleParamRef.current,
+										schedules: updateScheduleInList(
+											cycleParamRef.current.schedules ||
+												[],
+											schedule
+										)
+									},
+									true
+								);
+								props.navigation.dispatch(e.data.action);
+							}
+						},
+						{
+							text: 'Discard',
+							style: 'destructive',
+							onPress: () => {
+								props.updateSchedule({
+									...scheduleRef.current,
+									isModified: false
+								});
+								props.navigation.dispatch(e.data.action);
+							}
+						}
+					]
+				);
+			}
+		);
+		return () => listenerUnsubscribe();
+	}, [props]);
+
 	useEffect(() => {
 		props.navigation.setOptions({
 			headerLeft: () =>
@@ -24,7 +93,7 @@ export function SchedulesScreen(props: any) {
 				)
 		});
 		props.loadSchedules(cycleParamRef.current);
-	}, []);
+	}, [props]);
 
 	useEffect(() => {
 		cycleParamRef.current = {
@@ -109,10 +178,13 @@ export function SchedulesScreen(props: any) {
 
 const mapStateToProps = (state: any) => ({
 	schedules: state.cycle_schedule.schedules,
+	schedule: state.cycle_schedule.schedule,
 	cycle: state.root_cycle.cycle
 });
 
 export default connect(mapStateToProps, {
 	loadSchedules,
-	saveCycle
+	saveCycle,
+	saveSchedule,
+	updateSchedule
 })(SchedulesScreen);

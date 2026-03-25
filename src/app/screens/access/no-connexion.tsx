@@ -34,7 +34,7 @@ export function NoConnectionScreen(props: any) {
 	);
 
 	return (
-		<View>
+		<View style={{flex: 1}}>
 			<View style={{alignItems: 'center', marginTop: 35}}>
 				<Logo width={'70'} height={'70'} />
 				<Text

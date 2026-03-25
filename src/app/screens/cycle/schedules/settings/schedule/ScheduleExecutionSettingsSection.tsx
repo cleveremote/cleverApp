@@ -1,5 +1,5 @@
 import React, {useEffect} from 'react';
-import {Platform, ScrollView, Switch, Text, View} from 'react-native';
+import {Alert, ScrollView, Switch, Text, View} from 'react-native';
 import {navigationHeader} from '../../../../../components/common/navigationHeaders';
 import {
 	DateTimePickerForm,
@@ -35,15 +35,16 @@ export function ScheduleExecutionSettingsSection(props: any) {
 	const [pattern, setPattern] = React.useState(!!defValues.cron?.pattern);
 
 	const [saveUnchangedData, setSaveUnchangedData] = React.useState(false);
-	const isSavingRef = React.useRef(false);
 
 	const {
 		control,
-		handleSubmit,
 		formState: {errors},
+		handleSubmit,
 		setValue,
-		register
-	} = useForm({defaultValues});
+		getValues,
+		register,
+		reset
+	} = useForm({defaultValues, mode: 'onBlur'});
 
 	const onSubmit = (data: any) => {
 		if (saveUnchangedData) {
@@ -52,12 +53,6 @@ export function ScheduleExecutionSettingsSection(props: any) {
 				isModified: saveUnchangedData
 			});
 		}
-	};
-
-	const onSubmitGoBack = (data: any) => {
-		ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
-		onSubmit(data);
-		props.navigation.goBack();
 	};
 
 	const mappingtoDto = (data: any) => {
@@ -77,7 +72,7 @@ export function ScheduleExecutionSettingsSection(props: any) {
 				...result.cron,
 				sunBehavior: {
 					sunState: data.sunState,
-					time: convertToMs(data.after)
+					time: convertToMs(data.time)
 				},
 				after: undefined
 			};
@@ -91,62 +86,108 @@ export function ScheduleExecutionSettingsSection(props: any) {
 		return result;
 	};
 
-	const convertToMs = (t: Date) => {
-		const time = t.toLocaleTimeString();
-		const ms =
-			Number(time.split(':')[0]) * 60 * 60 * 1000 +
-			Number(time.split(':')[1]) * 60 * 1000;
-		return ms;
-	};
+	const convertToMs = (t: Date) =>
+		t.getHours() * 60 * 60 * 1000 + t.getMinutes() * 60 * 1000;
 
 	const validateCronExpression = (pattern: string) => {
-		return isValidCron(pattern, {seconds: true});
+		return (
+			isValidCron(pattern, {seconds: true}) || 'Invalid cron expression'
+		);
 	};
 
 	useEffect(() => {
+		const subscribe = () => {
+			const unsubscribe = props.navigation.addListener(
+				'beforeRemove',
+				(e: any) => {
+					e.preventDefault();
+
+					handleSubmit(
+						data => {
+							onSubmit(data);
+							props.navigation.dispatch(e.data.action);
+						},
+						_errors => {
+							Alert.alert(
+								'Discard changes?',
+								'Some fields contain invalid or incomplete information. Would you like to discard changes or continue editing?',
+								[
+									{
+										text: 'Continue',
+										style: 'cancel',
+										onPress: () => {
+											unsubscribe();
+											subscribe();
+										}
+									},
+									{
+										text: 'Discard',
+										style: 'destructive',
+										onPress: () => {
+											reset();
+											const data = getValues();
+											setPattern(!!data.pattern);
+											setSunState(!!data.sunState);
+											unsubscribe();
+											subscribe();
+										}
+									}
+								]
+							);
+						}
+					)();
+				}
+			);
+			return unsubscribe;
+		};
+
 		props.navigation.setOptions({
 			headerLeft: () =>
 				navigationHeader(
-					handleSubmit(onSubmitGoBack),
+					() => {
+						ReactNativeHapticFeedback.trigger(
+							'impactMedium',
+							hapticOptions
+						);
+						props.navigation.goBack();
+					},
 					'arrow-alt-circle-left',
 					false
 				)
 		});
+
+		const unsubscribe = subscribe();
+		return () => unsubscribe();
 	}, [saveUnchangedData]);
 
-	useEffect(() => {
-		const listenerUnsubscribe = props.navigation.addListener(
-			'beforeRemove',
-			(e: any) => {
-				if (isSavingRef.current) return;
-				e.preventDefault();
-				isSavingRef.current = true;
-				handleSubmit(data => {
-					onSubmit(data);
-					props.navigation.dispatch(e.data.action);
-				})();
-			}
-		);
-		return () => listenerUnsubscribe();
-	}, [saveUnchangedData]);
 	return (
 		<ScrollView automaticallyAdjustKeyboardInsets={true}>
 			<View style={BoxFormStyle.boxForm}>
-				<View style={{flexDirection: 'row', marginLeft: 20, marginTop: 8, marginBottom: 8}}>
+				<View
+					style={{
+						flexDirection: 'row',
+						marginLeft: 20,
+						marginTop: 8,
+						marginBottom: 8
+					}}>
 					<Switch
 						value={pattern}
-						trackColor={{ true: '#32404e', false: '#767577' }}
+						trackColor={{true: '#32404e', false: '#767577'}}
 						onValueChange={checked => {
 							setPattern(checked);
 							if (checked) {
-								setValue('date', new Date(), {
+								setValue('pattern', '*/30 * * * *', {
 									shouldValidate: true
 								});
 							} else {
+								setValue('date', new Date(), {
+									shouldValidate: true
+								});
 								setValue('pattern', null, {
 									shouldValidate: true
 								});
 							}
+							setSaveUnchangedData(true);
 						}}
 					/>
 					<Text
@@ -166,7 +207,7 @@ export function ScheduleExecutionSettingsSection(props: any) {
 						errors={errors}
 						name="pattern"
 						placeholder="Pattern*"
-						rules={{required: true}}
+						rules={{required: 'pattern is required'}}
 						refr={register('pattern', {
 							validate: validateCronExpression
 						})}
@@ -182,31 +223,51 @@ export function ScheduleExecutionSettingsSection(props: any) {
 						name="date"
 						placeholder="Date*"
 						minimumDate={new Date()}
-						rules={{required: true}}
+						rules={{required: 'date is required'}}
 						onChangeText={value => {
 							setSaveUnchangedData(true);
 						}}
 					/>
 				)}
 
-				<View style={{flexDirection: 'row', marginLeft: 20, marginTop: 8, marginBottom: 8}}>
+				<View
+					style={{
+						flexDirection: 'row',
+						marginLeft: 20,
+						marginTop: 8,
+						marginBottom: 8
+					}}>
 					<Switch
 						value={sunState}
-						trackColor={{ true: '#32404e', false: '#767577' }}
+						trackColor={{true: '#32404e', false: '#767577'}}
 						onValueChange={checked => {
 							setSunState(checked);
 							if (checked) {
-								setValue('after', new Date(), {
+								setValue(
+									'after',
+									new Date(new Date().setHours(0, 0, 0, 0)),
+									{
+										shouldValidate: true
+									}
+								);
+
+								setValue('sunState', 'SUNRISE', {
 									shouldValidate: true
 								});
 							} else {
 								setValue('sunState', null, {
 									shouldValidate: true
 								});
-								setValue('time', new Date(), {
-									shouldValidate: true
-								});
+								setValue(
+									'time',
+									new Date(new Date().setHours(0, 0, 0, 0)),
+									{
+										shouldValidate: true
+									}
+								);
 							}
+
+							setSaveUnchangedData(true);
 						}}
 					/>
 					<Text
@@ -230,8 +291,8 @@ export function ScheduleExecutionSettingsSection(props: any) {
 							control={control}
 							errors={errors}
 							name="sunState"
-							placeholder="Sun state*"
-							rules={{required: true}}
+							placeholder="SunState*"
+							rules={{required: 'sun state is required'}}
 							onValueChange={value => {
 								setSaveUnchangedData(true);
 							}}
@@ -242,7 +303,7 @@ export function ScheduleExecutionSettingsSection(props: any) {
 							errors={errors}
 							name="time"
 							placeholder="After sunset / Before sunrise*"
-							rules={{required: true}}
+							rules={{required: 'time is required'}}
 							onChangeText={() => {
 								setSaveUnchangedData(true);
 							}}
@@ -255,7 +316,7 @@ export function ScheduleExecutionSettingsSection(props: any) {
 						errors={errors}
 						name="after"
 						placeholder="Trigger after*"
-						rules={{required: true}}
+						rules={{required: 'after is required'}}
 						onChangeText={() => {
 							setSaveUnchangedData(true);
 						}}

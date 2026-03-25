@@ -16,7 +16,8 @@ export const loadSchedule = (
 			name: 'new schedule',
 			description: 'new schedule',
 			cron: {
-				pattern: '*/30 * * * * *'
+				pattern: '*/30 * * * * *',
+				date: new Date()
 			},
 			shouldConfirmation: true,
 			isPaused: true,

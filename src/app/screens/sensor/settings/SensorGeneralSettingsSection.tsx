@@ -65,7 +65,7 @@ export function SensorGeneralSettingsSection(props: any) {
 				errors={errors}
 				name="style"
 				placeholder="Sensor theme*"
-				rules={{required: true}}
+				rules={{required: 'Theme is required'}}
 				style={{...sensorData?.style}}
 				onChangeText={value => {
 					setSensorData({...sensorData, style: JSON.parse(value)});
@@ -78,7 +78,7 @@ export function SensorGeneralSettingsSection(props: any) {
 					errors={errors}
 					name="name"
 					placeholder="Name*"
-					rules={{required: true}}
+					rules={{required: 'Name is required'}}
 					onChangeText={value => {
 						setSaveUnchangedData(true);
 					}}
