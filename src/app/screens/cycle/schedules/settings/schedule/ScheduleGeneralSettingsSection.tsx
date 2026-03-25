@@ -14,7 +14,41 @@ import {useForm} from 'react-hook-form';
 import {connect} from 'react-redux';
 import {updateSchedule} from '../../../../../../module/process/infrasctructure/store/actions/schedule';
 
-export function ScheduleGeneralSettingsSection(props: any) {
+interface ScheduleGeneralFormData {
+	id?: string;
+	cycleId?: string;
+	name?: string;
+	description?: string;
+	isPaused?: boolean;
+	shouldConfirmation?: boolean;
+	isModified?: boolean;
+}
+
+interface ScheduleGeneralSettingsSectionProps {
+	navigation: {
+		dispatch: (action: NavigationAction) => void;
+		addListener: (
+			event: string,
+			callback: (
+				e: EventArg<'beforeRemove', true, {action: NavigationAction}>
+			) => void
+		) => () => void;
+		setOptions: (options: object) => void;
+		goBack: () => void;
+	};
+	route: {
+		params?: {
+			scheduleData?: ScheduleGeneralFormData;
+		};
+	};
+	updateSchedule: (
+		schedule: ScheduleGeneralFormData & {isModified: boolean}
+	) => void;
+}
+
+export function ScheduleGeneralSettingsSection(
+	props: ScheduleGeneralSettingsSectionProps
+) {
 	const defaultValues = {...props.route.params?.scheduleData};
 	const [saveUnchangedData, setSaveUnchangedData] = useState(
 		defaultValues.isModified
@@ -26,7 +60,7 @@ export function ScheduleGeneralSettingsSection(props: any) {
 		formState: {errors}
 	} = useForm({defaultValues});
 
-	const onSubmit = (data: any) => {
+	const onSubmit = (data: ScheduleGeneralFormData) => {
 		if (saveUnchangedData) {
 			props.updateSchedule({...data, isModified: saveUnchangedData});
 		}

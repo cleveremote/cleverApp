@@ -120,19 +120,19 @@ const COLORS = {
 
 const styles = StyleSheet.create({
 	container: {
-		alignSelf: 'stretch',
-		elevation: 3,
-		shadowColor: COLORS.shadow,
-		shadowOffset: {width: 0, height: 1},
-		shadowOpacity: 0.22,
-		shadowRadius: 2.22
+		alignSelf: 'stretch'
 	},
 	card: {
 		alignSelf: 'stretch',
 		backgroundColor: COLORS.cardBackground,
 		marginTop: 8,
 		marginHorizontal: 20,
-		borderRadius: 12
+		borderRadius: 12,
+		elevation: 3,
+		shadowColor: COLORS.shadow,
+		shadowOffset: {width: 0, height: 1},
+		shadowOpacity: 0.22,
+		shadowRadius: 2.22
 	}
 });
 

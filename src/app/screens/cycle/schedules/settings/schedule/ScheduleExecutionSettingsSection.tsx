@@ -1,5 +1,6 @@
 import React, {useEffect} from 'react';
-import {Alert, ScrollView, StyleSheet, Switch, Text, View} from 'react-native';
+import {Alert, ScrollView, StyleSheet, Text, View} from 'react-native';
+import {AppSwitch} from '../../../../../components/common/AppSwitch';
 import type {EventArg, NavigationAction} from '@react-navigation/core';
 import {navigationHeader} from '../../../../../components/common/navigationHeaders';
 import {
@@ -15,7 +16,7 @@ import {connect} from 'react-redux';
 import {updateSchedule} from '../../../../../../module/process/infrasctructure/store/actions/schedule';
 import {isValidCron} from 'cron-validator';
 
-const SWITCH_TRACK_COLOR = {true: '#32404e', false: '#767577'};
+const SWITCH_TRACK_COLOR = {true: '#32404e', false: '#d1d1d6'};
 
 export function ScheduleExecutionSettingsSection(props: any) {
 	const defValues = {...props.route.params?.scheduleData};
@@ -177,7 +178,7 @@ export function ScheduleExecutionSettingsSection(props: any) {
 		<ScrollView automaticallyAdjustKeyboardInsets={true}>
 			<View style={BoxFormStyle.boxForm}>
 				<View style={styles.switchRow}>
-					<Switch
+					<AppSwitch
 						value={pattern}
 						trackColor={SWITCH_TRACK_COLOR}
 						onValueChange={checked => {
@@ -231,7 +232,7 @@ export function ScheduleExecutionSettingsSection(props: any) {
 				)}
 
 				<View style={styles.switchRow}>
-					<Switch
+					<AppSwitch
 						value={sunState}
 						trackColor={SWITCH_TRACK_COLOR}
 						onValueChange={checked => {

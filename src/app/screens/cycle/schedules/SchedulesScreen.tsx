@@ -175,18 +175,18 @@ const styles = StyleSheet.create({
 		gap: 8,
 		marginVertical: 4,
 		alignSelf: 'stretch',
-		margin: 20,
-		elevation: 3,
-		shadowColor: COLORS.shadow,
-		shadowOffset: {width: 0, height: 1},
-		shadowOpacity: 0.22,
-		shadowRadius: 2.22
+		margin: 20
 	},
 	card: {
 		alignSelf: 'stretch',
 		backgroundColor: COLORS.cardBackground,
 		borderRadius: 12,
-		padding: 8
+		padding: 8,
+		elevation: 3,
+		shadowColor: COLORS.shadow,
+		shadowOffset: {width: 0, height: 1},
+		shadowOpacity: 0.22,
+		shadowRadius: 2.22
 	},
 	addRow: {
 		justifyContent: 'center',

@@ -124,7 +124,7 @@ export function PlanScreen(props: any) {
 	return (
 		<View style={{marginBottom: 60}}>
 			<View style={{alignSelf: 'stretch', backgroundColor: '#84adea', height: 60, elevation: 3, shadowColor: '#000', shadowOffset: {width: 0, height: 1}, shadowOpacity: 0.22, shadowRadius: 2.22}}>
-				<View style={{flexDirection: 'row', justifyContent: 'center', borderRadius: 12, marginBottom: 4, elevation: 6, shadowColor: '#000', shadowOffset: {width: 0, height: 3}, shadowOpacity: 0.27, shadowRadius: 4.65}}>
+				<View style={{flexDirection: 'row', justifyContent: 'center', borderRadius: 12, marginBottom: 4, elevation: 6, backgroundColor: 'transparent', shadowColor: '#000', shadowOffset: {width: 0, height: 3}, shadowOpacity: 0.27, shadowRadius: 4.65}}>
 					<View>
 						<FontAwesomeIcon
 							icon={faSun}

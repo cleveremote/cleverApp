@@ -1,5 +1,6 @@
 import React, {useEffect, useState} from 'react';
-import {Switch, TouchableOpacity, View} from 'react-native';
+import {TouchableOpacity, View} from 'react-native';
+import {AppSwitch} from '../common/AppSwitch';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import {hapticOptions} from '../../data/cycleTypes';
@@ -25,7 +26,12 @@ export function SensorStatus(props: any) {
 	return (
 		<View style={{alignItems: 'flex-end'}}>
 			{status === 'WAITTING_CONFIRMATION' ? (
-				<View style={{flexDirection: 'row', alignItems: 'center', gap: 12}}>
+				<View
+					style={{
+						flexDirection: 'row',
+						alignItems: 'center',
+						gap: 12
+					}}>
 					<TouchableOpacity
 						onLongPress={() => {
 							ReactNativeHapticFeedback.trigger(
@@ -67,12 +73,12 @@ export function SensorStatus(props: any) {
 					</TouchableOpacity>
 				</View>
 			) : (
-				<Switch
+				<AppSwitch
 					style={{marginTop: 2}}
 					value={status === 'IN_PROCCESS'}
 					trackColor={{
 						true: props.iconColorSwitch,
-						false: '#767577'
+						false: '#d1d1d6'
 					}}
 					onValueChange={value => {
 						props.closeSibillings(true);

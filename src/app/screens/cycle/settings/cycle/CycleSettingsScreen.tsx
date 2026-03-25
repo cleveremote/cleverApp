@@ -25,8 +25,7 @@ export function CycleSett(props: any) {
 	cycleRef.current = props.cycle;
 
 	const checkChanges = (e: any) => {
-		console.log('cycleRef.current?.sequences123', cycleRef.current);
-		if (
+if (
 			!isModified.current &&
 			!cycleRef.current?.isModified &&
 			!cycleRef.current?.sequences?.find((s: any) => s.isModified)
@@ -107,22 +106,19 @@ export function CycleSett(props: any) {
 	}, [props.cycle]);
 
 	return (
-		<View
-			style={{
-				alignSelf: 'stretch',
-				elevation: 3,
-				shadowColor: '#000',
-				shadowOffset: {width: 0, height: 1},
-				shadowOpacity: 0.22,
-				shadowRadius: 2.22
-			}}>
+		<View style={{alignSelf: 'stretch'}}>
 			<View
 				style={{
 					alignSelf: 'stretch',
 					backgroundColor: 'white',
 					marginTop: 8,
 					marginHorizontal: 20,
-					borderRadius: 12
+					borderRadius: 12,
+					elevation: 3,
+					shadowColor: '#000',
+					shadowOffset: {width: 0, height: 1},
+					shadowOpacity: 0.22,
+					shadowRadius: 2.22
 				}}>
 				<MenuAccordion
 					key={21}

@@ -38,12 +38,9 @@ export function SettingsScreen(props: any) {
 			const svgText = await RNFS.readFile(path, 'utf8');
 
 			// 3️⃣ Retour du contenu texte du SVG
-			console.log('Contenu du SVG :', svgText);
-
 			return svgText;
 		} catch (err) {
 			if (DocumentPicker.isCancel(err)) {
-				console.log('Sélection annulée');
 			} else {
 				console.error('Erreur :', err);
 			}

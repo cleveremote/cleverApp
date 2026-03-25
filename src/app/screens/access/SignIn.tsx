@@ -1,13 +1,13 @@
 import React from 'react';
 import {
 	StyleSheet,
-	Switch,
 	Text,
 	TextInput,
 	Alert,
 	TouchableOpacity,
 	View
 } from 'react-native';
+import {AppSwitch} from '../../components/common/AppSwitch';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import {hapticOptions} from '../../data/cycleTypes';
 import Spinner from 'react-native-loading-spinner-overlay';
@@ -35,6 +35,7 @@ export function SignIn(props: any) {
 	const nav = useNavigation();
 	React.useEffect(() => {
 		nav.setOptions({
+			headerTitleAlign: 'center',
 			headerLeft: () =>
 				navigationHeader(
 					() => props.navigation.goBack(),
@@ -100,12 +101,7 @@ export function SignIn(props: any) {
 					style={{
 						gap: 8,
 						marginVertical: 4,
-						alignSelf: 'stretch',
-						elevation: 3,
-						shadowColor: '#000',
-						shadowOffset: {width: 0, height: 1},
-						shadowOpacity: 0.22,
-						shadowRadius: 2.22
+						alignSelf: 'stretch'
 					}}>
 					<View
 						style={{
@@ -114,7 +110,12 @@ export function SignIn(props: any) {
 							marginTop: 8,
 							marginHorizontal: 20,
 							borderRadius: 12,
-							padding: 20
+							padding: 20,
+							elevation: 3,
+							shadowColor: '#000',
+							shadowOffset: {width: 0, height: 1},
+							shadowOpacity: 0.22,
+							shadowRadius: 2.22
 						}}>
 						<View style={{gap: 8}}>
 							<TextInput
@@ -183,13 +184,9 @@ export function SignIn(props: any) {
 									alignSelf: 'center',
 									alignItems: 'center'
 								}}>
-								<Switch
+								<AppSwitch
 									style={{marginRight: 12}}
 									value={signinData.rememberCredentials}
-									trackColor={{
-										true: '#32404e',
-										false: '#767577'
-									}}
 									onValueChange={checked => {
 										setSigninData({
 											login: signinData.login,

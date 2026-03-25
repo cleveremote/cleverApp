@@ -1,5 +1,5 @@
 import React from 'react';
-import {Text, View} from 'react-native';
+import {Text} from 'react-native';
 import {connect} from 'react-redux';
 
 export function SensorValue(props: any) {
@@ -11,29 +11,18 @@ export function SensorValue(props: any) {
 		);
 	};
 	return (
-		<View
+		<Text
 			style={{
-				justifyContent: 'center',
-				alignItems: 'flex-end',
-				borderRadius: 12,
-				height: 40,
-				width: 60,
-				elevation: 6,
-				shadowColor: '#000',
-				shadowOffset: {width: 0, height: 3},
-				shadowOpacity: 0.27,
-				shadowRadius: 4.65
+				fontWeight: 'bold',
+				fontSize: 20,
+				color: fontColor,
+				textShadowColor: '#737171',
+				textShadowOffset: {width: 1, height: 0},
+				textShadowRadius: 1
 			}}>
-			<Text
-				style={{
-					fontWeight: 'bold',
-					alignSelf: 'center',
-					color: fontColor
-				}}>
-				{getValue()?.value || '_  '}
-				{props.cycleData.unit}
-			</Text>
-		</View>
+			{getValue()?.value || '_  '}
+			{props.cycleData.unit}
+		</Text>
 	);
 }
 

@@ -102,22 +102,19 @@ export function TriggerSettingsScreen(props: any) {
 	}, [props.trigger]);
 
 	return (
-		<View
-			style={{
-				alignSelf: 'stretch',
-				elevation: 3,
-				shadowColor: '#000',
-				shadowOffset: {width: 0, height: 1},
-				shadowOpacity: 0.22,
-				shadowRadius: 2.22
-			}}>
+		<View style={{alignSelf: 'stretch'}}>
 			<View
 				style={{
 					alignSelf: 'stretch',
 					backgroundColor: 'white',
 					marginTop: 8,
 					marginHorizontal: 20,
-					borderRadius: 12
+					borderRadius: 12,
+					elevation: 3,
+					shadowColor: '#000',
+					shadowOffset: {width: 0, height: 1},
+					shadowOpacity: 0.22,
+					shadowRadius: 2.22
 				}}>
 				<View>
 					<View>

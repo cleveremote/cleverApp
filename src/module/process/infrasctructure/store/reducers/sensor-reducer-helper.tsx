@@ -57,10 +57,5 @@ export const updateStatus = (prevSensors: any, status: any) => {
 
 		return values;
 	}
-	1; //Incredibly Beautiful Teen Fucks in the Ass, Tight Hole, Pussy Juice
-	2; //Lured Schoolgirl on the Roof, Anal, Juice Pussy, Squirt
-	//Schoolgirl Continues to Fuck in Pussy after Creampie
-
-	//Fucked her Teen Creampie Pussy, Cumshot in a Tight Ass
 	return [];
 };

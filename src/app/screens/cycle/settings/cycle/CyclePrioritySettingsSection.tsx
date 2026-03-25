@@ -66,22 +66,18 @@ export function PrioritySettingsSection(props: any) {
 
 	return (
 		<View
-			style={{
-				marginVertical: 4,
-				alignSelf: 'stretch',
-				margin: 20,
-				elevation: 3,
-				shadowColor: '#000',
-				shadowOffset: {width: 0, height: 1},
-				shadowOpacity: 0.22,
-				shadowRadius: 2.22
-			}}>
+			style={{marginVertical: 4, alignSelf: 'stretch', margin: 20}}>
 			<View
 				style={{
 					alignSelf: 'stretch',
 					backgroundColor: 'white',
 					borderRadius: 12,
-					padding: 8
+					padding: 8,
+					elevation: 3,
+					shadowColor: '#000',
+					shadowOffset: {width: 0, height: 1},
+					shadowOpacity: 0.22,
+					shadowRadius: 2.22
 				}}>
 				<DragableForm
 					control={control}

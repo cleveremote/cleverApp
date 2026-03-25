@@ -54,10 +54,6 @@ export function DeviceSettings(props: any) {
 			})
 			.then(result => {
 				if (result.value) {
-					console.log(
-						'Networks raw value:',
-						JSON.parse(decode(result.value))
-					);
 					setNetworks(
 						JSON.parse(decode(result.value)).map((x: any) => ({
 							label: `${x.name} (${
@@ -137,12 +133,7 @@ export function DeviceSettings(props: any) {
 				style={{
 					gap: 8,
 					marginVertical: 4,
-					alignSelf: 'stretch',
-					elevation: 3,
-					shadowColor: '#000',
-					shadowOffset: {width: 0, height: 1},
-					shadowOpacity: 0.22,
-					shadowRadius: 2.22
+					alignSelf: 'stretch'
 				}}>
 				<View
 					style={{
@@ -150,6 +141,11 @@ export function DeviceSettings(props: any) {
 						backgroundColor: 'white',
 						marginTop: 8,
 						marginHorizontal: 20,
+						elevation: 3,
+						shadowColor: '#000',
+						shadowOffset: {width: 0, height: 1},
+						shadowOpacity: 0.22,
+						shadowRadius: 2.22,
 						borderRadius: 12,
 						padding: 20
 					}}>

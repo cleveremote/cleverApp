@@ -1,6 +1,5 @@
 export const loadModbusTasks = (modbusTasks: any) => {
-	console.log('modbusTasks', modbusTasks);
-	return modbusTasks || [];
+return modbusTasks || [];
 };
 
 export const loadModbusTask = (modbusTasks: any, modbusTaskId: string) => {

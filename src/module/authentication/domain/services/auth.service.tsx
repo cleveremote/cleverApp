@@ -169,10 +169,6 @@ class AuthenticationService {
 				try {
 					const r = await fetchTimeout(url, 500);
 					if (r.name === localServer) {
-						console.log(
-							'✅ Serveur trouvé :',
-							`http://${rootIp}${i}:5001`
-						);
 						return `http://${rootIp}${i}:5001`; // interrompt la boucle
 					}
 				} catch (e) {
@@ -181,7 +177,6 @@ class AuthenticationService {
 			}
 		}
 
-		//console.log("❌ Aucun serveur trouvé.");
 	}
 
 	// try first local if ok else distant
@@ -234,13 +229,11 @@ class AuthenticationService {
 					}
 				});
 				socket?.on('connect', () => {
-					console.log('connect');
 					this.setStatusServer(true);
 					resolve({res: true});
 				});
 
 				socket?.on('disconnect', reason => {
-					console.log('disconnect', reason);
 					this.setStatusServer(false);
 					if (reason !== 'io client disconnect') {
 						this.signout();
@@ -259,7 +252,6 @@ class AuthenticationService {
 
 	public manageReconnexion() {
 		this.socket?.on('disconnect', async reason => {
-			console.log('disconnect', reason);
 			this.setStatusServer(false);
 			if (reason !== 'io client disconnect') {
 				this.signout();

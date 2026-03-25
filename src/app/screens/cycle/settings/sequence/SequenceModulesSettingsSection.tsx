@@ -32,8 +32,7 @@ export function SequenceModulesSettingsSection(props: any) {
 	} = useForm({defaultValues});
 
 	const onSubmit = (data: any) => {
-		console.log('updateModule');
-		props.updateModule({portNum: data.modules, isModified: true});
+props.updateModule({portNum: data.modules, isModified: true});
 		_saveSequence(false);
 		setSaveUnchangedData(true);
 	};
@@ -60,8 +59,7 @@ export function SequenceModulesSettingsSection(props: any) {
 
 	const _saveSequence = (isGoBack = true) => {
 		ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
-		console.log('sequence saveSequence');
-		if (saveUnchangedDataRef.current) {
+if (saveUnchangedDataRef.current) {
 			props.updateSequence({
 				...props.route.params?.sequenceData,
 				modules: modulesRef.current,

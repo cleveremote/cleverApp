@@ -118,11 +118,6 @@ export const loadConfiguration =
 			'front/box/fetch/configuration',
 			{},
 			(response: any) => {
-				console.log(
-					'JSON.parse(response.config)',
-					JSON.parse(response.config)
-				);
-
 				dispatch({
 					type: CYCLES_LOAD,
 					payload: JSON.parse(response.config).cycles

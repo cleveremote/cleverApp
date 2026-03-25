@@ -120,6 +120,7 @@ export function Cycle(props: any) {
 	return (
 		<ScrollView
 			scrollEnabled={true}
+			contentContainerStyle={{paddingBottom: 16}}
 			refreshControl={
 				<RefreshControl
 					refreshing={refreshing}

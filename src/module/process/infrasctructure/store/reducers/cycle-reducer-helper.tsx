@@ -4,8 +4,7 @@ export const getKeys = (svg: string) => {
 	matches?.forEach(key => {
 		res[key] = false;
 	});
-	console.log('test1', res);
-	return Object.keys(res).map(key => ({
+return Object.keys(res).map(key => ({
 		label: key,
 		value: key
 	}));

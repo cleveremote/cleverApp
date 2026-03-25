@@ -82,8 +82,7 @@ export function SeqSettingsSec(props: any) {
 	}, []);
 
 	useEffect(() => {
-		console.log('sequences updated123', props.sequences);
-		setValue('sequences', props.sequences, {shouldValidate: true});
+setValue('sequences', props.sequences, {shouldValidate: true});
 		props.updateCycle({
 			...props.route.params.cycleData,
 			sequences: props.sequences,
@@ -102,23 +101,18 @@ export function SeqSettingsSec(props: any) {
 
 	return (
 		<View
-			style={{
-				gap: 8,
-				marginVertical: 4,
-				alignSelf: 'stretch',
-				margin: 20,
-				elevation: 3,
-				shadowColor: '#000',
-				shadowOffset: {width: 0, height: 1},
-				shadowOpacity: 0.22,
-				shadowRadius: 2.22
-			}}>
+			style={{gap: 8, marginVertical: 4, alignSelf: 'stretch', margin: 20}}>
 			<View
 				style={{
 					alignSelf: 'stretch',
 					backgroundColor: 'white',
 					borderRadius: 12,
-					padding: 8
+					padding: 8,
+					elevation: 3,
+					shadowColor: '#000',
+					shadowOffset: {width: 0, height: 1},
+					shadowOpacity: 0.22,
+					shadowRadius: 2.22
 				}}>
 				<DragableForm
 					isList={true}

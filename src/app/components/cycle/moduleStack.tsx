@@ -26,7 +26,7 @@ export function elementStack(
 				shadowOpacity: 0.22,
 				shadowRadius: 2.22
 			}}
-			key={item.key}>
+			key={item.id}>
 			<View style={{flexDirection: 'row'}}>
 				<Text
 					style={[styles.textSequence, {flex: 1, marginVertical: 8, marginLeft: 8}]}>

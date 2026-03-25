@@ -1,5 +1,6 @@
 import React, {useEffect, useRef, useState} from 'react';
-import {Platform, ScrollView, Switch, Text, View} from 'react-native';
+import {ScrollView, Text, View} from 'react-native';
+import {AppSwitch} from '../../../../../components/common/AppSwitch';
 import {navigationHeader} from '../../../../../components/common/navigationHeaders';
 import {BoxFormStyle} from '../../../../../styles/components/common/boxForm';
 import {
@@ -148,15 +149,8 @@ function TriggerExecutionSettingsSection(props: any) {
 						marginTop: 8,
 						marginBottom: 8
 					}}>
-					<Switch
+					<AppSwitch
 						value={!!sunStatusRef.current}
-						trackColor={{true: '#32404e', false: '#767577'}}
-						style={{
-							...(Platform.OS === 'android' && {
-								transform: [{scaleX: 1.5}, {scaleY: 1.5}],
-								marginVertical: 10
-							})
-						}}
 						onValueChange={checked => {
 							sunStatusRef.current = !!checked;
 							if (checked) {

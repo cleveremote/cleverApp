@@ -83,7 +83,6 @@ export const saveSchedules =
 			'front/box/sync/cycle',
 			cycle,
 			async (response: any) => {
-				console.log('saveSchedules', response);
 				await dispatch({
 					type: SCHEDULES_SAVE,
 					payload: JSON.parse(response.config).cycle?.schedules || []

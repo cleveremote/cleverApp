@@ -6,13 +6,12 @@ import {
 	FlatList,
 	Keyboard,
 	Modal,
-	Platform,
 	Pressable,
-	Switch,
 	Text,
 	TextInput,
 	View
 } from 'react-native';
+import {AppSwitch} from './AppSwitch';
 import {DragableSequences} from './draggableStack';
 import {styles} from '../../styles/cycleStyles';
 import {SequenceStack} from '../cycle/sequenceStack';
@@ -465,19 +464,9 @@ export function SwitchForm({
 				rules={rules}
 				render={({field: {onChange, onBlur, value}}) => (
 					<View style={{flexDirection: 'row', alignItems: 'center'}}>
-						<Switch
-							style={{
-								marginTop: 8,
-								...(Platform.OS === 'android' && {
-									transform: [{scaleX: 1.5}, {scaleY: 1.5}],
-									marginVertical: 10
-								})
-							}}
+						<AppSwitch
+							style={{marginTop: 8}}
 							value={value}
-							trackColor={{
-								true: '#32404e',
-								false: '#767577'
-							}}
 							onValueChange={checked => {
 								onChangeText(checked);
 								onChange(checked);
