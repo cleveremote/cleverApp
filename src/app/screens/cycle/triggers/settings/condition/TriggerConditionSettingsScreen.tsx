@@ -132,10 +132,6 @@ function TriggerConditionSettingsScreen(props: any) {
 							name={'General'}
 							icon={faGear}
 							onPress={() => {
-								ReactNativeHapticFeedback.trigger(
-									'impactMedium',
-									hapticOptions
-								);
 								props.navigation.navigate(
 									'TriggerConditionGeneralSettingsSection',
 									{
@@ -149,10 +145,6 @@ function TriggerConditionSettingsScreen(props: any) {
 							name={'Execution'}
 							icon={faBolt}
 							onPress={() => {
-								ReactNativeHapticFeedback.trigger(
-									'impactMedium',
-									hapticOptions
-								);
 								props.navigation.navigate(
 									'TriggerConditionParamSettingsSection',
 									{

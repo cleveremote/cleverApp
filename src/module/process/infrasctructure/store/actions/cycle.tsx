@@ -92,23 +92,26 @@ export const loadCycle =
 export const saveCycle =
 	(
 		data: any,
-		soft = false
+		soft = false,
+		onSuccess?: () => void
 	): ThunkAction<void, RootState, unknown, AnyAction> =>
 	async dispatch => {
 		if (soft) {
-			dispatch({
+			await dispatch({
 				type: CYCLE_SAVE,
 				payload: data
 			});
+			onSuccess?.();
 		} else {
 			authenticationService.socket?.emit(
 				'front/box/sync/cycle',
 				data,
-				(response: any) => {
-					dispatch({
+				async (response: any) => {
+					await dispatch({
 						type: CYCLE_SAVE,
 						payload: JSON.parse(response.config).cycle
 					});
+					onSuccess?.();
 				}
 			);
 		}

@@ -31,7 +31,10 @@
       "Bash(grep -r \"from ''native-base''\" src/ --include=\"*.tsx\" --include=\"*.ts\" -l)",
       "Bash(LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 cd /Users/nya-perso/cleveremote/cleverApp/ios)",
       "Bash(gem list:*)",
-      "Bash(pod --version)"
+      "Bash(pod --version)",
+      "Bash(grep -r beforeRemove /Users/nya-perso/cleveremote/cleverApp/node_modules/@react-navigation/native/src --include=*.ts -l)",
+      "Bash(grep -r beforeRemove /Users/nya-perso/cleveremote/cleverApp/node_modules/@react-navigation/core/src --include=*.ts -l)",
+      "Bash(grep -r EventArg /Users/nya-perso/cleveremote/cleverApp/node_modules/@react-navigation/native/lib/typescript --include=*.d.ts -l)"
     ],
     "additionalDirectories": [
       "/Users/nya/Library/Developer/Xcode/DerivedData/cleverApp-gfbkyyztpeonnddfkjftehjjxboc",

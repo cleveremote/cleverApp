@@ -120,10 +120,6 @@ function SequenceSettingsScreen(props: any) {
 							name={'General'}
 							icon={faGear}
 							onPress={() => {
-								ReactNativeHapticFeedback.trigger(
-									'impactMedium',
-									hapticOptions
-								);
 								props.navigation.navigate(
 									'SequenceGeneralSection',
 									{
@@ -137,10 +133,6 @@ function SequenceSettingsScreen(props: any) {
 							name={'Security'}
 							icon={faShieldHalved}
 							onPress={() => {
-								ReactNativeHapticFeedback.trigger(
-									'impactMedium',
-									hapticOptions
-								);
 								props.navigation.navigate(
 									'SequenceSecuritySection',
 									{
@@ -155,10 +147,6 @@ function SequenceSettingsScreen(props: any) {
 							name={'Modules'}
 							icon={faEthernet}
 							onPress={() => {
-								ReactNativeHapticFeedback.trigger(
-									'impactMedium',
-									hapticOptions
-								);
 								props.navigation.navigate(
 									'SequenceModulesSettingsSection',
 									{

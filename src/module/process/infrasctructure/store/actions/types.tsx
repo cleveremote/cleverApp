@@ -44,6 +44,7 @@ export const SCHEDULES_LOAD = 'SCHEDULES_LOAD';
 export const SCHEDULE_LOAD = 'SCHEDULE_LOAD';
 export const SCHEDULE_UPDATE = 'SCHEDULE_UPDATE';
 export const SCHEDULE_SAVE = 'SCHEDULE_SAVE';
+export const SCHEDULES_SAVE = 'SCHEDULES_SAVE';
 
 //////////////Trigger
 export const TRIGGERS_LOAD = 'TRIGGERS_LOAD';

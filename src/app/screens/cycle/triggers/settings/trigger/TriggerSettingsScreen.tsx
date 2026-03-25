@@ -126,10 +126,6 @@ export function TriggerSettingsScreen(props: any) {
 							name={'General'}
 							icon={faGear}
 							onPress={() => {
-								ReactNativeHapticFeedback.trigger(
-									'impactMedium',
-									hapticOptions
-								);
 								props.navigation.navigate(
 									'TriggerGeneralSettingsSection',
 									{
@@ -143,10 +139,6 @@ export function TriggerSettingsScreen(props: any) {
 							name={'Execution'}
 							icon={faBolt}
 							onPress={() => {
-								ReactNativeHapticFeedback.trigger(
-									'impactMedium',
-									hapticOptions
-								);
 								props.navigation.navigate(
 									'TriggerExecutionSettingsSection',
 									{
@@ -161,10 +153,6 @@ export function TriggerSettingsScreen(props: any) {
 							name={'Conditions'}
 							icon={faCheckDouble}
 							onPress={() => {
-								ReactNativeHapticFeedback.trigger(
-									'impactMedium',
-									hapticOptions
-								);
 								props.navigation.navigate(
 									'TriggerConditionsSection',
 									{

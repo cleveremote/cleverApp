@@ -129,10 +129,6 @@ export function CycleSett(props: any) {
 					name={'General'}
 					icon={faGear}
 					onPress={() => {
-						ReactNativeHapticFeedback.trigger(
-							'impactMedium',
-							hapticOptions
-						);
 						props.navigation.navigate('CycleGeneralSection', {
 							cycleData: props.cycle
 						});
@@ -143,10 +139,6 @@ export function CycleSett(props: any) {
 					name={'Priority'}
 					icon={faTrafficLight}
 					onPress={() => {
-						ReactNativeHapticFeedback.trigger(
-							'impactMedium',
-							hapticOptions
-						);
 						props.navigation.navigate('CyclePrioritySection', {
 							cycleData: props.cycle
 						});
@@ -157,10 +149,6 @@ export function CycleSett(props: any) {
 					name={'Sequences'}
 					icon={faRotateRight}
 					onPress={() => {
-						ReactNativeHapticFeedback.trigger(
-							'impactMedium',
-							hapticOptions
-						);
 						props.navigation.navigate('CycleSequenceSection', {
 							cycleData: props.cycle
 						});

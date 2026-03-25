@@ -2,7 +2,8 @@ import {
 	SCHEDULE_SAVE,
 	SCHEDULES_LOAD,
 	SCHEDULE_UPDATE,
-	SCHEDULE_LOAD
+	SCHEDULE_LOAD,
+	SCHEDULES_SAVE
 } from '../actions/types';
 import {
 	loadSchedule,
@@ -45,10 +46,14 @@ export default (state = initialState, action: any) => {
 		case SCHEDULE_SAVE: {
 			return {
 				...state,
-				schedules: updateSchedule(
-					state.schedules,
-					JSON.parse(action.payload).schedule
-				)
+				schedules: updateSchedule(state.schedules, action.payload)
+			};
+		}
+
+		case SCHEDULES_SAVE: {
+			return {
+				...state,
+				schedules: action.payload.schedules
 			};
 		}
 

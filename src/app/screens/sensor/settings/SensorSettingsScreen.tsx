@@ -90,30 +90,41 @@ function SensorSettingsScreen(props: any) {
 	}, [props.sensor]);
 
 	return (
-			<View style={{alignSelf: 'stretch', elevation: 3, shadowColor: '#000', shadowOffset: {width: 0, height: 1}, shadowOpacity: 0.22, shadowRadius: 2.22}}>
-				<View style={{alignSelf: 'stretch', backgroundColor: 'white', marginTop: 8, marginHorizontal: 20, borderRadius: 12}}>
-					<MenuAccordion
-						key={41}
-						name={'General'}
-						icon={faTrafficLight}
-						onPress={() => {
-							ReactNativeHapticFeedback.trigger(
-								'impactMedium',
-								hapticOptions
-							);
-							props.navigation.navigate('SensorGeneralSection', {
-								sensorData: props.sensor
-							});
-						}}
-					/>
-					<DeleteItemMenu
-						key={61}
-						OnConfirm={() => {
-							_deleteItem();
-						}}
-					/>
-				</View>
+		<View
+			style={{
+				alignSelf: 'stretch',
+				elevation: 3,
+				shadowColor: '#000',
+				shadowOffset: {width: 0, height: 1},
+				shadowOpacity: 0.22,
+				shadowRadius: 2.22
+			}}>
+			<View
+				style={{
+					alignSelf: 'stretch',
+					backgroundColor: 'white',
+					marginTop: 8,
+					marginHorizontal: 20,
+					borderRadius: 12
+				}}>
+				<MenuAccordion
+					key={41}
+					name={'General'}
+					icon={faTrafficLight}
+					onPress={() => {
+						props.navigation.navigate('SensorGeneralSection', {
+							sensorData: props.sensor
+						});
+					}}
+				/>
+				<DeleteItemMenu
+					key={61}
+					OnConfirm={() => {
+						_deleteItem();
+					}}
+				/>
 			</View>
+		</View>
 	);
 }
 

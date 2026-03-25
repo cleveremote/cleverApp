@@ -1,5 +1,6 @@
 import React, {useEffect} from 'react';
-import {Alert, ScrollView, Switch, Text, View} from 'react-native';
+import {Alert, ScrollView, StyleSheet, Switch, Text, View} from 'react-native';
+import type {EventArg, NavigationAction} from '@react-navigation/core';
 import {navigationHeader} from '../../../../../components/common/navigationHeaders';
 import {
 	DateTimePickerForm,
@@ -13,6 +14,8 @@ import {hapticOptions} from '../../../../../data/cycleTypes';
 import {connect} from 'react-redux';
 import {updateSchedule} from '../../../../../../module/process/infrasctructure/store/actions/schedule';
 import {isValidCron} from 'cron-validator';
+
+const SWITCH_TRACK_COLOR = {true: '#32404e', false: '#767577'};
 
 export function ScheduleExecutionSettingsSection(props: any) {
 	const defValues = {...props.route.params?.scheduleData};
@@ -48,10 +51,13 @@ export function ScheduleExecutionSettingsSection(props: any) {
 
 	const onSubmit = (data: any) => {
 		if (saveUnchangedData) {
-			props.updateSchedule({
-				...mappingtoDto(data),
-				isModified: saveUnchangedData
-			});
+			props.updateSchedule(
+				{
+					...mappingtoDto(data),
+					isModified: saveUnchangedData
+				},
+				true
+			);
 		}
 	};
 
@@ -89,54 +95,61 @@ export function ScheduleExecutionSettingsSection(props: any) {
 	const convertToMs = (t: Date) =>
 		t.getHours() * 60 * 60 * 1000 + t.getMinutes() * 60 * 1000;
 
-	const validateCronExpression = (pattern: string) => {
-		return (
-			isValidCron(pattern, {seconds: true}) || 'Invalid cron expression'
-		);
+	const validateCronExpression = (value: string) =>
+		isValidCron(value, {seconds: true}) || 'Invalid cron expression';
+
+	const buildBeforeRemoveListener = (
+		e: EventArg<'beforeRemove', true, {action: NavigationAction}>,
+		onContinue: () => void,
+		onDiscard: () => void
+	) => {
+		e.preventDefault();
+		handleSubmit(
+			data => {
+				onSubmit(data);
+				props.navigation.dispatch(e.data.action);
+			},
+			_errors => {
+				Alert.alert(
+					'Discard changes?',
+					'Some fields contain invalid or incomplete information. Would you like to discard changes or continue editing?',
+					[
+						{
+							text: 'Continue',
+							style: 'cancel',
+							onPress: onContinue
+						},
+						{
+							text: 'Discard',
+							style: 'destructive',
+							onPress: onDiscard
+						}
+					]
+				);
+			}
+		)();
 	};
 
 	useEffect(() => {
 		const subscribe = () => {
 			const unsubscribe = props.navigation.addListener(
 				'beforeRemove',
-				(e: any) => {
-					e.preventDefault();
-
-					handleSubmit(
-						data => {
-							onSubmit(data);
-							props.navigation.dispatch(e.data.action);
+				(e: any) =>
+					buildBeforeRemoveListener(
+						e,
+						() => {
+							unsubscribe();
+							subscribe();
 						},
-						_errors => {
-							Alert.alert(
-								'Discard changes?',
-								'Some fields contain invalid or incomplete information. Would you like to discard changes or continue editing?',
-								[
-									{
-										text: 'Continue',
-										style: 'cancel',
-										onPress: () => {
-											unsubscribe();
-											subscribe();
-										}
-									},
-									{
-										text: 'Discard',
-										style: 'destructive',
-										onPress: () => {
-											reset();
-											const data = getValues();
-											setPattern(!!data.pattern);
-											setSunState(!!data.sunState);
-											unsubscribe();
-											subscribe();
-										}
-									}
-								]
-							);
+						() => {
+							reset();
+							const data = getValues();
+							setPattern(!!data.pattern);
+							setSunState(!!data.sunState);
+							unsubscribe();
+							subscribe();
 						}
-					)();
-				}
+					)
 			);
 			return unsubscribe;
 		};
@@ -163,16 +176,10 @@ export function ScheduleExecutionSettingsSection(props: any) {
 	return (
 		<ScrollView automaticallyAdjustKeyboardInsets={true}>
 			<View style={BoxFormStyle.boxForm}>
-				<View
-					style={{
-						flexDirection: 'row',
-						marginLeft: 20,
-						marginTop: 8,
-						marginBottom: 8
-					}}>
+				<View style={styles.switchRow}>
 					<Switch
 						value={pattern}
-						trackColor={{true: '#32404e', false: '#767577'}}
+						trackColor={SWITCH_TRACK_COLOR}
 						onValueChange={checked => {
 							setPattern(checked);
 							if (checked) {
@@ -190,14 +197,7 @@ export function ScheduleExecutionSettingsSection(props: any) {
 							setSaveUnchangedData(true);
 						}}
 					/>
-					<Text
-						style={{
-							marginTop: 5,
-							color: '#32404e',
-							fontSize: 15,
-							marginLeft: 5,
-							fontWeight: 'bold'
-						}}>
+					<Text style={styles.switchLabel}>
 						Schedule by Date/Pattern
 					</Text>
 				</View>
@@ -230,27 +230,18 @@ export function ScheduleExecutionSettingsSection(props: any) {
 					/>
 				)}
 
-				<View
-					style={{
-						flexDirection: 'row',
-						marginLeft: 20,
-						marginTop: 8,
-						marginBottom: 8
-					}}>
+				<View style={styles.switchRow}>
 					<Switch
 						value={sunState}
-						trackColor={{true: '#32404e', false: '#767577'}}
+						trackColor={SWITCH_TRACK_COLOR}
 						onValueChange={checked => {
 							setSunState(checked);
 							if (checked) {
 								setValue(
 									'after',
 									new Date(new Date().setHours(0, 0, 0, 0)),
-									{
-										shouldValidate: true
-									}
+									{shouldValidate: true}
 								);
-
 								setValue('sunState', 'SUNRISE', {
 									shouldValidate: true
 								});
@@ -261,24 +252,14 @@ export function ScheduleExecutionSettingsSection(props: any) {
 								setValue(
 									'time',
 									new Date(new Date().setHours(0, 0, 0, 0)),
-									{
-										shouldValidate: true
-									}
+									{shouldValidate: true}
 								);
 							}
-
 							setSaveUnchangedData(true);
 						}}
 					/>
-					<Text
-						style={{
-							marginTop: 5,
-							color: '#32404e',
-							fontSize: 15,
-							marginLeft: 5,
-							fontWeight: 'bold'
-						}}>
-						Trigger based on (sun-state/delay){' '}
+					<Text style={styles.switchLabel}>
+						Trigger based on (sun-state/delay)
 					</Text>
 				</View>
 				{sunState ? (
@@ -293,7 +274,7 @@ export function ScheduleExecutionSettingsSection(props: any) {
 							name="sunState"
 							placeholder="SunState*"
 							rules={{required: 'sun state is required'}}
-							onValueChange={value => {
+							onValueChange={() => {
 								setSaveUnchangedData(true);
 							}}
 						/>
@@ -326,6 +307,22 @@ export function ScheduleExecutionSettingsSection(props: any) {
 		</ScrollView>
 	);
 }
+
+const styles = StyleSheet.create({
+	switchRow: {
+		flexDirection: 'row',
+		marginLeft: 20,
+		marginTop: 8,
+		marginBottom: 8
+	},
+	switchLabel: {
+		marginTop: 5,
+		color: '#32404e',
+		fontSize: 15,
+		marginLeft: 5,
+		fontWeight: 'bold'
+	}
+});
 
 export default connect(null, {
 	updateSchedule

@@ -30,7 +30,13 @@ export function MenuAccordion({
 	return (
 		<View>
 			<Pressable
-				onPress={() => onPress()}
+				onPress={() => {
+					ReactNativeHapticFeedback.trigger(
+						'impactMedium',
+						hapticOptions
+					);
+					onPress();
+				}}
 				style={{height: 50, backgroundColor: 'white', borderRadius: 12}}>
 				{({pressed}) => (
 					<View

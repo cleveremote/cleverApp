@@ -1,5 +1,6 @@
 import React, {useEffect, useState} from 'react';
-import {ScrollView, View} from 'react-native';
+import {Alert, ScrollView, View} from 'react-native';
+import type {EventArg, NavigationAction} from '@react-navigation/core';
 import {navigationHeader} from '../../../../../components/common/navigationHeaders';
 import {
 	InputForm,
@@ -18,7 +19,6 @@ export function ScheduleGeneralSettingsSection(props: any) {
 	const [saveUnchangedData, setSaveUnchangedData] = useState(
 		defaultValues.isModified
 	);
-	const isSavingRef = React.useRef(false);
 
 	const {
 		control,
@@ -32,37 +32,75 @@ export function ScheduleGeneralSettingsSection(props: any) {
 		}
 	};
 
-	const onSubmitGoBack = (data: any) => {
-		ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
-		onSubmit(data);
-		props.navigation.goBack();
+	const buildBeforeRemoveListener = (
+		e: EventArg<'beforeRemove', true, {action: NavigationAction}>,
+		onContinue: () => void,
+		onDiscard: () => void
+	) => {
+		e.preventDefault();
+		handleSubmit(
+			data => {
+				onSubmit(data);
+				props.navigation.dispatch(e.data.action);
+			},
+			_errors => {
+				Alert.alert(
+					'Discard changes?',
+					'Some fields contain invalid or incomplete information. Would you like to discard changes or continue editing?',
+					[
+						{
+							text: 'Continue',
+							style: 'cancel',
+							onPress: onContinue
+						},
+						{
+							text: 'Discard',
+							style: 'destructive',
+							onPress: onDiscard
+						}
+					]
+				);
+			}
+		)();
 	};
 
 	useEffect(() => {
+		const subscribe = () => {
+			const unsubscribe = props.navigation.addListener(
+				'beforeRemove',
+				(e: any) =>
+					buildBeforeRemoveListener(
+						e,
+						() => {
+							unsubscribe();
+							subscribe();
+						},
+						() => {
+							unsubscribe();
+							subscribe();
+						}
+					)
+			);
+			return unsubscribe;
+		};
+
 		props.navigation.setOptions({
 			headerLeft: () =>
 				navigationHeader(
-					handleSubmit(onSubmitGoBack),
+					() => {
+						ReactNativeHapticFeedback.trigger(
+							'impactMedium',
+							hapticOptions
+						);
+						props.navigation.goBack();
+					},
 					'arrow-alt-circle-left',
 					false
 				)
 		});
-	}, [saveUnchangedData]);
 
-	useEffect(() => {
-		const listenerUnsubscribe = props.navigation.addListener(
-			'beforeRemove',
-			(e: any) => {
-				if (isSavingRef.current) return;
-				e.preventDefault();
-				isSavingRef.current = true;
-				handleSubmit(data => {
-					onSubmit(data);
-					props.navigation.dispatch(e.data.action);
-				})();
-			}
-		);
-		return () => listenerUnsubscribe();
+		const unsubscribe = subscribe();
+		return () => unsubscribe();
 	}, [saveUnchangedData]);
 	return (
 		<ScrollView automaticallyAdjustKeyboardInsets={true}>

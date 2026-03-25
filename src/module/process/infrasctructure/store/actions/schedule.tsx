@@ -2,7 +2,8 @@ import {
 	SCHEDULES_LOAD,
 	SCHEDULE_UPDATE,
 	SCHEDULE_LOAD,
-	SCHEDULE_SAVE
+	SCHEDULE_SAVE,
+	SCHEDULES_SAVE
 } from './types';
 
 import {ThunkAction} from 'redux-thunk';
@@ -11,12 +12,16 @@ import {RootState} from '../store';
 import {authenticationService} from '../../../../authentication/domain/services/auth.service';
 
 export const updateSchedule =
-	(schedule: any): ThunkAction<void, RootState, unknown, AnyAction> =>
-	dispatch => {
-		dispatch({
+	(
+		schedule: any,
+		onSuccess?: () => void
+	): ThunkAction<void, RootState, unknown, AnyAction> =>
+	async dispatch => {
+		await dispatch({
 			type: SCHEDULE_UPDATE,
 			payload: schedule
 		});
+		onSuccess?.();
 	};
 
 export const loadSchedules =
@@ -41,16 +46,74 @@ export const loadSchedule =
 	};
 
 export const saveSchedule =
-	(data: any): ThunkAction<void, RootState, unknown, AnyAction> =>
+	(
+		data: any,
+		soft: boolean,
+		onSuccess?: () => void
+	): ThunkAction<void, RootState, unknown, AnyAction> =>
+	async dispatch => {
+		if (soft) {
+			await dispatch({
+				type: SCHEDULE_SAVE,
+				payload: data
+			});
+			onSuccess?.();
+		} else {
+			authenticationService.socket?.emit(
+				'front/box/sync/schedule',
+				data,
+				async (response: any) => {
+					await dispatch({
+						type: SCHEDULE_SAVE,
+						payload: JSON.parse(response.config).schedule
+					});
+					onSuccess?.();
+				}
+			);
+		}
+	};
+
+export const saveSchedules =
+	(
+		cycle: any,
+		onSuccess?: () => void
+	): ThunkAction<void, RootState, unknown, AnyAction> =>
 	async dispatch => {
 		authenticationService.socket?.emit(
-			'front/box/sync/schedule',
-			data,
-			(response: any) => {
-				dispatch({
-					type: SCHEDULE_SAVE,
-					payload: response.config
+			'front/box/sync/cycle',
+			cycle,
+			async (response: any) => {
+				console.log('saveSchedules', response);
+				await dispatch({
+					type: SCHEDULES_SAVE,
+					payload: JSON.parse(response.config).cycle?.schedules || []
 				});
+				onSuccess?.();
 			}
 		);
+	};
+
+export const updateCycleScheduleStructure =
+	(
+		data: any,
+		soft: boolean
+	): ThunkAction<void, RootState, unknown, AnyAction> =>
+	async dispatch => {
+		if (soft) {
+			dispatch({
+				type: SCHEDULE_SAVE,
+				payload: data
+			});
+		} else {
+			authenticationService.socket?.emit(
+				'front/box/sync/schedule',
+				data,
+				(response: any) => {
+					dispatch({
+						type: SCHEDULE_SAVE,
+						payload: JSON.parse(response.config).schedule
+					});
+				}
+			);
+		}
 	};
