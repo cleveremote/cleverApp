@@ -210,7 +210,6 @@ export function DateTimePickerForm({
 			if (mode === 'datetime') {
 				return new Date(value);
 			} else {
-				value.setHours(0, 0, 0, 0);
 				return value;
 			}
 		} else {

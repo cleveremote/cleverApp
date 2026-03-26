@@ -207,8 +207,7 @@ const styles = StyleSheet.create({
 });
 
 const mapStateToProps = (state: any) => ({
-	schedules: state.cycle_schedule.schedules,
-	schedule: state.cycle_schedule.schedule
+	schedules: state.cycle_schedule.schedules
 });
 
 export default connect(mapStateToProps, {

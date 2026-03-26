@@ -16,6 +16,15 @@ import {
 } from '../../../../../../module/process/infrasctructure/store/actions/schedule';
 import {saveCycle} from '../../../../../../module/process/infrasctructure/store/actions/cycle';
 
+const serializeSchedule = (schedule: any) => {
+	if (!schedule?.cron?.date || !(schedule.cron.date instanceof Date))
+		return schedule;
+	return {
+		...schedule,
+		cron: {...schedule.cron, date: schedule.cron.date.getTime()}
+	};
+};
+
 export function ScheduleSettingsScreen(props: any) {
 	const isModified = useRef(!props.route.params.item?.id);
 	isModified.current = props.schedule?.isModified;
@@ -30,14 +39,16 @@ export function ScheduleSettingsScreen(props: any) {
 		if (!isModified.current && !scheduleRef.current?.isModified) return;
 		e.preventDefault();
 		props.saveSchedule(scheduleRef.current, true, () => {
-			props.saveCycle(
-				{
-					...props.route.params.cycle,
-					schedules: schedulesRef.current ?? []
-				},
-				true,
-				() => props.navigation.dispatch(e.data.action)
-			);
+			() => console.log('Schedule saved successfully!'); // Callback after saving the schedule
+			props.navigation.dispatch(e.data.action);
+			// props.saveCycle(
+			// 	{
+			// 		...props.route.params.cycle,
+			// 		schedules: schedulesRef.current ?? []
+			// 	},
+			// 	true,
+			// 	() => props.navigation.dispatch(e.data.action)
+			// );
 		});
 	};
 
@@ -89,7 +100,7 @@ export function ScheduleSettingsScreen(props: any) {
 						props.navigation.navigate(
 							'ScheduleGeneralSettingsSection',
 							{
-								scheduleData: props.schedule
+								scheduleData: serializeSchedule(props.schedule)
 							}
 						)
 					}
@@ -102,7 +113,7 @@ export function ScheduleSettingsScreen(props: any) {
 						props.navigation.navigate(
 							'ScheduleExecutionSettingsSection',
 							{
-								scheduleData: props.schedule
+								scheduleData: serializeSchedule(props.schedule)
 							}
 						)
 					}

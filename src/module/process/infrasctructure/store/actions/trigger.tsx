@@ -2,7 +2,8 @@ import {
 	TRIGGERS_LOAD,
 	TRIGGER_UPDATE,
 	TRIGGER_LOAD,
-	TRIGGER_SAVE
+	TRIGGER_SAVE,
+	TRIGGERS_SAVE
 } from './types';
 
 import {ThunkAction} from 'redux-thunk';
@@ -11,12 +12,16 @@ import {RootState} from '../store';
 import {authenticationService} from '../../../../authentication/domain/services/auth.service';
 
 export const updateTrigger =
-	(trigger: any): ThunkAction<void, RootState, unknown, AnyAction> =>
-	dispatch => {
-		dispatch({
+	(
+		trigger: any,
+		onSuccess?: () => void
+	): ThunkAction<void, RootState, unknown, AnyAction> =>
+	async dispatch => {
+		await dispatch({
 			type: TRIGGER_UPDATE,
 			payload: trigger
 		});
+		onSuccess?.();
 	};
 
 export const loadTriggers =
@@ -43,7 +48,8 @@ export const loadTrigger =
 export const saveTrigger =
 	(
 		data: any,
-		soft: boolean
+		soft: boolean,
+		onSuccess?: () => void
 	): ThunkAction<void, RootState, unknown, AnyAction> =>
 	async dispatch => {
 		if (soft) {
@@ -51,6 +57,7 @@ export const saveTrigger =
 				type: TRIGGER_SAVE,
 				payload: data
 			});
+			onSuccess?.();
 		} else {
 			authenticationService.socket?.emit(
 				'front/box/sync/trigger',
@@ -60,7 +67,27 @@ export const saveTrigger =
 						type: TRIGGER_SAVE,
 						payload: JSON.parse(response.config).trigger
 					});
+					onSuccess?.();
 				}
 			);
 		}
+	};
+
+export const saveTriggers =
+	(
+		cycle: any,
+		onSuccess?: () => void
+	): ThunkAction<void, RootState, unknown, AnyAction> =>
+	async dispatch => {
+		authenticationService.socket?.emit(
+			'front/box/sync/cycle',
+			cycle,
+			async (response: any) => {
+				await dispatch({
+					type: TRIGGERS_SAVE,
+					payload: JSON.parse(response.config).cycle?.triggers || []
+				});
+				onSuccess?.();
+			}
+		);
 	};

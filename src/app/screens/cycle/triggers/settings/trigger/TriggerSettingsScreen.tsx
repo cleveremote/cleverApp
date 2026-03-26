@@ -1,5 +1,5 @@
-import {useEffect, useRef} from 'react';
-import {View} from 'react-native';
+import React, {useEffect, useRef} from 'react';
+import {StyleSheet, View} from 'react-native';
 import {connect} from 'react-redux';
 import {navigationHeader} from '../../../../../components/common/navigationHeaders';
 import {
@@ -16,57 +16,35 @@ import {
 import {saveCycle} from '../../../../../../module/process/infrasctructure/store/actions/cycle';
 
 export function TriggerSettingsScreen(props: any) {
-	const isModified = useRef(!props.route.params.item?.id);
 	const triggerRef = useRef(props.trigger);
 	triggerRef.current = props.trigger;
 
-	const updateTrigger = (prevTriggers: any, trigger: any) => {
-		const previous = [...prevTriggers];
-		if (trigger) {
-			const deleteId = trigger?.id.split('_');
-			const index = previous.findIndex(
-				x => x.id === (deleteId[1] || trigger?.id)
-			);
-			if (index > -1) {
-				previous[index] = trigger;
-			} else {
-				previous.push(trigger);
-			}
-		}
-		return previous;
-	};
+	const triggersRef = useRef(props.triggers);
+	triggersRef.current = props.triggers;
 
 	const checkChanges = (e: any) => {
-		if (!isModified.current && !triggerRef.current?.isModified) {
-			return;
-		}
-		saveTrigger(triggerRef.current, true, false);
-	};
+		const isModified =
+			triggerRef.current?.isModified ||
+			triggerRef.current?.conditions?.some(
+				(x: {isModified: boolean}) => x.isModified
+			);
 
-	const saveTrigger = (trigger: any, haptic: boolean, goBack: boolean) => {
-		if (haptic) {
-			ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
-		}
-		isModified.current = false;
-		props.saveTrigger(trigger);
-		if (goBack) {
-			props.navigation.goBack();
-		}
+		if (!isModified) return;
+
+		e.preventDefault();
+
+		props.saveTrigger(triggerRef.current, true, () => {
+			props.navigation.dispatch(e.data.action);
+		});
 	};
 
 	const _deleteItem = () => {
-		const data = {...triggerRef.current, id: `deleted_${props.trigger.id}`};
-		saveTrigger(data, false, true);
-		props.saveCycle(
-			{
-				...props.route.params.cycle,
-				triggers: updateTrigger(
-					props.route.params.cycle.triggers || [],
-					data
-				)
-			},
-			true
-		);
+		triggerRef.current = {
+			...triggerRef.current,
+			id: `deleted_${props.trigger.id}`,
+			isModified: true
+		};
+		props.navigation.goBack();
 	};
 
 	useEffect(() => {
@@ -74,9 +52,7 @@ export function TriggerSettingsScreen(props: any) {
 			props.route.params.trigger?.id,
 			props.route.params.trigger?.cycleId || props.route.params.cycle.id
 		);
-	}, []);
 
-	useEffect(() => {
 		props.navigation.setOptions({
 			headerLeft: () =>
 				navigationHeader(
@@ -91,88 +67,86 @@ export function TriggerSettingsScreen(props: any) {
 					false
 				)
 		});
-		const listenerUnsubscribe = props.navigation.addListener(
+
+		const unsubscribe = props.navigation.addListener(
 			'beforeRemove',
-			(e: any) => {
-				checkChanges(e);
-			}
+			checkChanges
 		);
-		isModified.current = props.sequence?.isModified;
-		return () => listenerUnsubscribe();
-	}, [props.trigger]);
+		return unsubscribe;
+	}, []);
 
 	return (
-		<View style={{alignSelf: 'stretch'}}>
-			<View
-				style={{
-					alignSelf: 'stretch',
-					backgroundColor: 'white',
-					marginTop: 8,
-					marginHorizontal: 20,
-					borderRadius: 12,
-					elevation: 3,
-					shadowColor: '#000',
-					shadowOffset: {width: 0, height: 1},
-					shadowOpacity: 0.22,
-					shadowRadius: 2.22
-				}}>
-				<View>
-					<View>
-						<MenuAccordion
-							key={21}
-							name={'General'}
-							icon={faGear}
-							onPress={() => {
-								props.navigation.navigate(
-									'TriggerGeneralSettingsSection',
-									{
-										triggerData: props.trigger
-									}
-								);
-							}}
-						/>
-						<MenuAccordion
-							key={41}
-							name={'Execution'}
-							icon={faBolt}
-							onPress={() => {
-								props.navigation.navigate(
-									'TriggerExecutionSettingsSection',
-									{
-										triggerData: props.trigger
-									}
-								);
-							}}
-						/>
-
-						<MenuAccordion
-							key={51}
-							name={'Conditions'}
-							icon={faCheckDouble}
-							onPress={() => {
-								props.navigation.navigate(
-									'TriggerConditionsSection',
-									{
-										triggerData: props.trigger
-									}
-								);
-							}}
-						/>
-						<DeleteItemMenu
-							key={61}
-							OnConfirm={() => {
-								_deleteItem();
-							}}
-						/>
-					</View>
-				</View>
+		<View style={styles.container}>
+			<View style={styles.card}>
+				<MenuAccordion
+					key={21}
+					name={'General'}
+					icon={faGear}
+					onPress={() =>
+						props.navigation.navigate(
+							'TriggerGeneralSettingsSection',
+							{
+								triggerData: props.trigger
+							}
+						)
+					}
+				/>
+				<MenuAccordion
+					key={41}
+					name={'Execution'}
+					icon={faBolt}
+					onPress={() =>
+						props.navigation.navigate(
+							'TriggerExecutionSettingsSection',
+							{
+								triggerData: props.trigger
+							}
+						)
+					}
+				/>
+				<MenuAccordion
+					key={51}
+					name={'Conditions'}
+					icon={faCheckDouble}
+					onPress={() =>
+						props.navigation.navigate('TriggerConditionsSection', {
+							triggerData: props.trigger
+						})
+					}
+				/>
+				<DeleteItemMenu key={61} OnConfirm={_deleteItem} />
 			</View>
 		</View>
 	);
 }
 
+const COLORS = {
+	shadow: '#000',
+	cardBackground: 'white'
+};
+
+const styles = StyleSheet.create({
+	container: {
+		alignSelf: 'stretch'
+	},
+	card: {
+		alignSelf: 'stretch',
+		backgroundColor: COLORS.cardBackground,
+		marginTop: 8,
+		marginHorizontal: 20,
+		borderRadius: 12,
+		elevation: 3,
+		shadowColor: COLORS.shadow,
+		shadowOffset: {width: 0, height: 1},
+		shadowOpacity: 0.22,
+		shadowRadius: 2.22
+	}
+});
+
 const mapStateToProps = (state: any) => ({
-	trigger: state.cycle_trigger.trigger
+	trigger: state.cycle_trigger.trigger,
+	triggers: state.cycle_trigger.triggers,
+	cycle: state.root_cycle.cycle
 });
 
 export default connect(mapStateToProps, {

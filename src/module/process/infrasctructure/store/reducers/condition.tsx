@@ -2,7 +2,8 @@ import {
 	CONDITIONS_LOAD,
 	CONDITION_LOAD,
 	CONDITION_UPDATE,
-	CONDITION_SAVE
+	CONDITION_SAVE,
+	CONDITIONS_SAVE
 } from '../actions/types';
 import {
 	loadCondition,
@@ -46,6 +47,13 @@ export default (state = initialState, action: any) => {
 			return {
 				...state,
 				conditions: updateCondition(state.conditions, action.payload)
+			};
+		}
+
+		case CONDITIONS_SAVE: {
+			return {
+				...state,
+				conditions: action.payload
 			};
 		}
 

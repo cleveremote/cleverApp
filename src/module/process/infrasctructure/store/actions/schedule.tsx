@@ -91,28 +91,3 @@ export const saveSchedules =
 			}
 		);
 	};
-
-export const updateCycleScheduleStructure =
-	(
-		data: any,
-		soft: boolean
-	): ThunkAction<void, RootState, unknown, AnyAction> =>
-	async dispatch => {
-		if (soft) {
-			dispatch({
-				type: SCHEDULE_SAVE,
-				payload: data
-			});
-		} else {
-			authenticationService.socket?.emit(
-				'front/box/sync/schedule',
-				data,
-				(response: any) => {
-					dispatch({
-						type: SCHEDULE_SAVE,
-						payload: JSON.parse(response.config).schedule
-					});
-				}
-			);
-		}
-	};

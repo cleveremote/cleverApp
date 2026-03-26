@@ -2,7 +2,8 @@ import {
 	TRIGGER_SAVE,
 	TRIGGERS_LOAD,
 	TRIGGER_UPDATE,
-	TRIGGER_LOAD
+	TRIGGER_LOAD,
+	TRIGGERS_SAVE
 } from '../actions/types';
 import {
 	loadTrigger,
@@ -46,7 +47,13 @@ export default (state = initialState, action: any) => {
 			return {
 				...state,
 				triggers: updateTrigger(state.triggers, action.payload)
-				//trigger: action.payload
+			};
+		}
+
+		case TRIGGERS_SAVE: {
+			return {
+				...state,
+				triggers: action.payload.triggers
 			};
 		}
 

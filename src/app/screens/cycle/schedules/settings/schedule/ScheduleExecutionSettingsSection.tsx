@@ -27,7 +27,10 @@ export function ScheduleExecutionSettingsSection(props: any) {
 	};
 	const defaultValues = {
 		pattern: defValues.cron?.pattern,
-		date: defValues.cron?.date,
+		date:
+			defValues.cron?.date != null
+				? new Date(defValues.cron.date)
+				: new Date(),
 		after: getTimeString(defValues.cron?.after),
 		sunState: defValues.cron?.sunBehavior?.sunState,
 		time: getTimeString(defValues.cron?.sunBehavior?.time)
@@ -50,16 +53,17 @@ export function ScheduleExecutionSettingsSection(props: any) {
 		reset
 	} = useForm({defaultValues, mode: 'onBlur'});
 
-	const onSubmit = (data: any) => {
-		if (saveUnchangedData) {
-			props.updateSchedule(
-				{
-					...mappingtoDto(data),
-					isModified: saveUnchangedData
-				},
-				true
-			);
-		}
+	const onSubmit = (data: any, e: any) => {
+		if (!saveUnchangedData) props.navigation.dispatch(e.data.action);
+		props.updateSchedule(
+			{
+				...mappingtoDto(data),
+				isModified: saveUnchangedData
+			},
+			() => {
+				props.navigation.dispatch(e.data.action);
+			}
+		);
 	};
 
 	const mappingtoDto = (data: any) => {
@@ -69,7 +73,8 @@ export function ScheduleExecutionSettingsSection(props: any) {
 		} else {
 			result.cron = {
 				...result.cron,
-				date: data.date.toString(),
+				date:
+					data.date instanceof Date ? data.date.getTime() : data.date,
 				pattern: null
 			};
 		}
@@ -107,8 +112,7 @@ export function ScheduleExecutionSettingsSection(props: any) {
 		e.preventDefault();
 		handleSubmit(
 			data => {
-				onSubmit(data);
-				props.navigation.dispatch(e.data.action);
+				onSubmit(data, e);
 			},
 			_errors => {
 				Alert.alert(

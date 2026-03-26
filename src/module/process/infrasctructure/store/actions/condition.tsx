@@ -2,7 +2,8 @@ import {
 	CONDITION_UPDATE,
 	CONDITIONS_LOAD,
 	CONDITION_LOAD,
-	CONDITION_SAVE
+	CONDITION_SAVE,
+	CONDITIONS_SAVE
 } from './types';
 
 import {ThunkAction} from 'redux-thunk';
@@ -40,10 +41,28 @@ export const loadCondition =
 	};
 
 export const saveCondition =
-	(data: any): ThunkAction<void, RootState, unknown, AnyAction> =>
+	(
+		data: any,
+		_soft?: boolean,
+		onSuccess?: () => void
+	): ThunkAction<void, RootState, unknown, AnyAction> =>
 	async dispatch => {
 		dispatch({
 			type: CONDITION_SAVE,
 			payload: data
 		});
+		onSuccess?.();
+	};
+
+export const saveConditions =
+	(
+		conditions: any,
+		onSuccess?: () => void
+	): ThunkAction<void, RootState, unknown, AnyAction> =>
+	async dispatch => {
+		await dispatch({
+			type: CONDITIONS_SAVE,
+			payload: conditions
+		});
+		onSuccess?.();
 	};

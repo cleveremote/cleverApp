@@ -51,12 +51,14 @@ export const TRIGGERS_LOAD = 'TRIGGERS_LOAD';
 export const TRIGGER_LOAD = 'TRIGGER_LOAD';
 export const TRIGGER_UPDATE = 'TRIGGER_UPDATE';
 export const TRIGGER_SAVE = 'TRIGGER_SAVE';
+export const TRIGGERS_SAVE = 'TRIGGERS_SAVE';
 
 //////////////Conditon-trigger
 export const CONDITIONS_LOAD = 'CONDITIONS_LOAD';
 export const CONDITION_LOAD = 'CONDITION_LOAD';
 export const CONDITION_UPDATE = 'CONDITION_UPDATE';
 export const CONDITION_SAVE = 'CONDITION_SAVE';
+export const CONDITIONS_SAVE = 'CONDITIONS_SAVE';
 
 ////////// new
 export const PROCESS_STATUS = 'PROCESS_STATUS';

@@ -57,6 +57,7 @@ export function ScheduleGeneralSettingsSection(
 	const {
 		control,
 		handleSubmit,
+		reset,
 		formState: {errors}
 	} = useForm({defaultValues});
 
@@ -110,6 +111,7 @@ export function ScheduleGeneralSettingsSection(
 							subscribe();
 						},
 						() => {
+							reset();
 							unsubscribe();
 							subscribe();
 						}
