@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		00E356F31AD99517003FC87E /* cleverAppTests.m in Sources */ = {isa = PBXBuildFile; fileRef = 00E356F21AD99517003FC87E /* cleverAppTests.m */; };
+		0E0308562F7695CF005F95FA /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 0E0308552F7695CF005F95FA /* PrivacyInfo.xcprivacy */; };
 		0E7F006F2BBAD4FF00FB9BE6 /* EvilIcons.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 0E7F005F2BBAD4FE00FB9BE6 /* EvilIcons.ttf */; };
 		0E7F00702BBAD4FF00FB9BE6 /* AntDesign.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 0E7F00602BBAD4FE00FB9BE6 /* AntDesign.ttf */; };
 		0E7F00712BBAD4FF00FB9BE6 /* Zocial.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 0E7F00612BBAD4FE00FB9BE6 /* Zocial.ttf */; };
@@ -27,6 +28,7 @@
 		13B07FBC1A68108700A75B9A /* AppDelegate.mm in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB01A68108700A75B9A /* AppDelegate.mm */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		13B07FC11A68108700A75B9A /* main.m in Sources */ = {isa = PBXBuildFile; fileRef = 13B07FB71A68108700A75B9A /* main.m */; };
+		1645A2C1E5FA89524E8361CD /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 24D161361EB293EC1F4C2FA8 /* PrivacyInfo.xcprivacy */; };
 		17F1E802BFCB40BC9B2AFFB9 /* libPods-cleverApp.a in Frameworks */ = {isa = PBXBuildFile; fileRef = D5263F787932D38503857C3A /* libPods-cleverApp.a */; };
 		25AC25E44A56B63964478876 /* libPods-cleverApp-cleverAppTests.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 731CF884D6D06BB4031478D3 /* libPods-cleverApp-cleverAppTests.a */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
@@ -46,6 +48,7 @@
 		00E356EE1AD99517003FC87E /* cleverAppTests.xctest */ = {isa = PBXFileReference; explicitFileType = wrapper.cfbundle; includeInIndex = 0; path = cleverAppTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		00E356F11AD99517003FC87E /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist.xml; path = Info.plist; sourceTree = "<group>"; };
 		00E356F21AD99517003FC87E /* cleverAppTests.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; path = cleverAppTests.m; sourceTree = "<group>"; };
+		0E0308552F7695CF005F95FA /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; name = PrivacyInfo.xcprivacy; path = cleverApp/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		0E7F005F2BBAD4FE00FB9BE6 /* EvilIcons.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; name = EvilIcons.ttf; path = "../node_modules/react-native-vector-icons/Fonts/EvilIcons.ttf"; sourceTree = "<group>"; };
 		0E7F00602BBAD4FE00FB9BE6 /* AntDesign.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; name = AntDesign.ttf; path = "../node_modules/react-native-vector-icons/Fonts/AntDesign.ttf"; sourceTree = "<group>"; };
 		0E7F00612BBAD4FE00FB9BE6 /* Zocial.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; name = Zocial.ttf; path = "../node_modules/react-native-vector-icons/Fonts/Zocial.ttf"; sourceTree = "<group>"; };
@@ -70,6 +73,7 @@
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = cleverApp/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = cleverApp/Info.plist; sourceTree = "<group>"; };
 		13B07FB71A68108700A75B9A /* main.m */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = sourcecode.c.objc; name = main.m; path = cleverApp/main.m; sourceTree = "<group>"; };
+		24D161361EB293EC1F4C2FA8 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xml; name = PrivacyInfo.xcprivacy; path = cleverApp/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		4412824B087E7D80E7700824 /* Pods-cleverApp-cleverAppTests.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-cleverApp-cleverAppTests.release.xcconfig"; path = "Target Support Files/Pods-cleverApp-cleverAppTests/Pods-cleverApp-cleverAppTests.release.xcconfig"; sourceTree = "<group>"; };
 		69D7A0358F716BD87272B6F4 /* Pods-cleverApp.release.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-cleverApp.release.xcconfig"; path = "Target Support Files/Pods-cleverApp/Pods-cleverApp.release.xcconfig"; sourceTree = "<group>"; };
 		731CF884D6D06BB4031478D3 /* libPods-cleverApp-cleverAppTests.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-cleverApp-cleverAppTests.a"; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -128,6 +132,7 @@
 				13B07FB61A68108700A75B9A /* Info.plist */,
 				81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */,
 				13B07FB71A68108700A75B9A /* main.m */,
+				24D161361EB293EC1F4C2FA8 /* PrivacyInfo.xcprivacy */,
 			);
 			name = cleverApp;
 			sourceTree = "<group>";
@@ -154,6 +159,7 @@
 			children = (
 				0E7F00602BBAD4FE00FB9BE6 /* AntDesign.ttf */,
 				0E7F00692BBAD4FF00FB9BE6 /* Entypo.ttf */,
+				0E0308552F7695CF005F95FA /* PrivacyInfo.xcprivacy */,
 				0E7F005F2BBAD4FE00FB9BE6 /* EvilIcons.ttf */,
 				0E7F00652BBAD4FE00FB9BE6 /* Feather.ttf */,
 				0E7F00662BBAD4FE00FB9BE6 /* FontAwesome.ttf */,
@@ -312,6 +318,8 @@
 				0E7F007E2BBAD4FF00FB9BE6 /* Octicons.ttf in Resources */,
 				81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
+				0E0308562F7695CF005F95FA /* PrivacyInfo.xcprivacy in Resources */,
+				1645A2C1E5FA89524E8361CD /* PrivacyInfo.xcprivacy in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -603,6 +611,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				CC = "";
 				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
 				CLANG_CXX_LANGUAGE_STANDARD = "c++20";
 				CLANG_CXX_LIBRARY = "libc++";
@@ -630,6 +639,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				COPY_PHASE_STRIP = NO;
+				CXX = "";
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				ENABLE_TESTABILITY = YES;
 				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = i386;
@@ -649,6 +659,8 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 13.4;
+				LD = "";
+				LDPLUSPLUS = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					/usr/lib/swift,
 					"$(inherited)",
@@ -668,10 +680,7 @@
 					"-DFOLLY_USE_LIBCPP=1",
 					"-DFOLLY_CFG_NO_COROUTINES=1",
 				);
-				OTHER_LDFLAGS = (
-					"$(inherited)",
-					" ",
-				);
+				OTHER_LDFLAGS = "$(inherited)  ";
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
 				USE_HERMES = true;
@@ -682,6 +691,7 @@
 			isa = XCBuildConfiguration;
 			buildSettings = {
 				ALWAYS_SEARCH_USER_PATHS = NO;
+				CC = "";
 				CLANG_ANALYZER_LOCALIZABILITY_NONLOCALIZED = YES;
 				CLANG_CXX_LANGUAGE_STANDARD = "c++20";
 				CLANG_CXX_LIBRARY = "libc++";
@@ -709,6 +719,7 @@
 				CLANG_WARN__DUPLICATE_METHOD_MATCH = YES;
 				"CODE_SIGN_IDENTITY[sdk=iphoneos*]" = "iPhone Developer";
 				COPY_PHASE_STRIP = YES;
+				CXX = "";
 				ENABLE_NS_ASSERTIONS = NO;
 				ENABLE_STRICT_OBJC_MSGSEND = YES;
 				"EXCLUDED_ARCHS[sdk=iphonesimulator*]" = i386;
@@ -721,6 +732,8 @@
 				GCC_WARN_UNUSED_FUNCTION = YES;
 				GCC_WARN_UNUSED_VARIABLE = YES;
 				IPHONEOS_DEPLOYMENT_TARGET = 13.4;
+				LD = "";
+				LDPLUSPLUS = "";
 				LD_RUNPATH_SEARCH_PATHS = (
 					/usr/lib/swift,
 					"$(inherited)",
@@ -739,10 +752,7 @@
 					"-DFOLLY_USE_LIBCPP=1",
 					"-DFOLLY_CFG_NO_COROUTINES=1",
 				);
-				OTHER_LDFLAGS = (
-					"$(inherited)",
-					" ",
-				);
+				OTHER_LDFLAGS = "$(inherited)  ";
 				REACT_NATIVE_PATH = "${PODS_ROOT}/../../node_modules/react-native";
 				SDKROOT = iphoneos;
 				USE_HERMES = true;

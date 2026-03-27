@@ -35,7 +35,13 @@
       "Bash(grep -r beforeRemove /Users/nya-perso/cleveremote/cleverApp/node_modules/@react-navigation/native/src --include=*.ts -l)",
       "Bash(grep -r beforeRemove /Users/nya-perso/cleveremote/cleverApp/node_modules/@react-navigation/core/src --include=*.ts -l)",
       "Bash(grep -r EventArg /Users/nya-perso/cleveremote/cleverApp/node_modules/@react-navigation/native/lib/typescript --include=*.d.ts -l)",
-      "Bash(npx prettier:*)"
+      "Bash(npx prettier:*)",
+      "Bash(git -C /Users/nya-perso/cleveremote/cleverApp checkout -b feature-mig-0.74)",
+      "Bash(npm view:*)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:react-native-community.github.io)",
+      "WebFetch(domain:github.com)",
+      "Bash(curl -s https://raw.githubusercontent.com/react-native-community/rn-diff-purge/diffs/diffs/0.73.6..0.74.7.diff)"
     ],
     "additionalDirectories": [
       "/Users/nya/Library/Developer/Xcode/DerivedData/cleverApp-gfbkyyztpeonnddfkjftehjjxboc",
