@@ -41,7 +41,8 @@
       "WebFetch(domain:raw.githubusercontent.com)",
       "WebFetch(domain:react-native-community.github.io)",
       "WebFetch(domain:github.com)",
-      "Bash(curl -s https://raw.githubusercontent.com/react-native-community/rn-diff-purge/diffs/diffs/0.73.6..0.74.7.diff)"
+      "Bash(curl -s https://raw.githubusercontent.com/react-native-community/rn-diff-purge/diffs/diffs/0.73.6..0.74.7.diff)",
+      "Bash(git -C /Users/nya-perso/cleveremote/cleverApp checkout -b feature-mig-0.75)"
     ],
     "additionalDirectories": [
       "/Users/nya/Library/Developer/Xcode/DerivedData/cleverApp-gfbkyyztpeonnddfkjftehjjxboc",
