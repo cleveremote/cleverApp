@@ -26,7 +26,8 @@ export interface ICyclesProps {
 
 export type CycleType = {
 	id: string;
-	sequences: any[];
+	sequences: SequenceItem[];
+	isModified?: boolean;
 };
 
 export type SequenceItem = {
@@ -36,6 +37,7 @@ export type SequenceItem = {
 	description: string;
 	duration: number;
 	modules: ModuleItem[];
+	isModified?: boolean;
 };
 
 export type ModuleItem = {

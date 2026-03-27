@@ -716,7 +716,7 @@ export function DragableForm({
 													{
 														alignSelf: 'flex-end',
 														display:
-															value.findIndex(
+															(value ?? []).findIndex(
 																(x: any) =>
 																	x.mode ===
 																	item.mode
@@ -736,7 +736,7 @@ export function DragableForm({
 													{
 														alignSelf: 'flex-end',
 														display:
-															value.findIndex(
+															(value ?? []).findIndex(
 																(x: any) =>
 																	x.mode ===
 																	item.mode
@@ -752,7 +752,7 @@ export function DragableForm({
 									</View>
 								);
 							}}
-							data={value.filter((x: any) =>
+							data={(value ?? []).filter((x: any) =>
 								x.id ? x.id?.indexOf('delete') === -1 : true
 							)}
 						/>

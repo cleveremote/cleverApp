@@ -1,5 +1,5 @@
 import React, {useEffect} from 'react';
-import {View} from 'react-native';
+import {StyleSheet, View} from 'react-native';
 import {navigationHeader} from '../../../../components/common/navigationHeaders';
 import {DragableForm} from '../../../../components/common/FormComponents';
 import {useForm} from 'react-hook-form';
@@ -10,7 +10,6 @@ import {updateCycle} from '../../../../../module/process/infrasctructure/store/a
 
 export function PrioritySettingsSection(props: any) {
 	const [saveUnchangedData, setSaveUnchangedData] = React.useState(false);
-	const isSavingRef = React.useRef(false);
 	const defaultValues = {...props.route.params?.cycleData};
 	const {
 		control,
@@ -18,46 +17,45 @@ export function PrioritySettingsSection(props: any) {
 		formState: {errors}
 	} = useForm({defaultValues});
 
-	const onSubmit = (data: any) => {
+	const onSubmit = (e: any, data: any) => {
 		if (saveUnchangedData) {
 			const priorities = data.modePriority.map(
 				(x: any, index: number) => ({mode: x.mode, priority: index})
 			);
-			props.updateCycle({
-				...data,
-				modePriority: priorities,
-				isModified: saveUnchangedData
-			});
+			props.updateCycle(
+				{
+					...data,
+					modePriority: priorities,
+					isModified: saveUnchangedData
+				},
+				() => {
+					props.navigation.dispatch(e.data.action);
+				}
+			);
 		}
-	};
-
-	const onSubmitGoBack = (data: any) => {
-		ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
-		onSubmit(data);
-		props.navigation.goBack();
 	};
 
 	useEffect(() => {
 		props.navigation.setOptions({
 			headerLeft: () =>
 				navigationHeader(
-					handleSubmit(onSubmitGoBack),
+					() => {
+						ReactNativeHapticFeedback.trigger(
+							'impactMedium',
+							hapticOptions
+						);
+						props.navigation.goBack();
+					},
 					'arrow-alt-circle-left',
 					false
 				)
 		});
-	}, [saveUnchangedData]);
-
-	useEffect(() => {
 		const listenerUnsubscribe = props.navigation.addListener(
 			'beforeRemove',
 			(e: any) => {
-				if (isSavingRef.current) return;
 				e.preventDefault();
-				isSavingRef.current = true;
 				handleSubmit(data => {
-					onSubmit(data);
-					props.navigation.dispatch(e.data.action);
+					onSubmit(e, data);
 				})();
 			}
 		);
@@ -65,20 +63,8 @@ export function PrioritySettingsSection(props: any) {
 	}, [saveUnchangedData]);
 
 	return (
-		<View
-			style={{marginVertical: 4, alignSelf: 'stretch', margin: 20}}>
-			<View
-				style={{
-					alignSelf: 'stretch',
-					backgroundColor: 'white',
-					borderRadius: 12,
-					padding: 8,
-					elevation: 3,
-					shadowColor: '#000',
-					shadowOffset: {width: 0, height: 1},
-					shadowOpacity: 0.22,
-					shadowRadius: 2.22
-				}}>
+		<View style={styles.container}>
+			<View style={styles.card}>
 				<DragableForm
 					control={control}
 					errors={errors}
@@ -96,3 +82,27 @@ export function PrioritySettingsSection(props: any) {
 export default connect(null, {
 	updateCycle
 })(PrioritySettingsSection);
+
+const colors = {
+	white: '#ffffff',
+	shadow: '#000000'
+};
+
+const styles = StyleSheet.create({
+	container: {
+		marginVertical: 4,
+		alignSelf: 'stretch',
+		margin: 20
+	},
+	card: {
+		alignSelf: 'stretch',
+		backgroundColor: colors.white,
+		borderRadius: 12,
+		padding: 8,
+		elevation: 3,
+		shadowColor: colors.shadow,
+		shadowOffset: {width: 0, height: 1},
+		shadowOpacity: 0.22,
+		shadowRadius: 2.22
+	}
+});

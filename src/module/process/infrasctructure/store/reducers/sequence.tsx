@@ -3,7 +3,7 @@ import {
 	SEQUENCE_UPDATE,
 	SEQUENCE_LOAD,
 	SEQUENCES_LOAD,
-	SEQUENCE_ORDER
+	SEQUENCES_SAVE
 } from '../actions/types';
 import {
 	loadSequence,
@@ -46,7 +46,7 @@ export default (state = initialState, action: any) => {
 			};
 		}
 
-		case SEQUENCE_ORDER: {
+		case SEQUENCES_SAVE: {
 			return {
 				...state,
 				sequences: action.payload

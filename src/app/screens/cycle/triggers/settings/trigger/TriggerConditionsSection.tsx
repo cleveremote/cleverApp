@@ -24,8 +24,7 @@ const SHADOW_COLOR = '#000';
 function TriggerConditionsSection(props: any) {
 	const conditionsRef = useRef(props.conditions);
 	conditionsRef.current = props.conditions;
-	const updateTriggerRef = useRef(props.updateTrigger);
-	updateTriggerRef.current = props.updateTrigger;
+
 	const triggerDataRef = useRef(props.route.params.triggerData);
 	triggerDataRef.current = props.route.params.triggerData;
 

@@ -1,5 +1,5 @@
 import React, {useEffect} from 'react';
-import {ScrollView, View} from 'react-native';
+import {Alert, ScrollView, View} from 'react-native';
 import {navigationHeader} from '../../../../components/common/navigationHeaders';
 import {
 	InputForm,
@@ -13,69 +13,117 @@ import {connect} from 'react-redux';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import {hapticOptions} from '../../../../data/cycleTypes';
 import {updateCycle} from '../../../../../module/process/infrasctructure/store/actions/cycle';
+import {EventArg, NavigationAction} from '@react-navigation/native';
 
 export function CycleGeneralSettingsSection(props: any) {
 	const [cycleData, setCycleData] = React.useState(
 		props.route.params?.cycleData
 	);
 	const [saveUnchangedData, setSaveUnchangedData] = React.useState(false);
-	const isSavingRef = React.useRef(false);
 	const defaultValues = {...props.route.params?.cycleData};
 	const {
 		control,
 		handleSubmit,
+		reset,
 		formState: {errors}
-	} = useForm({defaultValues});
+	} = useForm({defaultValues, mode: 'onBlur'});
 
-	const onSubmit = (data: any) => {
+	const onSubmit = (e: any, data: any) => {
 		ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
 		let style = data.style;
 		if (typeof style === 'string') {
 			style = JSON.parse(style);
 		}
 		if (saveUnchangedData) {
-			props.updateCycle({
-				...data,
-				style: {
-					fontColor: style.fontColor,
-					iconColor: style.iconColor,
-					bgColor: style.bgColor
+			props.updateCycle(
+				{
+					...data,
+					style: {
+						fontColor: style.fontColor,
+						iconColor: style.iconColor,
+						bgColor: style.bgColor
+					},
+					isModified: saveUnchangedData
 				},
-				isModified: saveUnchangedData
-			});
+				() => {
+					props.navigation.dispatch(e.data.action);
+				}
+			);
 		}
 	};
-	const onSubmitGoBack = (data: any) => {
-		onSubmit(data);
-
-		props.navigation.goBack();
+	const buildBeforeRemoveListener = (
+		e: EventArg<'beforeRemove', true, {action: NavigationAction}>,
+		onContinue: () => void,
+		onDiscard: () => void
+	) => {
+		const backActions = ['GO_BACK', 'POP', 'POP_TO_TOP'];
+		if (!backActions.includes(e.data.action.type)) {
+			return;
+		}
+		e.preventDefault();
+		handleSubmit(
+			data => {
+				onSubmit(e, data);
+			},
+			_errors => {
+				Alert.alert(
+					'Discard changes?',
+					'Some fields contain invalid or incomplete information. Would you like to discard changes or continue editing?',
+					[
+						{
+							text: 'Continue',
+							style: 'cancel',
+							onPress: onContinue
+						},
+						{
+							text: 'Discard',
+							style: 'destructive',
+							onPress: onDiscard
+						}
+					]
+				);
+			}
+		)();
 	};
 
 	useEffect(() => {
+		const subscribe = () => {
+			const unsubscribe = props.navigation.addListener(
+				'beforeRemove',
+				(e: any) =>
+					buildBeforeRemoveListener(
+						e,
+						() => {
+							unsubscribe();
+							subscribe();
+						},
+						() => {
+							reset();
+							unsubscribe();
+							subscribe();
+						}
+					)
+			);
+			return unsubscribe;
+		};
+
 		props.navigation.setOptions({
 			headerLeft: () =>
 				navigationHeader(
-					handleSubmit(onSubmitGoBack),
+					() => {
+						ReactNativeHapticFeedback.trigger(
+							'impactMedium',
+							hapticOptions
+						);
+						props.navigation.goBack();
+					},
 					'arrow-alt-circle-left',
 					false
 				)
 		});
-	}, [saveUnchangedData]);
 
-	useEffect(() => {
-		const listenerUnsubscribe = props.navigation.addListener(
-			'beforeRemove',
-			(e: any) => {
-				if (isSavingRef.current) return;
-				e.preventDefault();
-				isSavingRef.current = true;
-				handleSubmit(data => {
-					onSubmit(data);
-					props.navigation.dispatch(e.data.action);
-				})();
-			}
-		);
-		return () => listenerUnsubscribe();
+		const unsubscribe = subscribe();
+		return () => unsubscribe();
 	}, [saveUnchangedData]);
 
 	return (
@@ -116,10 +164,7 @@ export function CycleGeneralSettingsSection(props: any) {
 		</View>
 	);
 }
-const mapStateToProps = (state: any) => ({
-	cycle: state.root_cycle.cycle
-});
 
-export default connect(mapStateToProps, {
+export default connect(null, {
 	updateCycle
 })(CycleGeneralSettingsSection);

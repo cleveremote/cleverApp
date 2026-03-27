@@ -3,7 +3,7 @@ import {
 	SEQUENCES_LOAD,
 	SEQUENCE_LOAD,
 	SEQUENCE_SAVE,
-	SEQUENCE_ORDER
+	SEQUENCES_SAVE
 } from './types';
 
 import {ThunkAction} from 'redux-thunk';
@@ -37,13 +37,17 @@ export const loadSequence =
 		});
 	};
 
-export const updateSequencesOder =
-	(sequences: any[]): ThunkAction<void, RootState, unknown, AnyAction> =>
-	dispatch => {
-		dispatch({
-			type: SEQUENCE_ORDER,
+export const saveSequences =
+	(
+		sequences: any[],
+		onSuccess: () => void
+	): ThunkAction<void, RootState, unknown, AnyAction> =>
+	async dispatch => {
+		await dispatch({
+			type: SEQUENCES_SAVE,
 			payload: sequences
 		});
+		onSuccess?.();
 	};
 
 export const saveSequence =

@@ -33,7 +33,7 @@ export const SEQUENCE_UPDATE = 'SEQUENCE_UPDATE';
 export const SEQUENCES_LOAD = 'SEQUENCES_LOAD';
 export const SEQUENCE_LOAD = 'SEQUENCE_LOAD';
 export const SEQUENCE_SAVE = 'SEQUENCE_SAVE';
-export const SEQUENCE_ORDER = 'SEQUENCE_ORDER';
+export const SEQUENCES_SAVE = 'SEQUENCES_ORDER';
 
 /////////////Module
 export const MODULE_UPDATE = 'MODULE_UPDATE';

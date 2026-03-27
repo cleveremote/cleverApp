@@ -59,7 +59,7 @@ export function TriggerGeneralSettingsSection(
 		handleSubmit,
 		reset,
 		formState: {errors}
-	} = useForm({defaultValues});
+	} = useForm({defaultValues, mode: 'onBlur'});
 
 	const onSubmit = (data: TriggerGeneralFormData) => {
 		if (saveUnchangedData) {

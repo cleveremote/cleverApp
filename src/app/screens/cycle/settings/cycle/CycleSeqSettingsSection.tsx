@@ -1,6 +1,5 @@
-import {Text, TouchableOpacity, View} from 'react-native';
-import React, {useCallback, useEffect, useRef} from 'react';
-import {useFocusEffect} from '@react-navigation/native';
+import {StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import React, {useEffect, useRef} from 'react';
 import {navigationHeader} from '../../../../components/common/navigationHeaders';
 import {hapticOptions} from '../../../../data/cycleTypes';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
@@ -11,55 +10,48 @@ import {DragableForm} from '../../../../components/common/FormComponents';
 import {updateCycle} from '../../../../../module/process/infrasctructure/store/actions/cycle';
 import {
 	loadSequences,
-	updateSequencesOder
+	saveSequences
 } from '../../../../../module/process/infrasctructure/store/actions/sequence';
 
 export function SeqSettingsSec(props: any) {
-	const defaultValues = {...props.route.params?.cycleData};
+	const cycleParamRef = useRef(props.route.params?.cycleData);
+	cycleParamRef.current = props.route.params?.cycleData;
+
 	const sequencesRef = useRef(props.sequences);
 	sequencesRef.current = props.sequences;
-	const updateCycleRef = useRef(props.updateCycle);
-	updateCycleRef.current = props.updateCycle;
-	const cycleDataRef = useRef(props.route.params.cycleData);
-	cycleDataRef.current = props.route.params.cycleData;
 
 	const {
 		control,
 		handleSubmit,
 		formState: {errors},
 		setValue
-	} = useForm({defaultValues});
+	} = useForm({...cycleParamRef.current});
 
-	const updateSeqeuncesOrder = (data: any) => {
-		props.updateSequencesOder(data.sequences);
-	};
-
-	useFocusEffect(
-		useCallback(() => {
-			const hasModified = !!sequencesRef.current?.find(
-				(x: any) => x.isModified
-			);
-			if (hasModified || cycleDataRef.current.isModified) {
-				updateCycleRef.current({
-					...cycleDataRef.current,
-					sequences: sequencesRef.current,
+	const save = (data: any, e: any) => {
+		const sequences = data.sequences || data || [];
+		props.saveSequences(sequences, () => {
+			props.updateCycle(
+				{
+					...cycleParamRef.current,
+					sequences: sequences,
 					isModified: true
-				});
-			}
-		}, [])
-	);
-
+				},
+				() => {
+					e && props.navigation.dispatch(e.data.action);
+				}
+			);
+		});
+	};
 	const checkChanges = (e: any) => {
-		const hasModified = !!sequencesRef.current?.find(
+		const isModified = !!sequencesRef.current?.find(
 			(x: any) => x.isModified
 		);
-		if (hasModified || cycleDataRef.current.isModified) {
-			updateCycleRef.current({
-				...cycleDataRef.current,
-				sequences: sequencesRef.current,
-				isModified: true
-			});
-		}
+		if (!isModified && !cycleParamRef.current.isModified) return;
+		if (!['GO_BACK', 'POP', 'POP_TO_TOP'].includes(e.data.action.type))
+			return;
+		e.preventDefault();
+
+		save(sequencesRef.current, e);
 	};
 
 	useEffect(() => {
@@ -82,38 +74,19 @@ export function SeqSettingsSec(props: any) {
 	}, []);
 
 	useEffect(() => {
-setValue('sequences', props.sequences, {shouldValidate: true});
-		props.updateCycle({
-			...props.route.params.cycleData,
-			sequences: props.sequences,
-			isModified:
-				props.route.params.cycleData.isModified ||
-				!!props.sequences.find((x: any) => x.isModified)
+		setValue('sequences', sequencesRef.current, {
+			shouldValidate: true
 		});
 		const listenerUnsubscribe = props.navigation.addListener(
 			'beforeRemove',
-			(e: any) => {
-				checkChanges(e);
-			}
+			checkChanges
 		);
 		return () => listenerUnsubscribe();
 	}, [props.sequences]);
 
 	return (
-		<View
-			style={{gap: 8, marginVertical: 4, alignSelf: 'stretch', margin: 20}}>
-			<View
-				style={{
-					alignSelf: 'stretch',
-					backgroundColor: 'white',
-					borderRadius: 12,
-					padding: 8,
-					elevation: 3,
-					shadowColor: '#000',
-					shadowOffset: {width: 0, height: 1},
-					shadowOpacity: 0.22,
-					shadowRadius: 2.22
-				}}>
+		<View style={styles.container}>
+			<View style={styles.card}>
 				<DragableForm
 					isList={true}
 					navigation={props.navigation}
@@ -121,11 +94,11 @@ setValue('sequences', props.sequences, {shouldValidate: true});
 					control={control}
 					errors={errors}
 					name="sequences"
-					onDragEnd={() => handleSubmit(updateSeqeuncesOrder)()}
+					onDragEnd={() => handleSubmit(save)()}
 				/>
-				<View style={{justifyContent: 'center', alignItems: 'center'}}>
+				<View style={styles.addButtonWrapper}>
 					<TouchableOpacity
-						style={{marginTop: 20, transform: [{rotate: '135deg'}]}}
+						style={styles.addButton}
 						onPress={() => {
 							ReactNativeHapticFeedback.trigger(
 								'impactMedium',
@@ -138,24 +111,63 @@ setValue('sequences', props.sequences, {shouldValidate: true});
 								}
 							});
 						}}>
-						<Icon name="times-circle" size={30} color="#32404e" />
+						<Icon
+							name="times-circle"
+							size={30}
+							color={colors.dark}
+						/>
 					</TouchableOpacity>
-					<Text style={{color: '#32404e', fontSize: 15}}>
-						Add new sequence ...
-					</Text>
+					<Text style={styles.addLabel}>Add new sequence ...</Text>
 				</View>
 			</View>
 		</View>
 	);
 }
 
+const colors = {
+	dark: '#32404e',
+	shadow: '#000',
+	white: 'white'
+};
+
+const styles = StyleSheet.create({
+	container: {
+		gap: 8,
+		marginVertical: 4,
+		alignSelf: 'stretch',
+		margin: 20
+	},
+	card: {
+		alignSelf: 'stretch',
+		backgroundColor: colors.white,
+		borderRadius: 12,
+		padding: 8,
+		elevation: 3,
+		shadowColor: colors.shadow,
+		shadowOffset: {width: 0, height: 1},
+		shadowOpacity: 0.22,
+		shadowRadius: 2.22
+	},
+	addButtonWrapper: {
+		justifyContent: 'center',
+		alignItems: 'center'
+	},
+	addButton: {
+		marginTop: 20,
+		transform: [{rotate: '135deg'}]
+	},
+	addLabel: {
+		color: colors.dark,
+		fontSize: 15
+	}
+});
+
 const mapStateToProps = (state: any) => ({
-	sequences: state.cycle_sequence.sequences,
-	cycle: state.root_cycle.cycle
+	sequences: state.cycle_sequence.sequences
 });
 
 export default connect(mapStateToProps, {
-	updateSequencesOder,
+	saveSequences,
 	loadSequences,
 	updateCycle
 })(SeqSettingsSec);

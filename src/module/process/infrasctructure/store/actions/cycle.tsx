@@ -21,22 +21,19 @@ export const listenerEvents =
 				payload: JSON.parse(message).cycle
 			});
 		});
-
-		// authenticationService.socket?.on('front/synchronize/status', message => {
-		//     dispatch({
-		//         type: CYCLE_STATUS,
-		//         payload: JSON.parse(message)
-		//     });
-		// });
 	};
 
 export const updateCycle =
-	(cycle: any): ThunkAction<void, RootState, unknown, AnyAction> =>
-	dispatch => {
-		dispatch({
+	(
+		cycle: any,
+		onSuccess?: () => void
+	): ThunkAction<void, RootState, unknown, AnyAction> =>
+	async dispatch => {
+		await dispatch({
 			type: CYCLE_UPDATE,
 			payload: cycle
 		});
+		onSuccess?.();
 	};
 
 export const loadValues =
