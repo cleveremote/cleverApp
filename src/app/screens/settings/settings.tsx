@@ -2,7 +2,7 @@ import {Button, Platform, ScrollView, Text, TouchableOpacity, View} from 'react-
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import {authenticationService} from '../../../module/authentication/domain/services/auth.service';
-import DocumentPicker from 'react-native-document-picker';
+import { pick, types, isErrorWithCode } from '@react-native-documents/picker'
 import RNFS from 'react-native-fs';
 import {useState} from 'react';
 
@@ -17,20 +17,20 @@ const hapticTriggerType: string = Platform.select({
 }) as string;
 
 export function SettingsScreen(props: any) {
-	const uploadSvgAndParseText = async (): Promise<string> => {
+	const uploadSvgAndParseText = async (): Promise<string | null> => {
 		try {
 			// 1️⃣ Sélection du fichier SVG
-			const res = await DocumentPicker.pickSingle({
-				type: [DocumentPicker.types.allFiles] // tu peux filtrer sur 'image/svg+xml' aussi
+			const res = await pick({
+				type: [types.allFiles] // tu peux filtrer sur 'image/svg+xml' aussi
 			});
 
 			// 2️⃣ Lecture du contenu du fichier
-			const fileUri = res.uri;
+			const fileUri = res[0].uri;
 
 			// ⚠️ Différence Android / iOS
 			let path = fileUri;
 			if (fileUri.startsWith('content://')) {
-				const destPath = `${RNFS.TemporaryDirectoryPath}/${res.name}`;
+				const destPath = `${RNFS.TemporaryDirectoryPath}/${res[0].name}`;
 				await RNFS.copyFile(fileUri, destPath);
 				path = destPath;
 			}
@@ -40,7 +40,7 @@ export function SettingsScreen(props: any) {
 			// 3️⃣ Retour du contenu texte du SVG
 			return svgText;
 		} catch (err) {
-			if (DocumentPicker.isCancel(err)) {
+			if (err instanceof Error && isErrorWithCode(err) && err.code === 'DOCUMENT_PICKER_CANCELED') {
 			} else {
 				console.error('Erreur :', err);
 			}

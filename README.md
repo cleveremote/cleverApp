@@ -24,3 +24,15 @@ Attach to the React Native iOS - Experimental
 export ANDROID_SDK_ROOT=$HOME/Library/Android/sdk
 export PATH=$PATH:$ANDROID_SDK_ROOT/emulator
 export PATH=$PATH:$ANDROID_SDK_ROOT/platform-tools
+
+
+rm -rf node_modules
+rm -rf package-lock.json
+npm install
+
+
+cd ios                                                              
+rm -rf Pods
+rm -rf build
+pod install --repo-update
+cd ..

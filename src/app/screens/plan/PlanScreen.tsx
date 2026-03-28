@@ -1,11 +1,11 @@
-import {FlatList, Platform, Text, View} from 'react-native';
-import React, {useEffect, useRef, useState} from 'react';
-import {SvgXml} from 'react-native-svg';
-import {connect} from 'react-redux';
-import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
-import {faCloud, faSun} from '@fortawesome/free-solid-svg-icons';
+import { FlatList, Platform, Text, View } from 'react-native';
+import React, { useEffect, useRef, useState } from 'react';
+import { SvgXml } from 'react-native-svg';
+import { connect } from 'react-redux';
+import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
+import { faCloud, faSun } from '@fortawesome/free-solid-svg-icons';
 import SequenceStack from '../../components/cycle/sequenceStack';
-import {executeCycle} from '../../../module/process/infrasctructure/store/actions/cycle';
+import { executeCycle } from '../../../module/process/infrasctructure/store/actions/cycle';
 
 const hapticOptions = {
 	enableVibrateFallback: false,
@@ -39,11 +39,11 @@ export function PlanScreen(props: any) {
 			const cycleInProcess = cyclesInProcess[index];
 			const cycle = cycles.find(x => x.id === cycleInProcess.id);
 			const sequence = cycle.sequences.find(
-				(x: {id: string}) =>
+				(x: { id: string }) =>
 					inProcess.map(j => j.id).indexOf(x.id) !== -1
 			);
 			if (sequence) {
-				res.push({...sequence, name: cycle.name + '/' + sequence.name});
+				res.push({ ...sequence, name: cycle.name + '/' + sequence.name });
 			}
 		}
 		return res;
@@ -68,7 +68,7 @@ export function PlanScreen(props: any) {
 		let interval: NodeJS.Timeout | undefined;
 		if (inProcessSections.length) {
 			setShowText((showText: any) => {
-				const res = {...showText};
+				const res = { ...showText };
 				inProcessSections.forEach(data => {
 					res[data] = true;
 				});
@@ -79,7 +79,7 @@ export function PlanScreen(props: any) {
 
 		return () => {
 			setShowText((showText: any) => {
-				const res = {...showText};
+				const res = { ...showText };
 				Object.entries(mysKeys.current).forEach(data => {
 					res[data[0]] = false;
 				});
@@ -103,7 +103,7 @@ export function PlanScreen(props: any) {
 
 		return (
 			<>
-				<SvgXml xml={dup} width={'100%'} height={'100%'} />
+				{dup && <SvgXml xml={dup} width={'100%'} height={'100%'} />}
 			</>
 		);
 	};
@@ -122,9 +122,9 @@ export function PlanScreen(props: any) {
 	};
 
 	return (
-		<View style={{marginBottom: 60}}>
-			<View style={{alignSelf: 'stretch', backgroundColor: '#84adea', height: 60, elevation: 3, shadowColor: '#000', shadowOffset: {width: 0, height: 1}, shadowOpacity: 0.22, shadowRadius: 2.22}}>
-				<View style={{flexDirection: 'row', justifyContent: 'center', borderRadius: 12, marginBottom: 4, elevation: 6, backgroundColor: 'transparent', shadowColor: '#000', shadowOffset: {width: 0, height: 3}, shadowOpacity: 0.27, shadowRadius: 4.65}}>
+		<View style={{ marginBottom: 60 }}>
+			<View style={{ alignSelf: 'stretch', backgroundColor: '#84adea', height: 60, elevation: 3, shadowColor: '#000', shadowOffset: { width: 0, height: 1 }, shadowOpacity: 0.22, shadowRadius: 2.22 }}>
+				<View style={{ flexDirection: 'row', justifyContent: 'center', borderRadius: 12, marginBottom: 4, elevation: 6, backgroundColor: 'transparent', shadowColor: '#000', shadowOffset: { width: 0, height: 3 }, shadowOpacity: 0.27, shadowRadius: 4.65 }}>
 					<View>
 						<FontAwesomeIcon
 							icon={faSun}
@@ -179,10 +179,10 @@ export function PlanScreen(props: any) {
 			</View>
 
 			<FlatList
-				style={{maxHeight: 100}}
+				style={{ maxHeight: 100 }}
 				data={processes}
 				keyExtractor={(item, index) => index.toString()}
-				renderItem={({item}) => (
+				renderItem={({ item }) => (
 					<SequenceStack
 						navigation={props.navigation}
 						cycleId={'props.cycleData.id'}
@@ -193,7 +193,7 @@ export function PlanScreen(props: any) {
 					/>
 				)}
 			/>
-			<View style={{width: '100%', height: 200, marginTop: 20}}>
+			<View style={{ width: '100%', height: 200, marginTop: 20 }}>
 				{Plan(showText)}
 			</View>
 		</View>
@@ -206,4 +206,4 @@ const mapStateToProps = (state: any) => ({
 	plan: state.root_cycle.plan
 });
 
-export default connect(mapStateToProps, {executeCycle})(PlanScreen);
+export default connect(mapStateToProps, { executeCycle })(PlanScreen);

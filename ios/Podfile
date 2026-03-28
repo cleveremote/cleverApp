@@ -1,4 +1,3 @@
-# Resolve react_native_pods.rb with node to allow for hoisting
 require Pod::Executable.execute_command('node', ['-p',
   'require.resolve(
     "react-native/scripts/react_native_pods.rb",
@@ -23,19 +22,32 @@ target 'cleverApp' do
   use_react_native!(
     :path => config[:reactNativePath],
     :hermes_enabled => true,
-    # An absolute path to your application root.
     :app_path => "#{Pod::Config.instance.installation_root}/.."
   )
 
   post_install do |installer|
-    # https://github.com/facebook/react-native/blob/main/packages/react-native/scripts/react_native_pods.rb#L197-L202
     react_native_post_install(
       installer,
       config[:reactNativePath],
       :mac_catalyst_enabled => false,
-      # :ccache_enabled => true
     )
+
+    # Fix fmt 11 consteval errors with Apple Clang (Xcode 16 regression).
+    # base.h enables FMT_USE_CONSTEVAL for __apple_build_version__ >= 14000029
+    # but Apple Clang 16 has a bug with consteval constructors in templates.
+    # Patch the condition to disable consteval for all Apple Clang builds.
+    fmt_base_h = installer.sandbox.root.join('fmt/include/fmt/base.h').to_s
+    if File.exist?(fmt_base_h)
+      content = File.read(fmt_base_h)
+      patched = content.sub(
+        '#elif defined(__apple_build_version__) && __apple_build_version__ < 14000029L',
+        '#elif defined(__apple_build_version__)'
+      )
+      File.write(fmt_base_h, patched) if patched != content
+    end
+
     installer.pods_project.targets.each do |target|
+
       if target.name == 'react-native-slider'
         target.build_configurations.each do |config|
           config.build_settings['HEADER_SEARCH_PATHS'] ||= ['$(inherited)']

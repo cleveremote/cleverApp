@@ -43,7 +43,7 @@ export default function BlinkingSvg({elementId}) {
 
 	return (
 		<View>
-			<SvgXml xml={animatedSvg} width={200} height={200} />
+			{animatedSvg && <SvgXml xml={animatedSvg} width={200} height={200} />}
 		</View>
 	);
 }
