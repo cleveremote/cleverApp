@@ -37,7 +37,7 @@ export function DeviceScreen(props: any) {
 	);
 
 	return (
-		<View>
+		<View style={{flex: 1, marginTop: 25}}>
 			<View
 				style={{
 					flex: 1,
