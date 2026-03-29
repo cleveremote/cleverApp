@@ -5,6 +5,7 @@ import {authenticationService} from '../../../module/authentication/domain/servi
 import { pick, types, isErrorWithCode } from '@react-native-documents/picker'
 import RNFS from 'react-native-fs';
 import {useState} from 'react';
+import { Switch } from 'react-native';
 
 const hapticOptions = {
 	enableVibrateFallback: false,
@@ -63,6 +64,12 @@ export function SettingsScreen(props: any) {
 					alignItems: 'center',
 					height: '50%'
 				}}>
+					<Switch
+					    ios_backgroundColor={'red'}
+						value={true}
+						onValueChange={() => {}}
+							
+					/>
 				<View style={{marginLeft: 40, marginRight: 40, marginBottom: 20, alignSelf: 'center'}}>
 					<TouchableOpacity
 						style={{alignSelf: 'center'}}

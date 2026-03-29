@@ -131,7 +131,17 @@ export function AppStack(props: any) {
 		<>
 			{props.isServerConnected && props.isBoxConnected ? (
 				<Tab.Navigator
+				safeAreaInsets={{ bottom: 20 }}
 					screenOptions={({route}) => ({
+   tabBarItemStyle: {
+  justifyContent: 'center',
+  alignItems: 'center',
+  paddingBottom: 0,
+  paddingTop: 10,
+},
+tabBarStyle: {
+  justifyContent: 'center',
+},
 						tabBarActiveTintColor: '#32404e',
 						tabBarIcon: ({focused}) => tabBarIconCfg(focused, route)
 					})}>

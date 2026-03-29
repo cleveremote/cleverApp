@@ -1,4 +1,5 @@
 import React, {useState} from 'react';
+import {placeholderColor} from '../../styles/components/common/Input';
 import {
 	Modal,
 	Text,
@@ -51,6 +52,7 @@ export function ModalOverrideDuration({
 					</Text>
 					<TextInput
 						defaultValue={text}
+						placeholderTextColor={placeholderColor}
 						onChangeText={newText => setText(newText)}
 						style={{
 							borderWidth: 1,

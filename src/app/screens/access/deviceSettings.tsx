@@ -9,6 +9,7 @@ import {
 	View
 } from 'react-native';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
+import {placeholderColor} from '../../styles/components/common/Input';
 import {hapticOptions} from '../../data/cycleTypes';
 import {Picker} from '@react-native-picker/picker';
 import Spinner from 'react-native-loading-spinner-overlay';
@@ -161,6 +162,7 @@ export function DeviceSettings(props: any) {
 								{width: '100%'}
 							]}
 							placeholder="Profile"
+							placeholderTextColor={placeholderColor}
 							value={profile}
 							onChangeText={value => {
 								setProfile(value);
@@ -183,6 +185,7 @@ export function DeviceSettings(props: any) {
 						<TextInput
 							style={[styles.input, {width: '100%'}]}
 							placeholder="Psk"
+							placeholderTextColor={placeholderColor}
 							secureTextEntry={true}
 							textContentType={'newPassword'}
 							value={psk}
@@ -193,6 +196,7 @@ export function DeviceSettings(props: any) {
 						<TextInput
 							style={[styles.input, {width: '100%'}]}
 							placeholder="Password"
+							placeholderTextColor={placeholderColor}
 							secureTextEntry={true}
 							textContentType={'newPassword'}
 							value={password}

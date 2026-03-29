@@ -8,6 +8,7 @@ import {
 	View
 } from 'react-native';
 import {AppSwitch} from '../../components/common/AppSwitch';
+import {placeholderColor} from '../../styles/components/common/Input';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import {hapticOptions} from '../../data/cycleTypes';
 import Spinner from 'react-native-loading-spinner-overlay';
@@ -126,6 +127,7 @@ export function SignIn(props: any) {
 								}
 								style={styles.input}
 								placeholder="Profile"
+								placeholderTextColor={placeholderColor}
 								onChangeText={profile => {
 									setSigninData({
 										login: signinData.login,
@@ -145,6 +147,7 @@ export function SignIn(props: any) {
 								textContentType={'username'}
 								style={styles.input}
 								placeholder="Box id"
+								placeholderTextColor={placeholderColor}
 								onChangeText={login => {
 									setSigninData({
 										login,
@@ -158,6 +161,7 @@ export function SignIn(props: any) {
 							<TextInput
 								style={styles.input}
 								placeholder="Password"
+								placeholderTextColor={placeholderColor}
 								secureTextEntry={true}
 								textContentType={'newPassword'}
 								value={

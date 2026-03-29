@@ -249,6 +249,7 @@ export function DateTimePickerForm({
 									}
 								]}
 								placeholder={placeholder}
+								placeholderTextColor={placeholderColor}
 								onBlur={onBlur}
 								editable={false}
 								value={
@@ -411,6 +412,7 @@ export function InputForm({
 								}
 							]}
 							placeholder={placeholder}
+							placeholderTextColor={placeholderColor}
 							onBlur={onBlur}
 							editable={!disabled}
 							ref={refr}
@@ -610,6 +612,7 @@ export function TextAreaForm({
 								}
 							]}
 							placeholder={placeholder}
+							placeholderTextColor={placeholderColor}
 							onBlur={onBlur}
 							editable={!disabled}
 							onChangeText={value => {

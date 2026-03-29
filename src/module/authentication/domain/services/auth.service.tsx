@@ -149,34 +149,40 @@ class AuthenticationService {
 		return t;
 	}
 
-	private async findServer(localServer: string) {
-		const fetchTimeout = (url: string, ms = 5000) =>
-			Promise.race([
-				fetch(url).then(res => {
-					if (!res.ok) throw new Error(`HTTP ${res.status}`);
-					// Essaie de parser le JSON, sinon retourne le texte brut
-					return res.json().catch(() => res.text());
-				}),
-				new Promise((_, reject) =>
-					setTimeout(() => reject(new Error('Timeout')), ms)
-				)
-			]);
+	private async findServer(localServer: string): Promise<string | undefined> {
+		console.log('Scanning local network for server...');
 		const ip = await NetworkInfo.getIPV4Address();
-		if (ip) {
-			const rootIp = ip.replace(/\.\d+$/, '.');
-			for (let i = 1; i < 255; i++) {
-				const url = `http://${rootIp}${i}:3000/ping`;
-				try {
-					const r = await fetchTimeout(url, 500);
-					if (r.name === localServer) {
-						return `http://${rootIp}${i}:5001`; // interrompt la boucle
-					}
-				} catch (e) {
-					// ignore erreurs
-				}
-			}
-		}
+		console.log('Scanning local network for server...',ip);
+		if (!ip) return undefined;
 
+		const rootIp = ip.replace(/\.\d+$/, '.');
+
+		const tryHost = async (i: number): Promise<string> => {
+			const controller = new AbortController();
+			const timer = setTimeout(() => controller.abort(), 500);
+			try {
+				console.log(`http://${rootIp}${i}:3000/ping`);
+				const res = await fetch(`http://${rootIp}${i}:3000/ping`, {signal: controller.signal});
+				if (!res.ok) throw new Error(`HTTP ${res.status}`);
+				const r = await res.json().catch(() => res.text());
+				if (r?.name === localServer) return `http://${rootIp}${i}:5001`;
+				throw new Error('no match');
+			} finally {
+				clearTimeout(timer);
+			}
+		};
+
+		// Scan all hosts in parallel — total time = timeout (500ms) instead of 254 × 500ms
+		return new Promise(resolve => {
+			let remaining = 254;
+			for (let i = 1; i <= 254; i++) {
+				tryHost(i)
+					.then(url => resolve(url))
+					.catch(() => {
+						if (--remaining === 0) resolve(undefined);
+					});
+			}
+		});
 	}
 
 	// try first local if ok else distant
@@ -187,6 +193,7 @@ class AuthenticationService {
 		let server = WEBSITE_URL;
 
 		if (isLocal && Platform.OS === 'android') {
+			console.log('testing local server');
 			server =
 				this.getBaseHostname(
 					DEV_MODE
@@ -194,9 +201,11 @@ class AuthenticationService {
 						: `http://${boxId.slice(-8)}.local:5001`
 				) ?? '';
 			server = (await this.findServer(server)) ?? '';
-		} else {
+		} else if (isLocal) {
+			server = WEBSITE_URL_LOCAL;
+		} 	else {	
 			server = WEBSITE_URL;
-		}
+		}			
 
 		if (this.socket) {
 			this.socket.disconnect();
