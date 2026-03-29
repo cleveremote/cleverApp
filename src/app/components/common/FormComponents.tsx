@@ -1,7 +1,7 @@
 import React, {useState} from 'react';
 import {Control, Controller, FieldErrors} from 'react-hook-form';
 import {getColors} from '../../data/cycleTypes';
-import {InputStyle} from '../../styles/components/common/Input';
+import {InputStyle, placeholderColor} from '../../styles/components/common/Input';
 import {
 	FlatList,
 	Keyboard,

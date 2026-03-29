@@ -1,8 +1,8 @@
 import React from 'react';
 import {
-	NativeStackNavigationOptions,
-	createNativeStackNavigator
-} from '@react-navigation/native-stack';
+	StackNavigationOptions,
+	createStackNavigator
+} from '@react-navigation/stack';
 import {Provider} from 'react-redux';
 import {store} from '../../module/process/infrasctructure/store/store';
 import CycleScreen from '../screens/cycle/CyclesScreen';
@@ -20,8 +20,8 @@ export function CycleStack() {
 			title: title,
 			headerTintColor: '#32404e',
 			headerTitleStyle: {fontSize: 20, fontWeight: 'bold'}
-		} as NativeStackNavigationOptions);
-	const Stack = createNativeStackNavigator();
+		} as StackNavigationOptions);
+	const Stack = createStackNavigator();
 	return (
 		<Stack.Navigator screenOptions={{animation: 'none'}}>
 			<Stack.Screen

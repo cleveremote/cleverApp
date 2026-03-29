@@ -13,13 +13,13 @@ export function navigationHeader(
 			<TouchableOpacity
 				style={{transform: [{rotate: '135deg'}]}}
 				onPress={onPress}>
-				<Icon name={icon} size={30} color="#32404e" />
+				<Icon name={icon} size={30} color="#32404e" style={{marginHorizontal: 10}}/>
 			</TouchableOpacity>
 		</View>
 	) : (
 		<View>
 			<TouchableOpacity onPress={onPress}>
-				<Icon name={icon} size={30} color="#32404e" />
+				<Icon name={icon} size={30} color="#32404e" style={{marginHorizontal: 10}} />
 			</TouchableOpacity>
 		</View>
 	);
@@ -27,7 +27,7 @@ export function navigationHeader(
 
 export function brandLogo() {
 	return (
-		<View>
+		<View style={{marginHorizontal: 10}}>
 			<Logo width={'35'} height={'35'} />
 		</View>
 	);

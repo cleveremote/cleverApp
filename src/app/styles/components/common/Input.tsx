@@ -1,5 +1,7 @@
 import {StyleSheet} from 'react-native';
 
+export const placeholderColor = '#9CA3AF';
+
 export const InputStyle = StyleSheet.create({
 	textInput: {
 		color: '#32404e',

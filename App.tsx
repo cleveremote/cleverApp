@@ -1,6 +1,5 @@
 import * as React from 'react';
 import {Provider} from 'react-redux';
-import {createNativeStackNavigator} from '@react-navigation/native-stack';
 import {LogBox, StatusBar} from 'react-native';
 import Routes from './src/app/routes';
 import {store} from './src/module/process/infrasctructure/store/store';
@@ -10,7 +9,6 @@ LogBox.ignoreAllLogs();
 
 export async function onAppBootstrap() {}
 
-const Stack = createNativeStackNavigator();
 export default function App() {
 	onAppBootstrap();
 

@@ -1,5 +1,5 @@
 import React, {useEffect} from 'react';
-import {createNativeStackNavigator} from '@react-navigation/native-stack';
+import {createStackNavigator} from '@react-navigation/stack';
 import {ProfilesScreen} from '../screens/access/loading';
 import {DeviceSettings} from '../screens/access/deviceSettings';
 import SignIn from '../screens/access/SignIn';
@@ -15,10 +15,12 @@ export function AccessStack() {
 		devices();
 	}, []);
 
-	const Stack = createNativeStackNavigator();
+	const Stack = createStackNavigator();
 	return (
 		<>
-			<Stack.Navigator>
+			<Stack.Navigator screenOptions={{
+    headerLeft: () => null, // reset global
+  }}>
 				<Stack.Screen
 					name="Profiles"
 					options={{headerShown: false}}
@@ -36,7 +38,7 @@ export function AccessStack() {
 				/>
 				<Stack.Screen
 					name="Signin"
-					options={{headerShown: true, title: 'Sign in'}}
+					options={{headerShown: true, title: 'Sign in',headerStyle: {backgroundColor: 'white'}}}
 					component={SignIn}
 				/>
 			</Stack.Navigator>

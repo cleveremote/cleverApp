@@ -17,13 +17,13 @@ export const Router = ({isConnected}: {isConnected: boolean}) => {
 					<RootStack.Screen
 						name="Auth"
 						component={AccessStack}
-						options={{animationEnabled: false}}
+						options={{animation: 'none'}}
 					/>
 				) : (
 					<RootStack.Screen
 						name="App"
 						component={AppStack}
-						options={{animationEnabled: false}}
+						options={{animation: 'none'}}
 					/>
 				)}
 			</Stack.Navigator>

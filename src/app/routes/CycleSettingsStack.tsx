@@ -1,8 +1,8 @@
 import React from 'react';
 import {
-	NativeStackNavigationOptions,
-	createNativeStackNavigator
-} from '@react-navigation/native-stack';
+	StackNavigationOptions,
+	createStackNavigator
+} from '@react-navigation/stack';
 import {Provider} from 'react-redux';
 import {store} from '../../module/process/infrasctructure/store/store';
 import CycleGeneralSettingsSection from '../screens/cycle/settings/cycle/CycleGeneralSettingsSection';
@@ -21,8 +21,8 @@ export function CycleSettingStack() {
 			headerTitleStyle: {fontSize: 20, fontWeight: 'bold'},
 			headerLeft: () =>
 				navigationHeader(() => {}, 'arrow-alt-circle-left', false)
-		} as NativeStackNavigationOptions);
-	const Stack = createNativeStackNavigator();
+		} as StackNavigationOptions);
+	const Stack = createStackNavigator();
 	return (
 		<Stack.Navigator screenOptions={{animation: 'none'}}>
 			<Stack.Screen

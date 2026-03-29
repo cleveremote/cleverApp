@@ -1,8 +1,8 @@
 import React from 'react';
 import {
-	NativeStackNavigationOptions,
-	createNativeStackNavigator
-} from '@react-navigation/native-stack';
+	StackNavigationOptions,
+	createStackNavigator
+} from '@react-navigation/stack';
 import ScheduleSettingsScreen from '../screens/cycle/schedules/settings/schedule/ScheduleSettingsScreen';
 import ScheduleExecutionSettingsSection from '../screens/cycle/schedules/settings/schedule/ScheduleExecutionSettingsSection';
 import ScheduleGeneralSettingsSection from '../screens/cycle/schedules/settings/schedule/ScheduleGeneralSettingsSection';
@@ -17,10 +17,10 @@ export function ScheduleSettingsStack() {
 			headerTitleStyle: {fontSize: 20, fontWeight: 'bold'},
 			headerLeft: () =>
 				navigationHeader(() => {}, 'arrow-alt-circle-left', false)
-		} as NativeStackNavigationOptions);
+		} as StackNavigationOptions);
 
-	//const options = (title: string) => ({ headerTitleAlign: 'center', title: title, headerTintColor: '#32404e', headerTitleStyle: { fontSize: 20, fontWeight: 'bold' } } as NativeStackNavigationOptions);
-	const Stack = createNativeStackNavigator();
+	//const options = (title: string) => ({ headerTitleAlign: 'center', title: title, headerTintColor: '#32404e', headerTitleStyle: { fontSize: 20, fontWeight: 'bold' } } as StackNavigationOptions);
+	const Stack = createStackNavigator();
 	return (
 		<Stack.Navigator screenOptions={{animation: 'none'}}>
 			<Stack.Screen

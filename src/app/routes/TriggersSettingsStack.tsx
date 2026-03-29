@@ -1,8 +1,8 @@
 import React from 'react';
 import {
-	NativeStackNavigationOptions,
-	createNativeStackNavigator
-} from '@react-navigation/native-stack';
+	StackNavigationOptions,
+	createStackNavigator
+} from '@react-navigation/stack';
 import TriggerSettingsScreen from '../screens/cycle/triggers/settings/trigger/TriggerSettingsScreen';
 import TriggerExecutionSettingsSection from '../screens/cycle/triggers/settings/trigger/TriggerExecutionSettingsSection';
 import TriggerGeneralSettingsSection from '../screens/cycle/triggers/settings/trigger/TriggerGeneralSettingsSection';
@@ -16,8 +16,8 @@ export function TriggerSettingsStack() {
 			title: title,
 			headerTintColor: '#32404e',
 			headerTitleStyle: {fontSize: 20, fontWeight: 'bold'}
-		} as NativeStackNavigationOptions);
-	const Stack = createNativeStackNavigator();
+		} as StackNavigationOptions);
+	const Stack = createStackNavigator();
 	return (
 		<Stack.Navigator screenOptions={{animation: 'none'}}>
 			<Stack.Screen

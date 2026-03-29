@@ -1577,7 +1577,7 @@
     wcwidth "^1.0.1"
     yaml "^2.2.1"
 
-"@react-native-community/cli-platform-android@^19.0.0", "@react-native-community/cli-platform-android@19.1.2":
+"@react-native-community/cli-platform-android@19.1.2":
   version "19.1.2"
   resolved "https://registry.npmjs.org/@react-native-community/cli-platform-android/-/cli-platform-android-19.1.2.tgz"
   integrity sha512-eMryTlSSTl3JK/tZTaMaMgHec9qu+eQj+3A15qmBdj2ac3p/hiauwAe4q35rz5XABw1cJCuyn+s469YsdTllaw==
@@ -1599,7 +1599,7 @@
     execa "^5.0.0"
     fast-xml-parser "^4.4.1"
 
-"@react-native-community/cli-platform-ios@^19.0.0", "@react-native-community/cli-platform-ios@19.1.2":
+"@react-native-community/cli-platform-ios@19.1.2":
   version "19.1.2"
   resolved "https://registry.npmjs.org/@react-native-community/cli-platform-ios/-/cli-platform-ios-19.1.2.tgz"
   integrity sha512-rmLZjwpI+mV3bbd6FgR6yM/ekFNr4QM/Dgzmatkh8k94B5uGtw5Me4EKlY+MrqR3lIyjzqWtLoefcJxA1c9d2w==
@@ -1645,7 +1645,7 @@
   dependencies:
     joi "^17.2.1"
 
-"@react-native-community/cli@^19.0.0":
+"@react-native-community/cli@19.1.2":
   version "19.1.2"
   resolved "https://registry.npmjs.org/@react-native-community/cli/-/cli-19.1.2.tgz"
   integrity sha512-b28TLqODMgQRx6f4gbHoHYpnKyFbWzJkIk3+Ggpad/at493KfGQ+WvKg1sts/st8mxzmbk0T6lCc/9A3QoFKkQ==
@@ -1743,7 +1743,7 @@
     "@babel/traverse" "^7.25.3"
     "@react-native/codegen" "0.80.3"
 
-"@react-native/babel-preset@^0.80.0", "@react-native/babel-preset@0.80.3":
+"@react-native/babel-preset@0.80.3":
   version "0.80.3"
   resolved "https://registry.npmjs.org/@react-native/babel-preset/-/babel-preset-0.80.3.tgz"
   integrity sha512-ROSWmuabB+8vho57Lrc/nFhU82Sd9/I5RI1OslE+JCnOUMdt6kz2JKd6hA7GV3UsJbkbYRXOF9KfjzX804JweQ==
@@ -1886,7 +1886,7 @@
     hermes-parser "0.28.1"
     nullthrows "^1.1.1"
 
-"@react-native/metro-config@^0.80.0":
+"@react-native/metro-config@0.80.3":
   version "0.80.3"
   resolved "https://registry.npmjs.org/@react-native/metro-config/-/metro-config-0.80.3.tgz"
   integrity sha512-ZyXbk1F8TPFNiXPgk5raRgwRVrkVQvB0xEKGYERZRqgsGAO6mwZqad7Tj5N4G/C+zDo2PLsmHNBwRV6Nm8/l+g==
@@ -6807,7 +6807,7 @@ react-native-vector-icons@^9.2.0:
     prop-types "^15.7.2"
     yargs "^16.1.1"
 
-react-native@^0.80.0:
+react-native@0.80.3:
   version "0.80.3"
   resolved "https://registry.npmjs.org/react-native/-/react-native-0.80.3.tgz"
   integrity sha512-HLqcRHBsy8e/Za4IziKsEWKHhd7Gq2bn852vuH5SA2urNVSoZ8JuhlhQeGz3xr0m9GCpItIGNh45hgykTpbwGA==

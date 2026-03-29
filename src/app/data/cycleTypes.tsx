@@ -1,7 +1,4 @@
-import {
-	NativeStackNavigationProp,
-	NativeStackScreenProps
-} from '@react-navigation/native-stack';
+import {StackNavigationProp} from '@react-navigation/stack';
 import {OrientationType} from 'react-native-orientation-locker';
 export const hapticOptions = {
 	enableVibrateFallback: false,
@@ -15,7 +12,7 @@ export type CyclesStackParamList = {
 	Triggers: undefined;
 };
 
-export type navigationCycleType = NativeStackNavigationProp<
+export type navigationCycleType = StackNavigationProp<
 	CyclesStackParamList,
 	'Cycles'
 >;
