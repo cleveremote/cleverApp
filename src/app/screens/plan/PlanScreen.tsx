@@ -103,7 +103,9 @@ export function PlanScreen(props: any) {
 
 		return (
 			<>
-				{dup && <SvgXml xml={dup} width={'100%'} height={'100%'} />}
+				{dup && <View style={{ width: '100%', height: 200 }}>
+  <SvgXml xml={dup} width="100%" height="100%" />
+</View>}
 			</>
 		);
 	};

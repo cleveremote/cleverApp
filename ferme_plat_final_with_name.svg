@@ -1,6 +1,3 @@
-<?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<!-- Created with Inkscape (http://www.inkscape.org/) -->
-
 <svg
    xmlns:dc="http://purl.org/dc/elements/1.1/"
    xmlns:cc="http://creativecommons.org/ns#"
@@ -65,7 +62,7 @@
        height="1080"
        width="3200" />
     <g
-       style="display:inline"
+       style="display:sel_1_display"
        id="sel_1"
        transform="translate(-34.537797,347.60095)"
        inkscape:label="#g4398"
@@ -84,7 +81,7 @@
     </g>
     <g
        transform="translate(-0.25209687,344.02952)"
-       style="display:inline"
+       style="display:sel_2_display"
        id="sel_2"
        inkscape:label="#g4404">
       <path
@@ -100,7 +97,7 @@
     </g>
     <g
        transform="translate(-0.25209687,344.02952)"
-       style="display:inline"
+       style="display:sel_4_display"
        id="sel_4"
        inkscape:label="#g4410">
       <path
@@ -117,7 +114,7 @@
     </g>
     <g
        transform="translate(-0.25209687,344.02952)"
-       style="display:inline"
+       style="display:sel_5_display"
        id="sel_5"
        inkscape:label="#g4416">
       <path
@@ -133,7 +130,7 @@
     </g>
     <g
        transform="translate(-0.25209687,344.02952)"
-       style="display:inline"
+       style="display:sel_6_display"
        id="sel_6"
        inkscape:label="#g4422">
       <path

@@ -25,6 +25,9 @@ export ANDROID_SDK_ROOT=$HOME/Library/Android/sdk
 export PATH=$PATH:$ANDROID_SDK_ROOT/emulator
 export PATH=$PATH:$ANDROID_SDK_ROOT/platform-tools
 
+pour faire fonctionner le debugger depuis vscode 
+sudo ln -sf /Users/nya/.nvm/versions/node/v20.20.2/bin/node /usr/local/bin/node
+sudo ln -sf /Users/nya/.nvm/versions/node/v20.20.2/bin/npm /usr/local/bin/npm
 
 rm -rf node_modules
 rm -rf package-lock.json

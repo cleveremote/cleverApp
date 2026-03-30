@@ -12,7 +12,7 @@ export function AppSwitch({style, ...props}: SwitchProps) {
 	return (
 		<Switch
 			thumbColor="#ffffff"
-			// ios_backgroundColor="#d1d1d6"
+			ios_backgroundColor="#d1d1d6"
 			trackColor={DEFAULT_TRACK_COLOR}
 			{...props}
 			style={[{transform: switchTransform}, style]}
