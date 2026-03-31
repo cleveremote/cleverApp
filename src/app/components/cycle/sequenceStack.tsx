@@ -52,7 +52,7 @@ export function SequenceStack({
 			startDate.getMinutes(),
 			startDate.getSeconds()
 		);
-		const diff = date1utc - date2utc;
+		const diff = Math.max(date1utc - date2utc, 0);
 		const millisenconds = duration - diff;
 		const startIndex = status === 'STOPPED' ? 0 : (diff * 100) / duration;
 		const step = (100 - startIndex) / ((duration - diff) / 1000);
@@ -66,7 +66,7 @@ export function SequenceStack({
 
 	const getEndTime = (duration: number) => {
 		if (duration) {
-			let seconds = duration / 1000;
+			let seconds = Math.floor(duration / 1000);
 			const hours = Math.floor(seconds / 3600);
 			seconds = seconds % 3600;
 			const minutes = Math.floor(seconds / 60);

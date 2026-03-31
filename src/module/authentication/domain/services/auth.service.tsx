@@ -16,7 +16,7 @@ import {
 	SET_SERVER_CONNECTED
 } from '../../../process/infrasctructure/store/actions/types';
 import {store} from '../../../process/infrasctructure/store/store';
-import {NetworkInfo} from 'react-native-network-info';
+import NetInfo from '@react-native-community/netinfo';
 import {Platform} from 'react-native';
 class AuthenticationService {
 	public newEvent = new EventEmitter();
@@ -151,7 +151,8 @@ class AuthenticationService {
 
 	private async findServer(localServer: string): Promise<string | undefined> {
 		console.log('Scanning local network for server...');
-		const ip = await NetworkInfo.getIPV4Address();
+		const netState = await NetInfo.fetch();
+		const ip = (netState.details as {ipAddress?: string} | null)?.ipAddress ?? null;
 		console.log('Scanning local network for server...',ip);
 		if (!ip) return undefined;
 
