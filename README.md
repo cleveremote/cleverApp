@@ -33,6 +33,7 @@ rm -rf node_modules
 rm -rf package-lock.json
 npm install
 
+lsof -ti :8081 | xargs kill -9 2>/dev/null && echo "killed" || echo "nothing on 8081"
 
 cd ios                                                              
 rm -rf Pods
