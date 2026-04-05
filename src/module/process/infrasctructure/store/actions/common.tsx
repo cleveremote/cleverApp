@@ -15,18 +15,18 @@ import {
 import {ThunkAction} from 'redux-thunk';
 import {AnyAction} from 'redux';
 import {RootState} from '../store';
-import {authenticationService} from '../../../../authentication/domain/services/auth.service';
 import {Alert} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {socketService} from '../../../../../services/socket';
 
 export const listenerEvents =
 	(): ThunkAction<void, RootState, unknown, AnyAction> => async dispatch => {
-		authenticationService.socket?.off('UPDATE_CONFIGURATION');
-		authenticationService.socket?.off('front/synchronize/status');
-		authenticationService.socket?.off('front/synchronize/sensor-value');
-		authenticationService.socket?.off('server/front/box-status');
+		socketService.off('UPDATE_CONFIGURATION');
+		socketService.off('front/synchronize/status');
+		socketService.off('front/synchronize/sensor-value');
+		socketService.off('server/front/box-status');
 		setTimeout(() => {
-			authenticationService.socket?.on(
+			socketService.on(
 				'UPDATE_CONFIGURATION',
 				message => {
 					const data = JSON.parse(message);
@@ -46,7 +46,7 @@ export const listenerEvents =
 				}
 			);
 
-			authenticationService.socket?.on(
+			socketService.on(
 				'front/synchronize/status',
 				message => {
 					const data = JSON.parse(message);
@@ -57,7 +57,7 @@ export const listenerEvents =
 				}
 			);
 
-			authenticationService.socket?.on(
+			socketService.on(
 				'front/synchronize/sensor-value',
 				message => {
 					dispatch({
@@ -67,7 +67,7 @@ export const listenerEvents =
 				}
 			);
 
-			authenticationService.socket?.on(
+			socketService.on(
 				'server/front/box-status',
 				message => {
 					const res = JSON.parse(message).data === 'connected';
@@ -81,7 +81,7 @@ export const listenerEvents =
 	};
 
 // export const loadPlan = (): ThunkAction<void, RootState, unknown, AnyAction> => async dispatch => {
-//     authenticationService.socket?.emit('front/box/fetch/configuration', {plan:123}, (response: any) => {
+//     socketService.emit('front/box/fetch/configuration', {plan:123}, (response: any) => {
 //         dispatch({
 //             type: PLAN_LOAD,
 //             payload: response.config,
@@ -297,7 +297,7 @@ export const loadPlan =
 </svg>`);
 		const plan = await AsyncStorage.getItem('test_plan');
 		if (!plan) {
-			authenticationService.socket?.emit(
+			socketService.emit(
 				'front/box/fetch/configuration',
 				{plan: 123},
 				async (response: any) => {
@@ -318,7 +318,7 @@ export const loadPlan =
 
 export const loadConfiguration =
 	(): ThunkAction<void, RootState, unknown, AnyAction> => async dispatch => {
-		authenticationService.socket?.emit(
+		socketService.emit(
 			'front/box/fetch/configuration',
 			{},
 			(response: any) => {

@@ -16,6 +16,7 @@ import {
 import {SettingsScreen} from '../screens/settings/settings';
 import {AppState} from 'react-native';
 import {authenticationService} from '../../module/authentication/domain/services/auth.service';
+import {socketService} from '../../services/socket';
 import {connect} from 'react-redux';
 import {ParamListBase, RouteProp} from '@react-navigation/native';
 import {CycleStack} from './CycleStack';
@@ -86,7 +87,7 @@ export function AppStack(props: any) {
 
 				appState.current = nextAppState;
 				if (appState.current === 'background') {
-					authenticationService.socket?.disconnect();
+					socketService.disconnect();
 				}
 			}
 		);

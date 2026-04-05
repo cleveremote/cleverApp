@@ -8,7 +8,7 @@ import {
 import {ThunkAction} from 'redux-thunk';
 import {AnyAction} from 'redux';
 import {RootState} from '../store';
-import {authenticationService} from '../../../../authentication/domain/services/auth.service';
+import {socketService} from '../../../../../services/socket';
 
 export const updateModbusConnection =
 	(modbusConnection: any): ThunkAction<void, RootState, unknown, AnyAction> =>
@@ -21,7 +21,7 @@ export const updateModbusConnection =
 
 export const loadModbusConnections =
 	(): ThunkAction<void, RootState, unknown, AnyAction> => async dispatch => {
-		authenticationService.socket?.emit(
+		socketService.emit(
 			'front/box/fetch/configuration',
 			{},
 			(response: any) => {
@@ -47,7 +47,7 @@ export const loadModbusConnection =
 export const saveModbusConnection =
 	(data: any): ThunkAction<void, RootState, unknown, AnyAction> =>
 	async dispatch => {
-		authenticationService.socket?.emit(
+		socketService.emit(
 			'front/box/sync/modbusconnection',
 			data,
 			(response: any) => {

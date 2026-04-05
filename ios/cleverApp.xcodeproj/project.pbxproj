@@ -24,7 +24,9 @@
 		0E7F007C2BBAD4FF00FB9BE6 /* Fontisto.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 0E7F006C2BBAD4FF00FB9BE6 /* Fontisto.ttf */; };
 		0E7F007D2BBAD4FF00FB9BE6 /* Foundation.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 0E7F006D2BBAD4FF00FB9BE6 /* Foundation.ttf */; };
 		0E7F007E2BBAD4FF00FB9BE6 /* Octicons.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 0E7F006E2BBAD4FF00FB9BE6 /* Octicons.ttf */; };
-		0EF32D212F817BB700B4772B /* ca.cer in Resources */ = {isa = PBXBuildFile; fileRef = 0EF32D202F817BB700B4772B /* ca.cer */; };
+		0EF32D242F817BB700B4772B /* SSLCAModule.m in Sources */ = {isa = PBXBuildFile; fileRef = 0EF32D232F817BB700B4772B /* SSLCAModule.m */; };
+		0EF32D252F81F65400B4772B /* ca.der in Resources */ = {isa = PBXBuildFile; fileRef = 0EF32D242F81F65400B4772B /* ca.der */; };
+		0EF32D262F81F65400B4772B /* SRCASecurityPolicy.m in Sources */ = {isa = PBXBuildFile; fileRef = 0EF32D272F81F65400B4772B /* SRCASecurityPolicy.m */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		1645A2C1E5FA89524E8361CD /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 24D161361EB293EC1F4C2FA8 /* PrivacyInfo.xcprivacy */; };
 		761780ED2CA45674006654EE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 761780EC2CA45674006654EE /* AppDelegate.swift */; };
@@ -50,7 +52,11 @@
 		0E7F006C2BBAD4FF00FB9BE6 /* Fontisto.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; name = Fontisto.ttf; path = "../node_modules/react-native-vector-icons/Fonts/Fontisto.ttf"; sourceTree = "<group>"; };
 		0E7F006D2BBAD4FF00FB9BE6 /* Foundation.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; name = Foundation.ttf; path = "../node_modules/react-native-vector-icons/Fonts/Foundation.ttf"; sourceTree = "<group>"; };
 		0E7F006E2BBAD4FF00FB9BE6 /* Octicons.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; name = Octicons.ttf; path = "../node_modules/react-native-vector-icons/Fonts/Octicons.ttf"; sourceTree = "<group>"; };
-		0EF32D202F817BB700B4772B /* ca.cer */ = {isa = PBXFileReference; lastKnownFileType = file; path = ca.cer; sourceTree = "<group>"; };
+		0EF32D222F817BB700B4772B /* SSLCAModule.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SSLCAModule.h; path = cleverApp/SSLCAModule.h; sourceTree = "<group>"; };
+		0EF32D232F817BB700B4772B /* SSLCAModule.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = SSLCAModule.m; path = cleverApp/SSLCAModule.m; sourceTree = "<group>"; };
+		0EF32D282F81F65400B4772B /* SRCASecurityPolicy.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SRCASecurityPolicy.h; path = cleverApp/SRCASecurityPolicy.h; sourceTree = "<group>"; };
+		0EF32D272F81F65400B4772B /* SRCASecurityPolicy.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = SRCASecurityPolicy.m; path = cleverApp/SRCASecurityPolicy.m; sourceTree = "<group>"; };
+		0EF32D242F81F65400B4772B /* ca.der */ = {isa = PBXFileReference; lastKnownFileType = file; path = ca.der; sourceTree = "<group>"; };
 		0EF87C8E2BEE409A0089B8BE /* cleverApp.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = cleverApp.entitlements; path = cleverApp/cleverApp.entitlements; sourceTree = "<group>"; };
 		0EFC60FE2C0CB61E00A687AC /* cleverAppDebug.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = cleverAppDebug.entitlements; path = cleverApp/cleverAppDebug.entitlements; sourceTree = "<group>"; };
 		13B07F961A680F5B00A75B9A /* cleverApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = cleverApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
@@ -80,7 +86,11 @@
 		13B07FAE1A68108700A75B9A /* cleverApp */ = {
 			isa = PBXGroup;
 			children = (
-				0EF32D202F817BB700B4772B /* ca.cer */,
+				0EF32D242F81F65400B4772B /* ca.der */,
+				0EF32D222F817BB700B4772B /* SSLCAModule.h */,
+				0EF32D232F817BB700B4772B /* SSLCAModule.m */,
+				0EF32D282F81F65400B4772B /* SRCASecurityPolicy.h */,
+				0EF32D272F81F65400B4772B /* SRCASecurityPolicy.m */,
 				0EFC60FE2C0CB61E00A687AC /* cleverAppDebug.entitlements */,
 				0EF87C8E2BEE409A0089B8BE /* cleverApp.entitlements */,
 				761780EC2CA45674006654EE /* AppDelegate.swift */,
@@ -221,6 +231,7 @@
 				0E7F00702BBAD4FF00FB9BE6 /* AntDesign.ttf in Resources */,
 				0E7F00712BBAD4FF00FB9BE6 /* Zocial.ttf in Resources */,
 				0E7F00722BBAD4FF00FB9BE6 /* MaterialCommunityIcons.ttf in Resources */,
+				0EF32D252F81F65400B4772B /* ca.der in Resources */,
 				0E7F00732BBAD4FF00FB9BE6 /* FontAwesome5_Solid.ttf in Resources */,
 				0E7F00742BBAD4FF00FB9BE6 /* FontAwesome5_Brands.ttf in Resources */,
 				0E7F00752BBAD4FF00FB9BE6 /* Feather.ttf in Resources */,
@@ -234,7 +245,6 @@
 				0E7F007D2BBAD4FF00FB9BE6 /* Foundation.ttf in Resources */,
 				0E7F007E2BBAD4FF00FB9BE6 /* Octicons.ttf in Resources */,
 				81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */,
-				0EF32D212F817BB700B4772B /* ca.cer in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				0E0308562F7695CF005F95FA /* PrivacyInfo.xcprivacy in Resources */,
 				1645A2C1E5FA89524E8361CD /* PrivacyInfo.xcprivacy in Resources */,
@@ -347,6 +357,8 @@
 			buildActionMask = 2147483647;
 			files = (
 				761780ED2CA45674006654EE /* AppDelegate.swift in Sources */,
+				0EF32D242F817BB700B4772B /* SSLCAModule.m in Sources */,
+				0EF32D262F81F65400B4772B /* SRCASecurityPolicy.m in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

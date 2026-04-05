@@ -9,7 +9,7 @@ import {
 import {ThunkAction} from 'redux-thunk';
 import {AnyAction} from 'redux';
 import {RootState} from '../store';
-import {authenticationService} from '../../../../authentication/domain/services/auth.service';
+import {socketService} from '../../../../../services/socket';
 
 export const updateTrigger =
 	(
@@ -59,7 +59,7 @@ export const saveTrigger =
 			});
 			onSuccess?.();
 		} else {
-			authenticationService.socket?.emit(
+			socketService.emit(
 				'front/box/sync/trigger',
 				data,
 				(response: any) => {
@@ -79,7 +79,7 @@ export const saveTriggers =
 		onSuccess?: () => void
 	): ThunkAction<void, RootState, unknown, AnyAction> =>
 	async dispatch => {
-		authenticationService.socket?.emit(
+		socketService.emit(
 			'front/box/sync/cycle',
 			cycle,
 			async (response: any) => {

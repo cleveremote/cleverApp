@@ -9,7 +9,7 @@ import {
 import {ThunkAction} from 'redux-thunk';
 import {AnyAction} from 'redux';
 import {RootState} from '../store';
-import {authenticationService} from '../../../../authentication/domain/services/auth.service';
+import {socketService} from '../../../../../services/socket';
 
 export const updateSensor =
 	(sensor: any): ThunkAction<void, RootState, unknown, AnyAction> =>
@@ -22,7 +22,7 @@ export const updateSensor =
 
 export const loadSensors =
 	(): ThunkAction<void, RootState, unknown, AnyAction> => async dispatch => {
-		authenticationService.socket?.emit(
+		socketService.emit(
 			'front/box/fetch/configuration',
 			{},
 			(response: any) => {
@@ -50,7 +50,7 @@ export const loadSensor =
 export const saveSensor =
 	(data: any): ThunkAction<void, RootState, unknown, AnyAction> =>
 	async dispatch => {
-		authenticationService.socket?.emit(
+		socketService.emit(
 			'front/box/sync/sensor',
 			data,
 			(response: any) => {

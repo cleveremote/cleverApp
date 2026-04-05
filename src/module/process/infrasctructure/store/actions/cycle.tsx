@@ -11,11 +11,11 @@ import {
 import {ThunkAction} from 'redux-thunk';
 import {AnyAction} from 'redux';
 import {RootState} from '../store';
-import {authenticationService} from '../../../../authentication/domain/services/auth.service';
+import {socketService} from '../../../../../services/socket';
 
 export const listenerEvents =
 	(): ThunkAction<void, RootState, unknown, AnyAction> => async dispatch => {
-		authenticationService.socket?.on('UPDATE_CONFIGURATION', message => {
+		socketService.on('UPDATE_CONFIGURATION', message => {
 			dispatch({
 				type: CYCLE_SAVE,
 				payload: JSON.parse(message).cycle
@@ -43,7 +43,7 @@ export const loadValues =
 	): ThunkAction<void, RootState, unknown, AnyAction> =>
 	async dispatch => {
 		//dispatch({ type: CYCLE_EXECUTE, payload: true });
-		authenticationService.socket?.emit(
+		socketService.emit(
 			'front/box/fetch/status',
 			{type, query},
 			(response: any) => {
@@ -65,7 +65,7 @@ export const loadValues =
 
 export const loadCycles =
 	(): ThunkAction<void, RootState, unknown, AnyAction> => async dispatch => {
-		authenticationService.socket?.emit(
+		socketService.emit(
 			'front/box/fetch/configuration',
 			{},
 			(response: any) => {
@@ -100,7 +100,7 @@ export const saveCycle =
 			});
 			onSuccess?.();
 		} else {
-			authenticationService.socket?.emit(
+			socketService.emit(
 				'front/box/sync/cycle',
 				data,
 				async (response: any) => {
@@ -119,11 +119,11 @@ export const executeCycle =
 	async dispatch => {
 		dispatch({type: CYCLE_EXECUTE, payload: true});
 		return new Promise((resolve, reject) => {
-			if (!authenticationService.socket?.connected) {
+			if (!socketService.connected) {
 				reject(new Error('No server connexion!'));
 			}
 
-			authenticationService.socket?.emit(
+			socketService.emit(
 				'front/box/execute/process',
 				data,
 				(response: any) => {
