@@ -101,8 +101,8 @@ RCT_EXPORT_METHOD(initialize:(RCTPromiseResolveBlock)resolve
     return;
   }
 
-  // Only trust the custom CA, not the system root CAs
-  SecTrustSetAnchorCertificatesOnly(serverTrust, true);
+  // Trust both our custom CA and the system root CAs (needed for Cloudflare)
+  SecTrustSetAnchorCertificatesOnly(serverTrust, false);
 
   CFErrorRef error = NULL;
   bool trusted = SecTrustEvaluateWithError(serverTrust, &error);

@@ -7,6 +7,7 @@ import com.facebook.react.bridge.Promise
 import okhttp3.OkHttpClient
 import java.security.KeyStore
 import java.security.cert.CertificateFactory
+import java.security.cert.X509Certificate
 import javax.net.ssl.SSLContext
 import javax.net.ssl.TrustManagerFactory
 import javax.net.ssl.X509TrustManager
@@ -39,13 +40,22 @@ class SSLCAModule(reactContext: ReactApplicationContext) : ReactContextBaseJavaM
                 certificateFactory.generateCertificate(it)
             }
 
-            // Create a KeyStore with only our CA as a trusted entry
+            // Create a KeyStore with our custom CA + all system CAs (needed for Cloudflare)
             val keyStore = KeyStore.getInstance(KeyStore.getDefaultType()).apply {
                 load(null, null)
                 setCertificateEntry("custom-ca", caCert)
             }
 
-            // Build a TrustManagerFactory from the KeyStore
+            // Add system CAs so Cloudflare/public certs are also trusted
+            val defaultTmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm()).apply {
+                init(null as KeyStore?)
+            }
+            val defaultTm = defaultTmf.trustManagers.first() as X509TrustManager
+            for ((i, cert) in defaultTm.acceptedIssuers.withIndex()) {
+                keyStore.setCertificateEntry("system-ca-$i", cert)
+            }
+
+            // Build a TrustManagerFactory from the combined KeyStore
             val tmf = TrustManagerFactory.getInstance(TrustManagerFactory.getDefaultAlgorithm()).apply {
                 init(keyStore)
             }

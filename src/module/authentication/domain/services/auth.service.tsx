@@ -52,10 +52,18 @@ class AuthenticationService {
 
 		if (!socketService.connected) {
 			if (!socketService.getSocket()) {
+				// Socket was fully destroyed (e.g. after signout) — recreate from scratch
 				await this.setSocketServer();
 			} else {
+				// Socket exists but is disconnected (e.g. after pause) — try to reconnect with timeout
 				await new Promise<void>((resolve) => {
+					const timeout = setTimeout(() => {
+						cleanup();
+						this.setStatusServer(false);
+						resolve();
+					}, 8000);
 					const cleanup = () => {
+						clearTimeout(timeout);
 						socketService.off('connect', onConnect);
 						socketService.off('connect_error', onError);
 					};
@@ -65,6 +73,12 @@ class AuthenticationService {
 					socketService.on('connect_error', onError);
 					socketService.connect();
 				});
+
+				// If still not connected after resume attempt, recreate from scratch
+				if (!socketService.connected) {
+					socketService.disconnect();
+					await this.setSocketServer();
+				}
 			}
 		}
 
@@ -158,11 +172,12 @@ class AuthenticationService {
 			const controller = new AbortController();
 			const timer = setTimeout(() => controller.abort(), 500);
 			try {
-				console.log(`http://${rootIp}${i}:3000/ping`);
-				const res = await fetch(`http://${rootIp}${i}:3000/ping`, {signal: controller.signal});
+				console.log(`https://${rootIp}${i}:443/ping`);
+				const res = await fetch(`https://${rootIp}${i}:443/ping`, {signal: controller.signal});
 				if (!res.ok) throw new Error(`HTTP ${res.status}`);
 				const r = await res.json().catch(() => res.text());
-				if (r?.name === localServer) return `http://${rootIp}${i}:5001`;
+				console.log('tested', `https://${rootIp}${i}:443`, r);
+				if (r?.name === localServer) return `https://${rootIp}${i}:443`;
 				throw new Error('no match');
 			} finally {
 				clearTimeout(timer);
@@ -240,15 +255,6 @@ class AuthenticationService {
 		if (!connectionRes.res && connectionRes.retry) {
 			await this.setSocketServer(!isLocal, login);
 		}
-	}
-
-	public manageReconnexion() {
-		socketService.on('disconnect', async (reason: unknown) => {
-			this.setStatusServer(false);
-			if (reason !== 'io client disconnect') {
-				this.signout();
-			}
-		});
 	}
 
 	public async Login(

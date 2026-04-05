@@ -25,7 +25,7 @@ export const listenerEvents =
 		socketService.off('front/synchronize/status');
 		socketService.off('front/synchronize/sensor-value');
 		socketService.off('server/front/box-status');
-		setTimeout(() => {
+		
 			socketService.on(
 				'UPDATE_CONFIGURATION',
 				message => {
@@ -77,7 +77,7 @@ export const listenerEvents =
 					});
 				}
 			);
-		}, 1000);
+		
 	};
 
 // export const loadPlan = (): ThunkAction<void, RootState, unknown, AnyAction> => async dispatch => {

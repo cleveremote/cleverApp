@@ -66,10 +66,20 @@ class SocketService {
 	}
 
 	/**
-	 * Disconnect the socket.
+	 * Pause the socket (disconnect but keep the instance alive for reconnection).
+	 */
+	pause(): void {
+		if (this.socket?.connected) {
+			this.socket.disconnect();
+		}
+	}
+
+	/**
+	 * Disconnect the socket and destroy the instance.
 	 */
 	disconnect(): void {
 		if (this.socket) {
+			this.socket.removeAllListeners();
 			this.socket.disconnect();
 			this.socket = null;
 		}

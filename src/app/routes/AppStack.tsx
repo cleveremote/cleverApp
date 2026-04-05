@@ -26,7 +26,7 @@ import {
 	loadConfiguration,
 	loadPlan
 } from '../../module/process/infrasctructure/store/actions/common';
-import {setIsConnected} from '../../module/process/infrasctructure/store/actions/state';
+import {setIsConnected, setIsServerConnected, setIsBoxConnected} from '../../module/process/infrasctructure/store/actions/state';
 import {NoConnectionScreen} from '../screens/access/no-connexion';
 import {loadValues} from '../../module/process/infrasctructure/store/actions/cycle';
 import {PlanStack} from './PlanStack';
@@ -72,6 +72,9 @@ export function AppStack(props: any) {
 	}, [props.isServerConnected, props.isBoxConnected]);
 
 	useEffect(() => {
+		const RECONNECT_TIMEOUT_MS = 10000;
+		let reconnectTimer: NodeJS.Timeout | null = null;
+
 		const subscription = AppState.addEventListener(
 			'change',
 			async nextAppState => {
@@ -79,15 +82,31 @@ export function AppStack(props: any) {
 					appState.current.match(/inactive|background/) &&
 					nextAppState === 'active'
 				) {
+					// Start a timeout: if not reconnected within delay, force NoConnection
+					reconnectTimer = setTimeout(() => {
+						if (!socketService.connected) {
+							props.setIsServerConnected(false);
+							props.setIsBoxConnected(false);
+						}
+					}, RECONNECT_TIMEOUT_MS);
+
 					await authenticationService.executeRefresh();
-					props.loadConfiguration();
-					props.loadPlan();
-					props.loadValues('PROCESS');
+
+					// If reconnection succeeded, cancel the timeout and reload data
+					if (socketService.connected) {
+						if (reconnectTimer) {
+							clearTimeout(reconnectTimer);
+							reconnectTimer = null;
+						}
+						props.loadConfiguration();
+						props.loadPlan();
+						props.loadValues('PROCESS');
+					}
 				}
 
 				appState.current = nextAppState;
 				if (appState.current === 'background') {
-					socketService.disconnect();
+					socketService.pause();
 				}
 			}
 		);
@@ -99,6 +118,9 @@ export function AppStack(props: any) {
 		devices();
 		return () => {
 			subscription.remove();
+			if (reconnectTimer) {
+				clearTimeout(reconnectTimer);
+			}
 		};
 	}, []);
 
@@ -182,6 +204,8 @@ const mapStateToProps = (state: any) => ({
 
 export default connect(mapStateToProps, {
 	setIsConnected,
+	setIsServerConnected,
+	setIsBoxConnected,
 	loadConfiguration,
 	loadValues,
 	listenerEvents,

@@ -44,7 +44,8 @@ NS_ASSUME_NONNULL_BEGIN
     return NO;
   }
 
-  SecTrustSetAnchorCertificatesOnly(serverTrust, true);
+  // Trust both our custom CA and the system root CAs (needed for Cloudflare)
+  SecTrustSetAnchorCertificatesOnly(serverTrust, false);
 
   CFErrorRef error = NULL;
   bool trusted = SecTrustEvaluateWithError(serverTrust, &error);
