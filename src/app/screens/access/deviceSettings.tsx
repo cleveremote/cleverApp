@@ -6,12 +6,13 @@ import {
 	Alert,
 	TextInput,
 	TouchableOpacity,
-	View
+	View,
+	Modal,
+	FlatList
 } from 'react-native';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import {placeholderColor} from '../../styles/components/common/Input';
 import {hapticOptions} from '../../data/cycleTypes';
-import {Picker} from '@react-native-picker/picker';
 import Spinner from 'react-native-loading-spinner-overlay';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import {useNavigation} from '@react-navigation/native';
@@ -29,7 +30,8 @@ export function DeviceSettings(props: any) {
 	const [password, setPassword] = React.useState('');
 	const [isLoading, setIsLoading] = React.useState(false);
 	const [profile, setProfile] = React.useState('New profile');
-	const [networks, setNetworks] = React.useState([]);
+	const [networks, setNetworks] = React.useState<{label: string; value: string}[]>([]);
+	const [dropdownOpen, setDropdownOpen] = React.useState(false);
 
 	const nav = useNavigation();
 	useEffect(() => {
@@ -168,20 +170,39 @@ export function DeviceSettings(props: any) {
 								setProfile(value);
 							}}
 						/>
-						<Picker
-							selectedValue={ssid}
-							style={{width: '100%', height: 50}}
-							onValueChange={value => {
-								setSsid(value);
-							}}>
-							{networks.map((item: any, index: number) => (
-								<Picker.Item
-									key={'action_' + index}
-									label={`${item.label}`}
-									value={`${item.value}`}
-								/>
-							))}
-						</Picker>
+						<View style={{width: '100%'}}>
+								<TouchableOpacity
+									style={[styles.input, {justifyContent: 'center'}]}
+									onPress={() => setDropdownOpen(!dropdownOpen)}>
+									<View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}>
+										<Text style={{fontSize: 20, color: ssid ? '#000' : placeholderColor}}>
+											{networks.find((n: any) => n.value === ssid)?.label || 'Select network'}
+										</Text>
+										<Icon name={dropdownOpen ? 'chevron-up' : 'chevron-down'} size={14} color="#32404e" />
+									</View>
+								</TouchableOpacity>
+								{dropdownOpen && (
+									<View style={styles.dropdown}>
+										<FlatList
+											data={networks}
+											keyExtractor={(_item, index) => 'network_' + index}
+											renderItem={({item}: {item: any}) => (
+												<TouchableOpacity
+													style={[
+														styles.dropdownItem,
+														item.value === ssid && {backgroundColor: '#EDF2F7'}
+													]}
+													onPress={() => {
+														setSsid(item.value);
+														setDropdownOpen(false);
+													}}>
+													<Text style={{fontSize: 18}}>{item.label}</Text>
+												</TouchableOpacity>
+											)}
+										/>
+									</View>
+								)}
+							</View>
 						<TextInput
 							style={[styles.input, {width: '100%'}]}
 							placeholder="Psk"
@@ -249,5 +270,19 @@ const styles = StyleSheet.create({
 		color: '#32404e',
 		fontSize: 15,
 		marginBottom: 50
+	},
+	dropdown: {
+		width: '100%',
+		maxHeight: 200,
+		borderWidth: 1,
+		borderColor: '#CBD5E0',
+		borderTopWidth: 0,
+		borderBottomLeftRadius: 12,
+		borderBottomRightRadius: 12,
+		backgroundColor: 'white'
+	},
+	dropdownItem: {
+		paddingVertical: 12,
+		paddingHorizontal: 12
 	}
 });
