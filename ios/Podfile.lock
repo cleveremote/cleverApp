@@ -2278,6 +2278,8 @@ PODS:
     - ReactCommon/turbomodule/core
     - SocketRocket
     - Yoga
+  - react-native-zeroconf (0.14.0):
+    - React-Core
   - React-NativeModulesApple (0.83.4):
     - boost
     - DoubleConversion
@@ -3347,6 +3349,7 @@ DEPENDENCIES:
   - react-native-orientation-locker (from `../node_modules/react-native-orientation-locker`)
   - react-native-safe-area-context (from `../node_modules/react-native-safe-area-context`)
   - "react-native-slider (from `../node_modules/@react-native-community/slider`)"
+  - react-native-zeroconf (from `../node_modules/react-native-zeroconf`)
   - React-NativeModulesApple (from `../node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios`)
   - React-networking (from `../node_modules/react-native/ReactCommon/react/networking`)
   - React-oscompat (from `../node_modules/react-native/ReactCommon/oscompat`)
@@ -3519,6 +3522,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-safe-area-context"
   react-native-slider:
     :path: "../node_modules/@react-native-community/slider"
+  react-native-zeroconf:
+    :path: "../node_modules/react-native-zeroconf"
   React-NativeModulesApple:
     :path: "../node_modules/react-native/ReactCommon/react/nativemodule/core/platform/ios"
   React-networking:
@@ -3683,6 +3688,7 @@ SPEC CHECKSUMS:
   react-native-orientation-locker: 4409c5b12b65f942e75449872b4f078b6f27af81
   react-native-safe-area-context: 0f4986a88ec555aff660503b483d6e4bd6980a9a
   react-native-slider: 5da4af460d0dd1346f927e829dfecbb81bd46f91
+  react-native-zeroconf: 14d6e0ee473f6abeb61573d9d0f5f6940a1fec4a
   React-NativeModulesApple: fd9c17d032baa5376f22615d3819f212a31d6386
   React-networking: 11c7a1a9830d4493ae07094a1460e8fc68793c6b
   React-oscompat: 854967d380ee2921c848790cdb942b42d22017d8

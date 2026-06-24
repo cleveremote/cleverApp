@@ -15,16 +15,29 @@ import {
 	SET_SERVER_CONNECTED
 } from '../../../process/infrasctructure/store/actions/types';
 import {store} from '../../../process/infrasctructure/store/store';
-import NetInfo from '@react-native-community/netinfo';
-import {Platform} from 'react-native';
+import {
+	mdnsResolver,
+	ResolvedService
+} from '../../../../services/mdns/mdnsResolver';
 class AuthenticationService {
 	public newEvent = new EventEmitter();
 	public socketChangeEvent = new EventEmitter();
 	private timeout: NodeJS.Timeout | undefined;
 	private lastStatus = false;
+	/**
+	 * Service resolved via mDNS at login time. Cached for the whole session so
+	 * every subsequent socket (re)connect reuses the same host without
+	 * re-scanning. Cleared on signout or on a new login.
+	 */
+	private resolvedLocalService: ResolvedService | null = null;
 
 	constructor() {
 		global.atob = decode;
+	}
+
+	/** Exposes the mDNS service resolved during the current session's login. */
+	public getResolvedLocalService(): ResolvedService | null {
+		return this.resolvedLocalService;
 	}
 
 	public async dispatchExpireTokenEvent(token: string) {
@@ -150,51 +163,45 @@ class AuthenticationService {
 		socketService.disconnect();
 		await AsyncStorage.removeItem('refreshToken');
 		await AsyncStorage.removeItem('accessToken');
+		this.resolvedLocalService = null;
 		this.setIsExpired(true);
 	}
 
-	private getBaseHostname(url: string) {
-		const match = url.match(/\/\/([^:/]+)/);
-		const t = match ? match[1].split('.')[0] : null;
-		return t;
+	private parseLocalUrl(url: string): {hostname: string; port: string} {
+		const match = url.match(/^https?:\/\/([^:/]+)(?::(\d+))?/);
+		return {
+			hostname: match?.[1] ?? '',
+			port: match?.[2] ?? '443'
+		};
 	}
 
-	private async findServer(localServer: string): Promise<string | undefined> {
-		console.log('Scanning local network for server...');
-		const netState = await NetInfo.fetch();
-		const ip = (netState.details as {ipAddress?: string} | null)?.ipAddress ?? null;
-		console.log('Scanning local network for server...',ip);
-		if (!ip) return undefined;
+	/**
+	 * Scan mDNS once for the service matching the given boxId and cache it.
+	 * Subsequent calls within the same session return the cached service
+	 * without re-scanning — the host only changes on a new login.
+	 */
+	private async scanAndCacheLocalService(
+		boxId: string
+	): Promise<ResolvedService | undefined> {
+		if (this.resolvedLocalService) {
+			return this.resolvedLocalService;
+		}
 
-		const rootIp = ip.replace(/\.\d+$/, '.');
+		console.log('Resolving local server via mDNS:', boxId);
+		const service = await mdnsResolver.resolveService(boxId);
+		if (!service) {
+			console.log('mDNS resolution failed for', boxId);
+			return undefined;
+		}
+		console.log('Resolved', boxId, '->', service.hostname, service.ip);
+		this.resolvedLocalService = service;
+		return service;
+	}
 
-		const tryHost = async (i: number): Promise<string> => {
-			const controller = new AbortController();
-			const timer = setTimeout(() => controller.abort(), 500);
-			try {
-				console.log(`https://${rootIp}${i}:443/ping`);
-				const res = await fetch(`https://${rootIp}${i}:443/ping`, {signal: controller.signal});
-				if (!res.ok) throw new Error(`HTTP ${res.status}`);
-				const r = await res.json().catch(() => res.text());
-				console.log('tested', `https://${rootIp}${i}:443`, r);
-				if (r?.name === localServer) return `https://${rootIp}${i}:443`;
-				throw new Error('no match');
-			} finally {
-				clearTimeout(timer);
-			}
-		};
-
-		// Scan all hosts in parallel — total time = timeout (500ms) instead of 254 × 500ms
-		return new Promise(resolve => {
-			let remaining = 254;
-			for (let i = 1; i <= 254; i++) {
-				tryHost(i)
-					.then(url => resolve(url))
-					.catch(() => {
-						if (--remaining === 0) resolve(undefined);
-					});
-			}
-		});
+	private async resolveLocalServer(boxId: string): Promise<string | undefined> {
+		const service = await this.scanAndCacheLocalService(boxId);
+		if (!service) return undefined;
+		return `https://${service.hostname}.local`;
 	}
 
 	// try first local if ok else distant
@@ -203,17 +210,8 @@ class AuthenticationService {
 
 		let server = WEBSITE_URL;
 
-		if (isLocal && Platform.OS === 'android') {
-			console.log('testing local server');
-			server =
-				this.getBaseHostname(
-					DEV_MODE
-						? WEBSITE_URL_LOCAL
-						: `http://${boxId.slice(-8)}.local:5001`
-				) ?? '';
-			server = (await this.findServer(server)) ?? '';
-		} else if (isLocal) {
-			server = WEBSITE_URL_LOCAL;
+		if (isLocal) {
+			server = (await this.resolveLocalServer(boxId)) ?? '';
 		} else {
 			server = WEBSITE_URL;
 		}
@@ -222,7 +220,7 @@ class AuthenticationService {
 		const extraHeaders = {
 			boxId
 		};
-
+        console.log('Connecting to server at', server, 'with boxId', boxId, 'and token', token)
 		await socketService.init(server, token, extraHeaders);
 
 		const connectResult = (): Promise<{res: boolean; error?: string; retry?: boolean}> => {
@@ -263,6 +261,9 @@ class AuthenticationService {
 		_isLocal = true
 	): Promise<{res: boolean; error?: string}> {
 		this.reset();
+		// Force a fresh mDNS scan for this login session — the cached host
+		// from a previous session must not be reused on a new login.
+		this.resolvedLocalService = null;
 		await this.setSocketServer(true, login);
 		const sendLogin = (): Promise<{res: boolean; error?: string}> => {
 			return new Promise((resolve, _reject) => {

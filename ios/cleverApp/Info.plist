@@ -45,6 +45,12 @@
 	</dict>
 	<key>NSBluetoothAlwaysUsageDescription</key>
 	<string></string>
+	<key>NSLocalNetworkUsageDescription</key>
+	<string>$(PRODUCT_NAME) needs to discover devices on your local network.</string>
+	<key>NSBonjourServices</key>
+	<array>
+		<string>_https._tcp</string>
+	</array>
 	<key>NSFaceIDUsageDescription</key>
 	<string>$(PRODUCT_NAME) Authentication with TouchId or FaceID</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
