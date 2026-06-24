@@ -2,12 +2,72 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Attach to the React Native iOS - Experimental",
+            "name": "Debug iOS",
+            "cwd": "${workspaceFolder}",
+            "type": "reactnativedirect",
+            "request": "launch",
+            "platform": "ios",
+            "sourceMaps": true,
+            "sourceMapPathOverrides": {
+                "metro://ProjectRoot/*": "${workspaceFolder}/*",
+                "metro://[projectDir]/*": "${workspaceFolder}/*",
+                "/[metro-project]/*": "${workspaceFolder}/*",
+                "[metro-project]/*": "${workspaceFolder}/*",
+                "/*": "${workspaceFolder}/*"
+            }
+        },
+        {
+            "name": "Debug Android",
+            "cwd": "${workspaceFolder}",
+            "type": "reactnativedirect",
+            "request": "launch",
+            "platform": "android",
+            "sourceMaps": true,
+            "sourceMapPathOverrides": {
+                "metro://ProjectRoot/*": "${workspaceFolder}/*",
+                "metro://[projectDir]/*": "${workspaceFolder}/*",
+                "/[metro-project]/*": "${workspaceFolder}/*",
+                "[metro-project]/*": "${workspaceFolder}/*",
+                "/*": "${workspaceFolder}/*"
+            },
+            "env": {
+                "PATH": "/Users/nya/.nvm/versions/node/v20.20.2/bin:/usr/local/bin:/usr/bin:/bin:/Users/nya/Library/Android/sdk/platform-tools",
+                "ANDROID_HOME": "/Users/nya/Library/Android/sdk",
+                "ANDROID_SDK_ROOT": "/Users/nya/Library/Android/sdk",
+                "JAVA_HOME": "/Library/Java/JavaVirtualMachines/jdk-17.0.1.jdk/Contents/Home"
+            }
+        },
+        {
+            "name": "Attach iOS (app déjà lancée)",
             "cwd": "${workspaceFolder}",
             "type": "reactnativedirect",
             "request": "attach",
             "platform": "ios",
-            "port": 9221
+            "port": 8081,
+            "sourceMaps": true,
+            "sourceMapPathOverrides": {
+                "metro://ProjectRoot/*": "${workspaceFolder}/*",
+                "metro://[projectDir]/*": "${workspaceFolder}/*",
+                "/[metro-project]/*": "${workspaceFolder}/*",
+                "[metro-project]/*": "${workspaceFolder}/*",
+                "/*": "${workspaceFolder}/*"
+            }
+        },
+        {
+            "name": "Attach Android (app déjà lancée)",
+            "cwd": "${workspaceFolder}",
+            "type": "reactnativedirect",
+            "request": "attach",
+            "platform": "android",
+            "port": 8081,
+            "sourceMaps": true,
+            "sourceMapPathOverrides": {
+                "metro://ProjectRoot/*": "${workspaceFolder}/*",
+                "metro://[projectDir]/*": "${workspaceFolder}/*",
+                "/[metro-project]/*": "${workspaceFolder}/*",
+                "[metro-project]/*": "${workspaceFolder}/*",
+                "/*": "${workspaceFolder}/*"
+            }
         }
     ]
 }

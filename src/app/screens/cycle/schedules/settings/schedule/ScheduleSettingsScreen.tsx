@@ -1,107 +1,161 @@
-import React, { useEffect, useRef } from "react";
-import { NativeBaseProvider, VStack, Box, FormControl } from "native-base";
-import { connect } from 'react-redux';
-import { navigationHeader } from "../../../../../components/common/navigationHeaders";
-import { DeleteItemMenu, MenuAccordion } from "../../../../../components/common/cycleMenu";
-import ReactNativeHapticFeedback from "react-native-haptic-feedback";
-import { faBolt, faGear } from "@fortawesome/free-solid-svg-icons";
-import { Alert } from "react-native";
-import { hapticOptions } from "../../../../../data/cycleTypes";
-import { loadSchedule, saveSchedule } from "../../../../../../module/process/infrasctructure/store/actions/schedule";
+import React, {useEffect, useRef} from 'react';
+import {StyleSheet, View} from 'react-native';
+import {connect} from 'react-redux';
+import {navigationHeader} from '../../../../../components/common/navigationHeaders';
+import {
+	DeleteItemMenu,
+	MenuAccordion
+} from '../../../../../components/common/cycleMenu';
+import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
+import {faBolt, faGear} from '@fortawesome/free-solid-svg-icons';
+import {hapticOptions} from '../../../../../data/cycleTypes';
+import {
+	loadSchedule,
+	saveSchedule,
+	updateSchedule
+} from '../../../../../../module/process/infrasctructure/store/actions/schedule';
+import {saveCycle} from '../../../../../../module/process/infrasctructure/store/actions/cycle';
 
+const serializeSchedule = (schedule: any) => {
+	if (!schedule?.cron?.date || !(schedule.cron.date instanceof Date))
+		return schedule;
+	return {
+		...schedule,
+		cron: {...schedule.cron, date: schedule.cron.date.getTime()}
+	};
+};
 
 export function ScheduleSettingsScreen(props: any) {
+	const isModified = useRef(!props.route.params.item?.id);
+	isModified.current = props.schedule?.isModified;
 
-    const isModified = useRef(!props.route.params.schedule?.id);
+	const scheduleRef = useRef(props.schedule);
+	scheduleRef.current = props.schedule;
 
-    const checkChanges = (e: any) => {
-        if (!isModified.current) {
-            return;
-        }
-        const action = true; ////e.data.action.type !== 'POP_TO_TOP';
-        e.preventDefault();
-        Alert.alert(
-            'Discard changes?',
-            'You have unsaved changes. Are you sure to discard them and leave the screen?',
-            [
-                { text: "save", style: 'cancel', onPress: () => { saveSchedule(props.schedule, true, true); } },
-                { text: 'Discard', style: 'destructive', onPress: () => props.navigation.dispatch(e.data.action) },
-            ]
-        );
-    }
+	const schedulesRef = useRef(props.schedules);
+	schedulesRef.current = props.schedules;
 
+	const checkChanges = (e: any) => {
+		if (!isModified.current && !scheduleRef.current?.isModified) return;
+		e.preventDefault();
+		props.saveSchedule(scheduleRef.current, true, () => {
+			() => console.log('Schedule saved successfully!'); // Callback after saving the schedule
+			props.navigation.dispatch(e.data.action);
+			// props.saveCycle(
+			// 	{
+			// 		...props.route.params.cycle,
+			// 		schedules: schedulesRef.current ?? []
+			// 	},
+			// 	true,
+			// 	() => props.navigation.dispatch(e.data.action)
+			// );
+		});
+	};
 
-    const _deleteItem = () => {
-        const data = { ...props.schedule, id: `deleted_${props.schedule.id}` };
-        saveSchedule(data, false, true);
-    }
+	const _deleteItem = () => {
+		scheduleRef.current = {
+			...scheduleRef.current,
+			id: `deleted_${props.schedule.id}`,
+			isModified: true
+		};
+		props.navigation.goBack();
+	};
 
+	useEffect(() => {
+		props.loadSchedule(
+			props.route.params.schedule?.id,
+			props.route.params.schedule?.cycleId || props.route.params.cycle.id
+		);
 
-    const saveSchedule = (schedule: any, haptic: boolean, goBack: boolean) => {
-        if (haptic) {
-            ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
-        }
-        isModified.current = false;
-        props.saveSchedule(schedule);
-        if (goBack) {
-            props.navigation.goBack();
-        }
-    }
+		props.navigation.setOptions({
+			headerLeft: () =>
+				navigationHeader(
+					() => {
+						ReactNativeHapticFeedback.trigger(
+							'impactMedium',
+							hapticOptions
+						);
+						props.navigation.goBack();
+					},
+					'arrow-alt-circle-left',
+					false
+				)
+		});
 
-    useEffect(() => {
-        props.loadSchedule(props.route.params.schedule?.id, props.route.params.schedule?.cycleId || props.route.params.cycle.id )
-    }, []);
+		const unsubscribe = props.navigation.addListener(
+			'beforeRemove',
+			checkChanges
+		);
+		return unsubscribe;
+	}, []);
 
-    useEffect(() => {
-        props.navigation.setOptions({
-            headerLeft: () => navigationHeader(() => {
-                ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
-                props.navigation.goBack()
-            }, 'arrow-alt-circle-left', false)
-        });
-        const listenerUnsubscribe = props.navigation.addListener('beforeRemove', (e: any) => { checkChanges(e) });
-        isModified.current = props.schedule?.isModified;
-        console.log("test ", props.schedule);
-        return () => listenerUnsubscribe();
-    }, [props.schedule]);
-
-
-
-    return (
-        <NativeBaseProvider>
-            <VStack alignSelf="stretch" shadow={3}>
-                <Box alignSelf="stretch" bg='white' mt={2} mx={5} rounded="xl" >
-                    <Box>
-                        <FormControl>
-                            <MenuAccordion key={21} name={'General'} icon={faGear}
-                                onPress={() => {
-                                    ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
-                                    props.navigation.navigate('ScheduleGeneralSettingsSection', {
-                                        scheduleData: props.schedule
-                                    })
-                                }} />
-                            <MenuAccordion key={41} name={'Execution'} icon={faBolt}
-                                onPress={() => {
-                                    ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
-                                    props.navigation.navigate('ScheduleExecutionSettingsSection', {
-                                        scheduleData: props.schedule
-                                    })
-                                }} />
-                            <DeleteItemMenu key={61} OnConfirm={() => { _deleteItem(); }} />
-                        </FormControl>
-                    </Box>
-                </Box>
-            </VStack>
-        </NativeBaseProvider>
-    );
-
+	return (
+		<View style={styles.container}>
+			<View style={styles.card}>
+				<MenuAccordion
+					key={21}
+					name={'General'}
+					icon={faGear}
+					onPress={() =>
+						props.navigation.navigate(
+							'ScheduleGeneralSettingsSection',
+							{
+								scheduleData: serializeSchedule(props.schedule)
+							}
+						)
+					}
+				/>
+				<MenuAccordion
+					key={41}
+					name={'Execution'}
+					icon={faBolt}
+					onPress={() =>
+						props.navigation.navigate(
+							'ScheduleExecutionSettingsSection',
+							{
+								scheduleData: serializeSchedule(props.schedule)
+							}
+						)
+					}
+				/>
+				<DeleteItemMenu key={61} OnConfirm={_deleteItem} />
+			</View>
+		</View>
+	);
 }
 
+const COLORS = {
+	shadow: '#000',
+	cardBackground: 'white'
+};
+
+const styles = StyleSheet.create({
+	container: {
+		alignSelf: 'stretch'
+	},
+	card: {
+		alignSelf: 'stretch',
+		backgroundColor: COLORS.cardBackground,
+		marginTop: 8,
+		marginHorizontal: 20,
+		borderRadius: 12,
+		elevation: 3,
+		shadowColor: COLORS.shadow,
+		shadowOffset: {width: 0, height: 1},
+		shadowOpacity: 0.22,
+		shadowRadius: 2.22
+	}
+});
+
 const mapStateToProps = (state: any) => ({
-    schedule: state.cycle_schedule.schedule
+	schedule: state.cycle_schedule.schedule,
+	schedules: state.cycle_schedule.schedules,
+	cycle: state.root_cycle.cycle
 });
 
 export default connect(mapStateToProps, {
-    saveSchedule,
-    loadSchedule
+	saveSchedule,
+	loadSchedule,
+	saveCycle,
+	updateSchedule
 })(ScheduleSettingsScreen);

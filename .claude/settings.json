@@ -1,0 +1,52 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(git stash:*)",
+      "Bash(pod deintegrate:*)",
+      "Bash(npx react-native:*)",
+      "Bash(yarn add:*)",
+      "Read(//Users/nya-perso/.nvm/versions/**)",
+      "Read(//Users/nya/.nvm/versions/node/v20.12.0/bin/**)",
+      "Bash(ls /Users/nya-perso/cleveremote/cleverApp/ios/.xcode.env*)",
+      "Bash(/Users/nya/.nvm/versions/node/v20.12.0/bin/node node_modules/.bin/react-native bundle --entry-file index.js --platform ios --dev false --bundle-output /tmp/test_bundle.js --assets-dest /tmp/test_assets)",
+      "Bash(mkdir -p /tmp/test_assets)",
+      "Bash(/Users/nya/.nvm/versions/node/v20.12.0/bin/node node_modules/.bin/react-native bundle --entry-file index.js --platform ios --dev true --bundle-output /tmp/test_bundle_dev.js --assets-dest /tmp/test_assets)",
+      "Bash(xcodebuild -workspace cleverApp.xcworkspace -scheme cleverApp -configuration Debug -destination 'generic/platform=iOS Simulator' build)",
+      "Read(//Users/nya/Library/Developer/Xcode/DerivedData/cleverApp-gfbkyyztpeonnddfkjftehjjxboc/Logs/Build/**)",
+      "Bash(cp /Users/nya/Library/Developer/Xcode/DerivedData/cleverApp-gfbkyyztpeonnddfkjftehjjxboc/Logs/Build/FDB0D97D-AF2A-42B7-B671-57B162065B8A.xcactivitylog /tmp/build.log.gz)",
+      "Bash(gunzip -c /tmp/build.log.gz)",
+      "Bash(python3 -c \"import sys,json; p=json.load\\(sys.stdin\\); print\\(json.dumps\\(p.get\\(''''exports'''', p.get\\(''''main'''',''''''''\\)\\), indent=2\\)\\)\")",
+      "Bash(python3 -c \"import sys,json; p=json.load\\(sys.stdin\\); print\\(''''version:'''', p.get\\(''''version''''\\)\\); print\\(''''exports:'''', json.dumps\\(p.get\\(''''exports'''', {}\\), indent=2\\)[:500]\\)\")",
+      "Bash(xcodebuild -workspace cleverApp.xcworkspace -scheme cleverApp -configuration Debug -destination 'generic/platform=iOS' build)",
+      "Bash(/Users/nya/.nvm/versions/node/v20.12.0/bin/node node_modules/.bin/react-native bundle --entry-file index.js --platform ios --dev true --bundle-output /tmp/test_bundle_dev2.js --assets-dest /tmp/test_assets2 --reset-cache)",
+      "Bash(ls /Users/nya-perso/cleveremote/cleverApp/node_modules/react-native/React/Fabric/RCTThirdPartyFabricComponentsProvider.*)",
+      "Bash(grep -r RCTThirdPartyFabricComponentsProvider /Users/nya-perso/cleveremote/cleverApp/ios/ --include=*.pbxproj)",
+      "Bash(python3 -:*)",
+      "Bash(xxd)",
+      "Bash(python3:*)",
+      "Bash(npm uninstall:*)",
+      "Bash(./gradlew clean:*)",
+      "Bash(npx tsc:*)",
+      "Bash(grep -v \"^$\")",
+      "Bash(grep -r \"from ''native-base''\" src/ --include=\"*.tsx\" --include=\"*.ts\" -l)",
+      "Bash(LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 cd /Users/nya-perso/cleveremote/cleverApp/ios)",
+      "Bash(gem list:*)",
+      "Bash(pod --version)",
+      "Bash(grep -r beforeRemove /Users/nya-perso/cleveremote/cleverApp/node_modules/@react-navigation/native/src --include=*.ts -l)",
+      "Bash(grep -r beforeRemove /Users/nya-perso/cleveremote/cleverApp/node_modules/@react-navigation/core/src --include=*.ts -l)",
+      "Bash(grep -r EventArg /Users/nya-perso/cleveremote/cleverApp/node_modules/@react-navigation/native/lib/typescript --include=*.d.ts -l)",
+      "Bash(npx prettier:*)",
+      "Bash(git -C /Users/nya-perso/cleveremote/cleverApp checkout -b feature-mig-0.74)",
+      "Bash(npm view:*)",
+      "WebFetch(domain:raw.githubusercontent.com)",
+      "WebFetch(domain:react-native-community.github.io)",
+      "WebFetch(domain:github.com)",
+      "Bash(curl -s https://raw.githubusercontent.com/react-native-community/rn-diff-purge/diffs/diffs/0.73.6..0.74.7.diff)",
+      "Bash(git -C /Users/nya-perso/cleveremote/cleverApp checkout -b feature-mig-0.75)"
+    ],
+    "additionalDirectories": [
+      "/Users/nya/Library/Developer/Xcode/DerivedData/cleverApp-gfbkyyztpeonnddfkjftehjjxboc",
+      "/Users/nya-perso/cleveremote/cleverApp/src/app/components/common"
+    ]
+  }
+}

@@ -1,2 +1,3 @@
-export const WEBSITE_URL = 'http://192.168.1.11:5001';
-export const WEBSITE_URL_LOCAL = 'http://192.168.1.15:5001';
+export const DEV_MODE = true;
+export const WEBSITE_URL = 'https://api.cleversystech.com';
+export const WEBSITE_URL_LOCAL = 'https://pi-dev-1.local';

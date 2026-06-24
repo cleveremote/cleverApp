@@ -1,28 +1,33 @@
-import React, { useState } from 'react';
-import { Flex, IconButton, Box, View, Heading, HStack, Stagger, useDisclose, Text } from 'native-base';
-import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
-import Icon from 'react-native-vector-icons/FontAwesome5';
-import { OrientationType } from 'react-native-orientation-locker';
-import { hapticOptions, navigationCycleType } from '../../data/cycleTypes';
-import { ModalOverrideDuration } from '../common/modalOverrideDuration';
-import { red } from 'react-native-reanimated/lib/typescript/reanimated2/Colors';
-import { connect } from 'react-redux';
-
+import React from 'react';
+import {Text} from 'react-native';
+import {connect} from 'react-redux';
 
 export function SensorValue(props: any) {
-    const fontColor = props.cycleData.style.fontColor;
-    const getValue = () => {
-        return (props.values || []).find((x: any) => x.id === props.cycleData.id);
-    }
-    return (
-        <Box style={{ justifyContent: 'center', alignItems: 'flex-end' }} rounded="xl" shadow={6} height='40px' width={'60px'} >
-           <Text style={{ fontWeight: 'bold' }} alignSelf={'center'} color={fontColor}>{getValue()?.value}{props.cycleData.unit}</Text>
-        </Box>
-    );
+	const fontColor = props.cycleData.style.fontColor;
+	const getValue = () => {
+		return (props.values || []).find(
+			(x: any) =>
+				x.id === props.cycleData.id || x.deviceId === props.cycleData.id
+		);
+	};
+	return (
+		<Text
+			style={{
+				fontWeight: 'bold',
+				fontSize: 20,
+				color: fontColor,
+				textShadowColor: '#737171',
+				textShadowOffset: {width: 1, height: 0},
+				textShadowRadius: 1
+			}}>
+			{getValue()?.value || '_  '}
+			{props.cycleData.unit}
+		</Text>
+	);
 }
 
 const mapStateToProps = (state: any) => ({
-    values: state.root_sensor.values
+	values: state.root_sensor.values
 });
 
 export default connect(mapStateToProps, null)(SensorValue);

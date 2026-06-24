@@ -1,89 +1,135 @@
-
 import {
-    CYCLES_LOAD,
-    CYCLE_UPDATE,
-    CYCLE_LOAD,
-    CYCLE_SAVE,
-    CYCLE_STATUS,
-    CYCLE_EXECUTE
+	CYCLES_LOAD,
+	CYCLE_UPDATE,
+	CYCLE_LOAD,
+	CYCLE_SAVE,
+	CYCLE_STATUS,
+	CYCLE_EXECUTE,
+	DATA_LOAD
 } from './types';
 
-import { ThunkAction } from 'redux-thunk';
-import { AnyAction } from 'redux';
-import { RootState } from '../store';
-import { authenticationService } from '../../../../authentication/domain/services/auth.service';
+import {ThunkAction} from 'redux-thunk';
+import {AnyAction} from 'redux';
+import {RootState} from '../store';
+import {socketService} from '../../../../../services/socket';
 
+export const listenerEvents =
+	(): ThunkAction<void, RootState, unknown, AnyAction> => async dispatch => {
+		socketService.on('UPDATE_CONFIGURATION', message => {
+			dispatch({
+				type: CYCLE_SAVE,
+				payload: JSON.parse(message).cycle
+			});
+		});
+	};
 
-export const listenerEvents = (): ThunkAction<void, RootState, unknown, AnyAction> => async dispatch => {
-    authenticationService.socket?.on('UPDATE_CONFIGURATION', message => {
-       dispatch({
-            type: CYCLE_SAVE,
-            payload: JSON.parse(message).cycle
-        });
-    });
+export const updateCycle =
+	(
+		cycle: any,
+		onSuccess?: () => void
+	): ThunkAction<void, RootState, unknown, AnyAction> =>
+	async dispatch => {
+		await dispatch({
+			type: CYCLE_UPDATE,
+			payload: cycle
+		});
+		onSuccess?.();
+	};
 
-    // authenticationService.socket?.on('front/synchronize/status', message => {
-    //     dispatch({
-    //         type: CYCLE_STATUS,
-    //         payload: JSON.parse(message)
-    //     });
-    // });
-};
+export const loadValues =
+	(
+		type: string,
+		query?: any
+	): ThunkAction<void, RootState, unknown, AnyAction> =>
+	async dispatch => {
+		//dispatch({ type: CYCLE_EXECUTE, payload: true });
+		socketService.emit(
+			'front/box/fetch/status',
+			{type, query},
+			(response: any) => {
+				//dispatch({ type: CYCLE_EXECUTE, payload: false });
+				if (type !== 'DATA') {
+					dispatch({
+						type: CYCLE_STATUS,
+						payload: JSON.parse(response.config)
+					});
+				} else {
+					dispatch({
+						type: DATA_LOAD,
+						payload: JSON.parse(response.config)
+					});
+				}
+			}
+		);
+	};
 
+export const loadCycles =
+	(): ThunkAction<void, RootState, unknown, AnyAction> => async dispatch => {
+		socketService.emit(
+			'front/box/fetch/configuration',
+			{},
+			(response: any) => {
+				dispatch({
+					type: CYCLES_LOAD,
+					payload: JSON.parse(response.config).cycles
+				});
+			}
+		);
+	};
 
-export const updateCycle = (cycle: any): ThunkAction<void, RootState, unknown, AnyAction> => dispatch => {
-    dispatch({
-        type: CYCLE_UPDATE,
-        payload: cycle,
-    });
-}
+export const loadCycle =
+	(cycleId: string): ThunkAction<void, RootState, unknown, AnyAction> =>
+	dispatch => {
+		dispatch({
+			type: CYCLE_LOAD,
+			payload: cycleId
+		});
+	};
 
-export const loadCycles = (): ThunkAction<void, RootState, unknown, AnyAction> => async dispatch => {
-    authenticationService.socket?.emit('front/box/fetch/configuration', {}, (response: any) => {
-        dispatch({
-            type: CYCLES_LOAD,
-            payload: JSON.parse(response.config).cycles,
-        });
-    });
-};
+export const saveCycle =
+	(
+		data: any,
+		soft = false,
+		onSuccess?: () => void
+	): ThunkAction<void, RootState, unknown, AnyAction> =>
+	async dispatch => {
+		if (soft) {
+			await dispatch({
+				type: CYCLE_SAVE,
+				payload: data
+			});
+			onSuccess?.();
+		} else {
+			socketService.emit(
+				'front/box/sync/cycle',
+				data,
+				async (response: any) => {
+					await dispatch({
+						type: CYCLE_SAVE,
+						payload: JSON.parse(response.config).cycle
+					});
+					onSuccess?.();
+				}
+			);
+		}
+	};
 
-export const loadCycle = (cycleId: string): ThunkAction<void, RootState, unknown, AnyAction> => dispatch => {
-    dispatch({
-        type: CYCLE_LOAD,
-        payload: cycleId
-    });
-}
+export const executeCycle =
+	(data: any): ThunkAction<void, RootState, unknown, AnyAction> =>
+	async dispatch => {
+		dispatch({type: CYCLE_EXECUTE, payload: true});
+		return new Promise((resolve, reject) => {
+			if (!socketService.connected) {
+				reject(new Error('No server connexion!'));
+			}
 
-export const saveCycle = (data: any, soft = false): ThunkAction<void, RootState, unknown, AnyAction> => async dispatch => {
-    if (soft) {
-        dispatch({
-            type: CYCLE_SAVE,
-            payload: data,
-        });
-    } else {
-        authenticationService.socket?.emit('front/box/sync/cycle', data, (response: any) => {
-            dispatch({
-                type: CYCLE_SAVE,
-                payload: JSON.parse(response.config).cycle,
-            });
-        });
-    }
-};
-
-export const executeCycle = (data: any): ThunkAction<void, RootState, unknown, AnyAction> => async dispatch => {
-    return new Promise((resolve, reject) => {
-        if (!authenticationService.socket?.connected) {
-            reject(new Error("No server connexion!"));
-        }
-
-        authenticationService.socket?.emit('front/box/execute/process', data, (response: any) => {
-            // if (response) {
-            //     dispatch({
-            //         type: CYCLE_EXECUTE,
-            //         payload: response.config,
-            //     });
-            // }
-            resolve(response);
-        });
-    })
-};
+			socketService.emit(
+				'front/box/execute/process',
+				data,
+				(response: any) => {
+					dispatch({type: CYCLE_EXECUTE, payload: false});
+					resolve(response);
+				}
+			);
+		});
+	};

@@ -1,93 +1,142 @@
-import React, { useEffect, useRef } from "react";
-import { NativeBaseProvider, VStack, Box, FormControl } from "native-base";
-import { connect } from 'react-redux';
-import { navigationHeader } from "../../../../../components/common/navigationHeaders";
-import { DeleteItemMenu, MenuAccordion } from "../../../../../components/common/cycleMenu";
-import ReactNativeHapticFeedback from "react-native-haptic-feedback";
-import { faBolt, faGear } from "@fortawesome/free-solid-svg-icons";
-import { hapticOptions } from "../../../../../data/cycleTypes";
-import { loadCondition, saveCondition } from "../../../../../../module/process/infrasctructure/store/actions/condition";
-
-
+import React, {useEffect, useRef} from 'react';
+import {StyleSheet, View} from 'react-native';
+import {connect} from 'react-redux';
+import {navigationHeader} from '../../../../../components/common/navigationHeaders';
+import {
+	DeleteItemMenu,
+	MenuAccordion
+} from '../../../../../components/common/cycleMenu';
+import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
+import {faBolt, faGear} from '@fortawesome/free-solid-svg-icons';
+import {hapticOptions} from '../../../../../data/cycleTypes';
+import {
+	loadCondition,
+	saveCondition
+} from '../../../../../../module/process/infrasctructure/store/actions/condition';
+import {saveTrigger} from '../../../../../../module/process/infrasctructure/store/actions/trigger';
 
 function TriggerConditionSettingsScreen(props: any) {
-    const isModified = useRef(!props.route.params.condition?.id);
+	const isModified = useRef(!props.route.params.condition?.id);
+	isModified.current = props.condition?.isModified;
 
-    const checkChanges = (e: any) => {
-        if (!isModified.current) {
-            return;
-        }
-        console.log(props.condition);
-        saveCondition(props.condition, true, true);
-    }
+	const conditionRef = useRef(props.condition);
+	conditionRef.current = props.condition;
 
-    const _deleteItem = () => {
-        const data = { ...props.condition, id: `deleted_${props.condition.id}` };
-        saveCondition(data, false, true);
-    }
+	const conditionsRef = useRef(props.conditions);
+	conditionsRef.current = props.conditions;
 
-    const saveCondition = (condition: any, haptic: boolean, goBack: boolean) => {
-        if (haptic) {
-            ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
-        }
-        isModified.current = false;
-        props.saveCondition(condition);
-        if (goBack) {
-            props.navigation.goBack();
-        }
-    }
+	const checkChanges = (e: any) => {
+		if (!isModified.current && !conditionRef.current?.isModified) return;
+		e.preventDefault();
+		props.saveCondition(conditionRef.current, true, () => {
+			props.navigation.dispatch(e.data.action);
+		});
+	};
 
-    useEffect(() => {
-        console.log("props.route.params.condition?.triggerId || props.route.params.trigger.id",props.route.params.condition?.triggerId || props.route.params.trigger.id)
-        props.loadCondition(props.route.params.condition?.id, props.route.params.condition?.triggerId || props.route.params.trigger.id)
-    }, []);
+	const _deleteItem = () => {
+		conditionRef.current = {
+			...conditionRef.current,
+			id: `deleted_${props.condition.id}`,
+			isModified: true
+		};
+		props.navigation.goBack();
+	};
 
-    useEffect(() => {
-        props.navigation.setOptions({
-            headerLeft: () => navigationHeader(() => {
-                ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
-                props.navigation.goBack()
-            }, 'arrow-alt-circle-left', false)
-        });
-        const listenerUnsubscribe = props.navigation.addListener('beforeRemove', (e: any) => { checkChanges(e) });
-        isModified.current = props.condition?.isModified;
-        return () => listenerUnsubscribe();
-    }, [props.condition]);
+	useEffect(() => {
+		props.loadCondition(
+			props.route.params.condition?.id,
+			props.route.params.condition?.triggerId ||
+				props.route.params.trigger.id
+		);
 
-    return (
-        <NativeBaseProvider>
-            <VStack alignSelf="stretch" shadow={3}>
-                <Box alignSelf="stretch" bg='white' mt={2} mx={5} rounded="xl" >
-                    <Box>
-                        <FormControl>
-                            <MenuAccordion key={21} name={'General'} icon={faGear}
-                                onPress={() => {
-                                    ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
-                                    props.navigation.navigate('TriggerConditionGeneralSettingsSection', {
-                                        conditionData: props.condition
-                                    })
-                                }} />
-                            <MenuAccordion key={41} name={'Execution'} icon={faBolt}
-                                onPress={() => {
-                                    ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
-                                    props.navigation.navigate('TriggerConditionParamSettingsSection', {
-                                        conditionData: props.condition
-                                    })
-                                }} />
-                            <DeleteItemMenu key={61} OnConfirm={() => { _deleteItem(); }} />
-                        </FormControl>
-                    </Box>
-                </Box>
-            </VStack>
-        </NativeBaseProvider>
-    );
+		props.navigation.setOptions({
+			headerLeft: () =>
+				navigationHeader(
+					() => {
+						ReactNativeHapticFeedback.trigger(
+							'impactMedium',
+							hapticOptions
+						);
+						props.navigation.goBack();
+					},
+					'arrow-alt-circle-left',
+					false
+				)
+		});
+
+		const unsubscribe = props.navigation.addListener(
+			'beforeRemove',
+			checkChanges
+		);
+		return unsubscribe;
+	}, []);
+
+	return (
+		<View style={styles.container}>
+			<View style={styles.card}>
+				<MenuAccordion
+					key={21}
+					name={'General'}
+					icon={faGear}
+					onPress={() =>
+						props.navigation.navigate(
+							'TriggerConditionGeneralSettingsSection',
+							{
+								conditionData: props.condition
+							}
+						)
+					}
+				/>
+				<MenuAccordion
+					key={41}
+					name={'Execution'}
+					icon={faBolt}
+					onPress={() =>
+						props.navigation.navigate(
+							'TriggerConditionParamSettingsSection',
+							{
+								conditionData: props.condition
+							}
+						)
+					}
+				/>
+				<DeleteItemMenu key={61} OnConfirm={_deleteItem} />
+			</View>
+		</View>
+	);
 }
 
+const COLORS = {
+	shadow: '#000',
+	cardBackground: 'white'
+};
+
+const styles = StyleSheet.create({
+	container: {
+		alignSelf: 'stretch'
+	},
+	card: {
+		alignSelf: 'stretch',
+		backgroundColor: COLORS.cardBackground,
+		marginTop: 8,
+		marginHorizontal: 20,
+		borderRadius: 12,
+		elevation: 3,
+		shadowColor: COLORS.shadow,
+		shadowOffset: {width: 0, height: 1},
+		shadowOpacity: 0.22,
+		shadowRadius: 2.22
+	}
+});
+
 const mapStateToProps = (state: any) => ({
-    condition: state.trigger_condition.condition
+	condition: state.trigger_condition.condition,
+	conditions: state.trigger_condition.conditions,
+	trigger: state.cycle_trigger.trigger
 });
 
 export default connect(mapStateToProps, {
-    saveCondition,
-    loadCondition
+	saveCondition,
+	loadCondition,
+	saveTrigger
 })(TriggerConditionSettingsScreen);

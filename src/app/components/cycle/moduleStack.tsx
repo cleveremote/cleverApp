@@ -1,26 +1,55 @@
 import React from 'react';
-import { Box, Flex, IconButton, Progress, Text } from "native-base";
+import {TouchableOpacity, View} from 'react-native';
+import {Text} from 'react-native';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { IconDefinition } from '@fortawesome/free-solid-svg-icons';
-import { styles } from '../../styles/cycleStyles';
-import { hapticOptions } from '../../data/cycleTypes';
+import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
+import {IconDefinition} from '@fortawesome/free-solid-svg-icons';
+import {styles} from '../../styles/cycleStyles';
+import {hapticOptions} from '../../data/cycleTypes';
 
-
-export function elementStack(item: any, actionElement: Function, label: string, icon: { name: IconDefinition, color: string }) {
-    return (
-        <Box alignSelf="stretch" bg={'white'} rounded="xl" shadow={3} m={1} key={item.key}>
-            <Flex direction="row">
-                <Text flex={1} alignSelf={'flex-start'} style={styles.textSequence} my={2} ml={2}>{label}</Text>
-                <Box alignSelf={'flex-end'} my={2} mr={2}>
-                    <IconButton _pressed={{ _icon: { size:35} }} variant="unstyled" size={21}
-                        onPress={() => {
-                            ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
-                            actionElement(item);
-                        }}
-                        icon={<FontAwesomeIcon icon={icon.name} size={20} style={styles.textSequence} color={icon.color} />}
-                    />
-                </Box>
-            </Flex>
-        </Box>)
+export function elementStack(
+	item: any,
+	actionElement: Function,
+	label: string,
+	icon: {name: IconDefinition; color: string}
+) {
+	return (
+		<View
+			style={{
+				alignSelf: 'stretch',
+				backgroundColor: 'white',
+				borderRadius: 12,
+				margin: 4,
+				elevation: 3,
+				shadowColor: '#000',
+				shadowOffset: {width: 0, height: 1},
+				shadowOpacity: 0.22,
+				shadowRadius: 2.22
+			}}
+			key={item.id}>
+			<View style={{flexDirection: 'row'}}>
+				<Text
+					style={[styles.textSequence, {flex: 1, marginVertical: 8, marginLeft: 8}]}>
+					{label}
+				</Text>
+				<View style={{alignSelf: 'flex-end', marginVertical: 8, marginRight: 8}}>
+					<TouchableOpacity
+						onPress={() => {
+							ReactNativeHapticFeedback.trigger(
+								'impactMedium',
+								hapticOptions
+							);
+							actionElement(item);
+						}}>
+						<FontAwesomeIcon
+							icon={icon.name}
+							size={20}
+							style={styles.textSequence}
+							color={icon.color}
+						/>
+					</TouchableOpacity>
+				</View>
+			</View>
+		</View>
+	);
 }

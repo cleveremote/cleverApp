@@ -24,3 +24,19 @@ Attach to the React Native iOS - Experimental
 export ANDROID_SDK_ROOT=$HOME/Library/Android/sdk
 export PATH=$PATH:$ANDROID_SDK_ROOT/emulator
 export PATH=$PATH:$ANDROID_SDK_ROOT/platform-tools
+
+pour faire fonctionner le debugger depuis vscode 
+sudo ln -sf /Users/nya/.nvm/versions/node/v20.20.2/bin/node /usr/local/bin/node
+sudo ln -sf /Users/nya/.nvm/versions/node/v20.20.2/bin/npm /usr/local/bin/npm
+
+rm -rf node_modules
+rm -rf package-lock.json
+npm install
+
+lsof -ti :8081 | xargs kill -9 2>/dev/null && echo "killed" || echo "nothing on 8081"
+
+cd ios                                                              
+rm -rf Pods
+rm -rf build
+pod install --repo-update
+cd ..

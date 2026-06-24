@@ -1,250 +1,319 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { decode } from "base-64";
-import { jwtDecode } from 'jwt-decode';
-import { EventEmitter } from 'events';
-import { io, Socket } from "socket.io-client";
-import { DefaultEventsMap } from '@socket.io/component-emitter';
-import { WEBSITE_URL, WEBSITE_URL_LOCAL } from "../../../../../config/websocket";
-import { SET_BOX_CONNECTED, SET_CONNECTED, SET_SERVER_CONNECTED } from '../../../process/infrasctructure/store/actions/types';
-import { store } from '../../../process/infrasctructure/store/store';
-
+import {decode} from 'base-64';
+import {jwtDecode} from 'jwt-decode';
+import {EventEmitter} from 'events';
+import {socketService} from '../../../../services/socket';
+import {
+	DEV_MODE,
+	WEBSITE_URL,
+	WEBSITE_URL_LOCAL
+} from '../../../../../config/websocket';
+import {
+	RESET_STORE,
+	SET_BOX_CONNECTED,
+	SET_CONNECTED,
+	SET_SERVER_CONNECTED
+} from '../../../process/infrasctructure/store/actions/types';
+import {store} from '../../../process/infrasctructure/store/store';
+import {
+	mdnsResolver,
+	ResolvedService
+} from '../../../../services/mdns/mdnsResolver';
 class AuthenticationService {
-    public newEvent = new EventEmitter();
-    public socketChangeEvent = new EventEmitter();
-    private timeout: NodeJS.Timeout | undefined;;
-    private timeout2: NodeJS.Timeout | undefined;;
-    public socket: Socket<DefaultEventsMap, DefaultEventsMap> | undefined;
-    private isLocalRouter = true;
-    constructor() {
-        global.atob = decode;
-    }
+	public newEvent = new EventEmitter();
+	public socketChangeEvent = new EventEmitter();
+	private timeout: NodeJS.Timeout | undefined;
+	private lastStatus = false;
+	/**
+	 * Service resolved via mDNS at login time. Cached for the whole session so
+	 * every subsequent socket (re)connect reuses the same host without
+	 * re-scanning. Cleared on signout or on a new login.
+	 */
+	private resolvedLocalService: ResolvedService | null = null;
 
-    public async dispatchExpireTokenEvent(token: string) {
+	constructor() {
+		global.atob = decode;
+	}
 
-        if (this.timeout) {
-            clearTimeout(this.timeout);
-        }
-        const exp = this.getIsTokenExpired(token);
-        if ((exp && exp < Date.now() / 1000) || !exp) {
-            await this.executeRefresh();
-        } else {
-            this.setIsExpired(false);
-            this.timeout = setTimeout(async () => {
-                await this.executeRefresh();
-            }, (exp - (Date.now() / 1000)) * 1000);
-        }
-    }
+	/** Exposes the mDNS service resolved during the current session's login. */
+	public getResolvedLocalService(): ResolvedService | null {
+		return this.resolvedLocalService;
+	}
 
-    public async executeRefresh() {
-        if (this.timeout2) {
-            clearTimeout(this.timeout2);
-        }
-        const rt = await AsyncStorage.getItem('refreshToken');
-        if (!rt) {
-            if (this.socket) {
-                this.socket.disconnect();
-            }
-            this.setIsExpired(true);
-            return;
-        }
+	public async dispatchExpireTokenEvent(token: string) {
+		if (this.timeout) {
+			clearTimeout(this.timeout);
+		}
+		const exp = this.getIsTokenExpired(token);
+		if ((exp && exp < Date.now() / 1000) || !exp) {
+			await this.executeRefresh();
+		} else {
+			this.setIsExpired(false);
+			this.timeout = setTimeout(async () => {
+				await this.executeRefresh();
+			}, (exp - Date.now() / 1000) * 1000);
+		}
+	}
 
-        if (!this.socket) {
-            this.socket = await this.setSocketServer();
-        }
+	public async executeRefresh() {
+		const rt = await AsyncStorage.getItem('refreshToken');
+		if (!rt) {
+			socketService.disconnect();
+			this.setIsExpired(true);
+			return;
+		}
 
-        if (this.socket && !this.socket.connected) {
-            this.socket.connect();
-        }
-        this.timeout2 = setTimeout(async () => {
-            const tok = await AsyncStorage.getItem('accessToken');
-            if (!!this.socket?.connected && tok) {
-                const exp = this.getIsTokenExpired(tok);
-                if ((exp && exp < Date.now() / 1000) || !exp) {
-                    const res = await this.refreshToken();
-                    if (!res.res) {
-                        this.socket.disconnect();
-                        this.setIsExpired(true);
-                    } else {
-                        this.setIsExpired(false);
-                    }
-                }
-            } else {
-                this.setIsExpired(true);
-                this.socket?.disconnect();
-            }
-        }, 500);
-    }
+		if (!socketService.connected) {
+			if (!socketService.getSocket()) {
+				// Socket was fully destroyed (e.g. after signout) — recreate from scratch
+				await this.setSocketServer();
+			} else {
+				// Socket exists but is disconnected (e.g. after pause) — try to reconnect with timeout
+				await new Promise<void>((resolve) => {
+					const timeout = setTimeout(() => {
+						cleanup();
+						this.setStatusServer(false);
+						resolve();
+					}, 8000);
+					const cleanup = () => {
+						clearTimeout(timeout);
+						socketService.off('connect', onConnect);
+						socketService.off('connect_error', onError);
+					};
+					const onConnect = () => { cleanup(); this.setStatusServer(true); resolve(); };
+					const onError = () => { cleanup(); this.setStatusServer(false); resolve(); };
+					socketService.on('connect', onConnect);
+					socketService.on('connect_error', onError);
+					socketService.connect();
+				});
 
-    public getIsTokenExpired(token: string) {
-        global.atob = decode;
-        try {
-            const decoded = jwtDecode(token);
-            return decoded.exp;
+				// If still not connected after resume attempt, recreate from scratch
+				if (!socketService.connected) {
+					socketService.disconnect();
+					await this.setSocketServer();
+				}
+			}
+		}
 
-        } catch (error) {
-            return 0;
-        }
-    }
+		const tok = await AsyncStorage.getItem('accessToken');
+		if (socketService.connected && tok) {
+			const exp = this.getIsTokenExpired(tok);
+			if ((exp && exp < Date.now() / 1000) || !exp) {
+				const res = await this.refreshToken();
+				if (!res.res) {
+					socketService.disconnect();
+					this.setIsExpired(true);
+				} else {
+					this.setIsExpired(false);
+				}
+			}
+		} else {
+			this.setIsExpired(true);
+			socketService.disconnect();
+		}
+	}
 
-    public async refreshToken() {
+	public getIsTokenExpired(token: string) {
+		global.atob = decode;
+		try {
+			const decoded = jwtDecode(token);
+			return decoded.exp;
+		} catch (error) {
+			return 0;
+		}
+	}
 
-        const refresh = (socket: Socket<DefaultEventsMap, DefaultEventsMap> | undefined, refreshToken: string): Promise<{ res: boolean, error?: string }> => {
-            return new Promise((resolve, reject) => {
-                socket?.emit('front/box/refreshtoken', refreshToken, async (response: any) => {
-                    if (response.error) {
-                        // @ts-ignore: this.socket  will never be undefinied here
-                        this.socket.disconnect();
-                        resolve({ res: false, error: response.error });
-                    } else {
-                        await this.saveTokens(response);
-                        // @ts-ignore: this.socket  will never be undefinied here
-                        socket.auth.token = response.accessToken;
-                        socket?.disconnect();
-                        socket?.connect();
-                        //this.socket = await this.setSocketServer(true, response.accessToken);
-                        // @ts-ignore: this.socket  will never be undefinied here
-                        this.dispatchExpireTokenEvent(response.accessToken);
-                        resolve({ res: true });
-                    }
-                })
-            });
-        }
-        const refreshToken = await AsyncStorage.getItem('refreshToken') ?? "";
-        return await refresh(this.socket, refreshToken);
+	public async refreshToken() {
+		const refresh = (
+			refreshToken: string
+		): Promise<{res: boolean; error?: string}> => {
+			return new Promise((resolve, _reject) => {
+				socketService.emit(
+					'front/box/refreshtoken',
+					refreshToken,
+					async (response: any) => {
+						if (response.error) {
+							socketService.disconnect();
+							resolve({res: false, error: response.error});
+						} else {
+							await this.saveTokens(response);
+							socketService.updateAuthToken(response.accessToken);
+							socketService.reconnect();
+							this.dispatchExpireTokenEvent(response.accessToken);
+							resolve({res: true});
+						}
+					}
+				);
+			});
+		};
+		const refreshToken = (await AsyncStorage.getItem('refreshToken')) ?? '';
+		return await refresh(refreshToken);
+	}
 
-    }
+	private async saveTokens(tokens: any): Promise<void> {
+		try {
+			await AsyncStorage.setItem('refreshToken', tokens.refreshToken);
+			await AsyncStorage.setItem('accessToken', tokens.accessToken);
+		} catch (error) {
+			console.error('Error storing tokens:', error);
+		}
+	}
 
-    private async saveTokens(tokens: any): Promise<void> {
+	public async signout() {
+		socketService.disconnect();
+		await AsyncStorage.removeItem('refreshToken');
+		await AsyncStorage.removeItem('accessToken');
+		this.resolvedLocalService = null;
+		this.setIsExpired(true);
+	}
 
-        try {
-            await AsyncStorage.setItem('refreshToken', tokens.refreshToken);
-            await AsyncStorage.setItem('accessToken', tokens.accessToken);
-        } catch (error) {
-            console.error('Error storing tokens:', error);
-        }
-    }
+	private parseLocalUrl(url: string): {hostname: string; port: string} {
+		const match = url.match(/^https?:\/\/([^:/]+)(?::(\d+))?/);
+		return {
+			hostname: match?.[1] ?? '',
+			port: match?.[2] ?? '443'
+		};
+	}
 
-    public async signout() {
-        this.socket?.disconnect();
-        await AsyncStorage.removeItem('refreshToken');
-        await AsyncStorage.removeItem('accessToken');
-        this.setIsExpired(true);
-    }
+	/**
+	 * Scan mDNS once for the service matching the given boxId and cache it.
+	 * Subsequent calls within the same session return the cached service
+	 * without re-scanning — the host only changes on a new login.
+	 */
+	private async scanAndCacheLocalService(
+		boxId: string
+	): Promise<ResolvedService | undefined> {
+		if (this.resolvedLocalService) {
+			return this.resolvedLocalService;
+		}
 
-    // try first local if ok else distant
-    private async setSocketServer(isLocal: boolean = true, login: string = ""): Promise<Socket> {
-        const server = isLocal ? WEBSITE_URL_LOCAL : WEBSITE_URL;
+		console.log('Resolving local server via mDNS:', boxId);
+		const service = await mdnsResolver.resolveService(boxId);
+		if (!service) {
+			console.log('mDNS resolution failed for', boxId);
+			return undefined;
+		}
+		console.log('Resolved', boxId, '->', service.hostname, service.ip);
+		this.resolvedLocalService = service;
+		return service;
+	}
 
-        if (this.socket) {
-            this.socket.disconnect();
-        }
+	private async resolveLocalServer(boxId: string): Promise<string | undefined> {
+		const service = await this.scanAndCacheLocalService(boxId);
+		if (!service) return undefined;
+		return `https://${service.hostname}.local`;
+	}
 
-        this.socket = io(`${server}`, {
-            forceNew: false,
-            transports: ['polling', 'websocket'],
-            auth: {
-                token: await AsyncStorage.getItem('accessToken') ?? ""
-            },
-            extraHeaders: {
-                boxId: await AsyncStorage.getItem('boxId') ?? login
-            }
-        });
+	// try first local if ok else distant
+	private async setSocketServer(isLocal = true, login = ''): Promise<void> {
+		const boxId = login || (await AsyncStorage.getItem('boxId')) || '';
 
-        const connect = (socket: Socket<DefaultEventsMap, DefaultEventsMap> | undefined): Promise<{ res: boolean, error?: string, retry?: boolean }> => {
-            return new Promise((resolve, reject) => {
-                socket?.on("connect_error", async (error) => {
-                    if (socket?.active && (!login && !isLocal)) {
-                        resolve({ res: false, error: 'timeout', retry: true });
-                    } else {
-                        this.setStatusServer(false);
-                        resolve({ res: false, error: 'timeout' });
-                    }
-                });
-                socket?.on("connect", () => {
-                    this.setStatusServer(true);
-                    resolve({ res: true });
-                });
-            })
-        };
+		let server = WEBSITE_URL;
 
-        const connectionRes = await connect(this.socket);
-        if (!connectionRes.res && connectionRes.retry) {
-            return await this.setSocketServer(!isLocal, login);
-        }
-        return this.socket;
-    }
+		if (isLocal) {
+			server = (await this.resolveLocalServer(boxId)) ?? '';
+		} else {
+			server = WEBSITE_URL;
+		}
 
+		const token = (await AsyncStorage.getItem('accessToken')) ?? '';
+		const extraHeaders = {
+			boxId
+		};
+        console.log('Connecting to server at', server, 'with boxId', boxId, 'and token', token)
+		await socketService.init(server, token, extraHeaders);
 
-    public manageReconnexion() {
-        this.socket?.on("disconnect", async (reason) => {
-            this.setStatusServer(false);
-            if (reason !== "io client disconnect") {
-                this.socket = await this.setSocketServer();
-            }
-        });
-        this.socket?.on("connect", () => {
-            this.setStatusServer(true);
-        });
-    }
+		const connectResult = (): Promise<{res: boolean; error?: string; retry?: boolean}> => {
+			return new Promise((resolve, _reject) => {
+				socketService.on('connect_error', async (_error: any) => {
+					if (socketService.active && !login && !isLocal) {
+						resolve({res: false, error: 'timeout', retry: true});
+					} else if (login && isLocal) {
+						resolve({res: false, error: 'timeout', retry: true});
+					} else {
+						this.setStatusServer(false);
+						resolve({res: false, error: 'timeout'});
+					}
+				});
+				socketService.on('connect', () => {
+					this.setStatusServer(true);
+					resolve({res: true});
+				});
 
-    public async Login(login: string, password: string, isLocal: boolean = true): Promise<{ res: boolean, error?: string }> {
-        this.socket = await this.setSocketServer(true, login);
-        this.manageReconnexion();
-        const sendLogin = (): Promise<{ res: boolean, error?: string }> => {
-            return new Promise((resolve, reject) => {
-                if (!this.socket?.connected) {
-                    resolve({ res: false, error: "No server connexion!" });
-                }
-                this.socket?.emit('front/box/login', { login, password }, async (response: any) => {
-                    if (response.error) {
-                        // @ts-ignore: this.socket  will never be undefinied here
-                        this.socket.disconnect();
-                        resolve({ res: false, error: response.error });
-                    } else {
-                        await this.saveTokens(response);
-                        // @ts-ignore: this.socket  will never be undefinied here
-                        this.socket.auth.token = response.accessToken;
-                        this.socket?.disconnect();
-                        this.socket?.connect();
-                        // @ts-ignore: this.socket  will never be undefinied here
+				socketService.on('disconnect', (reason: unknown) => {
+					this.setStatusServer(false);
+					if (reason !== 'io client disconnect') {
+						this.signout();
+					}
+				});
+			});
+		};
 
-                        this.dispatchExpireTokenEvent(response.accessToken);
-                        resolve({ res: true });
-                    }
-                });
-            })
-        };
-        return await sendLogin();
+		const connectionRes = await connectResult();
+		if (!connectionRes.res && connectionRes.retry) {
+			await this.setSocketServer(!isLocal, login);
+		}
+	}
 
-    }
+	public async Login(
+		login: string,
+		password: string,
+		_isLocal = true
+	): Promise<{res: boolean; error?: string}> {
+		this.reset();
+		// Force a fresh mDNS scan for this login session — the cached host
+		// from a previous session must not be reused on a new login.
+		this.resolvedLocalService = null;
+		await this.setSocketServer(true, login);
+		const sendLogin = (): Promise<{res: boolean; error?: string}> => {
+			return new Promise((resolve, _reject) => {
+				if (!socketService.connected) {
+					resolve({res: false, error: 'No server connexion!'});
+				}
+				socketService.emit(
+					'front/box/login',
+					{login, password},
+					async (response: any) => {
+						if (response.error) {
+							socketService.disconnect();
+							resolve({res: false, error: response.error});
+						} else {
+							await this.saveTokens(response);
+							socketService.updateAuthToken(response.accessToken);
+							socketService.reconnect();
+							this.dispatchExpireTokenEvent(response.accessToken);
+							resolve({res: true});
+						}
+					}
+				);
+			});
+		};
+		return await sendLogin();
+	}
 
-    private setStatusBox(value: boolean) {
-        store.dispatch({
-            type: SET_BOX_CONNECTED,
-            payload: value,
-        });
-    }
+	private setStatusServer(value: boolean) {
+		store.dispatch({
+			type: SET_SERVER_CONNECTED,
+			payload: value
+		});
+	}
 
-    private setStatusServer(value: boolean) {
-        store.dispatch({
-            type: SET_SERVER_CONNECTED,
-            payload: value,
-        });
-    }
+	private setStatusLoggin(value: boolean) {
+		store.dispatch({
+			type: SET_CONNECTED,
+			payload: value
+		});
+	}
 
-    private setStatusLoggin(value: boolean) {
-        store.dispatch({
-            type: SET_CONNECTED,
-            payload: value,
-        });
-    }
+	public setIsExpired(value: boolean) {
+		this.setStatusServer(!value);
+		this.setStatusLoggin(!value);
+	}
 
-
-
-    public setIsExpired(value: boolean) {
-        //this.setStatusBox(!value);
-        this.setStatusServer(!value);
-        this.setStatusLoggin(!value);
-    }
+	public reset() {
+		store.dispatch({
+			type: RESET_STORE
+		});
+	}
 }
-export const authenticationService = new AuthenticationService()
+export const authenticationService = new AuthenticationService();

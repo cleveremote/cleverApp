@@ -1,108 +1,257 @@
 import * as React from 'react';
-import { Box, Flex, IconButton, Progress, Text } from "native-base";
+import {Text, TouchableOpacity, View} from 'react-native';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faCog, faForward } from '@fortawesome/free-solid-svg-icons';
-import { styles } from '../../styles/cycleStyles';
-import { hapticOptions } from '../../data/cycleTypes';
-import { AppState } from 'react-native';
+import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
+import {faCog, faForward} from '@fortawesome/free-solid-svg-icons';
+import {styles} from '../../styles/cycleStyles';
+import {hapticOptions} from '../../data/cycleTypes';
+import {connect} from 'react-redux';
+import {loadValues} from '../../../module/process/infrasctructure/store/actions/cycle';
 
+export function SequenceStack({
+	navigation,
+	isActive,
+	item,
+	cycleId,
+	onSkip,
+	stackParent,
+	statusIn
+}: {
+	navigation: any;
+	isActive: boolean;
+	item: any;
+	cycleId: string;
+	onSkip: (sequenceId: string) => void;
+	stackParent?: boolean;
+	statusIn?: any;
+}) {
+	const [progression, setProgression] = React.useState(0);
+	const [miliseconds, setMiliseconds] = React.useState(0);
+	const previousStatus = React.useRef('STOPPED');
 
-export function SequenceStack({ navigation, isActive, item, cycleId, onSkip, stackParent }: { navigation: any; isActive: boolean; item: any, cycleId: string, onSkip: (sequenceId: string) => void, stackParent?: boolean }) {
+	const getTimerParams = (
+		startedAt: string,
+		duration: number,
+		status: string
+	) => {
+		const now = new Date();
+		const startDate = new Date(startedAt);
+		const date1utc = Date.UTC(
+			now.getFullYear(),
+			now.getMonth(),
+			now.getDate(),
+			now.getHours(),
+			now.getMinutes(),
+			now.getSeconds()
+		);
+		const date2utc = Date.UTC(
+			startDate.getFullYear(),
+			startDate.getMonth(),
+			startDate.getDate(),
+			startDate.getHours(),
+			startDate.getMinutes(),
+			startDate.getSeconds()
+		);
+		const diff = Math.max(date1utc - date2utc, 0);
+		const millisenconds = duration - diff;
+		const startIndex = status === 'STOPPED' ? 0 : (diff * 100) / duration;
+		const step = (100 - startIndex) / ((duration - diff) / 1000);
+		return {
+			startIndex,
+			step,
+			millisenconds,
+			progression: startIndex > 100 ? 100 : startIndex
+		};
+	};
 
-    const [progression, setProgression] = React.useState(0);
-    const [miliseconds, setMiliseconds] = React.useState(item.progression?.duration);
-    const timerRef = React.useRef(item.status === 'STOPPED' && progression >= 0);
-    React.useEffect(() => {
-        function getTimerParams(now: Date, startDate: Date, timerDuration: number) {
-            const date1utc = Date.UTC(now.getFullYear(), now.getMonth(), now.getDate(), now.getHours(), now.getMinutes(), now.getSeconds());
-            const date2utc = Date.UTC(startDate.getFullYear(), startDate.getMonth(), startDate.getDate(), startDate.getHours(), startDate.getMinutes(), startDate.getSeconds());
-            //day = 1000 * 60 * 60 * 24;
-            const diff = (date1utc - date2utc);
-            setMiliseconds(item.progression?.duration - diff);
-            const startIndex = (diff * 100) / (timerDuration);
-            const step = ((100 - startIndex) / ((item.progression.duration - diff) / 1000));
-            return { startIndex, step }
-        }
-        if (item?.progression?.startedAt) {
-            setMiliseconds(item.progression?.duration);
-            const timerParams = getTimerParams(new Date(), new Date(item.progression.startedAt), item.progression.duration);
-            setProgression(timerParams.startIndex > 100 ? 100 : timerParams.startIndex);
-            const timerId = setInterval(() => {
-                timerRef.current = item.status === 'STOPPED' && progression >= 0;
-                if (timerRef.current) {
-                    setProgression(progression => progression + (timerParams.step) < 100 ? progression + (timerParams.step) : 100);
-                    setMiliseconds((ms: number) => ms - 1000);
-                    clearInterval(timerId);
-                } else {
-                    setProgression(progression => progression + (timerParams.step) < 100 ? progression + (timerParams.step) : 100);
-                    setMiliseconds((ms: number) => ms - 1000);
-                }
-            }, 1000);
+	const getEndTime = (duration: number) => {
+		if (duration) {
+			let seconds = Math.floor(duration / 1000);
+			const hours = Math.floor(seconds / 3600);
+			seconds = seconds % 3600;
+			const minutes = Math.floor(seconds / 60);
+			seconds = seconds % 60;
+			const t =
+				(hours < 10 ? '0' + hours : hours) +
+				':' +
+				(minutes < 10 ? '0' + minutes : minutes) +
+				':' +
+				(seconds < 10 ? '0' + seconds : seconds);
+			return t;
+		}
+		return '...';
+	};
 
-            return () => {
-                setProgression(progression => progression + (timerParams.step) < 100 ? progression + (timerParams.step) : 100);
-                setMiliseconds((ms: number) => ms - 1000);
-                clearInterval(timerId);
-                setProgression(0);
-                setMiliseconds(0);
-            };
-        }
+	React.useEffect(
+		() => {
+			if (stackParent) {
+				let timerId: any;
+				const statusData = statusIn.find((x: any) => x.id === item.id);
+				const status = statusData?.status;
+				const timerSpeed = 1000;
+				const startedAt = statusData?.startedAt;
+				const duration = statusData?.duration || item.maxDuration;
+				const timerParams = getTimerParams(startedAt, duration, status);
 
-    }, [item.progression?.tsp, item.status]);
+				if (previousStatus.current !== status && status === 'STOPPED') {
+					setProgression(100);
+					setMiliseconds(0);
+				}
+				previousStatus.current = statusData?.status;
 
-    return (
-        <Box alignSelf="stretch" bg={isActive ? '#32404e' : 'white'} rounded="xl" shadow={3} m={1}>
-            <Flex direction="row">
-                <Text flex={1} alignSelf={'flex-start'} style={isActive ? styles.textSequenceDrag : styles.textSequence} my={2} ml={2}>{item.name}</Text>
-                {stackParent ? <Box flex={3} alignSelf={'stretch'} mt={4} mr={2}>
-                    <Progress size="xs" value={progression} rounded="xl" _filledTrack={{ bg: '#32404e' }} />
-                    <Text alignSelf={'center'} style={isActive ? styles.textSequenceDrag : styles.textSequence} >{miliseconds > 0 ? 'expected end in ' + getEndTime(miliseconds) : 'duration ' + getEndTime(item.overridedDuradion || item.maxDuration)}</Text>
-                </Box> : null}
-                {
-                    stackParent && miliseconds > 0 ? <Box alignSelf={'flex-end'} my={2} mr={2} >
-                        {<IconButton _pressed={{ _icon: { size:35} }} variant="unstyled" size={25}
-                            onLongPress={() => {
-                                ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
-                                onSkip(item.id);
-                            }}
-                            icon={<FontAwesomeIcon icon={faForward} size={24} style={isActive ? styles.textSequenceDrag : styles.textSequence} />}
-                        />}
+				if (
+					status !== 'STOPPED' &&
+					startedAt &&
+					statusData?.type === 'SEQUENCE'
+				) {
+					setMiliseconds(timerParams.millisenconds);
+					setProgression(timerParams.progression);
 
-                    </Box> : null
-                }
+					timerId = setInterval(() => {
+						setProgression(progression =>
+							progression + timerParams.step < 100
+								? progression + timerParams.step
+								: 100
+						);
+						setMiliseconds((ms: number) => ms - timerSpeed);
+					}, timerSpeed);
+				}
+				return () => {
+					previousStatus.current = 'STOPPED';
+					clearInterval(timerId);
+					setProgression(0);
+					setMiliseconds(0);
+				};
+			}
+		},
+		stackParent ? [statusIn] : []
+	);
 
-                {!stackParent ? <Box alignSelf={'flex-end'} my={2} mr={2}>
+	return (
+		<View
+			style={{
+				alignSelf: 'stretch',
+				backgroundColor: isActive ? '#32404e' : 'white',
+				borderRadius: 12,
+				elevation: 3,
+				shadowColor: '#000',
+				shadowOffset: {width: 0, height: 1},
+				shadowOpacity: 0.22,
+				shadowRadius: 2.22,
+				margin: 4
+			}}>
+			<View style={{flexDirection: 'row'}}>
+				<Text
+					style={[
+						isActive ? styles.textSequenceDrag : styles.textSequence,
+						{flex: 1, alignSelf: 'flex-start', marginVertical: 8, marginLeft: 8}
+					]}>
+					{item.name}
+				</Text>
 
+				{stackParent ? (
+					<View
+						style={{
+							flex: 3,
+							alignSelf: 'stretch',
+							marginTop: 16,
+							marginRight: 8
+						}}>
+						<View
+							style={{
+								height: 4,
+								backgroundColor: '#e0e0e0',
+								borderRadius: 12,
+								overflow: 'hidden'
+							}}>
+							<View
+								style={{
+									height: '100%',
+									width: `${progression}%`,
+									backgroundColor: '#32404e',
+									borderRadius: 12
+								}}
+							/>
+						</View>
+						<Text
+							style={[
+								isActive
+									? styles.textSequenceDrag
+									: styles.textSequence,
+								{alignSelf: 'center'}
+							]}>
+							{miliseconds > 0
+								? 'expected end in ' + getEndTime(miliseconds)
+								: 'duration ' + getEndTime(item.maxDuration)}
+						</Text>
+					</View>
+				) : null}
 
-                    <IconButton _pressed={{ _icon: { size:35} }} variant="unstyled" size={21}
-                        onPress={() => {
-                            ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
-                            navigation.navigate('SequenceSettingsStack', { screen: "SequenceSettingsMenu", params: { cycleId, item } });
-                        }}
-                        icon={<FontAwesomeIcon icon={faCog} size={20} style={isActive ? styles.textSequenceDrag : styles.textSequence} />}
-                    />
+				{stackParent && miliseconds > 0 ? (
+					<View
+						style={{
+							alignSelf: 'flex-end',
+							marginVertical: 8,
+							marginRight: 8
+						}}>
+						<TouchableOpacity
+							onLongPress={() => {
+								ReactNativeHapticFeedback.trigger(
+									'impactMedium',
+									hapticOptions
+								);
+								onSkip(item.id);
+							}}>
+							<FontAwesomeIcon
+								icon={faForward}
+								size={24}
+								style={
+									isActive
+										? styles.textSequenceDrag
+										: styles.textSequence
+								}
+							/>
+						</TouchableOpacity>
+					</View>
+				) : null}
 
-
-                </Box> : null}
-
-            </Flex>
-
-        </Box>)
+				{!stackParent ? (
+					<View
+						style={{
+							alignSelf: 'flex-end',
+							marginVertical: 8,
+							marginRight: 8
+						}}>
+						<TouchableOpacity
+							onPress={() => {
+								ReactNativeHapticFeedback.trigger(
+									'impactMedium',
+									hapticOptions
+								);
+								navigation.navigate('SequenceSettingsStack', {
+									screen: 'SequenceSettingsMenu',
+									params: {cycleId, item}
+								});
+							}}>
+							<FontAwesomeIcon
+								icon={faCog}
+								size={20}
+								style={
+									isActive
+										? styles.textSequenceDrag
+										: styles.textSequence
+								}
+							/>
+						</TouchableOpacity>
+					</View>
+				) : null}
+			</View>
+		</View>
+	);
 }
 
-function getEndTime(duration: number) {
-    if (duration) {
-        let seconds = duration / 1000;
-        // 2- Extract hours:
-        const hours = parseInt(seconds / 3600); // 3,600 seconds in 1 hour
-        seconds = seconds % 3600; // seconds remaining after extracting hours
-        // 3- Extract minutes:
-        const minutes = parseInt(seconds / 60); // 60 seconds in 1 minute
-        // 4- Keep only seconds not extracted to minutes:
-        seconds = seconds % 60;
-        return ((hours < 10 ? ('0' + hours) : hours) + ":" + (minutes < 10 ? ('0' + minutes) : minutes) + ":" + (seconds < 10 ? ('0' + seconds) : seconds));
-    }
-    return '...';
+const mapStateToProps = (state: any) => ({
+	statusIn: state.root_cycle.status
+});
 
-}
+export default connect(mapStateToProps, {})(SequenceStack);

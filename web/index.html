@@ -1,0 +1,617 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+	<meta charset="UTF-8" />
+	<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+	<title>CleverApp — version simplifiée</title>
+	<style>
+		:root {
+			--bg: #1c2733;
+			--card: #32404e;
+			--card-light: #3d4d5e;
+			--accent: #4caf7d;
+			--accent-off: #d1d1d6;
+			--text: #f2f4f7;
+			--muted: #9aa7b5;
+			--danger: #e05d5d;
+		}
+		* { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+		body {
+			margin: 0;
+			font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+			background: var(--bg);
+			color: var(--text);
+			min-height: 100vh;
+		}
+		.hidden { display: none !important; }
+
+		/* ---------- Login ---------- */
+		.login-wrap {
+			max-width: 380px;
+			margin: 0 auto;
+			padding: 48px 20px;
+			display: flex;
+			flex-direction: column;
+			gap: 16px;
+		}
+		.brand {
+			text-align: center;
+			font-size: 26px;
+			font-weight: 800;
+			letter-spacing: 0.5px;
+			margin-bottom: 8px;
+		}
+		.brand span { color: var(--accent); }
+		label { font-size: 13px; color: var(--muted); margin-bottom: -8px; }
+		input, select {
+			width: 100%;
+			padding: 13px 14px;
+			border-radius: 10px;
+			border: 1px solid #44566a;
+			background: var(--card);
+			color: var(--text);
+			font-size: 16px;
+			outline: none;
+		}
+		input:focus, select:focus { border-color: var(--accent); }
+		button.primary {
+			width: 100%;
+			padding: 14px;
+			border: none;
+			border-radius: 10px;
+			background: var(--accent);
+			color: #06251a;
+			font-size: 16px;
+			font-weight: 700;
+			cursor: pointer;
+			margin-top: 6px;
+		}
+		button.primary:disabled { opacity: 0.6; cursor: default; }
+		.error {
+			background: rgba(224,93,93,0.15);
+			border: 1px solid var(--danger);
+			color: #ffb4b4;
+			padding: 10px 12px;
+			border-radius: 10px;
+			font-size: 14px;
+		}
+		.hint {
+			font-size: 12px; color: var(--muted); line-height: 1.5;
+			margin-top: 8px;
+		}
+		.hint a { color: var(--accent); }
+		.hint.blink { animation: blink 0.8s ease-in-out 3; }
+		@keyframes blink { 50% { color: var(--accent); } }
+		.warn {
+			background: rgba(230,170,60,0.13);
+			border: 1px solid #caa14a;
+			color: #ffd98a;
+			padding: 10px 12px; border-radius: 10px;
+			font-size: 13px; line-height: 1.5;
+		}
+		.warn b { color: #ffe9b8; }
+		#localHostRow { display: flex; flex-direction: column; gap: 16px; }
+
+		/* ---------- Dashboard ---------- */
+		header {
+			position: sticky; top: 0; z-index: 5;
+			display: flex; align-items: center; justify-content: space-between;
+			padding: 14px 16px;
+			background: var(--card);
+			border-bottom: 1px solid #44566a;
+		}
+		header .title { font-weight: 800; font-size: 18px; }
+		header .title span { color: var(--accent); }
+		.status-dot {
+			display: inline-block; width: 9px; height: 9px; border-radius: 50%;
+			background: var(--danger); margin-right: 6px; vertical-align: middle;
+		}
+		.status-dot.on { background: var(--accent); }
+		.logout {
+			background: none; border: 1px solid #55687c; color: #c5d0db;
+			border-radius: 8px; padding: 6px 12px; font-size: 13px; cursor: pointer;
+		}
+		main { max-width: 640px; margin: 0 auto; padding: 16px 12px 48px; }
+		.section-title {
+			font-size: 13px; text-transform: uppercase; letter-spacing: 1px;
+			color: var(--muted); margin: 20px 6px 10px;
+		}
+		.card {
+			display: flex; align-items: center; justify-content: space-between;
+			background: var(--card); border-radius: 12px;
+			padding: 14px 16px; margin: 8px 0;
+			box-shadow: 0 1px 3px rgba(0,0,0,0.3);
+		}
+		.card .name { font-weight: 600; font-size: 16px; }
+		.card .sub { font-size: 12px; color: var(--muted); margin-top: 2px; }
+		.value { font-size: 22px; font-weight: 800; }
+		.value .unit { font-size: 14px; color: var(--muted); margin-left: 2px; }
+		.empty { color: var(--muted); text-align: center; padding: 24px; font-size: 14px; }
+
+		/* iOS-style switch */
+		.switch { position: relative; width: 52px; height: 31px; flex: 0 0 auto; }
+		.switch input { opacity: 0; width: 0; height: 0; }
+		.slider {
+			position: absolute; cursor: pointer; inset: 0;
+			background: var(--accent-off); border-radius: 31px; transition: 0.25s;
+		}
+		.slider:before {
+			content: ""; position: absolute; height: 27px; width: 27px;
+			left: 2px; top: 2px; background: #fff; border-radius: 50%;
+			transition: 0.25s; box-shadow: 0 1px 3px rgba(0,0,0,0.4);
+		}
+		.switch input:checked + .slider { background: var(--accent); }
+		.switch input:checked + .slider:before { transform: translateX(21px); }
+		.switch.pending .slider { opacity: 0.5; }
+
+		#debugBar {
+			font-family: ui-monospace, Menlo, monospace; font-size: 11px;
+			color: #8fa0b0; background: #283442; padding: 6px 12px;
+			border-bottom: 1px solid #44566a; white-space: pre-wrap; word-break: break-word;
+		}
+		.toast {
+			position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+			background: var(--card-light); color: var(--text);
+			padding: 10px 18px; border-radius: 20px; font-size: 14px;
+			box-shadow: 0 4px 12px rgba(0,0,0,0.4); opacity: 0; transition: 0.3s;
+			pointer-events: none;
+		}
+		.toast.show { opacity: 1; }
+	</style>
+</head>
+<body>
+	<!-- ============ LOGIN ============ -->
+	<section id="loginScreen" class="login-wrap">
+		<div class="brand">clever<span>App</span></div>
+		<div id="loginError" class="error hidden"></div>
+		<div id="mixedWarn" class="warn hidden"></div>
+
+		<label for="server">Serveur</label>
+		<select id="server">
+			<option value="remote">Distant (api.cleversystech.com)</option>
+			<option value="local">Local (réseau domestique)</option>
+		</select>
+
+		<div id="localHostRow" class="hidden">
+			<label for="localHost">Adresse du boîtier (IP:port, schéma optionnel)</label>
+			<input id="localHost" type="text" autocapitalize="none" autocorrect="off"
+				placeholder="http://192.168.1.34:5001" value="http://192.168.1.34:5001" />
+			<div class="hint" id="localHint">
+				Le boîtier sert le Socket.IO en <b>HTTP</b> (ex. <code>http://192.168.1.34:5001</code>).
+				Indique l'IP et le port. Si tu mets <code>https://</code>, pense à accepter une fois le
+				certificat via <a id="certLink" href="#" target="_blank" rel="noopener">ce lien</a>.
+			</div>
+		</div>
+
+		<label for="login">Identifiant (boxId)</label>
+		<input id="login" type="text" autocapitalize="none" autocorrect="off" placeholder="boxId" />
+
+		<label for="password">Mot de passe</label>
+		<input id="password" type="password" placeholder="••••••••" />
+
+		<button id="loginBtn" class="primary">Se connecter</button>
+	</section>
+
+	<!-- ============ DASHBOARD ============ -->
+	<section id="dashboard" class="hidden">
+		<header>
+			<div class="title">clever<span>App</span></div>
+			<div>
+				<span id="connDot" class="status-dot"></span>
+				<button id="logoutBtn" class="logout">Déconnexion</button>
+			</div>
+		</header>
+		<div id="debugBar"></div>
+		<main>
+			<div class="section-title">Cycles</div>
+			<div id="cyclesList"></div>
+
+			<div class="section-title">Capteurs</div>
+			<div id="sensorsList"></div>
+		</main>
+	</section>
+
+	<div id="toast" class="toast"></div>
+
+	<!-- Socket.IO client v4 (copié depuis node_modules, aucune dépendance internet) -->
+	<script src="./socket.io.min.js"></script>
+	<script>
+	(function () {
+		'use strict';
+
+		// ----- State -----
+		let socket = null;
+		let accessToken = '';
+		let boxId = '';
+		let loggedIn = false;
+		let currentServer = '';
+		let reconnectCount = 0;
+		let lastReason = '';
+		let lastEvent = '';
+		let cycles = [];
+		let sensors = [];
+		let statuses = [];   // [{ id, status }]
+		let values = [];     // [{ id|deviceId, value }]
+
+		// ----- DOM helpers -----
+		const $ = (id) => document.getElementById(id);
+		const loginSection = $('loginScreen');
+		const dashboard = $('dashboard');
+		const loginError = $('loginError');
+
+		function showError(msg) {
+			loginError.textContent = msg;
+			loginError.classList.remove('hidden');
+		}
+		function clearError() { loginError.classList.add('hidden'); }
+
+		let toastTimer;
+		function toast(msg) {
+			const t = $('toast');
+			t.textContent = msg;
+			t.classList.add('show');
+			clearTimeout(toastTimer);
+			toastTimer = setTimeout(() => t.classList.remove('show'), 2200);
+		}
+
+		let connState = 'déconnecté';
+		function setConnDot(on) {
+			$('connDot').classList.toggle('on', !!on);
+			connState = on ? 'connecté' : 'déconnecté';
+			renderDebug();
+		}
+
+		function renderDebug() {
+			const el = $('debugBar');
+			if (!el) return;
+			el.textContent =
+				'serveur: ' + (currentServer || '—') +
+				'  |  état: ' + connState +
+				'  |  cycles: ' + cycles.length + '  capteurs: ' + sensors.length +
+				'  |  reconnexions: ' + reconnectCount +
+				(lastReason ? '  |  coupure: ' + lastReason : '') +
+				(lastEvent ? '\ndernier event: ' + lastEvent : '');
+		}
+
+		// Describe a parsed payload compactly for the debug bar.
+		function describe(v) {
+			if (Array.isArray(v)) return 'array[' + v.length + ']';
+			if (v && typeof v === 'object') return 'object{' + Object.keys(v).join(',') + '}';
+			return typeof v + '(' + v + ')';
+		}
+
+		// A realtime message may arrive as a JSON string or an already-parsed object.
+		function parseMsg(message) {
+			return typeof message === 'string' ? JSON.parse(message) : message;
+		}
+
+		// Insert or replace an item in an array, matched on any of the key fields.
+		function mergeById(arr, item, keys) {
+			keys = keys || ['id'];
+			const i = arr.findIndex((x) => keys.some((k) => item[k] != null && x[k] === item[k]));
+			if (i >= 0) arr[i] = item; else arr.push(item);
+		}
+
+		// ----- Status helpers -----
+		const isCycleOn = (id) => {
+			const list = Array.isArray(statuses) ? statuses : [];
+			const st = list.find((x) => x.id === id);
+			return st && st.status === 'IN_PROCCESS';
+		};
+		const sensorValue = (id) => {
+			const list = Array.isArray(values) ? values : [];
+			const v = list.find((x) => x.id === id || x.deviceId === id);
+			return v ? v.value : null;
+		};
+		const visible = (x) => x && x.id && x.id.indexOf('deleted') < 0;
+
+		// ----- Rendering -----
+		function renderCycles() {
+			renderDebug();
+			const list = $('cyclesList');
+			const items = cycles.filter(visible);
+			if (!items.length) {
+				list.innerHTML = '<div class="empty">Aucun cycle</div>';
+				return;
+			}
+			list.innerHTML = '';
+			items.forEach((cycle) => {
+				const on = isCycleOn(cycle.id);
+				const card = document.createElement('div');
+				card.className = 'card';
+				card.innerHTML =
+					'<div><div class="name"></div></div>' +
+					'<label class="switch"><input type="checkbox"' + (on ? ' checked' : '') +
+					' /><span class="slider"></span></label>';
+				card.querySelector('.name').textContent = cycle.name || cycle.id;
+				const input = card.querySelector('input');
+				input.addEventListener('change', () => toggleCycle(cycle, input));
+				list.appendChild(card);
+			});
+		}
+
+		function renderSensors() {
+			renderDebug();
+			const list = $('sensorsList');
+			const items = sensors.filter(visible);
+			if (!items.length) {
+				list.innerHTML = '<div class="empty">Aucun capteur</div>';
+				return;
+			}
+			list.innerHTML = '';
+			items.forEach((sensor) => {
+				const val = sensorValue(sensor.id);
+				const card = document.createElement('div');
+				card.className = 'card';
+				card.innerHTML =
+					'<div><div class="name"></div></div>' +
+					'<div class="value"><span class="num"></span>' +
+					'<span class="unit"></span></div>';
+				card.querySelector('.name').textContent = sensor.name || sensor.id;
+				card.querySelector('.num').textContent = (val === null || val === undefined) ? '—' : val;
+				card.querySelector('.unit').textContent = sensor.unit || '';
+				list.appendChild(card);
+			});
+		}
+
+		// ----- Actions -----
+		function toggleCycle(cycle, input) {
+			const desiredOn = input.checked;
+			const dto = {
+				id: cycle.id,
+				status: 'STOPPED',
+				action: desiredOn ? 'ON' : 'OFF',
+				function: 'FUNCTION',
+				mode: 'MANUAL',
+				type: 'INIT',
+				duration: 0
+			};
+			input.parentElement.classList.add('pending');
+			socket.emit('front/box/execute/process', dto, () => {
+				input.parentElement.classList.remove('pending');
+			});
+			// Optimistic local status update
+			const existing = statuses.find((x) => x.id === cycle.id);
+			const newStatus = desiredOn ? 'IN_PROCCESS' : 'STOPPED';
+			if (existing) existing.status = newStatus;
+			else statuses.push({ id: cycle.id, status: newStatus });
+			toast(desiredOn ? 'Cycle activé' : 'Cycle désactivé');
+		}
+
+		function fetchConfiguration() {
+			socket.emit('front/box/fetch/configuration', {}, (response) => {
+				try {
+					const cfg = JSON.parse(response && response.config);
+					// Only replace lists when the response actually carries them, so a
+					// partial/empty resync never wipes a populated UI.
+					if (Array.isArray(cfg.cycles) && cfg.cycles.length) cycles = cfg.cycles;
+					if (Array.isArray(cfg.sensors) && cfg.sensors.length) sensors = cfg.sensors;
+					if (Array.isArray(cfg.values)) values = cfg.values;
+					renderCycles();
+					renderSensors();
+				} catch (e) {
+					console.warn('[fetchConfiguration] bad response:', response);
+				}
+			});
+		}
+
+		function fetchStatus() {
+			socket.emit('front/box/fetch/status', { type: 'PROCESS' }, (response) => {
+				try {
+					const st = JSON.parse(response && response.config);
+					if (Array.isArray(st)) { statuses = st; renderCycles(); }
+				} catch (e) { /* ignore */ }
+			});
+		}
+
+		// ----- Realtime listeners -----
+		function attachRealtimeListeners() {
+			socket.off('front/synchronize/status');
+			socket.off('front/synchronize/sensor-value');
+			socket.off('UPDATE_CONFIGURATION');
+
+			socket.on('front/synchronize/status', (message) => {
+				try {
+					const data = parseMsg(message);
+					lastEvent = 'status ' + describe(data);
+					if (Array.isArray(data)) statuses = data;
+					else if (data && data.id) mergeById(statuses, data);
+					renderCycles();
+				} catch (e) { lastEvent = 'status PARSE_ERR'; renderDebug(); }
+			});
+			socket.on('front/synchronize/sensor-value', (message) => {
+				try {
+					const data = parseMsg(message);
+					lastEvent = 'sensor-value ' + describe(data);
+					if (Array.isArray(data)) values = data;
+					else if (data && (data.id || data.deviceId)) mergeById(values, data, ['id', 'deviceId']);
+					renderSensors();
+				} catch (e) { lastEvent = 'sensor-value PARSE_ERR'; renderDebug(); }
+			});
+			socket.on('UPDATE_CONFIGURATION', (message) => {
+				try {
+					const data = parseMsg(message);
+					lastEvent = 'UPDATE_CONFIGURATION ' + describe(data);
+					if (data.cycle) { mergeById(cycles, data.cycle); renderCycles(); }
+					if (data.sensor) { mergeById(sensors, data.sensor); renderSensors(); }
+					renderDebug();
+				} catch (e) { lastEvent = 'UPDATE_CONFIGURATION PARSE_ERR'; renderDebug(); }
+			});
+		}
+
+		// ----- Connect & Login -----
+		function connectAndLogin(server, login, password) {
+			boxId = login;
+			loggedIn = false;
+			currentServer = server;
+			reconnectCount = 0;
+			lastReason = '';
+			const isLocal = $('server').value === 'local';
+			return new Promise((resolve) => {
+				// Polling-first (default) so the boxId header is sent during the HTTP
+				// handshake — a browser cannot set custom headers on a raw WebSocket
+				// upgrade, so websocket-only would drop the boxId and the server would
+				// reject the connection. boxId is also passed via auth/query as a
+				// belt-and-suspenders in case the server reads it there.
+				socket = io(server, {
+					forceNew: true,
+					auth: { token: '', boxId: boxId },
+					query: { boxId: boxId },
+					extraHeaders: { boxId: boxId }
+				});
+
+				let settled = false;
+				const finish = (result) => { if (!settled) { settled = true; resolve(result); } };
+
+				socket.on('connect_error', (err) => {
+					if (isLocal) {
+						$('localHint').classList.add('blink');
+						finish({
+							ok: false,
+							local: true,
+							error: 'Boîtier injoignable. Vérifie : (1) même réseau Wi‑Fi que le boîtier, ' +
+								'(2) hôte/IP correct, (3) certificat accepté via le lien ci-dessus.'
+						});
+					} else {
+						finish({ ok: false, error: 'Connexion au serveur impossible' });
+					}
+				});
+
+				// Persistent connection-state handler. It must NOT re-login on every
+				// connect (that caused an infinite disconnect/reconnect loop). Once
+				// logged in, the token in socket.auth re-authenticates automatically
+				// on any reconnect — we only resync the data.
+				socket.on('connect', () => {
+					if (loggedIn) {
+						reconnectCount++;
+						fetchConfiguration();
+						fetchStatus();
+					}
+					setConnDot(true);
+				});
+
+				socket.on('disconnect', (reason) => {
+					lastReason = String(reason);
+					setConnDot(false);
+					console.warn('[socket] disconnect:', reason);
+				});
+				socket.on('connect_error', (e) => console.warn('[socket] connect_error:', e && e.message));
+
+				// One-shot: the FIRST connection performs the login handshake.
+				socket.once('connect', () => {
+					socket.emit('front/box/login', { login, password }, (response) => {
+						if (!response || response.error) {
+							finish({ ok: false, error: (response && response.error) || 'Échec de connexion' });
+							return;
+						}
+						accessToken = response.accessToken;
+						// Re-authenticate the socket with the received token, then mark
+						// as logged in so the persistent handler resyncs on (re)connects.
+						socket.auth.token = accessToken;
+						socket.once('connect', () => {
+							loggedIn = true;
+							attachRealtimeListeners();
+							fetchConfiguration();
+							fetchStatus();
+							finish({ ok: true });
+						});
+						socket.disconnect().connect();
+					});
+				});
+			});
+		}
+
+		// ----- Server selection -----
+		const REMOTE_URL = 'https://api.cleversystech.com';
+
+		function normalizeLocalHost(raw) {
+			let host = (raw || '').trim();
+			if (!host) return '';
+			host = host.replace(/\/+$/, '');
+			// Preserve an explicit scheme; otherwise default to http:// because the
+			// local box serves Socket.IO over plain HTTP (e.g. http://192.168.1.34:5001).
+			if (/^https?:\/\//i.test(host)) return host;
+			return 'http://' + host;
+		}
+
+		function resolveServerUrl() {
+			if ($('server').value === 'local') {
+				return normalizeLocalHost($('localHost').value);
+			}
+			return REMOTE_URL;
+		}
+
+		function updateServerUI() {
+			const isLocal = $('server').value === 'local';
+			$('localHostRow').classList.toggle('hidden', !isLocal);
+			if (isLocal) {
+				const url = normalizeLocalHost($('localHost').value) || '#';
+				$('certLink').href = url;
+				$('certLink').textContent = url;
+				checkMixedContent(url);
+			} else {
+				$('mixedWarn').classList.add('hidden');
+			}
+		}
+
+		// Detect the cases a browser will silently block for a local box.
+		function checkMixedContent(targetUrl) {
+			const warn = $('mixedWarn');
+			const pageHttps = location.protocol === 'https:';
+			// A page served over HTTPS connecting to a different-origin local box
+			// with a self-signed cert is the fragile combo: the WSS handshake is
+			// rejected without a visible prompt. file:// and http(localhost) are fine.
+			if (pageHttps && targetUrl && targetUrl !== location.origin) {
+				warn.innerHTML =
+					'⚠️ Cette page est servie en <b>HTTPS</b>. Pour joindre un boîtier ' +
+					'local en certificat auto-signé, sers plutôt cette page en ' +
+					'<b>http://localhost</b> ou ouvre le fichier en <b>file://</b>, ' +
+					'sinon le navigateur bloque la connexion sans avertissement.';
+				warn.classList.remove('hidden');
+			} else {
+				warn.classList.add('hidden');
+			}
+		}
+
+		$('server').addEventListener('change', updateServerUI);
+		$('localHost').addEventListener('input', updateServerUI);
+		updateServerUI();
+
+		// ----- UI wiring -----
+		$('loginBtn').addEventListener('click', async () => {
+			clearError();
+			const server = resolveServerUrl();
+			if (!server) { showError('Hôte local invalide'); return; }
+			const login = $('login').value.trim();
+			const password = $('password').value;
+			if (!login || !password) { showError('Identifiant et mot de passe requis'); return; }
+
+			const btn = $('loginBtn');
+			btn.disabled = true; btn.textContent = 'Connexion…';
+			const res = await connectAndLogin(server, login, password);
+			btn.disabled = false; btn.textContent = 'Se connecter';
+
+			if (res.ok) {
+				loginSection.classList.add('hidden');
+				dashboard.classList.remove('hidden');
+			} else {
+				if (socket) { socket.disconnect(); socket = null; }
+				showError(res.error);
+			}
+		});
+
+		$('password').addEventListener('keydown', (e) => {
+			if (e.key === 'Enter') $('loginBtn').click();
+		});
+
+		$('logoutBtn').addEventListener('click', () => {
+			if (socket) { socket.removeAllListeners(); socket.disconnect(); socket = null; }
+			accessToken = ''; loggedIn = false; cycles = []; sensors = []; statuses = []; values = [];
+			dashboard.classList.add('hidden');
+			loginSection.classList.remove('hidden');
+			$('password').value = '';
+		});
+	})();
+	</script>
+</body>
+</html>

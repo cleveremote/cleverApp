@@ -1,477 +1,553 @@
 import {
-  BleError,
-  BleErrorCode,
-  BleManager,
-  Device,
-  State as BluetoothState,
-  LogLevel,
-  type DeviceId,
-  type TransactionId,
-  type UUID,
-  type Characteristic,
-  type Base64,
-  type Subscription
-} from 'react-native-ble-plx'
-import { PermissionsAndroid, Platform } from 'react-native'
+	BleError,
+	BleErrorCode,
+	BleManager,
+	Device,
+	State as BluetoothState,
+	LogLevel,
+	type DeviceId,
+	type TransactionId,
+	type UUID,
+	type Characteristic,
+	type Base64,
+	type Subscription
+} from 'react-native-ble-plx';
+import {PermissionsAndroid, Platform} from 'react-native';
 
-const deviceNotConnectedErrorText = 'Device is not connected'
+const deviceNotConnectedErrorText = 'Device is not connected';
 
 class BLEServiceInstance {
-  manager: BleManager
+	manager: BleManager;
 
-  device: Device | null
+	device: Device | null;
 
-  characteristicMonitor: Subscription | null
+	characteristicMonitor: Subscription | null;
 
-  isCharacteristicMonitorDisconnectExpected = false
-  public scannedDevices: Device[] = [];
-  constructor() {
-    this.device = null
-    this.characteristicMonitor = null
-    this.manager = new BleManager()
-    this.manager.setLogLevel(LogLevel.Verbose)
-  }
+	isCharacteristicMonitorDisconnectExpected = false;
+	public scannedDevices: Device[] = [];
+	constructor() {
+		this.device = null;
+		this.characteristicMonitor = null;
+		this.manager = new BleManager();
+		this.manager.setLogLevel(LogLevel.Verbose);
+	}
 
-  getDevice = () => this.device
+	getDevice = () => this.device;
 
-  initializeBLE = () =>
-    new Promise<void>(resolve => {
-      const subscription = this.manager.onStateChange(state => {
-        switch (state) {
-          case BluetoothState.Unsupported:
-            this.showErrorToast('')
-            break
-          case BluetoothState.PoweredOff:
-            this.onBluetoothPowerOff()
-            this.manager.enable().catch((error: BleError) => {
-              if (error.errorCode === BleErrorCode.BluetoothUnauthorized) {
-                this.requestBluetoothPermission()
-              }
-            })
-            break
-          case BluetoothState.Unauthorized:
-            this.requestBluetoothPermission()
-            break
-          case BluetoothState.PoweredOn:
-            resolve()
-            subscription.remove()
-            break
-          default:
-            console.error('Unsupported state: ', state)
-        }
-      }, true)
-    })
+	initializeBLE = () =>
+		new Promise<void>(resolve => {
+			const subscription = this.manager.onStateChange(state => {
+				switch (state) {
+					case BluetoothState.Unsupported:
+						this.showErrorToast('');
+						break;
+					case BluetoothState.PoweredOff:
+						this.onBluetoothPowerOff();
+						this.manager.enable().catch((error: BleError) => {
+							if (
+								error.errorCode ===
+								BleErrorCode.BluetoothUnauthorized
+							) {
+								this.requestBluetoothPermission();
+							}
+						});
+						break;
+					case BluetoothState.Unauthorized:
+						this.requestBluetoothPermission();
+						break;
+					case BluetoothState.PoweredOn:
+						resolve();
+						subscription.remove();
+						break;
+					default:
+						console.error('Unsupported state: ', state);
+				}
+			}, true);
+		});
 
-  disconnectDevice = () => {
-    if (!this.device) {
-      this.showErrorToast(deviceNotConnectedErrorText)
-      throw new Error(deviceNotConnectedErrorText)
-    }
-    return this.manager
-      .cancelDeviceConnection(this.device.id)
-      .then(() => this.showSuccessToast('Device disconnected'))
-      .catch(error => {
-        if (error?.code !== BleErrorCode.DeviceDisconnected) {
-          this.onError(error)
-        }
-      })
-  }
+	disconnectDevice = () => {
+		if (!this.device) {
+			this.showErrorToast(deviceNotConnectedErrorText);
+			throw new Error(deviceNotConnectedErrorText);
+		}
+		return this.manager
+			.cancelDeviceConnection(this.device.id)
+			.then(() => this.showSuccessToast('Device disconnected'))
+			.catch(error => {
+				if (error?.code !== BleErrorCode.DeviceDisconnected) {
+					this.onError(error);
+				}
+			});
+	};
 
-  disconnectDeviceById = (id: DeviceId) =>
-    this.manager
-      .cancelDeviceConnection(id)
-      .then(() => this.showSuccessToast('Device disconnected'))
-      .catch(error => {
-        if (error?.code !== BleErrorCode.DeviceDisconnected) {
-          this.onError(error)
-        }
-      })
+	disconnectDeviceById = (id: DeviceId) =>
+		this.manager
+			.cancelDeviceConnection(id)
+			.then(() => this.showSuccessToast('Device disconnected'))
+			.catch(error => {
+				if (error?.code !== BleErrorCode.DeviceDisconnected) {
+					throw new Error(error.message);
+				}
+			});
 
-  onBluetoothPowerOff = () => {
-    this.showErrorToast('Bluetooth is turned off')
-  }
+	onBluetoothPowerOff = () => {
+		this.showErrorToast('Bluetooth is turned off');
+	};
 
-  scanDevices = async (onDeviceFound: (device: Device) => void, UUIDs: UUID[] | null = null, legacyScan?: boolean) => {
-    this.manager.startDeviceScan(UUIDs, { legacyScan }, (error, device) => {
-      if (error) {
-        this.onError(error)
-        console.error(error.message)
-        this.manager.stopDeviceScan()
-        return
-      }
-      if (device) {
-        onDeviceFound(device)
-      }
-    })
-  }
+	scanDevices = async (
+		onDeviceFound: (device: Device) => void,
+		UUIDs: UUID[] | null = null,
+		legacyScan?: boolean
+	) => {
+		this.manager.startDeviceScan(UUIDs, {legacyScan}, (error, device) => {
+			if (error) {
+				this.onError(error);
+				console.error(error.message);
+				this.manager.stopDeviceScan();
+				return;
+			}
+			if (device) {
+				onDeviceFound(device);
+			}
+		});
+	};
 
-  stopScanDevices = () => {
-    this.manager.stopDeviceScan();
-  }
+	stopScanDevices = () => {
+		this.manager.stopDeviceScan();
+	};
 
-  ScanBleDevices = async (): Promise<Device[]> => {
-    this.scannedDevices = [];
-    await BLEService.initializeBLE();
-    this.scanDevices(async (device) => {
-      if (device.serviceUUIDs && device.serviceUUIDs[0]) {
-        
-        const index = device.serviceUUIDs?.findIndex(x => x.split('-')[0] === '22222222');
-        
-        if ( index > -1) {
-         
-          const found = this.scannedDevices.find(x => x === device);
-          if (!found) {
-            console.log('device.serviceUUIDs[0]', device);
-            this.scannedDevices.push(device);
-          }
-        }
-      }
+	ScanBleDevices = async (): Promise<Device[]> => {
+		this.scannedDevices = [];
+		await BLEService.initializeBLE();
+		this.scanDevices(async device => {
+			if (device.serviceUUIDs && device.serviceUUIDs[0]) {
+				const index = device.serviceUUIDs?.findIndex(
+					x => x.split('-')[0] === '22222222'
+				);
 
-    });
+				if (index > -1) {
+					const found = this.scannedDevices.find(
+						x => x.id === device.id
+					);
+					if (!found) {
+						this.scannedDevices.push(device);
+					}
+				}
+			}
+		});
 
+		const getScannedDevices = (): Promise<Device[]> => {
+			return new Promise((resolve, reject) => {
+				setTimeout(() => {
+					this.manager.stopDeviceScan();
+					resolve(this.scannedDevices);
+				}, 5000);
+			});
+		};
+		return await getScannedDevices();
+	};
 
-    const getScannedDevices = (): Promise<Device[]> => {
-      return new Promise((resolve, reject) => {
+	connectToDevice = (deviceId: DeviceId) =>
+		new Promise<Device>((resolve, reject) => {
+			this.manager.stopDeviceScan();
+			this.manager
+				.connectToDevice(deviceId)
+				.then(device => {
+					this.device = device;
+					resolve(device);
+				})
+				.catch(error => {
+					if (
+						error.errorCode ===
+							BleErrorCode.DeviceAlreadyConnected &&
+						this.device
+					) {
+						resolve(this.device);
+					} else {
+						this.onError(error);
+						reject(error);
+					}
+				});
+		});
 
-        setTimeout(() => {
-          this.manager.stopDeviceScan();
-          resolve(this.scannedDevices);
-        }, 5000);
-      })
-    }
-    return await getScannedDevices();
+	discoverAllServicesAndCharacteristicsForDevice = async () =>
+		new Promise<Device>((resolve, reject) => {
+			if (!this.device) {
+				this.showErrorToast(deviceNotConnectedErrorText);
+				reject(new Error(deviceNotConnectedErrorText));
+				return;
+			}
+			this.manager
+				.discoverAllServicesAndCharacteristicsForDevice(this.device.id)
+				.then(device => {
+					resolve(device);
+					this.device = device;
+				})
+				.catch(error => {
+					this.onError(error);
+					reject(error);
+				});
+		});
 
+	readCharacteristicForDevice = async (
+		serviceUUID: UUID,
+		characteristicUUID: UUID
+	) =>
+		new Promise<Characteristic>((resolve, reject) => {
+			if (!this.device) {
+				this.showErrorToast(deviceNotConnectedErrorText);
+				reject(new Error(deviceNotConnectedErrorText));
+				return;
+			}
+			this.device.requestMTU(512);
+			this.manager
+				.readCharacteristicForDevice(
+					this.device.id,
+					serviceUUID,
+					characteristicUUID
+				)
+				.then(characteristic => {
+					resolve(characteristic);
+				})
+				.catch(error => {
+					reject(new Error(error.message));
+				});
+		});
 
-  }
+	writeCharacteristicWithResponseForDevice = async (
+		serviceUUID: UUID,
+		characteristicUUID: UUID,
+		time: Base64
+	) => {
+		if (!this.device) {
+			this.showErrorToast(deviceNotConnectedErrorText);
+			throw new Error(deviceNotConnectedErrorText);
+		}
+		return this.manager.writeCharacteristicWithResponseForDevice(
+			this.device.id,
+			serviceUUID,
+			characteristicUUID,
+			time
+		);
+	};
 
+	writeCharacteristicWithoutResponseForDevice = async (
+		serviceUUID: UUID,
+		characteristicUUID: UUID,
+		time: Base64
+	) => {
+		if (!this.device) {
+			this.showErrorToast(deviceNotConnectedErrorText);
+			throw new Error(deviceNotConnectedErrorText);
+		}
+		return this.manager
+			.writeCharacteristicWithoutResponseForDevice(
+				this.device.id,
+				serviceUUID,
+				characteristicUUID,
+				time
+			)
+			.catch(error => {
+				this.onError(error);
+			});
+	};
 
-  connectToDevice = (deviceId: DeviceId) =>
-    new Promise<Device>((resolve, reject) => {
-      this.manager.stopDeviceScan()
-      this.manager
-        .connectToDevice(deviceId)
-        .then(device => {
-          this.device = device
-          resolve(device)
-        })
-        .catch(error => {
-          if (error.errorCode === BleErrorCode.DeviceAlreadyConnected && this.device) {
-            resolve(this.device)
-          } else {
-            this.onError(error)
-            reject(error)
-          }
-        })
-    })
+	setupMonitor = (
+		serviceUUID: UUID,
+		characteristicUUID: UUID,
+		onCharacteristicReceived: (characteristic: Characteristic) => void,
+		onError: (error: Error) => void,
+		transactionId?: TransactionId,
+		hideErrorDisplay?: boolean
+	) => {
+		if (!this.device) {
+			this.showErrorToast(deviceNotConnectedErrorText);
+			throw new Error(deviceNotConnectedErrorText);
+		}
+		this.characteristicMonitor =
+			this.manager.monitorCharacteristicForDevice(
+				this.device?.id,
+				serviceUUID,
+				characteristicUUID,
+				(error, characteristic) => {
+					if (error) {
+						if (
+							error.errorCode === 2 &&
+							this.isCharacteristicMonitorDisconnectExpected
+						) {
+							this.isCharacteristicMonitorDisconnectExpected =
+								false;
+							return;
+						}
+						onError(error);
+						if (!hideErrorDisplay) {
+							this.onError(error);
+							this.characteristicMonitor?.remove();
+						}
+						return;
+					}
+					if (characteristic) {
+						onCharacteristicReceived(characteristic);
+					}
+				},
+				transactionId
+			);
+	};
 
-  discoverAllServicesAndCharacteristicsForDevice = async () =>
-    new Promise<Device>((resolve, reject) => {
-      if (!this.device) {
-        this.showErrorToast(deviceNotConnectedErrorText)
-        reject(new Error(deviceNotConnectedErrorText))
-        return
-      }
-      this.manager
-        .discoverAllServicesAndCharacteristicsForDevice(this.device.id)
-        .then(device => {
-          resolve(device)
-          this.device = device
-        })
-        .catch(error => {
-          this.onError(error)
-          reject(error)
-        })
-    })
+	setupCustomMonitor: BleManager['monitorCharacteristicForDevice'] = (
+		...args
+	) => this.manager.monitorCharacteristicForDevice(...args);
 
-  readCharacteristicForDevice = async (serviceUUID: UUID, characteristicUUID: UUID) =>
-    new Promise<Characteristic>((resolve, reject) => {
-      if (!this.device) {
-        this.showErrorToast(deviceNotConnectedErrorText)
-        reject(new Error(deviceNotConnectedErrorText))
-        return
-      }
-      this.manager
-        .readCharacteristicForDevice(this.device.id, serviceUUID, characteristicUUID)
-        .then(characteristic => {
-          resolve(characteristic)
-        })
-        .catch(error => {
-          this.onError(error)
-        })
-    })
+	finishMonitor = () => {
+		this.isCharacteristicMonitorDisconnectExpected = true;
+		this.characteristicMonitor?.remove();
+	};
 
-  writeCharacteristicWithResponseForDevice = async (serviceUUID: UUID, characteristicUUID: UUID, time: Base64) => {
-    if (!this.device) {
-      this.showErrorToast(deviceNotConnectedErrorText)
-      throw new Error(deviceNotConnectedErrorText)
-    }
-    return this.manager
-      .writeCharacteristicWithResponseForDevice(this.device.id, serviceUUID, characteristicUUID, time)
-      .catch(error => {
-        this.onError(error)
-      })
-  }
+	writeDescriptorForDevice = async (
+		serviceUUID: UUID,
+		characteristicUUID: UUID,
+		descriptorUUID: UUID,
+		data: Base64
+	) => {
+		if (!this.device) {
+			this.showErrorToast(deviceNotConnectedErrorText);
+			throw new Error(deviceNotConnectedErrorText);
+		}
+		return this.manager
+			.writeDescriptorForDevice(
+				this.device.id,
+				serviceUUID,
+				characteristicUUID,
+				descriptorUUID,
+				data
+			)
+			.catch(error => {
+				this.onError(error);
+			});
+	};
 
-  writeCharacteristicWithoutResponseForDevice = async (serviceUUID: UUID, characteristicUUID: UUID, time: Base64) => {
-    if (!this.device) {
-      this.showErrorToast(deviceNotConnectedErrorText)
-      throw new Error(deviceNotConnectedErrorText)
-    }
-    return this.manager
-      .writeCharacteristicWithoutResponseForDevice(this.device.id, serviceUUID, characteristicUUID, time)
-      .catch(error => {
-        this.onError(error)
-      })
-  }
+	readDescriptorForDevice = async (
+		serviceUUID: UUID,
+		characteristicUUID: UUID,
+		descriptorUUID: UUID
+	) => {
+		if (!this.device) {
+			this.showErrorToast(deviceNotConnectedErrorText);
+			throw new Error(deviceNotConnectedErrorText);
+		}
+		return this.manager
+			.readDescriptorForDevice(
+				this.device.id,
+				serviceUUID,
+				characteristicUUID,
+				descriptorUUID
+			)
+			.catch(error => {
+				this.onError(error);
+			});
+	};
 
-  setupMonitor = (
-    serviceUUID: UUID,
-    characteristicUUID: UUID,
-    onCharacteristicReceived: (characteristic: Characteristic) => void,
-    onError: (error: Error) => void,
-    transactionId?: TransactionId,
-    hideErrorDisplay?: boolean
-  ) => {
-    if (!this.device) {
-      this.showErrorToast(deviceNotConnectedErrorText)
-      throw new Error(deviceNotConnectedErrorText)
-    }
-    this.characteristicMonitor = this.manager.monitorCharacteristicForDevice(
-      this.device?.id,
-      serviceUUID,
-      characteristicUUID,
-      (error, characteristic) => {
-        if (error) {
-          if (error.errorCode === 2 && this.isCharacteristicMonitorDisconnectExpected) {
-            this.isCharacteristicMonitorDisconnectExpected = false
-            return
-          }
-          onError(error)
-          if (!hideErrorDisplay) {
-            this.onError(error)
-            this.characteristicMonitor?.remove()
-          }
-          return
-        }
-        if (characteristic) {
-          onCharacteristicReceived(characteristic)
-        }
-      },
-      transactionId
-    )
-  }
+	getServicesForDevice = () => {
+		if (!this.device) {
+			this.showErrorToast(deviceNotConnectedErrorText);
+			throw new Error(deviceNotConnectedErrorText);
+		}
+		return this.manager.servicesForDevice(this.device.id).catch(error => {
+			this.onError(error);
+		});
+	};
 
-  setupCustomMonitor: BleManager['monitorCharacteristicForDevice'] = (...args) =>
-    this.manager.monitorCharacteristicForDevice(...args)
+	getCharacteristicsForDevice = (serviceUUID: UUID) => {
+		if (!this.device) {
+			this.showErrorToast(deviceNotConnectedErrorText);
+			throw new Error(deviceNotConnectedErrorText);
+		}
+		return this.manager
+			.characteristicsForDevice(this.device.id, serviceUUID)
+			.catch(error => {
+				this.onError(error);
+			});
+	};
 
-  finishMonitor = () => {
-    this.isCharacteristicMonitorDisconnectExpected = true
-    this.characteristicMonitor?.remove()
-  }
+	getDescriptorsForDevice = (serviceUUID: UUID, characteristicUUID: UUID) => {
+		if (!this.device) {
+			this.showErrorToast(deviceNotConnectedErrorText);
+			throw new Error(deviceNotConnectedErrorText);
+		}
+		return this.manager
+			.descriptorsForDevice(
+				this.device.id,
+				serviceUUID,
+				characteristicUUID
+			)
+			.catch(error => {
+				this.onError(error);
+			});
+	};
 
-  writeDescriptorForDevice = async (
-    serviceUUID: UUID,
-    characteristicUUID: UUID,
-    descriptorUUID: UUID,
-    data: Base64
-  ) => {
-    if (!this.device) {
-      this.showErrorToast(deviceNotConnectedErrorText)
-      throw new Error(deviceNotConnectedErrorText)
-    }
-    return this.manager
-      .writeDescriptorForDevice(this.device.id, serviceUUID, characteristicUUID, descriptorUUID, data)
-      .catch(error => {
-        this.onError(error)
-      })
-  }
+	isDeviceConnected = () => {
+		if (!this.device) {
+			this.showErrorToast(deviceNotConnectedErrorText);
+			throw new Error(deviceNotConnectedErrorText);
+		}
+		return this.manager.isDeviceConnected(this.device.id);
+	};
 
-  readDescriptorForDevice = async (serviceUUID: UUID, characteristicUUID: UUID, descriptorUUID: UUID) => {
-    if (!this.device) {
-      this.showErrorToast(deviceNotConnectedErrorText)
-      throw new Error(deviceNotConnectedErrorText)
-    }
-    return this.manager
-      .readDescriptorForDevice(this.device.id, serviceUUID, characteristicUUID, descriptorUUID)
-      .catch(error => {
-        this.onError(error)
-      })
-  }
+	isDeviceWithIdConnected = (id: DeviceId) =>
+		this.manager.isDeviceConnected(id).catch(console.error);
 
-  getServicesForDevice = () => {
-    if (!this.device) {
-      this.showErrorToast(deviceNotConnectedErrorText)
-      throw new Error(deviceNotConnectedErrorText)
-    }
-    return this.manager.servicesForDevice(this.device.id).catch(error => {
-      this.onError(error)
-    })
-  }
+	getConnectedDevices = (expectedServices: UUID[]) => {
+		if (!this.device) {
+			this.showErrorToast(deviceNotConnectedErrorText);
+			throw new Error(deviceNotConnectedErrorText);
+		}
+		return this.manager.connectedDevices(expectedServices).catch(error => {
+			this.onError(error);
+		});
+	};
 
-  getCharacteristicsForDevice = (serviceUUID: UUID) => {
-    if (!this.device) {
-      this.showErrorToast(deviceNotConnectedErrorText)
-      throw new Error(deviceNotConnectedErrorText)
-    }
-    return this.manager.characteristicsForDevice(this.device.id, serviceUUID).catch(error => {
-      this.onError(error)
-    })
-  }
+	requestMTUForDevice = (mtu: number) => {
+		if (!this.device) {
+			this.showErrorToast(deviceNotConnectedErrorText);
+			throw new Error(deviceNotConnectedErrorText);
+		}
+		return this.manager
+			.requestMTUForDevice(this.device.id, mtu)
+			.catch(error => {
+				this.onError(error);
+			});
+	};
 
-  getDescriptorsForDevice = (serviceUUID: UUID, characteristicUUID: UUID) => {
-    if (!this.device) {
-      this.showErrorToast(deviceNotConnectedErrorText)
-      throw new Error(deviceNotConnectedErrorText)
-    }
-    return this.manager.descriptorsForDevice(this.device.id, serviceUUID, characteristicUUID).catch(error => {
-      this.onError(error)
-    })
-  }
+	onDeviceDisconnected = (
+		listener: (error: BleError | null, device: Device | null) => void
+	) => {
+		if (!this.device) {
+			this.showErrorToast(deviceNotConnectedErrorText);
+			throw new Error(deviceNotConnectedErrorText);
+		}
+		return this.manager.onDeviceDisconnected(this.device.id, listener);
+	};
 
-  isDeviceConnected = () => {
-    if (!this.device) {
-      this.showErrorToast(deviceNotConnectedErrorText)
-      throw new Error(deviceNotConnectedErrorText)
-    }
-    return this.manager.isDeviceConnected(this.device.id)
-  }
+	onDeviceDisconnectedCustom: BleManager['onDeviceDisconnected'] = (
+		...args
+	) => this.manager.onDeviceDisconnected(...args);
 
-  isDeviceWithIdConnected = (id: DeviceId) => this.manager.isDeviceConnected(id).catch(console.error)
+	readRSSIForDevice = () => {
+		if (!this.device) {
+			this.showErrorToast(deviceNotConnectedErrorText);
+			throw new Error(deviceNotConnectedErrorText);
+		}
+		return this.manager.readRSSIForDevice(this.device.id).catch(error => {
+			this.onError(error);
+		});
+	};
 
-  getConnectedDevices = (expectedServices: UUID[]) => {
-    if (!this.device) {
-      this.showErrorToast(deviceNotConnectedErrorText)
-      throw new Error(deviceNotConnectedErrorText)
-    }
-    return this.manager.connectedDevices(expectedServices).catch(error => {
-      this.onError(error)
-    })
-  }
+	getDevices = () => {
+		if (!this.device) {
+			this.showErrorToast(deviceNotConnectedErrorText);
+			throw new Error(deviceNotConnectedErrorText);
+		}
+		return this.manager.devices([this.device.id]).catch(error => {
+			this.onError(error);
+		});
+	};
 
-  requestMTUForDevice = (mtu: number) => {
-    if (!this.device) {
-      this.showErrorToast(deviceNotConnectedErrorText)
-      throw new Error(deviceNotConnectedErrorText)
-    }
-    return this.manager.requestMTUForDevice(this.device.id, mtu).catch(error => {
-      this.onError(error)
-    })
-  }
+	cancelTransaction = (transactionId: TransactionId) =>
+		this.manager.cancelTransaction(transactionId);
 
-  onDeviceDisconnected = (listener: (error: BleError | null, device: Device | null) => void) => {
-    if (!this.device) {
-      this.showErrorToast(deviceNotConnectedErrorText)
-      throw new Error(deviceNotConnectedErrorText)
-    }
-    return this.manager.onDeviceDisconnected(this.device.id, listener)
-  }
+	enable = () =>
+		this.manager.enable().catch(error => {
+			this.onError(error);
+		});
 
-  onDeviceDisconnectedCustom: BleManager['onDeviceDisconnected'] = (...args) =>
-    this.manager.onDeviceDisconnected(...args)
+	disable = () =>
+		this.manager.disable().catch(error => {
+			this.onError(error);
+		});
 
-  readRSSIForDevice = () => {
-    if (!this.device) {
-      this.showErrorToast(deviceNotConnectedErrorText)
-      throw new Error(deviceNotConnectedErrorText)
-    }
-    return this.manager.readRSSIForDevice(this.device.id).catch(error => {
-      this.onError(error)
-    })
-  }
+	getState = () =>
+		this.manager.state().catch(error => {
+			this.onError(error);
+		});
 
-  getDevices = () => {
-    if (!this.device) {
-      this.showErrorToast(deviceNotConnectedErrorText)
-      throw new Error(deviceNotConnectedErrorText)
-    }
-    return this.manager.devices([this.device.id]).catch(error => {
-      this.onError(error)
-    })
-  }
+	onError = (error: BleError) => {
+		switch (error.errorCode) {
+			case BleErrorCode.BluetoothUnauthorized:
+				this.requestBluetoothPermission();
+				break;
+			case BleErrorCode.LocationServicesDisabled:
+				this.showErrorToast('Location services are disabled');
+				break;
+			default:
+				this.showErrorToast(JSON.stringify(error, null, 4));
+		}
+	};
 
-  cancelTransaction = (transactionId: TransactionId) => this.manager.cancelTransaction(transactionId)
+	requestConnectionPriorityForDevice = (priority: 0 | 1 | 2) => {
+		if (!this.device) {
+			this.showErrorToast(deviceNotConnectedErrorText);
+			throw new Error(deviceNotConnectedErrorText);
+		}
+		return this.manager.requestConnectionPriorityForDevice(
+			this.device?.id,
+			priority
+		);
+	};
 
-  enable = () =>
-    this.manager.enable().catch(error => {
-      this.onError(error)
-    })
+	cancelDeviceConnection = () => {
+		if (!this.device) {
+			this.showErrorToast(deviceNotConnectedErrorText);
+			throw new Error(deviceNotConnectedErrorText);
+		}
+		return this.manager.cancelDeviceConnection(this.device?.id);
+	};
 
-  disable = () =>
-    this.manager.disable().catch(error => {
-      this.onError(error)
-    })
+	requestBluetoothPermission = async () => {
+		if (Platform.OS === 'ios') {
+			return true;
+		}
+		if (
+			Platform.OS === 'android' &&
+			PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION
+		) {
+			const apiLevel = parseInt(Platform.Version.toString(), 10);
 
-  getState = () =>
-    this.manager.state().catch(error => {
-      this.onError(error)
-    })
+			if (apiLevel < 31) {
+				const granted = await PermissionsAndroid.request(
+					PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION
+				);
+				return granted === PermissionsAndroid.RESULTS.GRANTED;
+			}
+			if (
+				PermissionsAndroid.PERMISSIONS.BLUETOOTH_SCAN &&
+				PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT
+			) {
+				const result = await PermissionsAndroid.requestMultiple([
+					PermissionsAndroid.PERMISSIONS.BLUETOOTH_SCAN,
+					PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT
+				]);
 
-  onError = (error: BleError) => {
-    switch (error.errorCode) {
-      case BleErrorCode.BluetoothUnauthorized:
-        this.requestBluetoothPermission()
-        break
-      case BleErrorCode.LocationServicesDisabled:
-        this.showErrorToast('Location services are disabled')
-        break
-      default:
-        this.showErrorToast(JSON.stringify(error, null, 4))
-    }
-  }
+				return (
+					result['android.permission.BLUETOOTH_CONNECT'] ===
+						PermissionsAndroid.RESULTS.GRANTED &&
+					result['android.permission.BLUETOOTH_SCAN'] ===
+						PermissionsAndroid.RESULTS.GRANTED
+				);
+			}
+		}
 
-  requestConnectionPriorityForDevice = (priority: 0 | 1 | 2) => {
-    if (!this.device) {
-      this.showErrorToast(deviceNotConnectedErrorText)
-      throw new Error(deviceNotConnectedErrorText)
-    }
-    return this.manager.requestConnectionPriorityForDevice(this.device?.id, priority)
-  }
+		this.showErrorToast('Permission have not been granted');
 
-  cancelDeviceConnection = () => {
-    if (!this.device) {
-      this.showErrorToast(deviceNotConnectedErrorText)
-      throw new Error(deviceNotConnectedErrorText)
-    }
-    return this.manager.cancelDeviceConnection(this.device?.id)
-  }
+		return false;
+	};
 
-  requestBluetoothPermission = async () => {
-    if (Platform.OS === 'ios') {
-      return true
-    }
-    if (Platform.OS === 'android' && PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION) {
-      const apiLevel = parseInt(Platform.Version.toString(), 10)
+	showErrorToast = (error: string) => {
+		console.error('error,', error);
+	};
 
-      if (apiLevel < 31) {
-        const granted = await PermissionsAndroid.request(PermissionsAndroid.PERMISSIONS.ACCESS_FINE_LOCATION)
-        return granted === PermissionsAndroid.RESULTS.GRANTED
-      }
-      if (PermissionsAndroid.PERMISSIONS.BLUETOOTH_SCAN && PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT) {
-        const result = await PermissionsAndroid.requestMultiple([
-          PermissionsAndroid.PERMISSIONS.BLUETOOTH_SCAN,
-          PermissionsAndroid.PERMISSIONS.BLUETOOTH_CONNECT
-        ])
-
-        return (
-          result['android.permission.BLUETOOTH_CONNECT'] === PermissionsAndroid.RESULTS.GRANTED &&
-          result['android.permission.BLUETOOTH_SCAN'] === PermissionsAndroid.RESULTS.GRANTED
-        )
-      }
-    }
-
-    this.showErrorToast('Permission have not been granted')
-
-    return false
-  }
-
-  showErrorToast = (error: string) => {
-
-    console.error('error,', error)
-  }
-
-  showSuccessToast = (info: string) => {
-    console.debug(info);
-  }
+	showSuccessToast = (info: string) => {
+		console.debug(info);
+	};
 }
 
-export const BLEService = new BLEServiceInstance()
+export const BLEService = new BLEServiceInstance();
