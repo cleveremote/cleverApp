@@ -51,7 +51,8 @@ export function Cycle(props: any) {
 					'times-circle',
 					true
 				),
-			headerLeft: brandLogo
+			headerLeft: () =>
+				brandLogo(() => props.navigation.navigate('SettingsScreen'))
 		});
 
 		const initial = Orientation.getInitialOrientation();
@@ -141,6 +142,11 @@ export function Cycle(props: any) {
 				/>
 				{props.cycles
 					?.filter((x: any) => x.id.indexOf('deleted') < 0)
+					// ?.filter((x: any) =>
+					// 	// props.route?.params?.typeFilter
+					// 	// 	? x.type === props.route.params.typeFilter
+					// 	// 	: x.type === 'CYCLE'
+					// )
 					?.map((cycle: any, index: number) => (
 						<CycleStack
 							key={'cycle_' + index}

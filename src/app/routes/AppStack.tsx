@@ -1,41 +1,48 @@
-import React, {useEffect, useRef} from 'react';
+import React, { useEffect, useRef } from 'react';
 import messaging from '@react-native-firebase/messaging';
-import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
-import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import {
 	faBorderAll,
 	faCircleDot,
+	faDiagramProject,
+	faFlask,
 	faImage,
 	faImagePortrait,
 	faImages,
 	faLayerGroup,
 	faMap,
 	faPlane,
-	faSyncAlt
+	faSyncAlt,
+	faWater
 } from '@fortawesome/free-solid-svg-icons';
-import {SettingsScreen} from '../screens/settings/settings';
-import {AppState} from 'react-native';
-import {authenticationService} from '../../module/authentication/domain/services/auth.service';
-import {socketService} from '../../services/socket';
-import {connect} from 'react-redux';
-import {ParamListBase, RouteProp} from '@react-navigation/native';
-import {CycleStack} from './CycleStack';
-import {SensorStack} from './SensorStack';
+import { AppState } from 'react-native';
+import { authenticationService } from '../../module/authentication/domain/services/auth.service';
+import { socketService } from '../../services/socket';
+import { connect } from 'react-redux';
+import { ParamListBase, RouteProp } from '@react-navigation/native';
+import { CycleStack } from './CycleStack';
+import { FertigationStack } from './FertigationStack';
+import { CircuitStack } from './CircuitStack';
+import { TanksStack } from './TanksStack';
+import { SensorStack } from './SensorStack';
 import {
 	listenerEvents,
 	loadConfiguration,
 	loadPlan
 } from '../../module/process/infrasctructure/store/actions/common';
-import {setIsConnected, setIsServerConnected, setIsBoxConnected} from '../../module/process/infrasctructure/store/actions/state';
-import {NoConnectionScreen} from '../screens/access/no-connexion';
-import {loadValues} from '../../module/process/infrasctructure/store/actions/cycle';
-import {PlanStack} from './PlanStack';
+import { setIsConnected, setIsServerConnected, setIsBoxConnected } from '../../module/process/infrasctructure/store/actions/state';
+import { NoConnectionScreen } from '../screens/access/no-connexion';
+import { loadValues } from '../../module/process/infrasctructure/store/actions/cycle';
+import { PlanStack } from './PlanStack';
 
 type Props = {
 	setIsConnected: (value: any) => void;
 	isLoggedIn: boolean;
 	loadConfiguration: () => any;
 };
+
+const FilteredCycleStack = () => <CycleStack typeFilter="MODULE" />;
 
 const tabBarIconCfg = (
 	focused: boolean,
@@ -48,8 +55,14 @@ const tabBarIconCfg = (
 		iconName = faSyncAlt;
 	} else if (route.name === 'PlanStack') {
 		iconName = faBorderAll;
-	} else {
+	} else if (route.name === 'SensorsStack') {
 		iconName = faCircleDot;
+	} else if (route.name === 'TanksStack') {
+		iconName = faWater;
+	} else if (route.name === 'CircuitStack') {
+		iconName = faDiagramProject;
+	} else {
+		iconName = faFlask;
 	}
 	return (
 		<FontAwesomeIcon
@@ -154,39 +167,58 @@ export function AppStack(props: any) {
 		<>
 			{props.isServerConnected && props.isBoxConnected ? (
 				<Tab.Navigator
-				safeAreaInsets={{ bottom: 20 }}
-					screenOptions={({route}) => ({
-   tabBarItemStyle: {
-  justifyContent: 'center',
-  alignItems: 'center',
-  paddingBottom: 0,
-  paddingTop: 10,
-},
-tabBarStyle: {
-  justifyContent: 'center',
-},
+					safeAreaInsets={{ bottom: 20 }}
+					screenOptions={({ route }) => ({
+						tabBarItemStyle: {
+							justifyContent: 'center',
+							alignItems: 'center',
+							paddingBottom: 0,
+							paddingTop: 10,
+						},
+						tabBarStyle: {
+							justifyContent: 'center',
+						},
 						tabBarActiveTintColor: '#32404e',
-						tabBarIcon: ({focused}) => tabBarIconCfg(focused, route)
+						tabBarIcon: ({ focused }) => tabBarIconCfg(focused, route)
 					})}>
 					<Tab.Screen
 						name="CyclesStack"
-						options={{headerShown: false, tabBarLabel: 'Cycles'}}
+						options={{ headerShown: false, tabBarLabel: 'Cycles' }}
 						component={CycleStack}
 					/>
-					<Tab.Screen
-						name="PlanStack"
-						options={{headerShown: false, tabBarLabel: 'Plan'}}
-						component={PlanStack}
-					/>
+
 					<Tab.Screen
 						name="Settings"
-						options={{headerShown: false}}
-						component={SettingsScreen}
+						options={{ headerShown: false, tabBarLabel: 'Modules' }}
+						component={FilteredCycleStack}
 					/>
 					<Tab.Screen
 						name="SensorsStack"
-						options={{headerShown: false, tabBarLabel: 'Sensors'}}
+						options={{ headerShown: false, tabBarLabel: 'Sensors' }}
 						component={SensorStack}
+					/>
+					<Tab.Screen
+						name="FertigationStack"
+						options={{ headerShown: false, tabBarLabel: 'Fertigation' }}
+						component={FertigationStack}
+					/>
+
+					<Tab.Screen
+						name="TanksStack"
+						options={{ headerShown: false, tabBarLabel: 'Bacs' }}
+						component={TanksStack}
+					/>
+
+					<Tab.Screen
+						name="CircuitStack"
+						options={{ headerShown: false, tabBarLabel: 'Circuit' }}
+						component={CircuitStack}
+					/>
+
+					<Tab.Screen
+						name="PlanStack"
+						options={{ headerShown: false, tabBarLabel: 'Plan' }}
+						component={PlanStack}
 					/>
 				</Tab.Navigator>
 			) : (

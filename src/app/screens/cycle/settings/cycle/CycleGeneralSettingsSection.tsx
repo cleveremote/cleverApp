@@ -19,6 +19,11 @@ export function CycleGeneralSettingsSection(props: any) {
 	const [cycleData, setCycleData] = React.useState(
 		props.route.params?.cycleData
 	);
+	// Les tâches et leurs sous-cycles utilisent la nouvelle palette vive ;
+	// les cycles classiques gardent les couleurs d'origine.
+	const useTaskColors =
+		!!props.route.params?.isTask || !!cycleData?.taskId;
+	const colorProportion = useTaskColors ? 0.5 : 0;
 	const [saveUnchangedData, setSaveUnchangedData] = React.useState(false);
 	const defaultValues = {...props.route.params?.cycleData};
 	const {
@@ -134,6 +139,7 @@ export function CycleGeneralSettingsSection(props: any) {
 				name="style"
 				placeholder="Cycle theme*"
 				rules={{required: 'Theme is required'}}
+				colorProportion={colorProportion}
 				style={{...cycleData?.style}}
 				onChangeText={value => {
 					setCycleData({...cycleData, style: JSON.parse(value)});

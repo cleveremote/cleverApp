@@ -1,5 +1,5 @@
 import React from 'react';
-import {TouchableOpacity, View} from 'react-native';
+import {TextInput, TouchableOpacity, View} from 'react-native';
 import {Text} from 'react-native';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
@@ -7,11 +7,19 @@ import {IconDefinition} from '@fortawesome/free-solid-svg-icons';
 import {styles} from '../../styles/cycleStyles';
 import {hapticOptions} from '../../data/cycleTypes';
 
+// When `numericInput` is provided (devices of a task cycle), the row also
+// renders a numeric field facing the label so the user can enter a value for
+// the element.
 export function elementStack(
 	item: any,
 	actionElement: Function,
 	label: string,
-	icon: {name: IconDefinition; color: string}
+	icon: {name: IconDefinition; color: string},
+	numericInput?: {
+		value: any;
+		onChangeValue: (text: string) => void;
+		placeholder?: string;
+	}
 ) {
 	return (
 		<View
@@ -27,12 +35,38 @@ export function elementStack(
 				shadowRadius: 2.22
 			}}
 			key={item.id}>
-			<View style={{flexDirection: 'row'}}>
+			<View style={{flexDirection: 'row', alignItems: 'center'}}>
 				<Text
 					style={[styles.textSequence, {flex: 1, marginVertical: 8, marginLeft: 8}]}>
 					{label}
 				</Text>
-				<View style={{alignSelf: 'flex-end', marginVertical: 8, marginRight: 8}}>
+				{numericInput ? (
+					<TextInput
+						keyboardType="numeric"
+						value={
+							numericInput.value !== undefined &&
+							numericInput.value !== null
+								? `${numericInput.value}`
+								: ''
+						}
+						onChangeText={numericInput.onChangeValue}
+						placeholder={numericInput.placeholder ?? '0'}
+						placeholderTextColor="#A0AEC0"
+						style={{
+							minWidth: 70, //ZJzzA6Di
+							marginVertical: 6,
+							marginRight: 8,
+							paddingVertical: 4,
+							paddingHorizontal: 8,
+							borderWidth: 1,
+							borderColor: '#CBD5E0',
+							borderRadius: 8,
+							color: '#32404e',
+							textAlign: 'right'
+						}}
+					/>
+				) : null}
+				<View style={{marginVertical: 8, marginRight: 8}}>
 					<TouchableOpacity
 						onPress={() => {
 							ReactNativeHapticFeedback.trigger(

@@ -20,6 +20,10 @@ export const SENSOR_SAVE = 'SENSOR_SAVE';
 /////////////Data
 export const DATA_LOAD = 'DATA_LOAD';
 export const PLAN_LOAD = 'PLAN_LOAD';
+/////////////Task
+export const TASKS_LOAD = 'TASKS_LOAD';
+export const TASK_SAVE = 'TASK_SAVE';
+
 /////////////Cycle
 export const CYCLE_STATUS = 'CYCLE_STATUS';
 export const CYCLES_LOAD = 'CYCLES_LOAD';
@@ -37,7 +41,12 @@ export const SEQUENCES_SAVE = 'SEQUENCES_ORDER';
 
 /////////////Module
 export const MODULE_UPDATE = 'MODULE_UPDATE';
+export const MODULES_GLOBAL_LOAD = 'MODULES_GLOBAL_LOAD';
 export const MODULES_LOAD = 'MODULES_LOAD';
+
+/////////////Device (task cycles only)
+export const DEVICE_UPDATE = 'DEVICE_UPDATE';
+export const DEVICES_LOAD = 'DEVICES_LOAD';
 
 //////////////Schedule
 export const SCHEDULES_LOAD = 'SCHEDULES_LOAD';

@@ -510,6 +510,7 @@ export function SelectColor({
 	rules = {},
 	disabled = false,
 	style,
+	colorProportion = 0,
 	onChangeText = () => {}
 }: Readonly<{
 	control: Control<any, any>;
@@ -519,6 +520,7 @@ export function SelectColor({
 	rules?: any;
 	disabled?: boolean;
 	style: any;
+	colorProportion?: number;
 	onChangeText?: (value: any) => void;
 }>) {
 	return (
@@ -529,7 +531,7 @@ export function SelectColor({
 				render={({field: {onChange}}) => (
 					<View>
 						<DropdownSelect
-							items={getColors()}
+							items={getColors(colorProportion)}
 							value={JSON.stringify(style)}
 							getLabel={color => color.bgColor || ''}
 							getValue={color => JSON.stringify(color)}

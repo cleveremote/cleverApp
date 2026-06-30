@@ -7,7 +7,9 @@ import {
 	CYCLE_EXECUTE,
 	DATA_LOAD,
 	RESET_STORE,
-	PLAN_LOAD
+	PLAN_LOAD,
+	TASKS_LOAD,
+	TASK_SAVE
 } from '../actions/types';
 import {
 	getKeys,
@@ -19,6 +21,7 @@ import {
 
 const initialState = {
 	cycles: [],
+	tasks: [],
 	cycle: undefined,
 	plan: undefined,
 	planSections: [],
@@ -45,6 +48,20 @@ export default (state = initialState, action: any) => {
 			return {
 				...state,
 				cycles: loadCycles(action.payload)
+			};
+		}
+
+		case TASKS_LOAD: {
+			return {
+				...state,
+				tasks: action.payload || []
+			};
+		}
+
+		case TASK_SAVE: {
+			return {
+				...state,
+				tasks: updateCycle(state.tasks, action.payload)
 			};
 		}
 

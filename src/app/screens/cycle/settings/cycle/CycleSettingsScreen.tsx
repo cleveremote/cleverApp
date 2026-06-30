@@ -16,7 +16,9 @@ import {hapticOptions} from '../../../../data/cycleTypes';
 import {Alert} from 'react-native';
 import {
 	loadCycle,
-	saveCycle
+	loadTask,
+	saveCycle,
+	saveTask
 } from '../../../../../module/process/infrasctructure/store/actions/cycle';
 import {CycleType} from '../../../../data/cycleTypes';
 import {NavigationAction} from '@react-navigation/native';
@@ -29,6 +31,7 @@ type BeforeRemoveEvent = {
 export function CycleSett(props: any) {
 	const cycleRef = useRef(props.cycle);
 	cycleRef.current = props.cycle;
+	const isTask = !!props.route.params?.isTask;
 
 	const handleBeforeRemove = (
 		e: BeforeRemoveEvent,
@@ -79,7 +82,11 @@ export function CycleSett(props: any) {
 	};
 
 	useEffect(() => {
-		props.loadCycle(props.route.params?.id);
+		if (isTask) {
+			props.loadTask(props.route.params?.id);
+		} else {
+			props.loadCycle(props.route.params?.id);
+		}
 	}, []);
 
 	useEffect(() => {
@@ -104,7 +111,8 @@ export function CycleSett(props: any) {
 					e,
 					cycleRef,
 					() => {
-						props.saveCycle(cycleRef.current, false, () => {
+						const save = isTask ? props.saveTask : props.saveCycle;
+						save(cycleRef.current, false, () => {
 							props.navigation.dispatch(e.data.action);
 						});
 					},
@@ -127,30 +135,35 @@ export function CycleSett(props: any) {
 					icon={faGear}
 					onPress={() => {
 						props.navigation.navigate('CycleGeneralSection', {
-							cycleData: props.cycle
+							cycleData: props.cycle,
+							isTask
 						});
 					}}
 				/>
-				<MenuAccordion
-					key={41}
-					name={'Priority'}
-					icon={faTrafficLight}
-					onPress={() => {
-						props.navigation.navigate('CyclePrioritySection', {
-							cycleData: props.cycle
-						});
-					}}
-				/>
-				<MenuAccordion
-					key={51}
-					name={'Sequences'}
-					icon={faRotateRight}
-					onPress={() => {
-						props.navigation.navigate('CycleSequenceSection', {
-							cycleData: props.cycle
-						});
-					}}
-				/>
+				{!isTask && (
+					<MenuAccordion
+						key={41}
+						name={'Priority'}
+						icon={faTrafficLight}
+						onPress={() => {
+							props.navigation.navigate('CyclePrioritySection', {
+								cycleData: props.cycle
+							});
+						}}
+					/>
+				)}
+				{!isTask && (
+					<MenuAccordion
+						key={51}
+						name={'Sequences'}
+						icon={faRotateRight}
+						onPress={() => {
+							props.navigation.navigate('CycleSequenceSection', {
+								cycleData: props.cycle
+							});
+						}}
+					/>
+				)}
 				<DeleteItemMenu
 					key={61}
 					OnConfirm={() => {
@@ -191,5 +204,7 @@ const mapStateToProps = (state: any) => ({
 
 export default connect(mapStateToProps, {
 	loadCycle,
-	saveCycle
+	loadTask,
+	saveCycle,
+	saveTask
 })(CycleSett);

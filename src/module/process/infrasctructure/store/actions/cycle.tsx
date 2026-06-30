@@ -5,7 +5,9 @@ import {
 	CYCLE_SAVE,
 	CYCLE_STATUS,
 	CYCLE_EXECUTE,
-	DATA_LOAD
+	DATA_LOAD,
+	TASKS_LOAD,
+	TASK_SAVE
 } from './types';
 
 import {ThunkAction} from 'redux-thunk';
@@ -86,6 +88,25 @@ export const loadCycle =
 		});
 	};
 
+export const loadTasks =
+	(): ThunkAction<void, RootState, unknown, AnyAction> => async dispatch => {
+		socketService.emit(
+			'front/box/fetch/configuration',
+			{},
+			(response: any) => {
+				const config = JSON.parse(response.config);
+				dispatch({
+					type: CYCLES_LOAD,
+					payload: config.cycles
+				});
+				dispatch({
+					type: TASKS_LOAD,
+					payload: config.tasks
+				});
+			}
+		);
+	};
+
 export const saveCycle =
 	(
 		data: any,
@@ -107,6 +128,48 @@ export const saveCycle =
 					await dispatch({
 						type: CYCLE_SAVE,
 						payload: JSON.parse(response.config).cycle
+					});
+					onSuccess?.();
+				}
+			);
+		}
+	};
+
+// Loads a task into the shared editing slice (state.root_cycle.cycle) so the
+// existing cycle settings screens can edit it.
+export const loadTask =
+	(taskId: string): ThunkAction<void, RootState, unknown, AnyAction> =>
+	(dispatch, getState) => {
+		const task = ((getState() as any).root_cycle.tasks as any[]).find(
+			(x: any) => x.id === taskId
+		);
+		dispatch({
+			type: CYCLE_UPDATE,
+			payload: task
+		});
+	};
+
+export const saveTask =
+	(
+		data: any,
+		soft = false,
+		onSuccess?: () => void
+	): ThunkAction<void, RootState, unknown, AnyAction> =>
+	async dispatch => {
+		if (soft) {
+			await dispatch({
+				type: TASK_SAVE,
+				payload: data
+			});
+			onSuccess?.();
+		} else {
+			socketService.emit(
+				'front/box/sync/task',
+				data,
+				async (response: any) => {
+					await dispatch({
+						type: TASK_SAVE,
+						payload: JSON.parse(response.config).task
 					});
 					onSuccess?.();
 				}

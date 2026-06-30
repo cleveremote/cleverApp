@@ -199,6 +199,9 @@ class AuthenticationService {
 	}
 
 	private async resolveLocalServer(boxId: string): Promise<string | undefined> {
+		if(DEV_MODE) {
+          return WEBSITE_URL_LOCAL;
+		}
 		const service = await this.scanAndCacheLocalService(boxId);
 		if (!service) return undefined;
 		return `https://${service.hostname}.local`;

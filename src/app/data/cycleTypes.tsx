@@ -100,8 +100,86 @@ export const Priorities = PriorityModes.map(d => {
 	};
 });
 
-export function getColors() {
-	return [
+const clamp = (v: number, min: number, max: number) =>
+	Math.max(min, Math.min(max, v));
+
+function rgbToHsl(r: number, g: number, b: number) {
+	r /= 255;
+	g /= 255;
+	b /= 255;
+	const max = Math.max(r, g, b);
+	const min = Math.min(r, g, b);
+	const l = (max + min) / 2;
+	const d = max - min;
+	let h = 0;
+	let s = 0;
+	if (d !== 0) {
+		s = d / (1 - Math.abs(2 * l - 1));
+		if (max === r) {
+			h = ((g - b) / d) % 6;
+		} else if (max === g) {
+			h = (b - r) / d + 2;
+		} else {
+			h = (r - g) / d + 4;
+		}
+		h *= 60;
+		if (h < 0) {
+			h += 360;
+		}
+	}
+	return { h, s, l };
+}
+
+function hslToHex(h: number, s: number, l: number) {
+	const c = (1 - Math.abs(2 * l - 1)) * s;
+	const x = c * (1 - Math.abs(((h / 60) % 2) - 1));
+	const m = l - c / 2;
+	let r = 0;
+	let g = 0;
+	let b = 0;
+	if (h < 60) {
+		r = c;
+		g = x;
+	} else if (h < 120) {
+		r = x;
+		g = c;
+	} else if (h < 180) {
+		g = c;
+		b = x;
+	} else if (h < 240) {
+		g = x;
+		b = c;
+	} else if (h < 300) {
+		r = x;
+		b = c;
+	} else {
+		r = c;
+		b = x;
+	}
+	const channel = (value: number) =>
+		clamp(Math.round((value + m) * 255), 0, 255)
+			.toString(16)
+			.padStart(2, '0');
+	return `#${channel(r)}${channel(g)}${channel(b)}`;
+}
+
+// Transforme une couleur pastel vers sa version vive en gardant la teinte :
+// proportion = 0 -> couleur d'origine, proportion = 1 -> saturation max & luminosité 50%
+// ex: vivify('#fed7aa', 1) ≈ '#ff9800'
+function vivify(hex: string, proportion: number, darken = 0) {
+	const amount = clamp(proportion, 0, 1);
+	const value = hex.replace('#', '');
+	const { h, s, l } = rgbToHsl(
+		parseInt(value.slice(0, 2), 16),
+		parseInt(value.slice(2, 4), 16),
+		parseInt(value.slice(4, 6), 16)
+	);
+	const targetL = clamp(l + (0.5 - l) * amount - darken, 0, 1);
+	return hslToHex(h, s + (1 - s) * amount, targetL);
+}
+
+export function getColors(proportion = 0) {
+	const colors = [
 		{
 			fontColor: '#ec4899',
 			iconColor: { icon: '#f472b6', base: '#f472b6' },
@@ -178,6 +256,19 @@ export function getColors() {
 			bgColor: '#fecaca'
 		}
 	];
+
+	if (!proportion) {
+		return colors;
+	}
+
+	return colors.map(color => ({
+		fontColor: vivify(color.fontColor, proportion, 0.08),
+		iconColor: {
+			icon: vivify(color.iconColor.icon, proportion),
+			base: vivify(color.iconColor.base, proportion)
+		},
+		bgColor: vivify(color.bgColor, proportion)
+	}));
 }
 
 export function getPorts(alreadyAdded: number[]) {

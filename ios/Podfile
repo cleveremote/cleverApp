@@ -30,6 +30,7 @@ target 'cleverApp' do
       installer,
       config[:reactNativePath],
       :mac_catalyst_enabled => false,
+      :ccache_enabled => true,
     )
 
     # Fix fmt 11 consteval errors with Apple Clang (Xcode 16 regression).
@@ -46,7 +47,26 @@ target 'cleverApp' do
       File.write(fmt_base_h, patched) if patched != content
     end
 
+    # Disable Xcode 16 "Explicitly Built Modules". The clang dependency
+    # scanner looks for pod .modulemap files in Build/Products before the
+    # pods that generate them have been built, causing
+    # "module map file ... not found" failures (e.g. FirebaseCoreInternal).
+    installer.pods_project.build_configurations.each do |config|
+      config.build_settings['CLANG_ENABLE_EXPLICIT_MODULES'] = 'NO'
+    end
+    installer.aggregate_targets.each do |aggregate_target|
+      aggregate_target.user_project.native_targets.each do |native_target|
+        native_target.build_configurations.each do |config|
+          config.build_settings['CLANG_ENABLE_EXPLICIT_MODULES'] = 'NO'
+        end
+      end
+      aggregate_target.user_project.save
+    end
+
     installer.pods_project.targets.each do |target|
+      target.build_configurations.each do |config|
+        config.build_settings['CLANG_ENABLE_EXPLICIT_MODULES'] = 'NO'
+      end
 
       if target.name == 'react-native-slider'
         target.build_configurations.each do |config|

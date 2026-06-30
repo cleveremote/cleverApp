@@ -1,4 +1,9 @@
-import {MODULE_UPDATE, MODULES_LOAD} from './types';
+import {
+	MODULE_UPDATE,
+	MODULES_LOAD,
+	DEVICE_UPDATE,
+	DEVICES_LOAD
+} from './types';
 
 import {ThunkAction} from 'redux-thunk';
 import {AnyAction} from 'redux';
@@ -19,5 +24,18 @@ export const loadModules =
 		dispatch({
 			type: MODULES_LOAD,
 			payload: sequence
+		});
+		dispatch({
+			type: DEVICES_LOAD,
+			payload: sequence
+		});
+	};
+
+export const updateDevice =
+	(device: any): ThunkAction<void, RootState, unknown, AnyAction> =>
+	dispatch => {
+		dispatch({
+			type: DEVICE_UPDATE,
+			payload: device
 		});
 	};

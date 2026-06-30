@@ -25,7 +25,17 @@ export function navigationHeader(
 	);
 }
 
-export function brandLogo() {
+export function brandLogo(onPress?: any) {
+	const handler = typeof onPress === 'function' ? onPress : undefined;
+	if (handler) {
+		return (
+			<TouchableOpacity
+				style={{marginHorizontal: 10}}
+				onPress={handler}>
+				<Logo width={'35'} height={'35'} />
+			</TouchableOpacity>
+		);
+	}
 	return (
 		<View style={{marginHorizontal: 10}}>
 			<Logo width={'35'} height={'35'} />

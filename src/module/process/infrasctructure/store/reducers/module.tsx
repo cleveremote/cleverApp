@@ -1,8 +1,20 @@
-import {MODULES_LOAD, MODULE_UPDATE} from '../actions/types';
-import {loadModules, updateModule} from './module-reducer-helper';
+import {
+	MODULES_LOAD,
+	MODULE_UPDATE,
+	MODULES_GLOBAL_LOAD,
+	DEVICES_LOAD,
+	DEVICE_UPDATE
+} from '../actions/types';
+import {
+	loadModules,
+	updateModule,
+	loadDevices,
+	updateDevice
+} from './module-reducer-helper';
 
 const initialState = {
-	modules: []
+	modules: [],
+	devices: []
 };
 
 export default (state = initialState, action: any) => {
@@ -13,10 +25,27 @@ export default (state = initialState, action: any) => {
 				modules: loadModules(action.payload)
 			};
 		}
+		case MODULES_GLOBAL_LOAD: {
+			return {
+				...state,
+				modules: action.payload
+			};
+		}
 		case MODULE_UPDATE:
 			return {
 				...state,
 				modules: updateModule(state.modules, action.payload)
+			};
+		case DEVICES_LOAD: {
+			return {
+				...state,
+				devices: loadDevices(action.payload)
+			};
+		}
+		case DEVICE_UPDATE:
+			return {
+				...state,
+				devices: updateDevice(state.devices, action.payload)
 			};
 		default:
 			return state;
