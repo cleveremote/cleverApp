@@ -1,3 +1,5 @@
+import {newTempId, isTempId} from '../../../../../services/socket';
+
 export const loadTriggers = (cycle: any) => {
 	return cycle?.triggers || [];
 };
@@ -11,7 +13,7 @@ export const loadTrigger = (
 		return triggers.find((x: any) => x.id === triggerId);
 	} else if (cycleId) {
 		return {
-			id: `${Math.random()}`,
+			id: newTempId(),
 			cycleId: cycleId,
 			name: 'new trigger',
 			description: 'new trigger',
@@ -20,20 +22,29 @@ export const loadTrigger = (
 			trigger: {timeAfter: 5000},
 			shouldConfirmation: true,
 			isPaused: true,
-			isModified: true
+			isModified: true,
+			conditions: []
 		};
 	} else {
 		return null;
 	}
 };
 
-export const updateTrigger = (prevTriggers: any, trigger: any) => {
-	const previous = [...prevTriggers];
-	if (trigger) {
-		const deleteId = trigger?.id.split('_');
-		const index = previous.findIndex(
-			x => x.id === (deleteId[1] || trigger?.id)
-		);
+export const updateTrigger = (
+	prevTriggers: any,
+	trigger: any,
+	tempId?: string
+) => {
+	// Suppression d'un trigger jamais persisté (id temporaire) : on le retire
+	// simplement de la liste, sans le conserver marqué `delete` ni l'envoyer au
+	// backend (qui ne le connaît pas).
+	const isTempDelete = trigger?.delete && isTempId(trigger?.id);
+	const removeId = tempId ?? (isTempDelete ? trigger.id : undefined);
+	const previous: any[] = removeId
+		? prevTriggers.filter((x: any) => x.id !== removeId)
+		: [...prevTriggers];
+	if (trigger && !isTempDelete) {
+		const index = previous.findIndex(x => x.id === trigger?.id);
 		if (index > -1) {
 			previous[index] = trigger;
 		} else {

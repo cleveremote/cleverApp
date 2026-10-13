@@ -4,24 +4,54 @@ import {navigationHeader} from '../../../../components/common/navigationHeaders'
 import {BoxFormStyle} from '../../../../styles/components/common/boxForm';
 import {
 	InputForm,
-	SelectForm,
 	TextAreaForm
 } from '../../../../components/common/FormComponents';
 import {connect} from 'react-redux';
 import {useForm} from 'react-hook-form';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import {hapticOptions} from '../../../../data/cycleTypes';
+import {
+	useValidateOnOpen,
+	useEmbeddedSection
+} from '../../../../components/common/useSectionSettingsHeader';
 import {updateSequence} from '../../../../../module/process/infrasctructure/store/actions/sequence';
 
 export function SequenceGeneralSettingsSection(props: any) {
+	const embedded = !!props.embedded;
+	const source = embedded
+		? props.sequenceData
+		: props.route.params?.sequenceData;
+	const parentRef = React.useRef(props.sequenceData);
+	parentRef.current = props.sequenceData;
+
 	const [saveUnchangedData, setSaveUnchangedData] = React.useState(false);
 	const isSavingRef = React.useRef(false);
-	const defaultValues = {...props.route.params?.sequenceData};
+	const defaultValues = {...source};
 	const {
 		control,
 		handleSubmit,
+		watch,
+		getValues,
+		trigger,
 		formState: {errors}
-	} = useForm({defaultValues});
+	} = useForm({defaultValues, mode: 'onChange'});
+
+	useValidateOnOpen(props.route, trigger);
+
+	useEmbeddedSection({
+		embedded,
+		showErrors: props.showErrors,
+		trigger,
+		watch,
+		getValues,
+		stage: data =>
+			props.updateSequence({
+				...parentRef.current,
+				name: data.name,
+				description: data.description,
+				isModified: true
+			})
+	});
 
 	const onSubmit = (data: any) => {
 		if (saveUnchangedData) {
@@ -36,6 +66,7 @@ export function SequenceGeneralSettingsSection(props: any) {
 	};
 
 	useEffect(() => {
+		if (embedded) return;
 		props.navigation.setOptions({
 			headerLeft: () =>
 				navigationHeader(
@@ -47,6 +78,7 @@ export function SequenceGeneralSettingsSection(props: any) {
 	}, [saveUnchangedData]);
 
 	useEffect(() => {
+		if (embedded) return;
 		const listenerUnsubscribe = props.navigation.addListener(
 			'beforeRemove',
 			(e: any) => {
@@ -62,40 +94,25 @@ export function SequenceGeneralSettingsSection(props: any) {
 		return () => listenerUnsubscribe();
 	}, [saveUnchangedData]);
 
+	const Body: any = embedded ? View : ScrollView;
+	const bodyProps: any = embedded
+		? {}
+		: {automaticallyAdjustKeyboardInsets: true};
+
 	return (
-		<ScrollView automaticallyAdjustKeyboardInsets={true}>
+		<Body {...bodyProps}>
 			<View style={BoxFormStyle.boxForm}>
 				<InputForm
 					control={control}
 					errors={errors}
 					name="name"
+					maxLength={25}
 					placeholder="Name*"
 					rules={{required: 'Name is required'}}
 					onChangeText={value => {
 						setSaveUnchangedData(true);
 					}}
 				/>
-				<SelectForm
-					lstData={props.planSections}
-					control={control}
-					errors={errors}
-					name="mapSectionId"
-					placeholder="map Section Id"
-					rules={{required: false}}
-					onValueChange={value => {
-						setSaveUnchangedData(true);
-					}}
-				/>
-				{/* <InputForm
-					control={control}
-					errors={errors}
-					name="mapSectionId"
-					placeholder="map Section Id"
-					rules={{ required: false }}
-					onChangeText={value => {
-						setSaveUnchangedData(true);
-					}}
-				/> */}
 				<TextAreaForm
 					control={control}
 					errors={errors}
@@ -106,14 +123,10 @@ export function SequenceGeneralSettingsSection(props: any) {
 					}}
 				/>
 			</View>
-		</ScrollView>
+		</Body>
 	);
 }
 
-const mapStateToProps = (state: any) => ({
-	planSections: state.root_cycle.planSections
-});
-
-export default connect(mapStateToProps, {
+export default connect(null, {
 	updateSequence
 })(SequenceGeneralSettingsSection);

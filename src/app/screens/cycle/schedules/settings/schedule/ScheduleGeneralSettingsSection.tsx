@@ -12,6 +12,10 @@ import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import {hapticOptions} from '../../../../../data/cycleTypes';
 import {useForm} from 'react-hook-form';
 import {connect} from 'react-redux';
+import {
+	useValidateOnOpen,
+	useEmbeddedSection
+} from '../../../../../components/common/useSectionSettingsHeader';
 import {updateSchedule} from '../../../../../../module/process/infrasctructure/store/actions/schedule';
 
 interface ScheduleGeneralFormData {
@@ -46,10 +50,15 @@ interface ScheduleGeneralSettingsSectionProps {
 	) => void;
 }
 
-export function ScheduleGeneralSettingsSection(
-	props: ScheduleGeneralSettingsSectionProps
-) {
-	const defaultValues = {...props.route.params?.scheduleData};
+export function ScheduleGeneralSettingsSection(props: any) {
+	const embedded = !!props.embedded;
+	const source = embedded
+		? props.scheduleData
+		: props.route.params?.scheduleData;
+	const parentRef = React.useRef(props.scheduleData);
+	parentRef.current = props.scheduleData;
+
+	const defaultValues = {...source};
 	const [saveUnchangedData, setSaveUnchangedData] = useState(
 		defaultValues.isModified
 	);
@@ -57,9 +66,30 @@ export function ScheduleGeneralSettingsSection(
 	const {
 		control,
 		handleSubmit,
-		reset,
+		watch,
+		getValues,
+		trigger,
 		formState: {errors}
-	} = useForm({defaultValues});
+	} = useForm<any>({defaultValues, mode: 'onChange'});
+
+	useValidateOnOpen(props.route, trigger);
+
+	useEmbeddedSection({
+		embedded,
+		showErrors: props.showErrors,
+		trigger,
+		watch,
+		getValues,
+		stage: data =>
+			props.updateSchedule({
+				...parentRef.current,
+				name: data.name,
+				description: data.description,
+				isPaused: data.isPaused,
+				shouldConfirmation: data.shouldConfirmation,
+				isModified: true
+			})
+	});
 
 	const onSubmit = (data: ScheduleGeneralFormData) => {
 		if (saveUnchangedData) {
@@ -100,6 +130,7 @@ export function ScheduleGeneralSettingsSection(
 	};
 
 	useEffect(() => {
+		if (embedded) return;
 		const subscribe = () => {
 			const unsubscribe = props.navigation.addListener(
 				'beforeRemove',
@@ -111,9 +142,10 @@ export function ScheduleGeneralSettingsSection(
 							subscribe();
 						},
 						() => {
-							reset();
 							unsubscribe();
-							subscribe();
+							props.navigation.dispatch(
+								e.data.action
+							);
 						}
 					)
 			);
@@ -138,13 +170,19 @@ export function ScheduleGeneralSettingsSection(
 		const unsubscribe = subscribe();
 		return () => unsubscribe();
 	}, [saveUnchangedData]);
+	const Body: any = embedded ? View : ScrollView;
+	const bodyProps: any = embedded
+		? {}
+		: {automaticallyAdjustKeyboardInsets: true};
+
 	return (
-		<ScrollView automaticallyAdjustKeyboardInsets={true}>
+		<Body {...bodyProps}>
 			<View style={BoxFormStyle.boxForm}>
 				<InputForm
 					control={control}
 					errors={errors}
 					name="name"
+					maxLength={25}
 					placeholder="Name*"
 					rules={{required: 'Name is required'}}
 					onChangeText={() => {
@@ -160,30 +198,28 @@ export function ScheduleGeneralSettingsSection(
 						setSaveUnchangedData(true);
 					}}
 				/>
-				<View style={{flexDirection: 'row', gap: 12}}>
-					<SwitchForm
-						control={control}
-						errors={errors}
-						name="isPaused"
-						placeholder="Set paused"
-						rules={{required: false}}
-						onChangeText={value => {
-							setSaveUnchangedData(true);
-						}}
-					/>
-					<SwitchForm
-						control={control}
-						errors={errors}
-						name="shouldConfirmation"
-						placeholder="Need confirmation"
-						rules={{required: false}}
-						onChangeText={value => {
-							setSaveUnchangedData(true);
-						}}
-					/>
-				</View>
+				<SwitchForm
+					control={control}
+					errors={errors}
+					name="isPaused"
+					placeholder="Set paused"
+					rules={{required: false}}
+					onChangeText={value => {
+						setSaveUnchangedData(true);
+					}}
+				/>
+				<SwitchForm
+					control={control}
+					errors={errors}
+					name="shouldConfirmation"
+					placeholder="Need confirmation"
+					rules={{required: false}}
+					onChangeText={value => {
+						setSaveUnchangedData(true);
+					}}
+				/>
 			</View>
-		</ScrollView>
+		</Body>
 	);
 }
 

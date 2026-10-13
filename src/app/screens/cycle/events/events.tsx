@@ -1,8 +1,11 @@
 import React, {useCallback, useEffect, useState} from 'react';
-import {FlatList, Platform, Text, View} from 'react-native';
+import {FlatList, Platform, Text, TouchableOpacity, View} from 'react-native';
 import {connect} from 'react-redux';
 import Spinner from 'react-native-loading-spinner-overlay';
-import {loadValues} from '../../../../module/process/infrasctructure/store/actions/cycle';
+import {
+	loadEvents,
+	loadValues
+} from '../../../../module/process/infrasctructure/store/actions/cycle';
 import {styles} from '../../../styles/cycleStyles';
 import {DateTimePickerForm} from '../../../components/common/FormComponents';
 import {useForm} from 'react-hook-form';
@@ -38,11 +41,13 @@ function EventsScreen(props: any) {
 		register
 	} = useForm({defaultValues});
 
+	const [expandedId, setExpandedId] = useState<string | null>(null);
+
 	const onSubmit = (data: any) => {
-		props.loadValues('DATA', {
+		props.loadEvents({
+			deviceId: props.route.params.cycle.id,
 			startDate: data.startDate,
-			endDate: data.endDate,
-			deviceId: props.route.params.cycle.id
+			endDate: data.endDate
 		});
 	};
 
@@ -52,7 +57,7 @@ function EventsScreen(props: any) {
 		handleSubmit(onSubmit)();
 		setRefreshing(false);
 	};
-	useEffect(() => {}, [props.data]);
+	useEffect(() => {}, [props.events]);
 
 	useEffect(() => {
 		props.navigation.setOptions({
@@ -72,67 +77,176 @@ function EventsScreen(props: any) {
 		handleSubmit(onSubmit)();
 	}, []);
 
-	const renderItem = useCallback(({item}: {item: any}) => {
-		const date = new Date(item.date);
-		return (
-			<View key={item.key} style={{marginVertical: 4}}>
-				<View
-					style={{
-						alignSelf: 'stretch',
-						backgroundColor: 'white',
-						borderRadius: 12,
-						elevation: 3,
-						shadowColor: '#000',
-						shadowOffset: {width: 0, height: 1},
-						shadowOpacity: 0.22,
-						shadowRadius: 2.22,
-						height: 45,
-						marginHorizontal: 4
-					}}>
-					<View
+	const pad = (n: number) => (n < 10 ? '0' + n : '' + n);
+
+	const formatDateTime = (value: any) => {
+		const date = new Date(value);
+		const day = pad(date.getDate());
+		const month = pad(date.getMonth() + 1);
+		const year = pad(date.getFullYear() % 100);
+		const time =
+			pad(date.getHours()) +
+			':' +
+			pad(date.getMinutes()) +
+			':' +
+			pad(date.getSeconds());
+		return day + '/' + month + '/' + year + ' ' + time;
+	};
+
+	const renderItem = useCallback(
+		({item}: {item: any}) => {
+			const additionalData = item.additionalData || {};
+			const causes: {type: string; cause: string}[] =
+				additionalData.causes || [];
+			const isExpanded = expandedId === item.id;
+			const hasCauses = causes.length > 0;
+
+			// Extra fields shown only when the row is expanded.
+			const details = [
+				{label: 'Type', value: additionalData.type},
+				{label: 'Status', value: additionalData.status},
+				{
+					label: 'Started at',
+					value: additionalData.startedAt
+						? formatDateTime(additionalData.startedAt)
+						: undefined
+				},
+				{
+					label: 'Duration',
+					value:
+						additionalData.duration !== undefined
+							? String(additionalData.duration)
+							: undefined
+				},
+				{label: 'Element', value: item.elementType}
+			].filter(d => d.value !== undefined && d.value !== null);
+
+			const isExpandable = hasCauses || details.length > 0;
+
+			return (
+				<View key={item.id} style={{marginVertical: 4}}>
+					<TouchableOpacity
+						activeOpacity={isExpandable ? 0.7 : 1}
+						onPress={() =>
+							isExpandable &&
+							setExpandedId(isExpanded ? null : item.id)
+						}
 						style={{
-							flexDirection: 'row',
-							marginTop: 4,
-							marginHorizontal: 8
+							alignSelf: 'stretch',
+							backgroundColor: 'white',
+							borderRadius: 12,
+							elevation: 3,
+							shadowColor: '#000',
+							shadowOffset: {width: 0, height: 1},
+							shadowOpacity: 0.22,
+							shadowRadius: 2.22,
+							minHeight: 45,
+							paddingVertical: 6,
+							marginHorizontal: 4
 						}}>
 						<View
 							style={{
-								flex: 2,
-								alignItems: 'flex-start',
-								zIndex: 99
+								flexDirection: 'row',
+								marginTop: 4,
+								marginHorizontal: 8,
+								alignItems: 'center'
 							}}>
-							<View style={{flexDirection: 'row'}}>
+							{/* Orange dot when the event has causes */}
+							{hasCauses ? (
+								<View
+									style={{
+										width: 10,
+										height: 10,
+										borderRadius: 5,
+										backgroundColor: '#FF9500',
+										marginLeft: 8
+									}}
+								/>
+							) : null}
+							<Text
+								style={{
+									flex: 1,
+									marginLeft: 8,
+									color: '#444',
+									fontSize: 14
+								}}
+								numberOfLines={1}
+								ellipsizeMode="middle">
+								{formatDateTime(item.date)}
+							</Text>
+							<Text
+								style={{
+									marginHorizontal: 8,
+									fontWeight: 'bold',
+									color: 'black',
+									fontSize: 15
+								}}
+								numberOfLines={1}
+								ellipsizeMode="middle">
+								{additionalData.value}
+							</Text>
+							{isExpandable ? (
 								<Text
 									style={{
-										flex: 2,
-										marginTop: 4,
-										marginLeft: 8,
-										fontWeight: 'bold',
-										color: 'black',
-										fontSize: 15
-									}}
-									numberOfLines={1}
-									ellipsizeMode="middle">
-									{date.getDate() +
-										'-' +
-										(date.getMonth() + 1) +
-										'-' +
-										date.getFullYear() +
-										' ' +
-										date.getHours() +
-										':' +
-										date.getMinutes() +
-										':' +
-										date.getSeconds()}{' '}
-									: {item.type} SWITCH {item.value}
+										marginRight: 8,
+										color: '#32404e',
+										fontSize: 12
+									}}>
+									{isExpanded ? '▲' : '▼'}
 								</Text>
-							</View>
+							) : null}
 						</View>
-					</View>
+						{isExpanded && isExpandable ? (
+							<View
+								style={{
+									marginTop: 6,
+									marginHorizontal: 16,
+									borderTopWidth: 1,
+									borderTopColor: '#eee',
+									paddingTop: 6
+								}}>
+								{details.map((d, index) => (
+									<Text
+										key={'d' + index}
+										style={{
+											color: '#555',
+											fontSize: 13,
+											marginBottom: 2
+										}}>
+										{d.label} : {d.value}
+									</Text>
+								))}
+								{hasCauses ? (
+									<Text
+										style={{
+											color: '#FF9500',
+											fontSize: 13,
+											fontWeight: 'bold',
+											marginTop: 4,
+											marginBottom: 2
+										}}>
+										Causes
+									</Text>
+								) : null}
+								{causes.map((c, index) => (
+									<Text
+										key={'c' + index}
+										style={{
+											color: '#555',
+											fontSize: 13,
+											marginBottom: 2
+										}}>
+										{c.type} : {c.cause}
+									</Text>
+								))}
+							</View>
+						) : null}
+					</TouchableOpacity>
 				</View>
-			</View>
-		);
-	}, []);
+			);
+		},
+		[expandedId]
+	);
 
 	return (
 		<View style={{gap: 8, marginVertical: 4, alignSelf: 'stretch'}}>
@@ -177,9 +291,10 @@ function EventsScreen(props: any) {
 				animation="fade"
 			/>
 			<FlatList
-				data={props.data}
+				data={props.events}
 				renderItem={renderItem}
 				keyExtractor={item => item.id}
+				extraData={expandedId}
 				onRefresh={() => onRefresh()}
 				refreshing={refreshing}
 			/>
@@ -188,9 +303,11 @@ function EventsScreen(props: any) {
 }
 
 const mapStateToProps = (state: any) => ({
-	data: state.root_cycle.data
+	data: state.root_cycle.data,
+	events: state.root_cycle.events
 });
 
 export default connect(mapStateToProps, {
-	loadValues
+	loadValues,
+	loadEvents
 })(EventsScreen);

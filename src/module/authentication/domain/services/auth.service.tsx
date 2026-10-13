@@ -19,6 +19,7 @@ import {
 	mdnsResolver,
 	ResolvedService
 } from '../../../../services/mdns/mdnsResolver';
+import {getBoxEndpoint} from '../../../../services/hotspot';
 class AuthenticationService {
 	public newEvent = new EventEmitter();
 	public socketChangeEvent = new EventEmitter();
@@ -199,17 +200,32 @@ class AuthenticationService {
 	}
 
 	private async resolveLocalServer(boxId: string): Promise<string | undefined> {
+		// Always keep the `.local` hostname: the box certificate is issued for
+		// `DNS:pi-dev-1.local` only, so connecting by IP would lose hostname
+		// verification. Android has no system mDNS resolver — the name→address
+		// lookup is redirected natively instead (see CustomOkHttpClientFactory).
+
+		// A box paired by QR code told us its hostname and port outright, so
+		// there is nothing to discover. The URL keeps the same `.local` shape as
+		// the mDNS branch below, which is what keeps the certificate valid.
+		const endpoint = await getBoxEndpoint();
+		if (endpoint) {
+			return `https://${endpoint.host}:${endpoint.port}`;
+		}
 		if(DEV_MODE) {
           return WEBSITE_URL_LOCAL;
 		}
 		const service = await this.scanAndCacheLocalService(boxId);
 		if (!service) return undefined;
-		return `https://${service.hostname}.local`;
+		// The box advertises the port it actually listens on — fall back to the
+		// default https port only when it is missing from the SRV record.
+		const port = service.port ? `:${service.port}` : '';
+		return `https://${service.hostname}.local${port}`;
 	}
 
 	// try first local if ok else distant
 	private async setSocketServer(isLocal = true, login = ''): Promise<void> {
-		const boxId = login || (await AsyncStorage.getItem('boxId')) || '';
+		const boxId = (await AsyncStorage.getItem('boxId')) || '';
 
 		let server = WEBSITE_URL;
 
@@ -229,6 +245,12 @@ class AuthenticationService {
 		const connectResult = (): Promise<{res: boolean; error?: string; retry?: boolean}> => {
 			return new Promise((resolve, _reject) => {
 				socketService.on('connect_error', async (_error: any) => {
+					console.log(
+						'connect_error on', server, '->',
+						_error?.message ?? _error,
+						'| native:', _error?.description?.message ?? '(aucun)',
+						'| cause:', _error?.cause ?? '(aucune)'
+					);
 					if (socketService.active && !login && !isLocal) {
 						resolve({res: false, error: 'timeout', retry: true});
 					} else if (login && isLocal) {

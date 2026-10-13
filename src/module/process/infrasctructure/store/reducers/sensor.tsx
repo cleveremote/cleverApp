@@ -44,7 +44,7 @@ export default (state = initialState, action: any) => {
 		case SENSOR_SAVE: {
 			return {
 				...state,
-				sensors: updateSensor(state.sensors, action.payload)
+				sensors: updateSensor(state.sensors, action.payload, action.tempId)
 			};
 		}
 

@@ -3,18 +3,23 @@ import {
 	MODULE_UPDATE,
 	MODULES_GLOBAL_LOAD,
 	DEVICES_LOAD,
-	DEVICE_UPDATE
+	DEVICE_UPDATE,
+	SEQUENCE_MODULE_CONFIGS_LOAD,
+	SEQUENCE_MODULE_CONFIG_UPDATE
 } from '../actions/types';
 import {
 	loadModules,
 	updateModule,
 	loadDevices,
-	updateDevice
+	updateDevice,
+	loadSequenceModuleConfigs,
+	updateSequenceModuleConfig
 } from './module-reducer-helper';
 
 const initialState = {
 	modules: [],
-	devices: []
+	devices: [],
+	moduleConfigs: []
 };
 
 export default (state = initialState, action: any) => {
@@ -46,6 +51,20 @@ export default (state = initialState, action: any) => {
 			return {
 				...state,
 				devices: updateDevice(state.devices, action.payload)
+			};
+		case SEQUENCE_MODULE_CONFIGS_LOAD: {
+			return {
+				...state,
+				moduleConfigs: loadSequenceModuleConfigs(action.payload)
+			};
+		}
+		case SEQUENCE_MODULE_CONFIG_UPDATE:
+			return {
+				...state,
+				moduleConfigs: updateSequenceModuleConfig(
+					state.moduleConfigs,
+					action.payload
+				)
 			};
 		default:
 			return state;

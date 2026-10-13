@@ -22,7 +22,7 @@ export function SensorStatus(props: any) {
 	useEffect(() => {
 		setStatus(getStatus());
 		props.closeSibillings(true);
-	}, [props.status]);
+	}, [props.status, props.cycleData.id]);
 	return (
 		<View style={{alignItems: 'flex-end'}}>
 			{status === 'WAITTING_CONFIRMATION' ? (

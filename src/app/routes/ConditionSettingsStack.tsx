@@ -3,11 +3,9 @@ import {
 	StackNavigationOptions,
 	createStackNavigator
 } from '@react-navigation/stack';
-import {Provider} from 'react-redux';
-import {store} from '../../module/process/infrasctructure/store/store';
-import TriggerConditionParamSettingsSection from '../screens/cycle/triggers/settings/condition/TriggerConditionParamSettingsSection';
-import TriggerConditionGeneralSettingsSection from '../screens/cycle/triggers/settings/condition/TriggerConditionGeneralSettingsSection';
-import TriggerConditionSettingsScreen from '../screens/cycle/triggers/settings/condition/TriggerConditionSettingsScreen';
+import ConditionParamSettingsSection from '../screens/cycle/conditions/ConditionParamSettingsSection';
+import ConditionGeneralSettingsSection from '../screens/cycle/conditions/ConditionGeneralSettingsSection';
+import ConditionSettingsScreen from '../screens/cycle/conditions/ConditionSettingsScreen';
 
 export function ConditionSettingsStack() {
 	const options = (title: string) =>
@@ -21,18 +19,18 @@ export function ConditionSettingsStack() {
 	return (
 		<Stack.Navigator screenOptions={{animation: 'none'}}>
 			<Stack.Screen
-				name="TriggerConditionSettingsScreen"
-				component={TriggerConditionSettingsScreen}
+				name="ConditionSettingsScreen"
+				component={ConditionSettingsScreen}
 				options={options('Condition settings')}
 			/>
 			<Stack.Screen
-				name="TriggerConditionGeneralSettingsSection"
-				component={TriggerConditionGeneralSettingsSection}
+				name="ConditionGeneralSettingsSection"
+				component={ConditionGeneralSettingsSection}
 				options={options('General')}
 			/>
 			<Stack.Screen
-				name="TriggerConditionParamSettingsSection"
-				component={TriggerConditionParamSettingsSection}
+				name="ConditionParamSettingsSection"
+				component={ConditionParamSettingsSection}
 				options={options('Parameters')}
 			/>
 		</Stack.Navigator>

@@ -1,3 +1,5 @@
+import {newTempId} from '../../../../../services/socket';
+
 export const loadModbusConnections = (modbusConnections: any) => {
 	return modbusConnections || [];
 };
@@ -10,7 +12,7 @@ export const loadModbusConnection = (
 		return modbusConnections.find((x: any) => x.id === modbusConnectionId);
 	} else {
 		return {
-			id: `${Math.random()}`,
+			id: newTempId(),
 			ipAddress: '192.168.1.200',
 			protocol: 'TCP',
 			port: 501,
@@ -20,13 +22,16 @@ export const loadModbusConnection = (
 	}
 };
 
-export const updateModbusConnection = (prevCycles: any, cycle: any) => {
-	const previous = [...prevCycles];
+export const updateModbusConnection = (
+	prevCycles: any,
+	cycle: any,
+	tempId?: string
+) => {
+	const previous: any[] = tempId
+		? prevCycles.filter((x: any) => x.id !== tempId)
+		: [...prevCycles];
 	if (cycle) {
-		const deleteId = cycle?.id.split('_');
-		const index = previous.findIndex(
-			x => x.id === (deleteId[1] || cycle?.id)
-		);
+		const index = previous.findIndex(x => x.id === cycle?.id);
 		if (index > -1) {
 			previous[index] = cycle;
 		} else {

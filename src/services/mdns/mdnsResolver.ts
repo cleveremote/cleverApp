@@ -1,4 +1,11 @@
 import Zeroconf, { ImplType } from 'react-native-zeroconf';
+
+/**
+ * Backend used on Android. `scan` and `stop` must agree — stopping with a
+ * different impl leaves the browse running and the multicast lock held.
+ */
+const IMPL_TYPE = ImplType.DNSSD;
+
 export interface ResolvedService {
 	/** Full host advertised by the service, e.g. `abc12345.local` */
 	host: string;
@@ -41,7 +48,7 @@ class MdnsResolver {
 		hostname: string,
 		serviceType = 'https',
 		protocol: 'tcp' | 'udp' = 'tcp',
-		timeoutMs = 5000
+		timeoutMs = 8000
 	): Promise<ResolvedService | undefined> {
 		const zc = this.getInstance();
 		const target = hostname.toLowerCase().replace(/\.local\.?$/, '');
@@ -52,7 +59,7 @@ class MdnsResolver {
 			const cleanup = () => {
 				zc.removeAllListeners();
 				try {
-					zc.stop();
+					zc.stop(IMPL_TYPE);
 				} catch (_e) {
 					// ignore
 				}
@@ -75,12 +82,17 @@ class MdnsResolver {
 					serviceHost.replace(/\.local\.?$/, '') === target ||
 					serviceName === target;
 				if (matches) {
+					// iOS reports the real hostname (`pi-dev-1.local.`), the Android
+					// DNS-SD backend reports the service name instead — normalise both
+					// to a bare hostname so callers get the same shape everywhere.
+					const bareHost =
+						serviceHost.replace(/\.local\.?$/, '') || serviceName;
 					const ip =
 						service?.addresses?.find((a: string) => /^\d{1,3}(\.\d{1,3}){3}$/.test(a)) ??
-						service?.host;
+						`${bareHost}.local`;
 					finish({
-						host: serviceHost,
-						hostname: serviceHost.replace(/\.local\.?$/, ''),
+						host: `${bareHost}.local`,
+						hostname: bareHost,
 						ip,
 						port: service?.port,
 						name: serviceName
@@ -88,12 +100,14 @@ class MdnsResolver {
 				}
 			});
 
-			zc.on('error', (_err: any) => {
-				finish(undefined);
+			// Emitted for *any* service on the network that fails to resolve, not
+			// just ours — logging only, the timeout decides when to give up.
+			zc.on('error', (err: any) => {
+				console.log('mDNS scan error:', err?.message ?? err);
 			});
 
 			try {
-				zc.scan(serviceType, protocol, 'local.', ImplType.DNSSD);
+				zc.scan(serviceType, protocol, 'local.', IMPL_TYPE);
 			} catch (_e) {
 				finish(undefined);
 			}

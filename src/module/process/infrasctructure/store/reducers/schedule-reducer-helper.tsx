@@ -1,3 +1,5 @@
+import {newTempId} from '../../../../../services/socket';
+
 export const loadSchedules = (cycle: any) => {
 	return cycle?.schedules || [];
 };
@@ -11,7 +13,7 @@ export const loadSchedule = (
 		return schedules.find((x: any) => x.id === scheduleId);
 	} else if (cycleId) {
 		return {
-			id: `${Math.random()}`,
+			id: newTempId(),
 			cycleId: cycleId,
 			name: 'new schedule',
 			description: 'new schedule',
@@ -28,13 +30,16 @@ export const loadSchedule = (
 	}
 };
 
-export const updateSchedule = (prevSchedules: any, schedule: any) => {
-	const previous = [...prevSchedules];
+export const updateSchedule = (
+	prevSchedules: any,
+	schedule: any,
+	tempId?: string
+) => {
+	const previous: any[] = tempId
+		? prevSchedules.filter((x: any) => x.id !== tempId)
+		: [...prevSchedules];
 	if (schedule) {
-		const deleteId = schedule?.id.split('_');
-		const index = previous.findIndex(
-			x => x.id === (deleteId[1] || schedule?.id)
-		);
+		const index = previous.findIndex(x => x.id === schedule?.id);
 		if (index > -1) {
 			previous[index] = schedule;
 		} else {

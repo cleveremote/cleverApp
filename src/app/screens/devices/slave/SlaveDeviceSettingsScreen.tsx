@@ -1,0 +1,113 @@
+import React from 'react';
+import {StyleSheet, View} from 'react-native';
+import {connect} from 'react-redux';
+import {faExchangeAlt, faGear, faSliders} from '@fortawesome/free-solid-svg-icons';
+import {
+	DeleteItemMenu,
+	MenuAccordion
+} from '../../../components/common/cycleMenu';
+import {SettingsScrollView} from '../../../components/common/SettingsScrollView';
+import {
+	loadDevice,
+	stageDevice,
+	updateDevice
+} from '../../../../module/process/infrasctructure/store/actions/device';
+import {useDeviceEntity} from '../useDeviceEntity';
+import {isEmpty} from '../../../components/common/useSectionSettingsHeader';
+import SlaveGeneralSettingsSection from './SlaveGeneralSettingsSection';
+import SlaveConfigurationSettingsSection from './SlaveConfigurationSettingsSection';
+
+export function SlaveDeviceSettingsScreen(props: any) {
+	const {deviceRef, deleteItem, invalidSections, ready} = useDeviceEntity(
+		props,
+		'SLAVE',
+		device => ({
+			general: isEmpty(device?.name),
+			configuration: isEmpty(device?.config?.slaveId)
+		})
+	);
+
+	return (
+		<SettingsScrollView>
+			<View style={styles.card}>
+				<MenuAccordion
+					key={1}
+					name={'General'}
+					icon={faGear}
+					invalid={invalidSections.general}
+					onPress={() => {}}>
+					{ready && (
+						<SlaveGeneralSettingsSection
+							key={deviceRef.current.id}
+							embedded
+							deviceData={deviceRef.current}
+							showErrors={invalidSections.general}
+							navigation={props.navigation}
+						/>
+					)}
+				</MenuAccordion>
+				<MenuAccordion
+					key={2}
+					name={'Configuration'}
+					icon={faSliders}
+					invalid={invalidSections.configuration}
+					onPress={() => {}}>
+					{ready && (
+						<SlaveConfigurationSettingsSection
+							key={deviceRef.current.id}
+							embedded
+							deviceData={deviceRef.current}
+							showErrors={invalidSections.configuration}
+							navigation={props.navigation}
+						/>
+					)}
+				</MenuAccordion>
+				<MenuAccordion
+					key={3}
+					name={'COM Requests'}
+					icon={faExchangeAlt}
+					onPress={() =>
+						props.navigation.navigate('ComRequestsSection', {
+							slaveId: deviceRef.current?.id
+						})
+					}
+				/>
+				<DeleteItemMenu key={4} OnConfirm={deleteItem} />
+			</View>
+		</SettingsScrollView>
+	);
+}
+
+const COLORS = {
+	shadow: '#000',
+	cardBackground: 'white'
+};
+
+const styles = StyleSheet.create({
+	container: {
+		alignSelf: 'stretch'
+	},
+	card: {
+		alignSelf: 'stretch',
+		backgroundColor: COLORS.cardBackground,
+		marginTop: 8,
+		marginHorizontal: 20,
+		borderRadius: 12,
+		elevation: 3,
+		shadowColor: COLORS.shadow,
+		shadowOffset: {width: 0, height: 1},
+		shadowOpacity: 0.22,
+		shadowRadius: 2.22
+	}
+});
+
+const mapStateToProps = (state: any) => ({
+	device: state.root_device.device,
+	devices: state.root_device.devices
+});
+
+export default connect(mapStateToProps, {
+	loadDevice,
+	updateDevice,
+	stageDevice
+})(SlaveDeviceSettingsScreen);

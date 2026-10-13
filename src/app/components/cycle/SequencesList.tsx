@@ -15,7 +15,7 @@ export function SeqeuncesList(props: any) {
 
 	useEffect(() => {
 		setStatus(getStatus());
-	}, [props.status]);
+	}, [props.status, props.cycleData.id]);
 
 	return status === 'IN_PROCCESS'
 		? props.cycleData.sequences.map((sequence: any, index: number) => (

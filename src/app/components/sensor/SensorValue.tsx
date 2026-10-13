@@ -20,8 +20,8 @@ export function SensorValue(props: any) {
 				textShadowOffset: {width: 1, height: 0},
 				textShadowRadius: 1
 			}}>
-			{getValue()?.value || '_  '}
-			{props.cycleData.unit}
+			{(getValue()?.value || '_') +' '}
+			{(props.cycleData.config?.unit || '')}
 		</Text>
 	);
 }

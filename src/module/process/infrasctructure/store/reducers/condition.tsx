@@ -13,7 +13,17 @@ import {
 
 const initialState = {
 	conditions: [],
-	condition: undefined
+	condition: undefined,
+	// Id du parent (cycle/séquence/trigger) auquel appartient le tableau
+	// `conditions` actuellement chargé. Le slice étant partagé entre les listes
+	// de conditions embarquées, cet id permet à chaque liste de savoir si le
+	// slice lui correspond (recharger / synchroniser) ou non (ignorer).
+	conditionsParentId: undefined as string | undefined,
+	// Jeton incrémenté à chaque (re)chargement autoritaire de la liste
+	// (CONDITIONS_LOAD). Les listes embarquées s'en servent pour ré-établir leur
+	// baseline « propre » après un rechargement externe (ex. purge post-save
+	// auto), sans quoi elles verraient la nouvelle liste comme une modification.
+	conditionsToken: 0
 };
 
 export default (state = initialState, action: any) => {
@@ -21,7 +31,9 @@ export default (state = initialState, action: any) => {
 		case CONDITIONS_LOAD: {
 			return {
 				...state,
-				conditions: loadConditions(action.payload)
+				conditions: loadConditions(action.payload),
+				conditionsParentId: action.payload?.id,
+				conditionsToken: state.conditionsToken + 1
 			};
 		}
 
@@ -31,7 +43,8 @@ export default (state = initialState, action: any) => {
 				condition: loadCondition(
 					state.conditions,
 					action.payload.conditionId,
-					action.payload.triggerId
+					action.payload.parentId,
+					action.payload.parentType
 				)
 			};
 		}
@@ -46,7 +59,11 @@ export default (state = initialState, action: any) => {
 		case CONDITION_SAVE: {
 			return {
 				...state,
-				conditions: updateCondition(state.conditions, action.payload)
+				conditions: updateCondition(
+					state.conditions,
+					action.payload,
+					action.tempId
+				)
 			};
 		}
 

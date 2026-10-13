@@ -137,25 +137,45 @@ export function ProfilesScreen(props: any) {
 
 			<View
 				style={{
+					flexDirection: 'row',
 					marginLeft: 40,
 					marginRight: 40,
 					marginBottom: 20,
 					alignSelf: 'center',
-					alignItems: 'center'
+					alignItems: 'flex-start',
+					justifyContent: 'center'
 				}}>
-				<TouchableOpacity
-					onPress={() => {
-						ReactNativeHapticFeedback.trigger(
-							'impactMedium',
-							hapticOptions
-						);
-						props.navigation.navigate('Device');
-					}}>
-					<Icon name="wifi" size={25} color="#32404e" />
-				</TouchableOpacity>
-				<Text style={{color: '#32404e', fontSize: 15}}>
-					Connectivity settings
-				</Text>
+				<View style={{alignItems: 'center', marginHorizontal: 25}}>
+					<TouchableOpacity
+						onPress={() => {
+							ReactNativeHapticFeedback.trigger(
+								'impactMedium',
+								hapticOptions
+							);
+							props.navigation.navigate('ScanBox');
+						}}>
+						<Icon name="qrcode" size={25} color="#32404e" />
+					</TouchableOpacity>
+					<Text style={{color: '#32404e', fontSize: 15}}>
+						Scan a box
+					</Text>
+				</View>
+
+				<View style={{alignItems: 'center', marginHorizontal: 25}}>
+					<TouchableOpacity
+						onPress={() => {
+							ReactNativeHapticFeedback.trigger(
+								'impactMedium',
+								hapticOptions
+							);
+							props.navigation.navigate('Device');
+						}}>
+						<Icon name="wifi" size={25} color="#32404e" />
+					</TouchableOpacity>
+					<Text style={{color: '#32404e', fontSize: 15}}>
+						Connectivity settings
+					</Text>
+				</View>
 			</View>
 		</View>
 	);

@@ -6,6 +6,7 @@ import {
 import {Provider} from 'react-redux';
 import {store} from '../../module/process/infrasctructure/store/store';
 import CycleScreen from '../screens/cycle/CyclesScreen';
+import CycleMenuScreen from '../screens/cycle/CycleMenuScreen';
 import EventsScreen from '../screens/cycle/events/events';
 import {SettingsScreen} from '../screens/settings/settings';
 
@@ -28,8 +29,13 @@ export function CycleStack({typeFilter}: {typeFilter?: string} = {}) {
 			<Stack.Screen
 				name="Cycles"
 				component={CycleScreen}
-				options={options(typeFilter==="MODULE" ? 'Modules' : (typeFilter==='FERTIGATION' ? 'Fertigation' : 'Cycles'))}
+				options={options(typeFilter==="MODULE" ? 'Modules' : (typeFilter==='FERTIGATION' ? 'Fertigation' : 'Tasks'))}
 				initialParams={{typeFilter}}
+			/>
+			<Stack.Screen
+				name="CycleMenu"
+				component={CycleMenuScreen}
+				options={options('Cycles Settings')}
 			/>
 			<Stack.Screen
 				name="Settings"

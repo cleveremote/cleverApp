@@ -6,8 +6,6 @@ import {faCog, faForward} from '@fortawesome/free-solid-svg-icons';
 import {styles} from '../../styles/cycleStyles';
 import {hapticOptions} from '../../data/cycleTypes';
 import {connect} from 'react-redux';
-import {loadValues} from '../../../module/process/infrasctructure/store/actions/cycle';
-
 export function SequenceStack({
 	navigation,
 	isActive,
@@ -90,7 +88,7 @@ export function SequenceStack({
 				const status = statusData?.status;
 				const timerSpeed = 1000;
 				const startedAt = statusData?.startedAt;
-				const duration = statusData?.duration || item.maxDuration;
+				const duration = statusData?.duration || item.securityConfig.maxDuration;
 				const timerParams = getTimerParams(startedAt, duration, status);
 
 				if (previousStatus.current !== status && status === 'STOPPED') {
@@ -182,7 +180,7 @@ export function SequenceStack({
 							]}>
 							{miliseconds > 0
 								? 'expected end in ' + getEndTime(miliseconds)
-								: 'duration ' + getEndTime(item.maxDuration)}
+								: 'duration ' + getEndTime(item.securityConfig.maxDuration)}
 						</Text>
 					</View>
 				) : null}

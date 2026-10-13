@@ -5,6 +5,7 @@ import {InputStyle, placeholderColor} from '../../styles/components/common/Input
 import {
 	FlatList,
 	Keyboard,
+	KeyboardTypeOptions,
 	Modal,
 	Pressable,
 	Text,
@@ -25,14 +26,27 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import Slider from '@react-native-community/slider';
 
-function DropdownSelect<T extends {iconColor?: {base: string}}>({
+// Resolve a field error by name, supporting dotted paths (e.g.
+// `config.ipAddress`, `params.persistence.address`). react-hook-form nests its
+// error tree, so `errors['config.ipAddress']` is always undefined — walk the
+// path instead so nested fields show their inline error like flat ones.
+const getFieldError = (errors: FieldErrors<any>, name: string): any =>
+	name
+		.split('.')
+		.reduce(
+			(acc: any, key: string) => (acc == null ? acc : acc[key]),
+			errors as any
+		);
+
+export function DropdownSelect<T extends {iconColor?: {base: string}}>({
 	items,
 	value,
 	getLabel,
 	getValue,
 	renderPrefix,
 	onChange,
-	hasError
+	hasError,
+	disabled = false
 }: Readonly<{
 	items: T[];
 	value: any;
@@ -41,6 +55,7 @@ function DropdownSelect<T extends {iconColor?: {base: string}}>({
 	renderPrefix?: (item: T) => React.ReactNode;
 	onChange: (value: any) => void;
 	hasError: boolean;
+	disabled?: boolean;
 }>) {
 	const [isOpen, setIsOpen] = useState(false);
 	const selectedItem = items.find(item => {
@@ -51,6 +66,7 @@ function DropdownSelect<T extends {iconColor?: {base: string}}>({
 	return (
 		<>
 			<Pressable
+				disabled={disabled}
 				onPress={() => setIsOpen(true)}
 				style={[
 					InputStyle.input,
@@ -63,6 +79,7 @@ function DropdownSelect<T extends {iconColor?: {base: string}}>({
 						alignItems: 'center',
 						justifyContent: 'space-between',
 						marginVertical: 4,
+						opacity: disabled ? 0.6 : 1,
 						backgroundColor:
 							selectedItem?.iconColor?.base ?? 'transparent'
 					}
@@ -85,11 +102,13 @@ function DropdownSelect<T extends {iconColor?: {base: string}}>({
 						{label}
 					</Text>
 				</View>
-				<FontAwesomeIcon
-					icon={faChevronDown}
-					size={12}
-					color="#32404e"
-				/>
+				{disabled ? null : (
+					<FontAwesomeIcon
+						icon={faChevronDown}
+						size={12}
+						color="#32404e"
+					/>
+				)}
 			</Pressable>
 			<Modal visible={isOpen} transparent animationType="fade">
 				<Pressable
@@ -233,7 +252,7 @@ export function DateTimePickerForm({
 						<Text
 							style={{
 								...InputStyle.textInput,
-								color: errors[name] ? 'red' : '#32404e'
+								color: getFieldError(errors, name) ? 'red' : '#32404e'
 							}}>
 							{placeholder}
 						</Text>
@@ -287,14 +306,14 @@ export function DateTimePickerForm({
 				)}
 				name={name}
 			/>
-			{errors[name] && (
+			{getFieldError(errors, name) && (
 				<View style={{flexDirection: 'row', alignItems: 'center'}}>
 					<FontAwesomeIcon
 						icon={faTriangleExclamation}
 						style={InputStyle.iconInputError}
 					/>
 					<Text style={InputStyle.textInputError}>
-						{(errors[name]?.message as string) || 'unknown error'}
+						{(getFieldError(errors, name)?.message as string) || 'unknown error'}
 					</Text>
 				</View>
 			)}
@@ -331,7 +350,7 @@ export function SliderForm({
 						<Text
 							style={{
 								...InputStyle.textInput,
-								color: errors[name] ? 'red' : '#32404e'
+								color: getFieldError(errors, name) ? 'red' : '#32404e'
 							}}>
 							{placeholder}
 						</Text>
@@ -351,14 +370,14 @@ export function SliderForm({
 				)}
 				name={name}
 			/>
-			{errors[name] && (
+			{getFieldError(errors, name) && (
 				<View style={{flexDirection: 'row', alignItems: 'center'}}>
 					<FontAwesomeIcon
 						icon={faTriangleExclamation}
 						style={InputStyle.iconInputError}
 					/>
 					<Text style={InputStyle.textInputError}>
-						{(errors[name]?.message as string) || 'unknown error'}
+						{(getFieldError(errors, name)?.message as string) || 'unknown error'}
 					</Text>
 				</View>
 			)}
@@ -374,6 +393,8 @@ export function InputForm({
 	rules = {},
 	disabled = false,
 	refr,
+	keyboardType,
+	maxLength,
 	onChangeText = () => {}
 }: Readonly<{
 	control: Control<any, any>;
@@ -383,6 +404,8 @@ export function InputForm({
 	rules?: any;
 	disabled?: boolean;
 	refr?: any;
+	keyboardType?: KeyboardTypeOptions;
+	maxLength?: number;
 	onChangeText?: (value: any) => void;
 }>) {
 	return (
@@ -395,7 +418,7 @@ export function InputForm({
 						<Text
 							style={{
 								...InputStyle.textInput,
-								color: errors[name] ? 'red' : '#32404e'
+								color: getFieldError(errors, name) ? 'red' : '#32404e'
 							}}>
 							{placeholder}
 						</Text>
@@ -404,8 +427,8 @@ export function InputForm({
 								InputStyle.input,
 								{
 									borderRadius: 12,
-									borderWidth: errors[name] ? 2 : 1,
-									borderColor: errors[name]
+									borderWidth: getFieldError(errors, name) ? 2 : 1,
+									borderColor: getFieldError(errors, name)
 										? '#FC8181'
 										: '#CBD5E0',
 									paddingHorizontal: 12
@@ -415,6 +438,8 @@ export function InputForm({
 							placeholderTextColor={placeholderColor}
 							onBlur={onBlur}
 							editable={!disabled}
+							keyboardType={keyboardType}
+							maxLength={maxLength}
 							ref={refr}
 							onChangeText={value => {
 								onChangeText(value);
@@ -426,14 +451,14 @@ export function InputForm({
 				)}
 				name={name}
 			/>
-			{errors[name] && (
+			{getFieldError(errors, name) && (
 				<View style={{flexDirection: 'row', alignItems: 'center'}}>
 					<FontAwesomeIcon
 						icon={faTriangleExclamation}
 						style={InputStyle.iconInputError}
 					/>
 					<Text style={InputStyle.textInputError}>
-						{(errors[name]?.message as string) || 'unknown error'}
+						{(getFieldError(errors, name)?.message as string) || 'unknown error'}
 					</Text>
 				</View>
 			)}
@@ -464,37 +489,42 @@ export function SwitchForm({
 				control={control}
 				rules={rules}
 				render={({field: {onChange, onBlur, value}}) => (
-					<View style={{flexDirection: 'row', alignItems: 'center'}}>
+					<View
+						style={{
+							flexDirection: 'row',
+							alignItems: 'center',
+							justifyContent: 'space-between',
+							marginVertical: 8
+						}}>
+						<Text
+							style={{
+								color: '#32404e',
+								fontSize: 15,
+								fontWeight: 'bold',
+								flexShrink: 1,
+								marginRight: 8
+							}}>
+							{placeholder}
+						</Text>
 						<AppSwitch
-							style={{marginTop: 8}}
 							value={value}
 							onValueChange={checked => {
 								onChangeText(checked);
 								onChange(checked);
 							}}
 						/>
-						<Text
-							style={{
-								marginTop: 12,
-								color: '#32404e',
-								fontSize: 15,
-								marginLeft: 5,
-								fontWeight: 'bold'
-							}}>
-							{placeholder}
-						</Text>
 					</View>
 				)}
 				name={name}
 			/>
-			{errors[name] && (
+			{getFieldError(errors, name) && (
 				<View style={{flexDirection: 'row', alignItems: 'center'}}>
 					<FontAwesomeIcon
 						icon={faTriangleExclamation}
 						style={InputStyle.iconInputError}
 					/>
 					<Text style={InputStyle.textInputError}>
-						{(errors[name]?.message as string) || 'unknown error'}
+						{(getFieldError(errors, name)?.message as string) || 'unknown error'}
 					</Text>
 				</View>
 			)}
@@ -528,11 +558,19 @@ export function SelectColor({
 			<Controller
 				control={control}
 				rules={rules}
-				render={({field: {onChange}}) => (
+				render={({field: {onChange}}) => {
+					const items = getColors(colorProportion);
+					// Le style enregistré contient des champs supplémentaires (id)
+					// et un ordre de clés différent : on retrouve l'entrée de la
+					// palette via bgColor (identité stable) pour la présélection.
+					const selected = items.find(
+						color => color.bgColor === style?.bgColor
+					);
+					return (
 					<View>
 						<DropdownSelect
-							items={getColors(colorProportion)}
-							value={JSON.stringify(style)}
+							items={items}
+							value={selected ? JSON.stringify(selected) : ''}
 							getLabel={color => color.bgColor || ''}
 							getValue={color => JSON.stringify(color)}
 							renderPrefix={color => (
@@ -548,20 +586,21 @@ export function SelectColor({
 								onChangeText(val);
 								onChange(val);
 							}}
-							hasError={!!errors[name]}
+							hasError={!!getFieldError(errors, name)}
 						/>
 					</View>
-				)}
+					);
+				}}
 				name={name}
 			/>
-			{errors[name] && (
+			{getFieldError(errors, name) && (
 				<View style={{flexDirection: 'row', alignItems: 'center'}}>
 					<FontAwesomeIcon
 						icon={faTriangleExclamation}
 						style={InputStyle.iconInputError}
 					/>
 					<Text style={InputStyle.textInputError}>
-						{(errors[name]?.message as string) || 'unknown error'}
+						{(getFieldError(errors, name)?.message as string) || 'unknown error'}
 					</Text>
 				</View>
 			)}
@@ -576,6 +615,7 @@ export function TextAreaForm({
 	errors,
 	rules = {},
 	disabled = false,
+	maxLength = 500,
 	onChangeText = () => {}
 }: Readonly<{
 	control: Control<any, any>;
@@ -584,8 +624,17 @@ export function TextAreaForm({
 	errors: FieldErrors<any>;
 	rules?: any;
 	disabled?: boolean;
+	maxLength?: number;
 	onChangeText?: (value: any) => void;
 }>) {
+	// Le champ s'adapte à son contenu : `scrollEnabled={false}` fait
+	// s'auto-dimensionner un TextInput multiline (iOS comme Android), à
+	// condition de ne pas lui imposer de hauteur — d'où le `height: 'auto'`
+	// qui neutralise le `height: 50` de InputStyle.input, remplacé par un
+	// simple minimum. La description est donc toujours affichée en entier,
+	// sans scroll interne, et reste à une ligne quand le texte est court.
+	const minHeight = 50;
+
 	return (
 		<>
 			<Controller
@@ -596,21 +645,28 @@ export function TextAreaForm({
 						<Text
 							style={{
 								...InputStyle.textInput,
-								color: errors[name] ? 'red' : '#32404e'
+								color: getFieldError(errors, name) ? 'red' : '#32404e'
 							}}>
 							{placeholder}
 						</Text>
 						<TextInput
 							multiline={true}
+							scrollEnabled={false}
+							maxLength={maxLength}
 							style={[
 								InputStyle.input,
 								{
 									borderRadius: 12,
-									borderWidth: errors[name] ? 2 : 1,
-									borderColor: errors[name]
+									borderWidth: getFieldError(errors, name) ? 2 : 1,
+									borderColor: getFieldError(errors, name)
 										? '#FC8181'
 										: '#CBD5E0',
-									paddingHorizontal: 12
+									paddingHorizontal: 12,
+									paddingTop: 14,
+									paddingBottom: 14,
+									height: 'auto',
+									minHeight: minHeight,
+									textAlignVertical: 'top'
 								}
 							]}
 							placeholder={placeholder}
@@ -624,18 +680,30 @@ export function TextAreaForm({
 							value={value}
 							onSubmitEditing={Keyboard.dismiss}
 						/>
+						<Text
+							style={{
+								alignSelf: 'flex-end',
+								color:
+									(value?.length ?? 0) >= maxLength
+										? '#FC8181'
+										: placeholderColor,
+								fontSize: 12,
+								marginTop: 2
+							}}>
+							{(value?.length ?? 0) + '/' + maxLength}
+						</Text>
 					</View>
 				)}
 				name={name}
 			/>
-			{errors[name] && (
+			{getFieldError(errors, name) && (
 				<View style={{flexDirection: 'row', alignItems: 'center'}}>
 					<FontAwesomeIcon
 						icon={faTriangleExclamation}
 						style={InputStyle.iconInputError}
 					/>
 					<Text style={InputStyle.textInputError}>
-						{(errors[name]?.message as string) || 'unknown error'}
+						{(getFieldError(errors, name)?.message as string) || 'unknown error'}
 					</Text>
 				</View>
 			)}
@@ -651,7 +719,8 @@ export function DragableForm({
 	onDragEnd = (data: any[]) => {},
 	isList = false,
 	navigation,
-	parentId
+	parentId,
+	scrollEnabled = true
 }: Readonly<{
 	control: Control<any, any>;
 	name: string;
@@ -661,6 +730,7 @@ export function DragableForm({
 	isList?: boolean;
 	navigation?: any;
 	parentId?: string;
+	scrollEnabled?: boolean;
 }>) {
 	return (
 		<>
@@ -670,6 +740,7 @@ export function DragableForm({
 				render={({field: {onChange, onBlur, value}}) => (
 					<View>
 						<DragableSequences
+							scrollEnabled={scrollEnabled}
 							onDrag={() => {}}
 							onDragEnd={(value: any[]) => {
 								onChange(value);
@@ -745,7 +816,7 @@ export function DragableForm({
 																(x: any) =>
 																	x.mode ===
 																	item.mode
-															) === 2
+															) === 4
 																? 'flex'
 																: 'none',
 														margin: 8
@@ -758,21 +829,25 @@ export function DragableForm({
 								);
 							}}
 							data={(value ?? []).filter((x: any) =>
-								x.id ? x.id?.indexOf('delete') === -1 : true
+								x.delete
+									? false
+									: x.id
+									? x.id?.indexOf('delete') === -1
+									: true
 							)}
 						/>
 					</View>
 				)}
 				name={name}
 			/>
-			{errors[name] && (
+			{getFieldError(errors, name) && (
 				<View style={{flexDirection: 'row', alignItems: 'center'}}>
 					<FontAwesomeIcon
 						icon={faTriangleExclamation}
 						style={InputStyle.iconInputError}
 					/>
 					<Text style={InputStyle.textInputError}>
-						{(errors[name]?.message as string) || 'unknown error'}
+						{(getFieldError(errors, name)?.message as string) || 'unknown error'}
 					</Text>
 				</View>
 			)}
@@ -809,7 +884,7 @@ export function SelectForm({
 						<Text
 							style={{
 								...InputStyle.textInput,
-								color: errors[name] ? 'red' : '#32404e'
+								color: getFieldError(errors, name) ? 'red' : '#32404e'
 							}}>
 							{placeholder}
 						</Text>
@@ -818,24 +893,25 @@ export function SelectForm({
 							value={value}
 							getLabel={item => `${item.label}`}
 							getValue={item => `${item.value}`}
+							disabled={disabled}
 							onChange={val => {
 								onChange(val);
 								onValueChange(val);
 							}}
-							hasError={!!errors[name]}
+							hasError={!!getFieldError(errors, name)}
 						/>
 					</View>
 				)}
 				name={name}
 			/>
-			{errors[name] && (
+			{getFieldError(errors, name) && (
 				<View style={{flexDirection: 'row', alignItems: 'center'}}>
 					<FontAwesomeIcon
 						icon={faTriangleExclamation}
 						style={InputStyle.iconInputError}
 					/>
 					<Text style={InputStyle.textInputError}>
-						{(errors[name]?.message as string) || 'unknown error'}
+						{(getFieldError(errors, name)?.message as string) || 'unknown error'}
 					</Text>
 				</View>
 			)}

@@ -9,7 +9,12 @@ import {
 import {ThunkAction} from 'redux-thunk';
 import {AnyAction} from 'redux';
 import {RootState} from '../store';
-import {socketService} from '../../../../../services/socket';
+import {
+	socketService,
+	normalizeIds,
+	denormalizeIds,
+	isTempId
+} from '../../../../../services/socket';
 
 export const updateSchedule =
 	(
@@ -61,11 +66,12 @@ export const saveSchedule =
 		} else {
 			socketService.emit(
 				'front/box/sync/schedule',
-				data,
+				denormalizeIds(data),
 				async (response: any) => {
 					await dispatch({
 						type: SCHEDULE_SAVE,
-						payload: JSON.parse(response.config).schedule
+						payload: normalizeIds(JSON.parse(response.config).schedule),
+						tempId: isTempId(data.id) ? data.id : undefined
 					});
 					onSuccess?.();
 				}
@@ -81,11 +87,14 @@ export const saveSchedules =
 	async dispatch => {
 		socketService.emit(
 			'front/box/sync/cycle',
-			cycle,
+			denormalizeIds(cycle),
 			async (response: any) => {
 				await dispatch({
 					type: SCHEDULES_SAVE,
-					payload: JSON.parse(response.config).cycle?.schedules || []
+					payload:
+						normalizeIds(
+							JSON.parse(response.config).cycle?.schedules
+						) || []
 				});
 				onSuccess?.();
 			}

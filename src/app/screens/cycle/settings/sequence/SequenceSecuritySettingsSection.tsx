@@ -1,35 +1,83 @@
-import React, {useEffect} from 'react';
-import {ScrollView, View} from 'react-native';
-import {navigationHeader} from '../../../../components/common/navigationHeaders';
-import {useForm} from 'react-hook-form';
+import React, { useEffect } from 'react';
+import { ScrollView, View } from 'react-native';
+import { navigationHeader } from '../../../../components/common/navigationHeaders';
+import { useForm } from 'react-hook-form';
 import {
-	InputForm,
+	DateTimePickerForm,
 	SelectForm,
 	SliderForm
 } from '../../../../components/common/FormComponents';
-import {BoxFormStyle} from '../../../../styles/components/common/boxForm';
-import {connect} from 'react-redux';
+import { BoxFormStyle } from '../../../../styles/components/common/boxForm';
+import { connect } from 'react-redux';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
-import {hapticOptions} from '../../../../data/cycleTypes';
-import {updateSequence} from '../../../../../module/process/infrasctructure/store/actions/sequence';
+import { hapticOptions } from '../../../../data/cycleTypes';
+import {
+	useValidateOnOpen,
+	useEmbeddedSection
+} from '../../../../components/common/useSectionSettingsHeader';
+import { updateSequence } from '../../../../../module/process/infrasctructure/store/actions/sequence';
 
 export function SequenceSecuritySettingsSection(props: any) {
+	const embedded = !!props.embedded;
+	const source = embedded
+		? props.sequenceData
+		: props.route.params?.sequenceData;
+	const parentRef = React.useRef(props.sequenceData);
+	parentRef.current = props.sequenceData;
+
 	const [saveUnchangedData, setSaveUnchangedData] = React.useState(false);
 	const isSavingRef = React.useRef(false);
-	const defaultValues = {...props.route.params?.sequenceData};
+
+	const getTimeString = (dateValue: number) => {
+		const date = new Date();
+		date.setHours(0, 0, 0, 0);
+		return new Date(date.getTime() + (dateValue || 0));
+	};
+	const convertToMs = (t: Date) =>
+		t.getHours() * 60 * 60 * 1000 + t.getMinutes() * 60 * 1000;
+
+	const defaultValues = {
+		...source,
+		securityConfig: {
+			...source?.securityConfig,
+			maxDuration: getTimeString(source?.securityConfig?.maxDuration)
+		}
+	};
 	const [vfd, setVfd] = React.useState(defaultValues.vfd);
 	const {
 		control,
 		handleSubmit,
-		formState: {errors}
-	} = useForm({defaultValues});
+		watch,
+		getValues,
+		trigger,
+		formState: { errors }
+	} = useForm({ defaultValues, mode: 'onChange' });
+
+	useValidateOnOpen(props.route, trigger);
+
+	useEmbeddedSection({
+		embedded,
+		showErrors: props.showErrors,
+		trigger,
+		watch,
+		getValues,
+		stage: data =>
+			props.updateSequence({
+				...parentRef.current,
+				securityConfig: {
+					maxDuration: convertToMs(data.securityConfig?.maxDuration)
+				},
+				isModified: true
+			})
+	});
 
 	const onSubmit = (data: any) => {
 		if (saveUnchangedData) {
 			props.updateSequence({
 				...data,
-				maxDuration: Number(data.maxDuration),
-				vfd: Number(data.vfd),
+				securityConfig: {
+					maxDuration: convertToMs(data.securityConfig.maxDuration)
+				},
 				isModified: saveUnchangedData
 			});
 		}
@@ -42,6 +90,7 @@ export function SequenceSecuritySettingsSection(props: any) {
 	};
 
 	useEffect(() => {
+		if (embedded) return;
 		props.navigation.setOptions({
 			headerLeft: () =>
 				navigationHeader(
@@ -53,6 +102,7 @@ export function SequenceSecuritySettingsSection(props: any) {
 	}, [saveUnchangedData]);
 
 	useEffect(() => {
+		if (embedded) return;
 		const listenerUnsubscribe = props.navigation.addListener(
 			'beforeRemove',
 			(e: any) => {
@@ -75,28 +125,34 @@ export function SequenceSecuritySettingsSection(props: any) {
 		}));
 	};
 
+	const Body: any = embedded ? View : ScrollView;
+	const bodyProps: any = embedded
+		? {}
+		: { automaticallyAdjustKeyboardInsets: true };
+
 	return (
-		<ScrollView automaticallyAdjustKeyboardInsets={true}>
+		<Body {...bodyProps}>
 			<View style={BoxFormStyle.boxForm}>
-				<InputForm
+				<DateTimePickerForm
+					mode={'time'}
 					control={control}
 					errors={errors}
-					name="maxDuration"
+					name="securityConfig.maxDuration"
 					placeholder="security*"
-					rules={{required: 'Security is required'}}
-					onChangeText={value => {
+					rules={{ required: 'Security is required' }}
+					onChangeText={() => {
 						setSaveUnchangedData(true);
 					}}
 				/>
 			</View>
-			<View style={BoxFormStyle.boxForm}>
+			{/* <View style={BoxFormStyle.boxForm}>
 				<SelectForm
 					lstData={getModbusTasks()}
 					control={control}
 					errors={errors}
 					name="taskId"
 					placeholder="tasks"
-					rules={{required: false}}
+					rules={{ required: false }}
 					onValueChange={value => {
 						setSaveUnchangedData(true);
 					}}
@@ -106,14 +162,14 @@ export function SequenceSecuritySettingsSection(props: any) {
 					errors={errors}
 					name="vfd"
 					placeholder={`VFD speed* → ${vfd} %`}
-					rules={{required: 'VFD speed is required'}}
+					rules={{ required: 'VFD speed is required' }}
 					onChangeText={value => {
 						setSaveUnchangedData(true);
 						setVfd(value);
 					}}
 				/>
-			</View>
-		</ScrollView>
+			</View> */}
+		</Body>
 	);
 }
 

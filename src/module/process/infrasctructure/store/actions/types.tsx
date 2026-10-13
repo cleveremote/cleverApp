@@ -19,10 +19,11 @@ export const SENSOR_SAVE = 'SENSOR_SAVE';
 
 /////////////Data
 export const DATA_LOAD = 'DATA_LOAD';
+export const EVENTS_LOAD = 'EVENTS_LOAD';
 export const PLAN_LOAD = 'PLAN_LOAD';
-/////////////Task
-export const TASKS_LOAD = 'TASKS_LOAD';
-export const TASK_SAVE = 'TASK_SAVE';
+/////////////Group
+export const GROUPS_LOAD = 'GROUPS_LOAD';
+export const GROUP_SAVE = 'GROUP_SAVE';
 
 /////////////Cycle
 export const CYCLE_STATUS = 'CYCLE_STATUS';
@@ -48,6 +49,20 @@ export const MODULES_LOAD = 'MODULES_LOAD';
 export const DEVICE_UPDATE = 'DEVICE_UPDATE';
 export const DEVICES_LOAD = 'DEVICES_LOAD';
 
+/////////////Device (root list from configuration)
+export const ROOT_DEVICES_LOAD = 'ROOT_DEVICES_LOAD';
+export const ROOT_DEVICE_LOAD = 'ROOT_DEVICE_LOAD';
+export const ROOT_DEVICE_UPDATE = 'ROOT_DEVICE_UPDATE';
+export const ROOT_DEVICE_SAVE = 'ROOT_DEVICE_SAVE';
+
+/////////////Actuator (master typed list + per-sequence module refs)
+export const ACTUATORS_LOAD = 'ACTUATORS_LOAD';
+export const ACTUATOR_LOAD = 'ACTUATOR_LOAD';
+export const ACTUATOR_UPDATE = 'ACTUATOR_UPDATE';
+export const ACTUATOR_SAVE = 'ACTUATOR_SAVE';
+export const SEQUENCE_MODULE_CONFIGS_LOAD = 'SEQUENCE_MODULE_CONFIGS_LOAD';
+export const SEQUENCE_MODULE_CONFIG_UPDATE = 'SEQUENCE_MODULE_CONFIG_UPDATE';
+
 //////////////Schedule
 export const SCHEDULES_LOAD = 'SCHEDULES_LOAD';
 export const SCHEDULE_LOAD = 'SCHEDULE_LOAD';
@@ -68,6 +83,11 @@ export const CONDITION_LOAD = 'CONDITION_LOAD';
 export const CONDITION_UPDATE = 'CONDITION_UPDATE';
 export const CONDITION_SAVE = 'CONDITION_SAVE';
 export const CONDITIONS_SAVE = 'CONDITIONS_SAVE';
+
+//////////////Global settings (box-level settings, ex: localCoordinates)
+export const SETTINGS_LOAD = 'SETTINGS_LOAD';
+export const SETTINGS_UPDATE = 'SETTINGS_UPDATE';
+export const SETTINGS_SAVE = 'SETTINGS_SAVE';
 
 ////////// new
 export const PROCESS_STATUS = 'PROCESS_STATUS';

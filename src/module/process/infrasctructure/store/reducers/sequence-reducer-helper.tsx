@@ -1,3 +1,5 @@
+import {newTempId} from '../../../../../services/socket';
+
 export const loadSequences = (cycle: any) => {
 	return cycle?.sequences || [];
 };
@@ -7,11 +9,12 @@ export const loadSequence = (sequences: any, sequenceId: string) => {
 		return sequences.find((x: any) => x.id === sequenceId);
 	} else {
 		return {
-			id: `${Math.random()}`,
+			id: newTempId(),
 			name: 'new sequence',
 			description: 'new sequence',
-			maxDuration: 50000,
-			vfd: 50,
+			securityConfig: {
+				maxDuration: 50000
+			},
 			isModified: true
 		};
 	}
@@ -20,10 +23,7 @@ export const loadSequence = (sequences: any, sequenceId: string) => {
 export const updateSequence = (prevSequences: any, sequence: any) => {
 	const previous = [...prevSequences];
 	if (sequence) {
-		const deleteId = sequence?.id.split('_');
-		const index = previous.findIndex(
-			x => x.id === (deleteId[1] || sequence?.id)
-		);
+		const index = previous.findIndex(x => x.id === sequence?.id);
 		if (index > -1) {
 			previous[index] = sequence;
 		} else {

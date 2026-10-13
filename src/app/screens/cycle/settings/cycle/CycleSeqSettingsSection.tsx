@@ -14,11 +14,25 @@ import {
 } from '../../../../../module/process/infrasctructure/store/actions/sequence';
 
 export function SeqSettingsSec(props: any) {
-	const cycleParamRef = useRef(props.route.params?.cycleData);
-	cycleParamRef.current = props.route.params?.cycleData;
+	// Le cycle vient soit d'une prop directe (mode embarqué inline dans
+	// CycleSettingsScreen), soit des params de route (mode écran autonome).
+	const embedded = !!props.embedded;
+	const cycleData = props.cycleData ?? props.route?.params?.cycleData;
+	const cycleParamRef = useRef(cycleData);
+	cycleParamRef.current = cycleData;
 
 	const sequencesRef = useRef(props.sequences);
 	sequencesRef.current = props.sequences;
+
+	// Baseline du contenu des séquences au (re)chargement pour CE cycle. On ne se
+	// fie pas au flag `isModified` (il peut persister) : on compare le contenu
+	// pour ne synchroniser que sur un vrai changement utilisateur, et jamais au
+	// simple affichage de la liste.
+	const seqBaselineRef = useRef<string | null>(null);
+	// Dernier jeton de rechargement autoritaire observé (cf. slice) : un changement
+	// signale un remplacement « propre » de la liste (ex. purge après save auto de
+	// suppression) → on ré-établit la baseline sans marquer le cycle modifié.
+	const seqPrevTokenRef = useRef<number>(props.sequencesToken);
 
 	const {
 		control,
@@ -28,7 +42,9 @@ export function SeqSettingsSec(props: any) {
 	} = useForm({...cycleParamRef.current});
 
 	const save = (data: any, e: any) => {
-		const sequences = data.sequences || data || [];
+		const sequences = (data.sequences || data || []).map(
+			(x: any, index: number) => ({...x, order: index})
+		);
 		props.saveSequences(sequences, () => {
 			props.updateCycle(
 				{
@@ -55,42 +71,87 @@ export function SeqSettingsSec(props: any) {
 	};
 
 	useEffect(() => {
-		props.navigation.setOptions({
-			headerLeft: () =>
-				navigationHeader(
-					() => {
-						ReactNativeHapticFeedback.trigger(
-							'impactMedium',
-							hapticOptions
-						);
-						props.navigation.goBack();
-					},
-					'arrow-alt-circle-left',
-					false
-				)
-		});
+		// En mode embarqué, l'entête appartient à l'écran parent : on ne le
+		// modifie pas.
+		if (!embedded) {
+			props.navigation.setOptions({
+				headerLeft: () =>
+					navigationHeader(
+						() => {
+							ReactNativeHapticFeedback.trigger(
+								'impactMedium',
+								hapticOptions
+							);
+							props.navigation.goBack();
+						},
+						'arrow-alt-circle-left',
+						false
+					)
+			});
+		}
 
-		props.loadSequences(props.route.params.cycleData);
+		props.loadSequences(cycleParamRef.current);
 	}, []);
 
 	useEffect(() => {
 		setValue('sequences', sequencesRef.current, {
 			shouldValidate: true
 		});
+		if (embedded) {
+			// Pas de listener beforeRemove propre en mode embarqué (l'écran
+			// parent CycleSettingsScreen possède le sien). Mais la persistance
+			// réelle se fait via saveCycle sur le cycle entier : on répercute
+			// donc les édits de séquences (slice cycle_sequence) dans le cycle
+			// partagé (state.root_cycle.cycle) pour qu'ils soient enregistrés à
+			// la sortie. Sans ça, les modifications restent isolées et perdues.
+			// Garde d'appartenance : ignorer un slice appartenant à un autre cycle
+			// (partagé) pour ne pas synchroniser des séquences périmées.
+			if (props.sequencesParentId !== cycleParamRef.current?.id) {
+				seqBaselineRef.current = null;
+				seqPrevTokenRef.current = props.sequencesToken;
+				return;
+			}
+			const snapshot = JSON.stringify(sequencesRef.current ?? []);
+			if (seqPrevTokenRef.current !== props.sequencesToken) {
+				// Rechargement autoritaire : nouvelle baseline, pas de synchro
+				// (sinon on re-marquerait le cycle modifié).
+				seqPrevTokenRef.current = props.sequencesToken;
+				seqBaselineRef.current = snapshot;
+				return;
+			}
+			if (seqBaselineRef.current === null) {
+				// Fraîchement chargé pour ce cycle : mémoriser la baseline sans
+				// rien synchroniser (le simple affichage ne doit pas marquer le
+				// cycle comme modifié).
+				seqBaselineRef.current = snapshot;
+				return;
+			}
+			if (snapshot === seqBaselineRef.current) return; // aucun vrai changement
+			const sequences = (sequencesRef.current ?? []).map(
+				(x: any, index: number) => ({...x, order: index})
+			);
+			props.updateCycle({
+				...cycleParamRef.current,
+				sequences,
+				isModified: true
+			});
+			return;
+		}
 		const listenerUnsubscribe = props.navigation.addListener(
 			'beforeRemove',
 			checkChanges
 		);
 		return () => listenerUnsubscribe();
-	}, [props.sequences]);
+	}, [props.sequences, props.sequencesParentId, props.sequencesToken]);
 
 	return (
 		<View style={styles.container}>
 			<View style={styles.card}>
 				<DragableForm
 					isList={true}
+					scrollEnabled={!embedded}
 					navigation={props.navigation}
-					parentId={props.route.params.cycleData.id}
+					parentId={cycleParamRef.current.id}
 					control={control}
 					errors={errors}
 					name="sequences"
@@ -107,7 +168,7 @@ export function SeqSettingsSec(props: any) {
 							props.navigation.navigate('SequenceSettingsStack', {
 								screen: 'SequenceSettingsMenu',
 								params: {
-									cycleId: props.route.params.cycleData.id
+									cycleId: cycleParamRef.current.id
 								}
 							});
 						}}>
@@ -163,7 +224,9 @@ const styles = StyleSheet.create({
 });
 
 const mapStateToProps = (state: any) => ({
-	sequences: state.cycle_sequence.sequences
+	sequences: state.cycle_sequence.sequences,
+	sequencesParentId: state.cycle_sequence.sequencesParentId,
+	sequencesToken: state.cycle_sequence.sequencesToken
 });
 
 export default connect(mapStateToProps, {

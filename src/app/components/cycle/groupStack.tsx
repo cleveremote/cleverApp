@@ -6,7 +6,7 @@ import SensorStatus from './CycleStatus';
 import {MenuCycle} from './cycleStack';
 import CycleStack from './cycleStack';
 
-// The task/cycle configuration may expose `iconColor` either as a plain color
+// The group/cycle configuration may expose `iconColor` either as a plain color
 // string or as the `{base, icon}` object expected by CycleStack/MenuCycle.
 // Normalize it so both forms render correctly.
 const normalizeStyle = (style: any) => {
@@ -24,8 +24,8 @@ const normalizeStyle = (style: any) => {
 	return {...style, iconColor: {base: ic, icon: ic}};
 };
 
-export function TaskStack({
-	taskData,
+export function GroupStack({
+	groupData,
 	cycles,
 	navigation,
 	orientation,
@@ -36,7 +36,7 @@ export function TaskStack({
 	onExecute,
 	status
 }: Readonly<{
-	taskData: any;
+	groupData: any;
 	cycles: any[];
 	navigation: any;
 	orientation: OrientationType;
@@ -47,16 +47,24 @@ export function TaskStack({
 	onExecute: (id: string, ms: number, executableType?: string) => void;
 	status?: any;
 }>) {
-	const taskStyle = normalizeStyle(taskData.style);
-	const fontColor = taskStyle.fontColor;
-	const iconColorSwitch = taskStyle.iconColor.base;
-	const bgColor = taskStyle.bgColor;
+	const groupStyle = normalizeStyle(groupData.style);
+	const fontColor = groupStyle.fontColor;
+	const iconColorSwitch = groupStyle.iconColor.base;
+	const bgColor = groupStyle.bgColor;
 
-	const taskWithStyle = {...taskData, style: taskStyle};
+	const groupWithStyle = {...groupData, style: groupStyle};
 
-	const taskCycles = (cycles || [])
-		.filter((x: any) => x.id.indexOf('deleted') < 0)
-		.filter((x: any) => x.taskId === taskData.id)
+	// Les cycles enfants d'un groupe sont désormais référencés par le groupe
+	// lui-même via `childCycles` ({cycleId, config:{order,…}}). On résout chaque
+	// `cycleId` contre la liste plate des cycles, on trie par `config.order`
+	// (tri stable : les ordres égaux gardent leur ordre d'insertion) et on écarte
+	// les références non résolues ou supprimées.
+	const groupCycles = [...(groupData.childCycles || [])]
+		.sort((a: any, b: any) => (a.config?.order ?? 0) - (b.config?.order ?? 0))
+		.map((child: any) =>
+			(cycles || []).find((c: any) => c.id === child.cycleId)
+		)
+		.filter((cycle: any) => cycle && !cycle.delete)
 		.map((cycle: any) => ({...cycle, style: normalizeStyle(cycle.style)}));
 
 	return (
@@ -94,14 +102,14 @@ export function TaskStack({
 							}}
 							numberOfLines={1}
 							ellipsizeMode="middle">
-							{taskData.name}
+							{groupData.name}
 						</Text>
 					</View>
 					<SensorStatus
-						cycleData={taskWithStyle}
+						cycleData={groupWithStyle}
 						iconColorSwitch={iconColorSwitch}
 						onSwitch={(value: boolean, type: string) =>
-							onSwitch(taskData, value, type, "TASK")
+							onSwitch(groupData, value, type, "TASK")
 						}
 						closeSibillings={closeSibillings}
 						onSkip={onSkip}
@@ -113,20 +121,20 @@ export function TaskStack({
 			<View style={{marginTop: -37, width: 60, marginLeft: 8}}>
 				<MenuCycle
 					navigation={navigation}
-					cycleData={taskWithStyle}
+					cycleData={groupWithStyle}
 					closeSibillings={closeSibillings}
 					current={current}
-					onExecute={onExecute.bind(null, taskData.id, 0, "TASK")}
-					isTask={true}
+					onExecute={onExecute.bind(null, groupData.id, 0, "TASK")}
+					isGroup={true}
 					status={
-						status?.find((x: any) => x?.id === taskData.id)?.status
+						status?.find((x: any) => x?.id === groupData.id)?.status
 					}
 				/>
 			</View>
 
-			{taskCycles.map((cycle: any, index: number) => (
+			{groupCycles.map((cycle: any, index: number) => (
 				<View
-					key={'task_cycle_' + index}
+					key={'group_cycle_' + index}
 					style={{marginLeft: 20, marginTop: 8}}>
 					<CycleStack
 						cycleData={cycle}
@@ -150,4 +158,4 @@ const mapStateToProps = (state: any) => ({
 	status: state.root_cycle.status
 });
 
-export default connect(mapStateToProps, null)(TaskStack);
+export default connect(mapStateToProps, null)(GroupStack);

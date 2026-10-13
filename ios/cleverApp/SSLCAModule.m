@@ -12,6 +12,14 @@ static SecCertificateRef _caCertificate = NULL;
 static NSURLSession *_trustedSession = nil;
 static SRCASecurityPolicy *_caSecurityPolicy = nil;
 
+/**
+ * Backstop on a single box request, for the case where nothing else stops it.
+ *
+ * Deliberately above every budget JS passes in — the caller's own timeout is
+ * what should decide, this only catches a task that would otherwise linger.
+ */
+static const NSTimeInterval kResourceTimeoutSeconds = 90.0;
+
 @implementation SSLCAModule
 
 RCT_EXPORT_MODULE();
@@ -53,8 +61,23 @@ RCT_EXPORT_METHOD(initialize:(RCTPromiseResolveBlock)resolve
 
     _caCertificate = cert;
 
-    // Create a trusted NSURLSession with this module as its delegate
-    NSURLSessionConfiguration *config = [NSURLSessionConfiguration defaultSessionConfiguration];
+    // Create a trusted NSURLSession with this module as its delegate.
+    //
+    // This session only ever talks to the box, on the LAN. Saying so is what
+    // keeps the pairing flow honest: joined to the box access point the phone
+    // has no internet over Wi-Fi, so iOS prefers cellular for anything it is
+    // allowed to send there — the request leaves over the wrong interface and
+    // dies slowly instead of failing. `waitsForConnectivity` would make the
+    // same wait worse by holding the task until a usable route appears, long
+    // after JS gave up on its own timeout.
+    NSURLSessionConfiguration *config = [NSURLSessionConfiguration ephemeralSessionConfiguration];
+    config.allowsCellularAccess = NO;
+    config.waitsForConnectivity = NO;
+    // `timeoutInterval` on the request only bounds *silence* between packets, so
+    // a request that keeps trickling can outlive the budget JS was promised.
+    // This caps the whole thing.
+    config.timeoutIntervalForResource = kResourceTimeoutSeconds;
+
     _trustedSession = [NSURLSession sessionWithConfiguration:config
                                                     delegate:[[SSLCAModule alloc] init]
                                                delegateQueue:nil];
@@ -72,6 +95,101 @@ RCT_EXPORT_METHOD(initialize:(RCTPromiseResolveBlock)resolve
   @catch (NSException *exception) {
     reject(@"SSL_ERROR", exception.reason, nil);
   }
+}
+
+/**
+ * Performs a GET through the trusted session.
+ *
+ * React Native's own `fetch` goes through RCTHTTPRequestHandler, whose
+ * NSURLSession has no authentication delegate — it evaluates the box
+ * certificate against the system trust store only and rejects it. Everything
+ * needed to accept it already lives in this module, so expose it to JS.
+ */
+RCT_EXPORT_METHOD(get:(NSString *)urlString
+                  timeout:(double)timeoutMs
+                  resolver:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
+{
+  if (!_trustedSession) {
+    reject(@"SSL_NOT_INITIALIZED",
+           @"initialize must be called before get", nil);
+    return;
+  }
+
+  NSURL *url = [NSURL URLWithString:urlString];
+  if (!url) {
+    reject(@"SSL_BAD_URL", [NSString stringWithFormat:@"Invalid URL: %@", urlString], nil);
+    return;
+  }
+
+  NSURLRequest *request =
+      [NSURLRequest requestWithURL:url
+                       cachePolicy:NSURLRequestReloadIgnoringLocalCacheData
+                   timeoutInterval:timeoutMs / 1000.0];
+
+  [self runRequest:request resolver:resolve rejecter:reject];
+}
+
+/**
+ * Performs a JSON POST through the trusted session — same reason as `get`
+ * above: RN's own `fetch` cannot be taught about the box CA.
+ */
+RCT_EXPORT_METHOD(post:(NSString *)urlString
+                  body:(NSString *)jsonBody
+                  timeout:(double)timeoutMs
+                  resolver:(RCTPromiseResolveBlock)resolve
+                  rejecter:(RCTPromiseRejectBlock)reject)
+{
+  if (!_trustedSession) {
+    reject(@"SSL_NOT_INITIALIZED",
+           @"initialize must be called before post", nil);
+    return;
+  }
+
+  NSURL *url = [NSURL URLWithString:urlString];
+  if (!url) {
+    reject(@"SSL_BAD_URL", [NSString stringWithFormat:@"Invalid URL: %@", urlString], nil);
+    return;
+  }
+
+  NSMutableURLRequest *request =
+      [NSMutableURLRequest requestWithURL:url
+                              cachePolicy:NSURLRequestReloadIgnoringLocalCacheData
+                          timeoutInterval:timeoutMs / 1000.0];
+  request.HTTPMethod = @"POST";
+  [request setValue:@"application/json" forHTTPHeaderField:@"Content-Type"];
+  request.HTTPBody = [(jsonBody ?: @"{}") dataUsingEncoding:NSUTF8StringEncoding];
+
+  [self runRequest:request resolver:resolve rejecter:reject];
+}
+
+#pragma mark - Private
+
+- (void)runRequest:(NSURLRequest *)request
+          resolver:(RCTPromiseResolveBlock)resolve
+          rejecter:(RCTPromiseRejectBlock)reject
+{
+  NSURLSessionDataTask *task = [_trustedSession
+      dataTaskWithRequest:request
+        completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
+          if (error) {
+            // The domain and code travel to JS so a failure stays diagnosable
+            // from the app itself (-1003 unknown host, -1009 offline, ...).
+            reject([NSString stringWithFormat:@"%@_%ld", error.domain, (long)error.code],
+                   error.localizedDescription,
+                   error);
+            return;
+          }
+
+          NSString *body = data
+              ? [[NSString alloc] initWithData:data encoding:NSUTF8StringEncoding]
+              : nil;
+          resolve(@{
+            @"status": @([(NSHTTPURLResponse *)response statusCode]),
+            @"body": body ?: @""
+          });
+        }];
+  [task resume];
 }
 
 #pragma mark - NSURLSessionDelegate

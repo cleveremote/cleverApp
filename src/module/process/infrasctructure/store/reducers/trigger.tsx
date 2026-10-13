@@ -46,14 +46,15 @@ export default (state = initialState, action: any) => {
 		case TRIGGER_SAVE: {
 			return {
 				...state,
-				triggers: updateTrigger(state.triggers, action.payload)
+				triggers: updateTrigger(state.triggers, action.payload, action.tempId)
 			};
 		}
 
 		case TRIGGERS_SAVE: {
+			// `payload` est déjà la liste des triggers renvoyée par le box.
 			return {
 				...state,
-				triggers: action.payload.triggers
+				triggers: action.payload
 			};
 		}
 

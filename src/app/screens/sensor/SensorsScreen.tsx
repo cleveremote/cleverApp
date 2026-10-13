@@ -70,7 +70,7 @@ export function Sensor(props: any) {
 			}>
 			<View style={{gap: 8, marginVertical: 4, alignSelf: 'stretch'}}>
 				{props.sensors
-					?.filter((x: any) => x.id.indexOf('deleted') < 0)
+					?.filter((x: any) => !x.delete && x.display !== false)
 					?.map((cycle: any, index: number) => (
 						<SensorStack
 							key={'cycle_' + index}

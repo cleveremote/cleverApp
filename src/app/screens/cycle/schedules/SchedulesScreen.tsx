@@ -1,10 +1,10 @@
-import {TouchableOpacity, View, Text, Alert, StyleSheet} from 'react-native';
+import {TouchableOpacity, View, Text, StyleSheet} from 'react-native';
 import React, {useEffect, useRef} from 'react';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import {connect} from 'react-redux';
-import {navigationHeader} from '../../../components/common/navigationHeaders';
 import {elementStack} from '../../../components/cycle/moduleStack';
+import {useSectionSettingsHeader} from '../../../components/common/useSectionSettingsHeader';
 import {hapticOptions} from '../../../data/cycleTypes';
 import {faCog} from '@fortawesome/free-solid-svg-icons';
 import {
@@ -12,12 +12,6 @@ import {
 	saveSchedules
 } from '../../../../module/process/infrasctructure/store/actions/schedule';
 import {saveCycle} from '../../../../module/process/infrasctructure/store/actions/cycle';
-import {NavigationAction} from '@react-navigation/native';
-
-type BeforeRemoveEvent = {
-	preventDefault: () => void;
-	data: {action: NavigationAction};
-};
 
 type Schedule = {
 	id?: string;
@@ -25,46 +19,6 @@ type Schedule = {
 	isModified?: boolean;
 	[key: string]: unknown;
 };
-
-function handleBeforeRemove(
-	e: BeforeRemoveEvent,
-	schedulesRef: React.MutableRefObject<Schedule[]>,
-	onSave: () => void,
-	onDiscard: () => void
-): void {
-	const hasModified = schedulesRef.current?.find(x => x.isModified);
-	if (!hasModified) return;
-	if (!['GO_BACK', 'POP', 'POP_TO_TOP'].includes(e.data.action.type)) return;
-	e.preventDefault();
-	Alert.alert(
-		'Discard changes?',
-		'You have unsaved changes. Are you sure to discard them and leave the screen?',
-		[
-			{
-				text: 'save',
-				style: 'cancel',
-				onPress: () => {
-					ReactNativeHapticFeedback.trigger(
-						'impactMedium',
-						hapticOptions
-					);
-					onSave();
-				}
-			},
-			{
-				text: 'Discard',
-				style: 'destructive',
-				onPress: () => {
-					ReactNativeHapticFeedback.trigger(
-						'impactMedium',
-						hapticOptions
-					);
-					onDiscard();
-				}
-			}
-		]
-	);
-}
 
 export function SchedulesScreen(props: any) {
 	const cycleParamRef = useRef(props.route.params.cycle);
@@ -74,44 +28,32 @@ export function SchedulesScreen(props: any) {
 	schedulesRef.current = props.schedules;
 
 	useEffect(() => {
-		const unsubscribe = props.navigation.addListener(
-			'beforeRemove',
-			(e: BeforeRemoveEvent) =>
-				handleBeforeRemove(
-					e,
-					schedulesRef,
-					() => {
-						const updated = schedulesRef.current.map(s => ({
-							...s,
-							isModified: false
-						}));
-						props.saveSchedules(
-							{...cycleParamRef.current, schedules: updated},
-							() => props.navigation.dispatch(e.data.action)
-						);
-					},
-					() => {
-						props.saveSchedules(
-							cycleParamRef.current.schedules ?? [],
-							() => props.navigation.dispatch(e.data.action)
-						);
-					}
-				)
-		);
-		return unsubscribe;
-	}, []);
-
-	useEffect(() => {
-		props.navigation.setOptions({
-			headerLeft: () =>
-				navigationHeader(
-					() => props.navigation.goBack(),
-					'arrow-alt-circle-left',
-					false
-				)
-		});
 		props.loadSchedules(cycleParamRef.current);
 	}, []);
+
+	// Ajout / édition / suppression sont mis en attente dans le slice par les
+	// sous-écrans : la liste n'est persistée que par le bouton save de l'entête.
+	// Tant que rien n'a changé, l'entête n'affiche qu'un simple retour.
+	useSectionSettingsHeader({
+		navigation: props.navigation,
+		entity: props.schedules,
+		isNew: false,
+		backWhenPristine: true,
+		hasChanges: () => !!schedulesRef.current?.some(x => x.isModified),
+		save: onDone => {
+			const updated = (schedulesRef.current ?? []).map(s => ({
+				...s,
+				isModified: false
+			}));
+			props.saveSchedules(
+				{...cycleParamRef.current, schedules: updated},
+				onDone
+			);
+		},
+		// Abandon : on remet la liste telle qu'elle était à l'entrée sur l'écran
+		// (les modifications en attente ne vivaient que dans le slice).
+		discard: () => props.loadSchedules(cycleParamRef.current)
+	});
 
 	const schedules: Schedule[] = props.schedules ?? [];
 
@@ -119,10 +61,7 @@ export function SchedulesScreen(props: any) {
 		<View style={styles.container}>
 			<View style={styles.card}>
 				{schedules
-					.filter(
-						(element: Schedule) =>
-							!element.id?.startsWith('deleted_')
-					)
+					.filter((element: Schedule) => !element.delete)
 					.map((element: Schedule) =>
 						elementStack(
 							element,

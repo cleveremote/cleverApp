@@ -22,7 +22,14 @@ class SocketService {
 	): Promise<void> {
 		// Ensure SSL trust is initialized before any connection
 		if (!this.sslReady) {
-			await initSSL();
+			try {
+				await initSSL();
+			} catch (e) {
+				// Without the CA anchor every TLS handshake to the box will fail —
+				// surface it here rather than letting it look like a network error.
+				console.log('initSSL failed:', (e as Error)?.message ?? e);
+				throw e;
+			}
 			this.sslReady = true;
 		}
 

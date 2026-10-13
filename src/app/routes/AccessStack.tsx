@@ -5,6 +5,9 @@ import {DeviceSettings} from '../screens/access/deviceSettings';
 import SignIn from '../screens/access/SignIn';
 import messaging from '@react-native-firebase/messaging';
 import {DeviceScreen} from '../screens/access/device';
+import {ScanBoxScreen} from '../screens/access/scanBox';
+import {BoxConfiguration} from '../screens/access/boxConfiguration';
+import {BoxHandover} from '../screens/access/boxHandover';
 export function AccessStack() {
 	useEffect(() => {
 		const devices = async () => {
@@ -27,6 +30,11 @@ export function AccessStack() {
 					component={ProfilesScreen}
 				/>
 				<Stack.Screen
+					name="ScanBox"
+					options={{headerShown: true, title: 'Scanner la box'}}
+					component={ScanBoxScreen}
+				/>
+				<Stack.Screen
 					name="Device"
 					options={{headerShown: true, title: 'Device(s) found'}}
 					component={DeviceScreen}
@@ -35,6 +43,22 @@ export function AccessStack() {
 					name="deviceSettings"
 					options={{headerShown: true, title: 'Configure connexion'}}
 					component={DeviceSettings}
+				/>
+				<Stack.Screen
+					name="BoxConfiguration"
+					options={{headerShown: true, title: 'Configurer la box'}}
+					component={BoxConfiguration}
+				/>
+				<Stack.Screen
+					name="BoxHandover"
+					options={{
+						headerShown: true,
+						title: 'Connexion de la box',
+						// Le geste de retour ramènerait au formulaire, qui n'a
+						// plus de réseau : la sortie passe par l'en-tête.
+						gestureEnabled: false
+					}}
+					component={BoxHandover}
 				/>
 				<Stack.Screen
 					name="Signin"

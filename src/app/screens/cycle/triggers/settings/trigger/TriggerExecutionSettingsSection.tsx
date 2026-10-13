@@ -11,13 +11,22 @@ import {
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import {hapticOptions} from '../../../../../data/cycleTypes';
 import {useForm} from 'react-hook-form';
+import {
+	useValidateOnOpen,
+	useEmbeddedSection
+} from '../../../../../components/common/useSectionSettingsHeader';
 import {updateTrigger} from '../../../../../../module/process/infrasctructure/store/actions/trigger';
 import {connect} from 'react-redux';
 
 const SWITCH_TRACK_COLOR = {true: '#32404e', false: '#d1d1d6'};
 
 export function TriggerExecutionSettingsSection(props: any) {
-	const defValues = {...props.route.params?.triggerData};
+	const embedded = !!props.embedded;
+	const parentRef = useRef(props.triggerData);
+	parentRef.current = props.triggerData;
+	const defValues = {
+		...(embedded ? props.triggerData : props.route.params?.triggerData)
+	};
 	const getTimeString = (dateValue: number) => {
 		const date = new Date();
 		date.setHours(0, 0, 0, 0);
@@ -42,9 +51,30 @@ export function TriggerExecutionSettingsSection(props: any) {
 		handleSubmit,
 		formState: {errors},
 		setValue,
+		watch,
 		getValues,
-		reset
-	} = useForm({defaultValues, mode: 'onBlur'});
+		trigger
+	} = useForm<any>({defaultValues, mode: 'onChange'});
+
+	useValidateOnOpen(props.route, trigger);
+
+	useEmbeddedSection({
+		embedded,
+		showErrors: props.showErrors,
+		trigger,
+		watch,
+		getValues,
+		stage: data => {
+			const dto = mappingtoDto(data);
+			props.updateTrigger({
+				...parentRef.current,
+				action: dto.action,
+				delay: dto.delay,
+				trigger: dto.trigger,
+				isModified: true
+			});
+		}
+	});
 
 	const onSubmit = (data: any) => {
 		if (saveUnchangedData.current) {
@@ -114,6 +144,7 @@ export function TriggerExecutionSettingsSection(props: any) {
 	};
 
 	useEffect(() => {
+		if (embedded) return;
 		const subscribe = () => {
 			const unsubscribe = props.navigation.addListener(
 				'beforeRemove',
@@ -125,12 +156,10 @@ export function TriggerExecutionSettingsSection(props: any) {
 							subscribe();
 						},
 						() => {
-							reset();
-							const data = getValues();
-							sunStateRef.current = !!data.sunState;
-							setSunState(!!data.sunState);
 							unsubscribe();
-							subscribe();
+							props.navigation.dispatch(
+								e.data.action
+							);
 						}
 					)
 			);
@@ -157,8 +186,13 @@ export function TriggerExecutionSettingsSection(props: any) {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
+	const Body: any = embedded ? View : ScrollView;
+	const bodyProps: any = embedded
+		? {}
+		: {automaticallyAdjustKeyboardInsets: true};
+
 	return (
-		<ScrollView automaticallyAdjustKeyboardInsets={true}>
+		<Body {...bodyProps}>
 			<View style={BoxFormStyle.boxForm}>
 				<SelectForm
 					lstData={[
@@ -186,6 +220,9 @@ export function TriggerExecutionSettingsSection(props: any) {
 					}}
 				/>
 				<View style={styles.switchRow}>
+					<Text style={styles.switchLabel}>
+						Trigger (delay/sun-state)
+					</Text>
 					<AppSwitch
 						value={sunState}
 						trackColor={SWITCH_TRACK_COLOR}
@@ -193,9 +230,11 @@ export function TriggerExecutionSettingsSection(props: any) {
 							sunStateRef.current = checked;
 							setSunState(checked);
 							if (checked) {
-								setValue('timeAfter', new Date(), {
-									shouldValidate: true
-								});
+								setValue(
+									'timeAfter',
+									new Date(new Date().setHours(0, 0, 0, 0)),
+									{shouldValidate: true}
+								);
 								setValue('sunState', 'SUNRISE', {
 									shouldValidate: true
 								});
@@ -203,16 +242,15 @@ export function TriggerExecutionSettingsSection(props: any) {
 								setValue('sunState', null, {
 									shouldValidate: true
 								});
-								setValue('time', new Date(), {
-									shouldValidate: true
-								});
+								setValue(
+									'time',
+									new Date(new Date().setHours(0, 0, 0, 0)),
+									{shouldValidate: true}
+								);
 							}
 							saveUnchangedData.current = true;
 						}}
 					/>
-					<Text style={styles.switchLabel}>
-						Trigger based on (sun-state/delay)
-					</Text>
 				</View>
 				{sunState ? (
 					<>
@@ -235,7 +273,11 @@ export function TriggerExecutionSettingsSection(props: any) {
 							control={control}
 							errors={errors}
 							name="time"
-							placeholder="After sunset / Before sunrise*"
+							placeholder={
+								watch('sunState') === 'SUNSET'
+									? 'After sunset*'
+									: 'Before sunrise*'
+							}
 							rules={{required: 'Time is required'}}
 							onChangeText={() => {
 								saveUnchangedData.current = true;
@@ -256,22 +298,23 @@ export function TriggerExecutionSettingsSection(props: any) {
 					/>
 				)}
 			</View>
-		</ScrollView>
+		</Body>
 	);
 }
 
 const styles = StyleSheet.create({
 	switchRow: {
 		flexDirection: 'row',
-		marginLeft: 20,
+		alignItems: 'center',
+		justifyContent: 'space-between',
 		marginTop: 8,
 		marginBottom: 8
 	},
 	switchLabel: {
-		marginTop: 5,
+		flexShrink: 1,
+		marginRight: 8,
 		color: '#32404e',
 		fontSize: 15,
-		marginLeft: 5,
 		fontWeight: 'bold'
 	}
 });

@@ -1,20 +1,31 @@
 import React, {useEffect, useState} from 'react';
 import {Alert, ScrollView, View} from 'react-native';
 import type {EventArg, NavigationAction} from '@react-navigation/core';
-import {navigationHeader} from '../../../../../components/common/navigationHeaders';
-import {connect} from 'react-redux';
-import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
-import {hapticOptions} from '../../../../../data/cycleTypes';
-import {useForm} from 'react-hook-form';
-import {updateCondition} from '../../../../../../module/process/infrasctructure/store/actions/condition';
+import {navigationHeader} from '../../../components/common/navigationHeaders';
 import {
 	InputForm,
-	SelectForm
-} from '../../../../../components/common/FormComponents';
-import {BoxFormStyle} from '../../../../../styles/components/common/boxForm';
+	TextAreaForm
+} from '../../../components/common/FormComponents';
+import {BoxFormStyle} from '../../../styles/components/common/boxForm';
+import {useForm} from 'react-hook-form';
+import {hapticOptions} from '../../../data/cycleTypes';
+import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
+import {
+	useValidateOnOpen,
+	useEmbeddedSection
+} from '../../../components/common/useSectionSettingsHeader';
+import {updateCondition} from '../../../../module/process/infrasctructure/store/actions/condition';
+import {connect} from 'react-redux';
 
-export function TriggerConditionParamSettingsSection(props: any) {
-	const defaultValues = {...props.route.params?.conditionData};
+function ConditionGeneralSettingsSection(props: any) {
+	const embedded = !!props.embedded;
+	const source = embedded
+		? props.conditionData
+		: props.route.params?.conditionData;
+	const parentRef = React.useRef(props.conditionData);
+	parentRef.current = props.conditionData;
+
+	const defaultValues = {...source};
 	const [saveUnchangedData, setSaveUnchangedData] = useState(
 		defaultValues.isModified
 	);
@@ -22,9 +33,29 @@ export function TriggerConditionParamSettingsSection(props: any) {
 	const {
 		control,
 		handleSubmit,
-		reset,
+		watch,
+		getValues,
+		trigger,
 		formState: {errors}
-	} = useForm({defaultValues});
+	} = useForm({defaultValues, mode: 'onChange'});
+
+	// Écran autonome : validation immédiate si ouvert depuis un état « not valid ».
+	useValidateOnOpen(props.route, trigger);
+
+	useEmbeddedSection({
+		embedded,
+		showErrors: props.showErrors,
+		trigger,
+		watch,
+		getValues,
+		stage: data =>
+			props.updateCondition({
+				...parentRef.current,
+				name: data.name,
+				description: data.description,
+				isModified: true
+			})
+	});
 
 	const onSubmit = (data: any) => {
 		if (saveUnchangedData) {
@@ -65,6 +96,7 @@ export function TriggerConditionParamSettingsSection(props: any) {
 	};
 
 	useEffect(() => {
+		if (embedded) return;
 		const subscribe = () => {
 			const unsubscribe = props.navigation.addListener(
 				'beforeRemove',
@@ -76,9 +108,10 @@ export function TriggerConditionParamSettingsSection(props: any) {
 							subscribe();
 						},
 						() => {
-							reset();
 							unsubscribe();
-							subscribe();
+							props.navigation.dispatch(
+								e.data.action
+							);
 						}
 					)
 			);
@@ -104,69 +137,39 @@ export function TriggerConditionParamSettingsSection(props: any) {
 		return () => unsubscribe();
 	}, [saveUnchangedData]);
 
-	const getDevices = () => {
-		const cycles = props.cycles.map((x: any) => ({
-			label: x.name,
-			value: x.id
-		}));
-		const sensors = props.sensors.map((x: any) => ({
-			label: x.name,
-			value: x.id
-		}));
-		return cycles.concat(sensors);
-	};
+	const Body: any = embedded ? View : ScrollView;
+	const bodyProps: any = embedded
+		? {}
+		: {automaticallyAdjustKeyboardInsets: true};
 
 	return (
-		<ScrollView automaticallyAdjustKeyboardInsets={true}>
+		<Body {...bodyProps}>
 			<View style={BoxFormStyle.boxForm}>
-				<SelectForm
-					lstData={getDevices()}
-					control={control}
-					errors={errors}
-					name="deviceId"
-					placeholder="Sensors/Cycles"
-					rules={{required: 'Device is required'}}
-					onValueChange={() => {
-						setSaveUnchangedData(true);
-					}}
-				/>
-				<SelectForm
-					lstData={[
-						{label: '<', value: '<'},
-						{label: '>', value: '>'},
-						{label: '=', value: '='},
-						{label: '<=', value: '<='},
-						{label: '>=', value: '>='}
-					]}
-					control={control}
-					errors={errors}
-					name="operator"
-					placeholder="Operator*"
-					rules={{required: 'Operator is required'}}
-					onValueChange={() => {
-						setSaveUnchangedData(true);
-					}}
-				/>
 				<InputForm
 					control={control}
 					errors={errors}
-					name="value"
-					placeholder="Value*"
-					rules={{required: 'Value is required'}}
+					name="name"
+					maxLength={25}
+					placeholder="Name*"
+					rules={{required: 'Name is required'}}
+					onChangeText={() => {
+						setSaveUnchangedData(true);
+					}}
+				/>
+				<TextAreaForm
+					control={control}
+					errors={errors}
+					name="description"
+					placeholder="Description"
 					onChangeText={() => {
 						setSaveUnchangedData(true);
 					}}
 				/>
 			</View>
-		</ScrollView>
+		</Body>
 	);
 }
 
-const mapStateToProps = (state: any) => ({
-	sensors: state.root_sensor.sensors,
-	cycles: state.root_cycle.cycles
-});
-
-export default connect(mapStateToProps, {updateCondition})(
-	TriggerConditionParamSettingsSection
-);
+export default connect(null, {
+	updateCondition
+})(ConditionGeneralSettingsSection);

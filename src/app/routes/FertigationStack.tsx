@@ -3,7 +3,7 @@ import {
 	StackNavigationOptions,
 	createStackNavigator
 } from '@react-navigation/stack';
-import TasksScreen from '../screens/cycle/TasksScreen';
+import GroupsScreen from '../screens/cycle/GroupsScreen';
 import EventsScreen from '../screens/cycle/events/events';
 import {SettingsScreen} from '../screens/settings/settings';
 
@@ -25,7 +25,7 @@ export function FertigationStack() {
 		<Stack.Navigator screenOptions={{animation: 'none'}}>
 			<Stack.Screen
 				name="Cycles"
-				component={TasksScreen}
+				component={GroupsScreen}
 				options={options('Fertigation')}
 			/>
 			<Stack.Screen

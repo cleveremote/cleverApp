@@ -12,6 +12,10 @@ import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import {hapticOptions} from '../../../../../data/cycleTypes';
 import {useForm} from 'react-hook-form';
 import {connect} from 'react-redux';
+import {
+	useValidateOnOpen,
+	useEmbeddedSection
+} from '../../../../../components/common/useSectionSettingsHeader';
 import {updateTrigger} from '../../../../../../module/process/infrasctructure/store/actions/trigger';
 
 interface TriggerGeneralFormData {
@@ -46,10 +50,16 @@ interface TriggerGeneralSettingsSectionProps {
 	) => void;
 }
 
-export function TriggerGeneralSettingsSection(
-	props: TriggerGeneralSettingsSectionProps
-) {
-	const defaultValues = {...props.route.params?.triggerData};
+export function TriggerGeneralSettingsSection(props: any) {
+	// Mode embarqué : rendu inline dans l'écran de réglages du trigger.
+	const embedded = !!props.embedded;
+	const source = embedded
+		? props.triggerData
+		: props.route.params?.triggerData;
+	const parentRef = React.useRef(props.triggerData);
+	parentRef.current = props.triggerData;
+
+	const defaultValues = {...source};
 	const [saveUnchangedData, setSaveUnchangedData] = useState(
 		defaultValues.isModified
 	);
@@ -57,9 +67,30 @@ export function TriggerGeneralSettingsSection(
 	const {
 		control,
 		handleSubmit,
-		reset,
+		watch,
+		getValues,
+		trigger,
 		formState: {errors}
-	} = useForm({defaultValues, mode: 'onBlur'});
+	} = useForm<any>({defaultValues, mode: 'onChange'});
+
+	useValidateOnOpen(props.route, trigger);
+
+	useEmbeddedSection({
+		embedded,
+		showErrors: props.showErrors,
+		trigger,
+		watch,
+		getValues,
+		stage: data =>
+			props.updateTrigger({
+				...parentRef.current,
+				name: data.name,
+				description: data.description,
+				isPaused: data.isPaused,
+				shouldConfirmation: data.shouldConfirmation,
+				isModified: true
+			})
+	});
 
 	const onSubmit = (data: TriggerGeneralFormData) => {
 		if (saveUnchangedData) {
@@ -100,6 +131,7 @@ export function TriggerGeneralSettingsSection(
 	};
 
 	useEffect(() => {
+		if (embedded) return;
 		const subscribe = () => {
 			const unsubscribe = props.navigation.addListener(
 				'beforeRemove',
@@ -111,9 +143,10 @@ export function TriggerGeneralSettingsSection(
 							subscribe();
 						},
 						() => {
-							reset();
 							unsubscribe();
-							subscribe();
+							props.navigation.dispatch(
+								e.data.action
+							);
 						}
 					)
 			);
@@ -139,13 +172,19 @@ export function TriggerGeneralSettingsSection(
 		return () => unsubscribe();
 	}, [saveUnchangedData]);
 
+	const Body: any = embedded ? View : ScrollView;
+	const bodyProps: any = embedded
+		? {}
+		: {automaticallyAdjustKeyboardInsets: true};
+
 	return (
-		<ScrollView automaticallyAdjustKeyboardInsets={true}>
+		<Body {...bodyProps}>
 			<View style={BoxFormStyle.boxForm}>
 				<InputForm
 					control={control}
 					errors={errors}
 					name="name"
+					maxLength={25}
 					placeholder="Name*"
 					rules={{required: 'Name is required'}}
 					onChangeText={() => {
@@ -161,30 +200,28 @@ export function TriggerGeneralSettingsSection(
 						setSaveUnchangedData(true);
 					}}
 				/>
-				<View style={{flexDirection: 'row', gap: 12}}>
-					<SwitchForm
-						control={control}
-						errors={errors}
-						name="isPaused"
-						placeholder="Set paused"
-						rules={{required: false}}
-						onChangeText={() => {
-							setSaveUnchangedData(true);
-						}}
-					/>
-					<SwitchForm
-						control={control}
-						errors={errors}
-						name="shouldConfirmation"
-						placeholder="Need confirmation"
-						rules={{required: false}}
-						onChangeText={() => {
-							setSaveUnchangedData(true);
-						}}
-					/>
-				</View>
+				<SwitchForm
+					control={control}
+					errors={errors}
+					name="isPaused"
+					placeholder="Set paused"
+					rules={{required: false}}
+					onChangeText={() => {
+						setSaveUnchangedData(true);
+					}}
+				/>
+				<SwitchForm
+					control={control}
+					errors={errors}
+					name="shouldConfirmation"
+					placeholder="Need confirmation"
+					rules={{required: false}}
+					onChangeText={() => {
+						setSaveUnchangedData(true);
+					}}
+				/>
 			</View>
-		</ScrollView>
+		</Body>
 	);
 }
 

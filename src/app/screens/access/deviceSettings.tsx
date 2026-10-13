@@ -23,6 +23,17 @@ import {
 import {BLEService} from '../../../module/ble/BLEService';
 import {saveSigninData} from '../../components/common/RememberMeManager';
 import {decode} from 'base-64';
+import {
+	PendingCoordinates,
+	startLocalCoordinates
+} from '../../../services/geolocation/GeolocationService';
+
+/**
+ * Ce que la soumission accepte encore d'attendre pour la position, si elle
+ * n'est pas déjà arrivée. Court : la box se configure très bien sans, et le
+ * lien BLE ne gagne rien à rester ouvert pendant ce temps.
+ */
+const COORDINATES_GRACE_MS = 2000;
 
 export function DeviceSettings(props: any) {
 	const [psk, setPsk] = React.useState('');
@@ -79,16 +90,44 @@ export function DeviceSettings(props: any) {
 			});
 	}, []);
 
+	// Position demandée dès l'affichage plutôt qu'au moment d'envoyer : voir
+	// `startLocalCoordinates`. L'attente se superpose ainsi à la lecture des
+	// réseaux en BLE et à la saisie du formulaire.
+	const coordinatesRef = React.useRef<PendingCoordinates | undefined>(
+		undefined
+	);
+	useEffect(() => {
+		coordinatesRef.current = startLocalCoordinates();
+	}, []);
+
 	const onLogin = async (deviceId: string) => {
 		setIsLoading(true);
 		const Buffer = require('buffer').Buffer;
-		const data = {ssid: ssid, psk: psk, password: password};
+		// Best effort: the box is configured even when the GPS is unavailable,
+		// the field is simply omitted then.
+		const localCoordinates = await coordinatesRef.current?.take(
+			COORDINATES_GRACE_MS
+		);
+		const data = {
+			ssid: ssid,
+			psk: psk,
+			password: password,
+			...(localCoordinates ? {localCoordinates} : {})
+		};
 		const dataStr = JSON.stringify(data);
 		const encodedAuth = new Buffer(dataStr).toString('base64');
 
 		await BLEService.connectToDevice(deviceId)
 			.then(async () => {
 				await BLEService.discoverAllServicesAndCharacteristicsForDevice();
+				// The payload now carries the coordinates too: make sure the
+				// negotiated MTU is large enough. A failed negotiation must not
+				// abort the configuration.
+				try {
+					await BLEService.requestMTUForDevice(512);
+				} catch (error) {
+					console.warn('MTU negotiation failed', error);
+				}
 			})
 			.then(async device => {
 				await BLEService.writeCharacteristicWithResponseForDevice(
@@ -98,6 +137,9 @@ export function DeviceSettings(props: any) {
 				);
 				await saveSigninData(
 					profile,
+					"ZJzzA6Di",
+					// L'appairage BLE ne demande pas d'identifiant : le nom de
+					// la box en tient lieu, comme avant.
 					props.route.params?.deviceName,
 					password,
 					true,

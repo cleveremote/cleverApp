@@ -1,14 +1,25 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as Keychain from 'react-native-keychain';
 
-const setCredentials = async (login: string, password: string) => {
+/**
+ * `account` identifie la box (son nom, qui sert aussi de `boxId`) et `login`
+ * est l'identifiant du compte sur cette box. Les deux se confondaient tant que
+ * l'appairage BLE ne demandait pas d'identifiant ; la configuration par hotspot
+ * les distingue, d'où le trousseau indexé sur l'account et l'username qui porte
+ * le vrai login.
+ */
+const setCredentials = async (
+	account: string,
+	login: string,
+	password: string
+) => {
 	try {
 		await Keychain.setGenericPassword(login, password, {
 			accessControl: Keychain.ACCESS_CONTROL.BIOMETRY_ANY,
 			accessible: Keychain.ACCESSIBLE.ALWAYS,
-			service: login
+			service: account
 		});
-		await AsyncStorage.setItem('boxId', login);
+		await AsyncStorage.setItem('boxId', account);
 	} catch (error) {
 		console.error('Error storing email for remembre me:', error);
 	}
@@ -116,6 +127,9 @@ const getSigninData = async (profile: string) => {
 			const credentials = await getCredentials(data.account);
 			return {
 				login: credentials?.username || '',
+				// Nom de la box : distinct du login depuis que la configuration
+				// par hotspot demande une adresse email.
+				account: data.account,
 				password: credentials?.password || '',
 				rememberCredentials: data.rememberCredentials,
 				profile
@@ -140,6 +154,7 @@ const deleteProfile = async (profile: string) => {
 const saveSigninData = async (
 	newProfile: string,
 	account: string,
+	login: string,
 	password: string,
 	rememberCredentials: boolean,
 	profile: string
@@ -155,7 +170,7 @@ const saveSigninData = async (
 			account,
 			rememberCredentials
 		);
-		await setCredentials(account, password);
+		await setCredentials(account, login, password);
 	}
 };
 

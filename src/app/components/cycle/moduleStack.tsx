@@ -3,13 +3,14 @@ import {TextInput, TouchableOpacity, View} from 'react-native';
 import {Text} from 'react-native';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
-import {IconDefinition} from '@fortawesome/free-solid-svg-icons';
+import {IconDefinition, faCog} from '@fortawesome/free-solid-svg-icons';
 import {styles} from '../../styles/cycleStyles';
 import {hapticOptions} from '../../data/cycleTypes';
 
 // When `numericInput` is provided (devices of a task cycle), the row also
 // renders a numeric field facing the label so the user can enter a value for
-// the element.
+// the element. When `settingsAction` is provided (CTRL actuators), a gear icon
+// is rendered before the main action so the row can open a dedicated config.
 export function elementStack(
 	item: any,
 	actionElement: Function,
@@ -19,7 +20,8 @@ export function elementStack(
 		value: any;
 		onChangeValue: (text: string) => void;
 		placeholder?: string;
-	}
+	},
+	settingsAction?: () => void
 ) {
 	return (
 		<View
@@ -65,6 +67,24 @@ export function elementStack(
 							textAlign: 'right'
 						}}
 					/>
+				) : null}
+				{settingsAction ? (
+					<View style={{marginVertical: 8, marginRight: 8}}>
+						<TouchableOpacity
+							onPress={() => {
+								ReactNativeHapticFeedback.trigger(
+									'impactMedium',
+									hapticOptions
+								);
+								settingsAction();
+							}}>
+							<FontAwesomeIcon
+								icon={faCog}
+								size={20}
+								style={styles.textSequence}
+							/>
+						</TouchableOpacity>
+					</View>
 				) : null}
 				<View style={{marginVertical: 8, marginRight: 8}}>
 					<TouchableOpacity

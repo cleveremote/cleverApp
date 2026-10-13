@@ -1,4 +1,5 @@
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
 <!-- Android >= 12 --> 
@@ -9,15 +10,29 @@
    <uses-permission android:name="android.permission.BLUETOOTH_ADMIN" android:maxSdkVersion="30" /> 
    <!-- common --> 
    <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
+   <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
 
    <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
    <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
    <uses-permission android:name="android.permission.CHANGE_WIFI_MULTICAST_STATE" />
 
-   <!-- Add this line if your application always requires BLE. More info can be found on: 
-       https://developer.android.com/guide/topics/connectivity/bluetooth-le.html#permissions 
-     --> 
-   <uses-feature android:name="android.hardware.bluetooth_le" android:required="true"/> 
+   <!-- QR pairing: join the box hotspot via WifiNetworkSpecifier (HotspotModule). -->
+   <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
+   <!-- requestNetwork() refuses to run without this one. -->
+   <uses-permission android:name="android.permission.CHANGE_NETWORK_STATE" />
+   <!-- Android >= 13 replaces the location requirement for Wi-Fi work. -->
+   <uses-permission android:name="android.permission.NEARBY_WIFI_DEVICES"
+       android:usesPermissionFlags="neverForLocation"
+       tools:targetApi="33" />
+
+   <!-- QR pairing: scanning the code on the box (ScanBoxScreen). -->
+   <uses-permission android:name="android.permission.CAMERA" />
+   <uses-feature android:name="android.hardware.camera" android:required="true" />
+
+   <!-- Add this line if your application always requires BLE. More info can be found on:
+       https://developer.android.com/guide/topics/connectivity/bluetooth-le.html#permissions
+     -->
+   <uses-feature android:name="android.hardware.bluetooth_le" android:required="true"/>
     <application
       android:name=".MainApplication"
       android:label="@string/app_name"

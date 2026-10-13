@@ -163,7 +163,7 @@ const SmallValve = () => (
 	</>
 );
 
-export function FertigationScreen() {
+export function FertigationScreen(props: any) {
 	const {width, height} = useWindowDimensions();
 	const insets = useSafeAreaInsets();
 	const navigation = useNavigation<any>();
@@ -658,7 +658,11 @@ export function FertigationScreen() {
 					height={25.29459}
 					fill="#ffffff"
 					fillOpacity={0.01}
-					onPress={() => navigation.navigate('TanksStack')}
+					onPress={() =>
+						props.onNavigateToTanks
+							? props.onNavigateToTanks()
+							: navigation.navigate('TanksStack')
+					}
 				/>
 			</Svg>
 				</Animated.View>

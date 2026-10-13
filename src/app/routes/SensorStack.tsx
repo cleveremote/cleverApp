@@ -6,6 +6,7 @@ import {
 import {Provider} from 'react-redux';
 import {store} from '../../module/process/infrasctructure/store/store';
 import SensorsScreen from '../screens/sensor/SensorsScreen';
+import SensorMenuScreen from '../screens/sensor/SensorMenuScreen';
 import {SensorSettingsStack} from './SensorSettingsStack';
 
 export function SensorStack() {
@@ -24,6 +25,11 @@ export function SensorStack() {
 				name="Sensors"
 				component={SensorsScreen}
 				options={options('Sensors')}
+			/>
+			<Stack.Screen
+				name="SensorMenu"
+				component={SensorMenuScreen}
+				options={options('Sensors Settings')}
 			/>
 			<Stack.Screen
 				name="Settings"

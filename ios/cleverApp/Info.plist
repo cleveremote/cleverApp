@@ -45,6 +45,8 @@
 	</dict>
 	<key>NSBluetoothAlwaysUsageDescription</key>
 	<string></string>
+	<key>NSCameraUsageDescription</key>
+	<string>$(PRODUCT_NAME) uses the camera to scan the QR code on your box and pair with it.</string>
 	<key>NSLocalNetworkUsageDescription</key>
 	<string>$(PRODUCT_NAME) needs to discover devices on your local network.</string>
 	<key>NSBonjourServices</key>
@@ -54,7 +56,7 @@
 	<key>NSFaceIDUsageDescription</key>
 	<string>$(PRODUCT_NAME) Authentication with TouchId or FaceID</string>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string></string>
+	<string>$(PRODUCT_NAME) uses your location to record where your box is installed during its configuration.</string>
 	<key>RCTNewArchEnabled</key>
 	<true/>
 	<key>UIAppFonts</key>

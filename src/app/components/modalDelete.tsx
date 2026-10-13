@@ -9,11 +9,15 @@ import {
 export function ModalConfirmation({
 	isOpen,
 	onClose,
-	onDelete
+	onDelete,
+	title = 'Confirmation required !',
+	message = 'This action cannot be reversed. Deleted data can not be recovered.'
 }: {
 	isOpen: boolean;
 	onClose: () => void;
 	onDelete: () => void;
+	title?: string;
+	message?: string;
 }) {
 	return (
 		<Modal
@@ -41,12 +45,9 @@ export function ModalConfirmation({
 							fontWeight: 'bold',
 							marginBottom: 12
 						}}>
-						Delete Cycle
+						{title}
 					</Text>
-					<Text style={{marginBottom: 20}}>
-						This will remove the cycle. This action cannot be
-						reversed. Deleted data can not be recovered.
-					</Text>
+					<Text style={{marginBottom: 20}}>{message}</Text>
 					<View
 						style={{
 							flexDirection: 'row',
@@ -56,7 +57,7 @@ export function ModalConfirmation({
 						<TouchableOpacity
 							onPress={onClose}
 							style={{paddingVertical: 8, paddingHorizontal: 16}}>
-							<Text style={{color: '#718096'}}>Cancel</Text>
+							<Text style={{color: '#718096'}}>No</Text>
 						</TouchableOpacity>
 						<TouchableOpacity
 							onPress={onDelete}
@@ -67,7 +68,7 @@ export function ModalConfirmation({
 								borderRadius: 6
 							}}>
 							<Text style={{color: 'white', fontWeight: 'bold'}}>
-								Delete
+								Yes
 							</Text>
 						</TouchableOpacity>
 					</View>

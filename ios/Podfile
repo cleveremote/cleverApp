@@ -7,6 +7,12 @@ require Pod::Executable.execute_command('node', ['-p',
 platform :ios, min_ios_version_supported
 prepare_react_native_project!
 
+# VisionCamera is used only for QR scanning (ScanBoxScreen). Frame processors would
+# pull in Worklets, and the location APIs would force an NSLocationWhenInUse prompt
+# on the camera — neither is needed.
+$VCEnableFrameProcessors = false
+$VCEnableLocation = false
+
 linkage = ENV['USE_FRAMEWORKS']
 if linkage != nil
   Pod::UI.puts "Configuring Pod with #{linkage}ally linked Frameworks".green

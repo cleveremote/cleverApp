@@ -11,14 +11,16 @@ import {
 	PLAN_LOAD,
 	MODBUS_CONNECTIONS_LOAD,
 	MODBUS_TASKS_LOAD,
-	TASKS_LOAD
+	ROOT_DEVICES_LOAD,
+	GROUPS_LOAD
 } from './types';
 import {ThunkAction} from 'redux-thunk';
 import {AnyAction} from 'redux';
 import {RootState} from '../store';
 import {Alert} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import {socketService} from '../../../../../services/socket';
+import {socketService, normalizeIds} from '../../../../../services/socket';
+import {statusFromConfiguration} from './cycle';
 
 export const listenerEvents =
 	(): ThunkAction<void, RootState, unknown, AnyAction> => async dispatch => {
@@ -30,7 +32,7 @@ export const listenerEvents =
 			socketService.on(
 				'UPDATE_CONFIGURATION',
 				message => {
-					const data = JSON.parse(message);
+					const data = normalizeIds(JSON.parse(message));
 					if (data.cycle) {
 						dispatch({
 							type: CYCLE_SAVE,
@@ -50,7 +52,7 @@ export const listenerEvents =
 			socketService.on(
 				'front/synchronize/status',
 				message => {
-					const data = JSON.parse(message);
+					const data = normalizeIds(JSON.parse(message));
 					dispatch({
 						type: CYCLE_STATUS,
 						payload: data
@@ -63,7 +65,7 @@ export const listenerEvents =
 				message => {
 					dispatch({
 						type: SENSOR_STATUS,
-						payload: JSON.parse(message)
+						payload: normalizeIds(JSON.parse(message))
 					});
 				}
 			);
@@ -120,34 +122,52 @@ export const loadConfiguration =
 			'front/box/fetch/configuration',
 			{},
 			(response: any) => {
+				const config = normalizeIds(JSON.parse(response.config));
+
 				dispatch({
 					type: CYCLES_LOAD,
-					payload: JSON.parse(response.config).cycles
+					payload: config.cycles
 				});
 
 				dispatch({
-					type: TASKS_LOAD,
-					payload: JSON.parse(response.config).tasks
+					type: GROUPS_LOAD,
+					payload: (config.cycles || []).filter(
+						(x: any) => x.type === 'GROUP'
+					)
 				});
 
 				dispatch({
 					type: SENSORS_LOAD,
-					payload: JSON.parse(response.config).sensors
+					payload: config.sensors
 				});
 
 				dispatch({
 					type: MODBUS_CONNECTIONS_LOAD,
-					payload: JSON.parse(response.config).modbusconnections
+					payload: config.modbusconnections
 				});
 
 				dispatch({
 					type: MODBUS_TASKS_LOAD,
-					payload: JSON.parse(response.config).modbusTasks
+					payload: config.modbusTasks
+				});
+
+				dispatch({
+					type: ROOT_DEVICES_LOAD,
+					payload: config.devices
 				});
 
 				dispatch({
 					type: SENSOR_STATUS,
-					payload: JSON.parse(response.config).values
+					payload: config.values
+				});
+
+				// Pendant des `config.values` pour les capteurs : le status
+				// d'exécution des cycles/séquences est porté par la configuration
+				// elle-même, il alimente la tranche `root_cycle.status`.
+				dispatch({
+					type: CYCLE_STATUS,
+					payload: statusFromConfiguration(config.cycles),
+					replace: true
 				});
 			}
 		);

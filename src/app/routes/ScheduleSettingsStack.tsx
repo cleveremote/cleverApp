@@ -4,7 +4,6 @@ import {
 	createStackNavigator
 } from '@react-navigation/stack';
 import ScheduleSettingsScreen from '../screens/cycle/schedules/settings/schedule/ScheduleSettingsScreen';
-import ScheduleExecutionSettingsSection from '../screens/cycle/schedules/settings/schedule/ScheduleExecutionSettingsSection';
 import ScheduleGeneralSettingsSection from '../screens/cycle/schedules/settings/schedule/ScheduleGeneralSettingsSection';
 import {navigationHeader} from '../components/common/navigationHeaders';
 
@@ -32,11 +31,6 @@ export function ScheduleSettingsStack() {
 				name="ScheduleGeneralSettingsSection"
 				component={ScheduleGeneralSettingsSection}
 				options={options('General')}
-			/>
-			<Stack.Screen
-				name="ScheduleExecutionSettingsSection"
-				component={ScheduleExecutionSettingsSection}
-				options={options('Execution')}
 			/>
 		</Stack.Navigator>
 	);

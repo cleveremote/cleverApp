@@ -9,7 +9,12 @@ import {
 import {ThunkAction} from 'redux-thunk';
 import {AnyAction} from 'redux';
 import {RootState} from '../store';
-import {socketService} from '../../../../../services/socket';
+import {
+	socketService,
+	normalizeIds,
+	denormalizeIds,
+	isTempId
+} from '../../../../../services/socket';
 
 export const updateSensor =
 	(sensor: any): ThunkAction<void, RootState, unknown, AnyAction> =>
@@ -28,11 +33,11 @@ export const loadSensors =
 			(response: any) => {
 				dispatch({
 					type: SENSORS_LOAD,
-					payload: JSON.parse(response.config).sensors
+					payload: normalizeIds(JSON.parse(response.config).sensors)
 				});
 				dispatch({
 					type: SENSOR_STATUS,
-					payload: JSON.parse(response.config).values
+					payload: normalizeIds(JSON.parse(response.config).values)
 				});
 			}
 		);
@@ -52,11 +57,12 @@ export const saveSensor =
 	async dispatch => {
 		socketService.emit(
 			'front/box/sync/sensor',
-			data,
+			denormalizeIds(data),
 			(response: any) => {
 				dispatch({
 					type: SENSOR_SAVE,
-					payload: JSON.parse(response.config).sensor
+					payload: normalizeIds(JSON.parse(response.config).sensor),
+					tempId: isTempId(data.id) ? data.id : undefined
 				});
 			}
 		);

@@ -13,12 +13,14 @@ export function DragableSequences({
 	onDrag = () => {},
 	onDragEnd,
 	stackElement,
-	data
+	data,
+	scrollEnabled = true
 }: {
 	onDrag: Function;
 	onDragEnd: Function;
 	stackElement: Function;
 	data: any[];
+	scrollEnabled?: boolean;
 }) {
 	const renderItem = ({item, drag, isActive}: RenderItemParams<any>) => {
 		isActive &&
@@ -41,6 +43,7 @@ export function DragableSequences({
 		<GestureHandlerRootView style={{width: '100%'}}>
 			<DraggableFlatList
 				data={data}
+				scrollEnabled={scrollEnabled}
 				onDragEnd={({data}) => {
 					onDragEnd(data);
 				}}

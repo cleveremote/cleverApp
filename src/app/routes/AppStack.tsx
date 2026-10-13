@@ -3,18 +3,18 @@ import messaging from '@react-native-firebase/messaging';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import {
-	faBorderAll,
 	faCircleDot,
 	faDiagramProject,
 	faFlask,
+	faGear,
 	faImage,
 	faImagePortrait,
 	faImages,
 	faLayerGroup,
+	faList,
+	faListCheck,
 	faMap,
-	faPlane,
-	faSyncAlt,
-	faWater
+	faPlane
 } from '@fortawesome/free-solid-svg-icons';
 import { AppState } from 'react-native';
 import { authenticationService } from '../../module/authentication/domain/services/auth.service';
@@ -22,10 +22,9 @@ import { socketService } from '../../services/socket';
 import { connect } from 'react-redux';
 import { ParamListBase, RouteProp } from '@react-navigation/native';
 import { CycleStack } from './CycleStack';
-import { FertigationStack } from './FertigationStack';
-import { CircuitStack } from './CircuitStack';
-import { TanksStack } from './TanksStack';
+import { SynoptiquesStack } from './SynoptiquesStack';
 import { SensorStack } from './SensorStack';
+import { SettingsStack } from './SettingsStack';
 import {
 	listenerEvents,
 	loadConfiguration,
@@ -34,7 +33,6 @@ import {
 import { setIsConnected, setIsServerConnected, setIsBoxConnected } from '../../module/process/infrasctructure/store/actions/state';
 import { NoConnectionScreen } from '../screens/access/no-connexion';
 import { loadValues } from '../../module/process/infrasctructure/store/actions/cycle';
-import { PlanStack } from './PlanStack';
 
 type Props = {
 	setIsConnected: (value: any) => void;
@@ -42,25 +40,19 @@ type Props = {
 	loadConfiguration: () => any;
 };
 
-const FilteredCycleStack = () => <CycleStack typeFilter="MODULE" />;
-
 const tabBarIconCfg = (
 	focused: boolean,
 	route: RouteProp<ParamListBase, string>
 ) => {
 	let iconName;
-	if (route.name === 'Settings') {
-		iconName = faLayerGroup;
+	if (route.name === 'SettingsStack') {
+		iconName = faGear;
 	} else if (route.name === 'CyclesStack') {
-		iconName = faSyncAlt;
-	} else if (route.name === 'PlanStack') {
-		iconName = faBorderAll;
+		iconName = faList;
+	} else if (route.name === 'SynoptiquesStack') {
+		iconName = faDiagramProject;
 	} else if (route.name === 'SensorsStack') {
 		iconName = faCircleDot;
-	} else if (route.name === 'TanksStack') {
-		iconName = faWater;
-	} else if (route.name === 'CircuitStack') {
-		iconName = faDiagramProject;
 	} else {
 		iconName = faFlask;
 	}
@@ -183,42 +175,26 @@ export function AppStack(props: any) {
 					})}>
 					<Tab.Screen
 						name="CyclesStack"
-						options={{ headerShown: false, tabBarLabel: 'Cycles' }}
+						options={{ headerShown: false, tabBarLabel: 'Tasks' }}
 						component={CycleStack}
 					/>
 
-					<Tab.Screen
-						name="Settings"
-						options={{ headerShown: false, tabBarLabel: 'Modules' }}
-						component={FilteredCycleStack}
-					/>
 					<Tab.Screen
 						name="SensorsStack"
 						options={{ headerShown: false, tabBarLabel: 'Sensors' }}
 						component={SensorStack}
 					/>
+
 					<Tab.Screen
-						name="FertigationStack"
-						options={{ headerShown: false, tabBarLabel: 'Fertigation' }}
-						component={FertigationStack}
+						name="SynoptiquesStack"
+						options={{ headerShown: false, tabBarLabel: 'Synoptiques' }}
+						component={SynoptiquesStack}
 					/>
 
 					<Tab.Screen
-						name="TanksStack"
-						options={{ headerShown: false, tabBarLabel: 'Bacs' }}
-						component={TanksStack}
-					/>
-
-					<Tab.Screen
-						name="CircuitStack"
-						options={{ headerShown: false, tabBarLabel: 'Circuit' }}
-						component={CircuitStack}
-					/>
-
-					<Tab.Screen
-						name="PlanStack"
-						options={{ headerShown: false, tabBarLabel: 'Plan' }}
-						component={PlanStack}
+						name="SettingsStack"
+						options={{ headerShown: false, tabBarLabel: 'Settings' }}
+						component={SettingsStack}
 					/>
 				</Tab.Navigator>
 			) : (

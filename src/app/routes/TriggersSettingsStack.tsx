@@ -6,7 +6,7 @@ import {
 import TriggerSettingsScreen from '../screens/cycle/triggers/settings/trigger/TriggerSettingsScreen';
 import TriggerExecutionSettingsSection from '../screens/cycle/triggers/settings/trigger/TriggerExecutionSettingsSection';
 import TriggerGeneralSettingsSection from '../screens/cycle/triggers/settings/trigger/TriggerGeneralSettingsSection';
-import TriggerConditionsSection from '../screens/cycle/triggers/settings/trigger/TriggerConditionsSection';
+import ConditionsSection from '../screens/cycle/conditions/ConditionsSection';
 import {ConditionSettingsStack} from './ConditionSettingsStack';
 
 export function TriggerSettingsStack() {
@@ -36,8 +36,8 @@ export function TriggerSettingsStack() {
 				options={options('Execution')}
 			/>
 			<Stack.Screen
-				name="TriggerConditionsSection"
-				component={TriggerConditionsSection}
+				name="ConditionsSection"
+				component={ConditionsSection}
 				options={options('Conditions')}
 			/>
 			<Stack.Screen

@@ -46,14 +46,19 @@ export default (state = initialState, action: any) => {
 		case SCHEDULE_SAVE: {
 			return {
 				...state,
-				schedules: updateSchedule(state.schedules, action.payload)
+				schedules: updateSchedule(
+					state.schedules,
+					action.payload,
+					action.tempId
+				)
 			};
 		}
 
 		case SCHEDULES_SAVE: {
+			// `payload` est déjà la liste des schedules renvoyée par le box.
 			return {
 				...state,
-				schedules: action.payload.schedules
+				schedules: action.payload
 			};
 		}
 

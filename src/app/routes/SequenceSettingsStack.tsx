@@ -8,7 +8,10 @@ import {store} from '../../module/process/infrasctructure/store/store';
 import SequenceSettingsScreen from '../screens/cycle/settings/sequence/SequenceSettingsScreen';
 import SequenceGeneralSettingsSection from '../screens/cycle/settings/sequence/SequenceGeneralSettingsSection';
 import SequenceSecuritySettingsSection from '../screens/cycle/settings/sequence/SequenceSecuritySettingsSection';
-import SequenceModulesSettingsSection from '../screens/cycle/settings/sequence/SequenceModulesSettingsSection';
+import SequenceActuatorsSettingsSection from '../screens/cycle/settings/sequence/SequenceActuatorsSettingsSection';
+import SequenceActuatorConfigSection from '../screens/cycle/settings/sequence/SequenceActuatorConfigSection';
+import ConditionsSection from '../screens/cycle/conditions/ConditionsSection';
+import {ConditionSettingsStack} from './ConditionSettingsStack';
 import {navigationHeader} from '../components/common/navigationHeaders';
 
 export function SequenceSettingStack() {
@@ -40,9 +43,24 @@ export function SequenceSettingStack() {
 				options={options('Security')}
 			/>
 			<Stack.Screen
-				name="SequenceModulesSettingsSection"
-				component={SequenceModulesSettingsSection}
-				options={options('Modules')}
+				name="SequenceActuatorsSection"
+				component={SequenceActuatorsSettingsSection}
+				options={options('Actuators')}
+			/>
+			<Stack.Screen
+				name="SequenceActuatorConfigSection"
+				component={SequenceActuatorConfigSection}
+				options={options('Actuator Settings')}
+			/>
+			<Stack.Screen
+				name="ConditionsSection"
+				component={ConditionsSection}
+				options={options('Conditions')}
+			/>
+			<Stack.Screen
+				name="ConditionSettingsStack"
+				component={ConditionSettingsStack}
+				options={{headerShown: false}}
 			/>
 		</Stack.Navigator>
 	);

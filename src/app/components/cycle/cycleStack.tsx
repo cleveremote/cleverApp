@@ -114,7 +114,7 @@ export function MenuCycle({
 	current,
 	onExecute,
 	status,
-	isTask
+	isGroup
 }: Readonly<{
 	navigation: any;
 	cycleData: any;
@@ -122,7 +122,7 @@ export function MenuCycle({
 	current: string | undefined;
 	onExecute: (sequenceId: string, ms: number) => void;
 	status: any;
-	isTask?: boolean;
+	isGroup?: boolean;
 }>) {
 	const [isOpen, setIsOpen] = useState(false);
 	const onToggle = () => setIsOpen(prev => !prev);
@@ -150,7 +150,7 @@ export function MenuCycle({
 				closeSibillings(false);
 				navigation.navigate('Settings', {
 					screen: 'CycleSettingsMenu',
-					params: {...cycleData, isTask}
+					params: {...cycleData, isGroup}
 				});
 			}
 		},

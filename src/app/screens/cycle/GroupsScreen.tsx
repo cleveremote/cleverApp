@@ -1,6 +1,6 @@
 import React, {useEffect, useRef} from 'react';
 import {connect} from 'react-redux';
-import TaskStack from '../../components/cycle/taskStack';
+import GroupStack from '../../components/cycle/groupStack';
 import {ScrollView, RefreshControl} from 'react-native-gesture-handler';
 import Orientation, {OrientationType} from 'react-native-orientation-locker';
 import {
@@ -12,14 +12,14 @@ import {styles} from '../../styles/cycleStyles';
 import {AppState, View} from 'react-native';
 import {
 	executeCycle,
-	loadTasks
+	loadGroups
 } from '../../../module/process/infrasctructure/store/actions/cycle';
 import {
 	fakeFertigationCycles,
-	fakeFertigationTasks
+	fakeFertigationGroups
 } from '../../data/fakeFertigation';
 
-export function Tasks(props: any) {
+export function Groups(props: any) {
 	const [activeMenu, setActiveMenu] = React.useState<string>();
 	const [orientation, setOrientation] = React.useState<OrientationType>(
 		OrientationType.UNKNOWN
@@ -50,12 +50,17 @@ export function Tasks(props: any) {
 		props.navigation.setOptions({
 			headerRight: () =>
 				navigationHeader(
-					() => props.navigation.navigate('Settings'),
+					() =>
+						props.navigation.navigate('Settings', {
+							screen: 'CycleSettingsMenu',
+							// No id + isGroup → CycleSettingsScreen creates a blank
+							// GROUP cycle (General / Priority / Cycles).
+							params: {id: undefined, isGroup: true}
+						}),
 					'times-circle',
 					true
 				),
-			headerLeft: () =>
-				brandLogo(() => props.navigation.navigate('SettingsScreen'))
+			headerLeft: () => brandLogo()
 		});
 
 		const initial = Orientation.getInitialOrientation();
@@ -119,15 +124,15 @@ export function Tasks(props: any) {
 
 	const onRefresh = async () => {
 		setRefreshing(true);
-		await props.loadTasks();
+		await props.loadGroups();
 		setRefreshing(false);
 	};
 
 	// Fall back to fake data so the structure/visual can be validated without a
-	// backend. As soon as the box returns real tasks, those take precedence
-	// (along with the real cycles linked to them via taskId).
-	const usingFake = !props.tasks?.length;
-	const tasks = usingFake ? fakeFertigationTasks : props.tasks;
+	// backend. As soon as the box returns real groups, those take precedence
+	// (along with the real cycles they reference via `childCycles`).
+	const usingFake = false;
+	const groups = usingFake ? fakeFertigationGroups : props.groups;
 	const cycles = usingFake ? fakeFertigationCycles : props.cycles;
 
 	return (
@@ -152,12 +157,12 @@ export function Tasks(props: any) {
 					textStyle={styles.spinnerTextStyle}
 					animation="fade"
 				/>
-				{tasks
-					?.filter((x: any) => x.id.indexOf('deleted') < 0)
-					?.map((task: any, index: number) => (
-						<TaskStack
-							key={'task_' + index}
-							taskData={task}
+				{groups
+					?.filter((x: any) => !x.delete)
+					?.map((group: any, index: number) => (
+						<GroupStack
+							key={'group_' + index}
+							groupData={group}
 							cycles={cycles}
 							navigation={props.navigation}
 							current={activeMenu}
@@ -174,7 +179,7 @@ export function Tasks(props: any) {
 }
 
 const mapStateToProps = (state: any) => ({
-	tasks: state.root_cycle.tasks,
+	groups: state.root_cycle.groups,
 	cycles: state.root_cycle.cycles,
 	isLoading: state.root_cycle.isLoading,
 	connected: state.status.connected,
@@ -182,6 +187,6 @@ const mapStateToProps = (state: any) => ({
 });
 
 export default connect(mapStateToProps, {
-	loadTasks,
+	loadGroups,
 	executeCycle
-})(Tasks);
+})(Groups);

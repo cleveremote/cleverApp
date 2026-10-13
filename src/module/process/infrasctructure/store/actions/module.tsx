@@ -2,7 +2,9 @@ import {
 	MODULE_UPDATE,
 	MODULES_LOAD,
 	DEVICE_UPDATE,
-	DEVICES_LOAD
+	DEVICES_LOAD,
+	SEQUENCE_MODULE_CONFIGS_LOAD,
+	SEQUENCE_MODULE_CONFIG_UPDATE
 } from './types';
 
 import {ThunkAction} from 'redux-thunk';
@@ -37,5 +39,23 @@ export const updateDevice =
 		dispatch({
 			type: DEVICE_UPDATE,
 			payload: device
+		});
+	};
+
+export const loadSequenceModuleConfigs =
+	(sequence: any): ThunkAction<void, RootState, unknown, AnyAction> =>
+	dispatch => {
+		dispatch({
+			type: SEQUENCE_MODULE_CONFIGS_LOAD,
+			payload: sequence
+		});
+	};
+
+export const updateSequenceModuleConfig =
+	(moduleConfig: any): ThunkAction<void, RootState, unknown, AnyAction> =>
+	dispatch => {
+		dispatch({
+			type: SEQUENCE_MODULE_CONFIG_UPDATE,
+			payload: moduleConfig
 		});
 	};

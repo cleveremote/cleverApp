@@ -15,7 +15,9 @@ export function MenuAccordion({
 	isLast = false,
 	closeSibillings,
 	current,
-	onPress
+	onPress,
+	children,
+	invalid = false
 }: {
 	name: string;
 	icon: IconDefinition;
@@ -24,8 +26,15 @@ export function MenuAccordion({
 	closeSibillings?: Function;
 	current?: string;
 	onPress: Function;
+	children?: React.ReactNode;
+	// Encadre la section en rouge quand son sous-formulaire n'est pas conforme.
+	invalid?: boolean;
 }) {
 	const [isExpanded, setExpended] = useState(false);
+
+	// Section non conforme : icône + titre en rouge et mention « not valid ».
+	const errorColor = '#E53E3E';
+	const activeColor = invalid ? errorColor : color;
 
 	return (
 		<View>
@@ -35,6 +44,11 @@ export function MenuAccordion({
 						'impactMedium',
 						hapticOptions
 					);
+					// Avec un contenu déplié, l'accordéon se déplie/replie inline
+					// au lieu de déléguer la navigation.
+					if (children) {
+						setExpended(prev => !prev);
+					}
 					onPress();
 				}}
 				style={{height: 50, backgroundColor: 'white', borderRadius: 12}}>
@@ -64,19 +78,19 @@ export function MenuAccordion({
 									borderRadius: 0.5 * 45,
 									justifyContent: 'center',
 									alignItems: 'center',
-									borderColor: color,
+									borderColor: activeColor,
 									borderWidth: 2.5
 								}}>
 								<FontAwesomeIcon
 									icon={icon}
 									size={20}
-									color={color}
+									color={activeColor}
 								/>
 							</View>
 							<Text
 								style={{
 									fontWeight: 'bold',
-									color: color,
+									color: activeColor,
 									fontSize: 15,
 									marginLeft: 8
 								}}>
@@ -88,9 +102,22 @@ export function MenuAccordion({
 						<View
 							style={{
 								flex: 1,
-								alignItems: 'flex-end',
+								flexDirection: 'row',
+								alignItems: 'center',
+								justifyContent: 'flex-end',
 								marginRight: 20
 							}}>
+							{invalid ? (
+								<Text
+									style={{
+										color: errorColor,
+										fontSize: 12,
+										fontWeight: 'bold',
+										marginRight: 8
+									}}>
+									not valid
+								</Text>
+							) : null}
 							<Icon
 								name={
 									isExpanded ? 'angle-down' : 'angle-right'
@@ -102,6 +129,7 @@ export function MenuAccordion({
 					</View>
 				)}
 			</Pressable>
+			{children && isExpanded ? <View>{children}</View> : null}
 		</View>
 	);
 }
@@ -112,7 +140,9 @@ export function DeleteItemMenu({
 	color = '#fb1900',
 	isLast = true,
 	onCancel = () => {},
-	OnConfirm
+	OnConfirm,
+	confirmTitle,
+	confirmMessage
 }: {
 	name?: string;
 	icon?: IconDefinition;
@@ -120,16 +150,19 @@ export function DeleteItemMenu({
 	isLast?: boolean;
 	onCancel?: () => void;
 	OnConfirm: () => void;
+	confirmTitle?: string;
+	confirmMessage?: string;
 }) {
 	const [isOpened, setOpened] = useState(false);
-	const onPress = () => {
+	// Appui long : ouvre une modal « Are you sure ? » (Yes / No).
+	const onLongPress = () => {
 		ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
-		setOpened(!isOpened);
+		setOpened(true);
 	};
 	return (
 		<View>
 			<Pressable
-				onLongPress={onPress}
+				onLongPress={onLongPress}
 				style={{height: 55, backgroundColor: 'white', borderRadius: 12}}>
 				{({pressed}) => (
 					<View
@@ -193,13 +226,15 @@ export function DeleteItemMenu({
 			</Pressable>
 			<ModalConfirmation
 				isOpen={isOpened}
+				title={confirmTitle}
+				message={confirmMessage}
 				onClose={() => {
 					onCancel();
-					onPress();
+					setOpened(false);
 				}}
 				onDelete={() => {
+					setOpened(false);
 					OnConfirm();
-					onPress();
 				}}
 			/>
 		</View>

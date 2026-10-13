@@ -1,25 +1,17 @@
-import {TouchableOpacity, View, Text, Alert, StyleSheet} from 'react-native';
+import {TouchableOpacity, View, Text, StyleSheet} from 'react-native';
 import React, {useEffect, useRef} from 'react';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import {connect} from 'react-redux';
-import {navigationHeader} from '../../../components/common/navigationHeaders';
 import {elementStack} from '../../../components/cycle/moduleStack';
+import {useSectionSettingsHeader} from '../../../components/common/useSectionSettingsHeader';
 import {hapticOptions} from '../../../data/cycleTypes';
 import {faCog} from '@fortawesome/free-solid-svg-icons';
 import {
 	loadTriggers,
-	saveTrigger,
-	saveTriggers,
-	updateTrigger
+	saveTriggers
 } from '../../../../module/process/infrasctructure/store/actions/trigger';
 import {saveCycle} from '../../../../module/process/infrasctructure/store/actions/cycle';
-import {NavigationAction} from '@react-navigation/native';
-
-type BeforeRemoveEvent = {
-	preventDefault: () => void;
-	data: {action: NavigationAction};
-};
 
 type Trigger = {
 	id?: string;
@@ -29,48 +21,6 @@ type Trigger = {
 	[key: string]: unknown;
 };
 
-function handleBeforeRemove(
-	e: BeforeRemoveEvent,
-	triggersRef: React.MutableRefObject<Trigger[]>,
-	onSave: () => void,
-	onDiscard: () => void
-): void {
-	const hasModified = triggersRef.current?.some(
-		x => x.isModified || x.conditions?.some(c => c.isModified)
-	);
-	if (!hasModified) return;
-	if (!['GO_BACK', 'POP', 'POP_TO_TOP'].includes(e.data.action.type)) return;
-	e.preventDefault();
-	Alert.alert(
-		'Discard changes?',
-		'You have unsaved changes. Are you sure to discard them and leave the screen?',
-		[
-			{
-				text: 'save',
-				style: 'cancel',
-				onPress: () => {
-					ReactNativeHapticFeedback.trigger(
-						'impactMedium',
-						hapticOptions
-					);
-					onSave();
-				}
-			},
-			{
-				text: 'Discard',
-				style: 'destructive',
-				onPress: () => {
-					ReactNativeHapticFeedback.trigger(
-						'impactMedium',
-						hapticOptions
-					);
-					onDiscard();
-				}
-			}
-		]
-	);
-}
-
 export function TriggersScreen(props: any) {
 	const cycleParamRef = useRef(props.route.params.cycle);
 	cycleParamRef.current = props.route.params.cycle;
@@ -79,52 +29,39 @@ export function TriggersScreen(props: any) {
 	triggersRef.current = props.triggers;
 
 	useEffect(() => {
-		const unsubscribe = props.navigation.addListener(
-			'beforeRemove',
-			(e: BeforeRemoveEvent) =>
-				handleBeforeRemove(
-					e,
-					triggersRef,
-					() => {
-						triggersRef.current = triggersRef.current?.map(x => ({
-							...x,
-							isModified: false,
-							conditions: x.conditions?.map(c => ({
-								...c,
-								isModified: false
-							}))
-						}));
-
-						props.saveTriggers(
-							{
-								...cycleParamRef.current,
-								triggers: triggersRef.current
-							},
-							() => props.navigation.dispatch(e.data.action)
-						);
-					},
-					() => {
-						props.saveTriggers(
-							cycleParamRef.current.triggers ?? [],
-							() => props.navigation.dispatch(e.data.action)
-						);
-					}
-				)
-		);
-		return unsubscribe;
-	}, []);
-
-	useEffect(() => {
-		props.navigation.setOptions({
-			headerLeft: () =>
-				navigationHeader(
-					() => props.navigation.goBack(),
-					'arrow-alt-circle-left',
-					false
-				)
-		});
 		props.loadTriggers(cycleParamRef.current);
 	}, []);
+
+	// Ajout / édition / suppression sont mis en attente dans le slice par les
+	// sous-écrans : la liste n'est persistée que par le bouton save de l'entête.
+	// Tant que rien n'a changé, l'entête n'affiche qu'un simple retour.
+	useSectionSettingsHeader({
+		navigation: props.navigation,
+		entity: props.triggers,
+		isNew: false,
+		backWhenPristine: true,
+		hasChanges: () =>
+			!!triggersRef.current?.some(
+				x => x.isModified || x.conditions?.some(c => c.isModified)
+			),
+		save: onDone => {
+			const updated = (triggersRef.current ?? []).map(x => ({
+				...x,
+				isModified: false,
+				conditions: x.conditions?.map(c => ({
+					...c,
+					isModified: false
+				}))
+			}));
+			props.saveTriggers(
+				{...cycleParamRef.current, triggers: updated},
+				onDone
+			);
+		},
+		// Abandon : on remet la liste telle qu'elle était à l'entrée sur l'écran
+		// (les modifications en attente ne vivaient que dans le slice).
+		discard: () => props.loadTriggers(cycleParamRef.current)
+	});
 
 	const triggers: Trigger[] = props.triggers ?? [];
 
@@ -132,10 +69,7 @@ export function TriggersScreen(props: any) {
 		<View style={styles.container}>
 			<View style={styles.card}>
 				{triggers
-					.filter(
-						(element: Trigger) =>
-							!element.id?.startsWith('deleted_')
-					)
+					.filter((element: Trigger) => !element.delete)
 					.map((element: Trigger) =>
 						elementStack(
 							element,

@@ -9,6 +9,10 @@ import {
 import {ThunkAction} from 'redux-thunk';
 import {AnyAction} from 'redux';
 import {RootState} from '../store';
+import {
+	assignConditionOrder,
+	ConditionParentType
+} from '../../../../../app/data/conditionTypes';
 
 export const updateCondition =
 	(condition: any): ThunkAction<void, RootState, unknown, AnyAction> =>
@@ -31,12 +35,13 @@ export const loadConditions =
 export const loadCondition =
 	(
 		conditionId: string,
-		triggerId: string
+		parentId: string,
+		parentType: ConditionParentType
 	): ThunkAction<void, RootState, unknown, AnyAction> =>
 	dispatch => {
 		dispatch({
 			type: CONDITION_LOAD,
-			payload: {conditionId, triggerId}
+			payload: {conditionId, parentId, parentType}
 		});
 	};
 
@@ -62,7 +67,7 @@ export const saveConditions =
 	async dispatch => {
 		await dispatch({
 			type: CONDITIONS_SAVE,
-			payload: conditions
+			payload: assignConditionOrder(conditions)
 		});
 		onSuccess?.();
 	};

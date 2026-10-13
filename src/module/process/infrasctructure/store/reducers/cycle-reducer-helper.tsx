@@ -1,10 +1,12 @@
+import { newTempId } from '../../../../../services/socket';
+
 export const getKeys = (svg: string) => {
 	const matches = svg.match(/sel_./g);
 	const res = {} as any;
 	matches?.forEach(key => {
 		res[key] = false;
 	});
-return Object.keys(res).map(key => ({
+	return Object.keys(res).map(key => ({
 		label: key,
 		value: key
 	}));
@@ -14,23 +16,41 @@ export const loadCycles = (cycles: any) => {
 	return cycles || [];
 };
 
-export const loadCycle = (cycles: any, cycleId: string) => {
+export const loadCycle = (
+	cycles: any,
+	cycleId: string,
+	parentCycleId?: string,
+	// Optional entity type for the new-cycle template (e.g. `MODULE`); a plain
+	// cycle when omitted.
+	newType?: string
+) => {
 	if (cycleId) {
 		return cycles.find((x: any) => x.id === cycleId);
 	} else {
+		// Auto-positionne le type de l'entité créée : MODULE pour un module,
+		// CYCLE par défaut pour un cycle classique (les GROUP/fertigations
+		// passent par newGroup()).
+		const type = newType ?? 'CYCLE';
+		const label = type === 'MODULE' ? 'new module' : 'new cycle';
 		return {
-			id: `${Math.random()}`,
-			name: 'new cycle',
-			description: 'new cycle',
+			id: newTempId(),
+			type,
+			name: label,
+			description: label,
+			// Set when the cycle is created from a GROUP's Cycles section: the box
+			// links it back to that group as a `childCycle` when the cycle is saved.
+			parentCycleId: parentCycleId ?? null,
 			style: {
 				bgColor: '#a5f3fc',
 				fontColor: '#60a5fa',
-				iconColor: {base: '#60a5fa', icon: '#60a5fa'}
+				iconColor: { base: '#60a5fa', icon: '#60a5fa' }
 			},
 			modePriority: [
-				{mode: 'MANUAL', priority: 0},
-				{mode: 'TRIGGER', priority: 1},
-				{mode: 'SCHEDULE', priority: 2}
+				{ mode: 'MANUAL', priority: 0 },
+				{ mode: 'SCHEDULE', priority: 1 },
+				{ mode: 'TRIGGER', priority: 2 },
+				{ mode: 'AUTO', priority: 3 },
+				{ mode: 'SYSTEM', priority: 4 }
 			],
 			sequences: [],
 			isModified: true
@@ -38,13 +58,14 @@ export const loadCycle = (cycles: any, cycleId: string) => {
 	}
 };
 
-export const updateCycle = (prevCycles: any, cycle: any) => {
-	const previous = [...prevCycles];
+export const updateCycle = (prevCycles: any, cycle: any, tempId?: string) => {
+	// Drop the temporary optimistic entry (if any) now that the backend has
+	// assigned a real id, so it doesn't linger as a duplicate.
+	const previous: any[] = tempId
+		? prevCycles.filter((x: any) => x.id !== tempId)
+		: [...prevCycles];
 	if (cycle) {
-		const deleteId = cycle?.id.split('_');
-		const index = previous.findIndex(
-			x => x.id === (deleteId[1] || cycle?.id)
-		);
+		const index = previous.findIndex(x => x.id === cycle?.id);
 		if (index > -1) {
 			previous[index] = cycle;
 		} else {
@@ -104,7 +125,7 @@ export const updateStatus = (prevSatus: any, status: any) => {
 	status.forEach((element: any) => {
 		const index = values.findIndex(x => x.id === element.id);
 		if (index > -1) {
-			values[index] = {...element};
+			values[index] = { ...element };
 		} else {
 			values.push(element);
 		}

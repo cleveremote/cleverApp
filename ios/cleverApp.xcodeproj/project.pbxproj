@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		0E0308562F7695CF005F95FA /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 0E0308552F7695CF005F95FA /* PrivacyInfo.xcprivacy */; };
+		0E582CA93024E19E00A221F9 /* ca.der in Resources */ = {isa = PBXBuildFile; fileRef = 0E582CA83024E19E00A221F9 /* ca.der */; };
 		0E7F006F2BBAD4FF00FB9BE6 /* EvilIcons.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 0E7F005F2BBAD4FE00FB9BE6 /* EvilIcons.ttf */; };
 		0E7F00702BBAD4FF00FB9BE6 /* AntDesign.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 0E7F00602BBAD4FE00FB9BE6 /* AntDesign.ttf */; };
 		0E7F00712BBAD4FF00FB9BE6 /* Zocial.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 0E7F00612BBAD4FE00FB9BE6 /* Zocial.ttf */; };
@@ -25,7 +26,6 @@
 		0E7F007D2BBAD4FF00FB9BE6 /* Foundation.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 0E7F006D2BBAD4FF00FB9BE6 /* Foundation.ttf */; };
 		0E7F007E2BBAD4FF00FB9BE6 /* Octicons.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 0E7F006E2BBAD4FF00FB9BE6 /* Octicons.ttf */; };
 		0EF32D242F817BB700B4772B /* SSLCAModule.m in Sources */ = {isa = PBXBuildFile; fileRef = 0EF32D232F817BB700B4772B /* SSLCAModule.m */; };
-		0EF32D252F81F65400B4772B /* ca.der in Resources */ = {isa = PBXBuildFile; fileRef = 0EF32D242F81F65400B4772B /* ca.der */; };
 		0EF32D262F81F65400B4772B /* SRCASecurityPolicy.m in Sources */ = {isa = PBXBuildFile; fileRef = 0EF32D272F81F65400B4772B /* SRCASecurityPolicy.m */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		1645A2C1E5FA89524E8361CD /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 24D161361EB293EC1F4C2FA8 /* PrivacyInfo.xcprivacy */; };
@@ -36,6 +36,7 @@
 
 /* Begin PBXFileReference section */
 		0E0308552F7695CF005F95FA /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.xml; name = PrivacyInfo.xcprivacy; path = cleverApp/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
+		0E582CA83024E19E00A221F9 /* ca.der */ = {isa = PBXFileReference; lastKnownFileType = file; path = ca.der; sourceTree = "<group>"; };
 		0E7F005F2BBAD4FE00FB9BE6 /* EvilIcons.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; name = EvilIcons.ttf; path = "../node_modules/react-native-vector-icons/Fonts/EvilIcons.ttf"; sourceTree = "<group>"; };
 		0E7F00602BBAD4FE00FB9BE6 /* AntDesign.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; name = AntDesign.ttf; path = "../node_modules/react-native-vector-icons/Fonts/AntDesign.ttf"; sourceTree = "<group>"; };
 		0E7F00612BBAD4FE00FB9BE6 /* Zocial.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; name = Zocial.ttf; path = "../node_modules/react-native-vector-icons/Fonts/Zocial.ttf"; sourceTree = "<group>"; };
@@ -54,7 +55,6 @@
 		0E7F006E2BBAD4FF00FB9BE6 /* Octicons.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; name = Octicons.ttf; path = "../node_modules/react-native-vector-icons/Fonts/Octicons.ttf"; sourceTree = "<group>"; };
 		0EF32D222F817BB700B4772B /* SSLCAModule.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SSLCAModule.h; path = cleverApp/SSLCAModule.h; sourceTree = "<group>"; };
 		0EF32D232F817BB700B4772B /* SSLCAModule.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = SSLCAModule.m; path = cleverApp/SSLCAModule.m; sourceTree = "<group>"; };
-		0EF32D242F81F65400B4772B /* ca.der */ = {isa = PBXFileReference; lastKnownFileType = file; path = ca.der; sourceTree = "<group>"; };
 		0EF32D272F81F65400B4772B /* SRCASecurityPolicy.m */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.objc; name = SRCASecurityPolicy.m; path = cleverApp/SRCASecurityPolicy.m; sourceTree = "<group>"; };
 		0EF32D282F81F65400B4772B /* SRCASecurityPolicy.h */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.c.h; name = SRCASecurityPolicy.h; path = cleverApp/SRCASecurityPolicy.h; sourceTree = "<group>"; };
 		0EF87C8E2BEE409A0089B8BE /* cleverApp.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; name = cleverApp.entitlements; path = cleverApp/cleverApp.entitlements; sourceTree = "<group>"; };
@@ -86,7 +86,7 @@
 		13B07FAE1A68108700A75B9A /* cleverApp */ = {
 			isa = PBXGroup;
 			children = (
-				0EF32D242F81F65400B4772B /* ca.der */,
+				0E582CA83024E19E00A221F9 /* ca.der */,
 				0EF32D222F817BB700B4772B /* SSLCAModule.h */,
 				0EF32D232F817BB700B4772B /* SSLCAModule.m */,
 				0EF32D282F81F65400B4772B /* SRCASecurityPolicy.h */,
@@ -231,7 +231,7 @@
 				0E7F00702BBAD4FF00FB9BE6 /* AntDesign.ttf in Resources */,
 				0E7F00712BBAD4FF00FB9BE6 /* Zocial.ttf in Resources */,
 				0E7F00722BBAD4FF00FB9BE6 /* MaterialCommunityIcons.ttf in Resources */,
-				0EF32D252F81F65400B4772B /* ca.der in Resources */,
+				0E582CA93024E19E00A221F9 /* ca.der in Resources */,
 				0E7F00732BBAD4FF00FB9BE6 /* FontAwesome5_Solid.ttf in Resources */,
 				0E7F00742BBAD4FF00FB9BE6 /* FontAwesome5_Brands.ttf in Resources */,
 				0E7F00752BBAD4FF00FB9BE6 /* Feather.ttf in Resources */,
