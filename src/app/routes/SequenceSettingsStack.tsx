@@ -8,7 +8,6 @@ import {store} from '../../module/process/infrasctructure/store/store';
 import SequenceSettingsScreen from '../screens/cycle/settings/sequence/SequenceSettingsScreen';
 import SequenceGeneralSettingsSection from '../screens/cycle/settings/sequence/SequenceGeneralSettingsSection';
 import SequenceSecuritySettingsSection from '../screens/cycle/settings/sequence/SequenceSecuritySettingsSection';
-import SequenceActuatorsSettingsSection from '../screens/cycle/settings/sequence/SequenceActuatorsSettingsSection';
 import SequenceActuatorConfigSection from '../screens/cycle/settings/sequence/SequenceActuatorConfigSection';
 import ConditionsSection from '../screens/cycle/conditions/ConditionsSection';
 import {ConditionSettingsStack} from './ConditionSettingsStack';
@@ -41,11 +40,6 @@ export function SequenceSettingStack() {
 				name="SequenceSecuritySection"
 				component={SequenceSecuritySettingsSection}
 				options={options('Security')}
-			/>
-			<Stack.Screen
-				name="SequenceActuatorsSection"
-				component={SequenceActuatorsSettingsSection}
-				options={options('Actuators')}
 			/>
 			<Stack.Screen
 				name="SequenceActuatorConfigSection"

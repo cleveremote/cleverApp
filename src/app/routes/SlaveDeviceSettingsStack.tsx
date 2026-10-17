@@ -5,7 +5,6 @@ import {
 } from '@react-navigation/stack';
 import SlaveDeviceSettingsScreen from '../screens/devices/slave/SlaveDeviceSettingsScreen';
 import SlaveGeneralSettingsSection from '../screens/devices/slave/SlaveGeneralSettingsSection';
-import SlaveConfigurationSettingsSection from '../screens/devices/slave/SlaveConfigurationSettingsSection';
 import ComRequestsSection from '../screens/devices/slave/ComRequestsSection';
 import {ComRequestSettingsStack} from './ComRequestSettingsStack';
 
@@ -29,11 +28,6 @@ export function SlaveDeviceSettingsStack() {
 				name="SlaveGeneralSection"
 				component={SlaveGeneralSettingsSection}
 				options={options('General')}
-			/>
-			<Stack.Screen
-				name="SlaveConfigurationSection"
-				component={SlaveConfigurationSettingsSection}
-				options={options('Configuration')}
 			/>
 			<Stack.Screen
 				name="ComRequestsSection"

@@ -1,7 +1,7 @@
 import React from 'react';
 import {StyleSheet, View} from 'react-native';
 import {connect} from 'react-redux';
-import {faExchangeAlt, faGear, faSliders} from '@fortawesome/free-solid-svg-icons';
+import {faExchangeAlt, faGear} from '@fortawesome/free-solid-svg-icons';
 import {
 	DeleteItemMenu,
 	MenuAccordion
@@ -15,15 +15,14 @@ import {
 import {useDeviceEntity} from '../useDeviceEntity';
 import {isEmpty} from '../../../components/common/useSectionSettingsHeader';
 import SlaveGeneralSettingsSection from './SlaveGeneralSettingsSection';
-import SlaveConfigurationSettingsSection from './SlaveConfigurationSettingsSection';
+import ComRequestsSection from './ComRequestsSection';
 
 export function SlaveDeviceSettingsScreen(props: any) {
 	const {deviceRef, deleteItem, invalidSections, ready} = useDeviceEntity(
 		props,
 		'SLAVE',
 		device => ({
-			general: isEmpty(device?.name),
-			configuration: isEmpty(device?.config?.slaveId)
+			general: isEmpty(device?.name) || isEmpty(device?.config?.slaveId)
 		})
 	);
 
@@ -47,31 +46,18 @@ export function SlaveDeviceSettingsScreen(props: any) {
 					)}
 				</MenuAccordion>
 				<MenuAccordion
-					key={2}
-					name={'Configuration'}
-					icon={faSliders}
-					invalid={invalidSections.configuration}
+					key={3}
+					name={'COM Requests'}
+					icon={faExchangeAlt}
 					onPress={() => {}}>
 					{ready && (
-						<SlaveConfigurationSettingsSection
-							key={deviceRef.current.id}
+						<ComRequestsSection
 							embedded
-							deviceData={deviceRef.current}
-							showErrors={invalidSections.configuration}
+							slaveId={deviceRef.current.id}
 							navigation={props.navigation}
 						/>
 					)}
 				</MenuAccordion>
-				<MenuAccordion
-					key={3}
-					name={'COM Requests'}
-					icon={faExchangeAlt}
-					onPress={() =>
-						props.navigation.navigate('ComRequestsSection', {
-							slaveId: deviceRef.current?.id
-						})
-					}
-				/>
 				<DeleteItemMenu key={4} OnConfirm={deleteItem} />
 			</View>
 		</SettingsScrollView>

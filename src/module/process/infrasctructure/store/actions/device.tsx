@@ -97,23 +97,47 @@ export const saveDeviceTree =
 
 // Ask the box to probe the master's `discoveryRegisters` on the
 // DEFAULT_UNCONFIGURED_UNIT_ID and register any newly-found slave devices.
-// The backend returns the refreshed configuration, so we reload the whole
-// device list from the response.
+// Without `masterId` (Devices screen), the box runs a global discovery.
+// The discovered devices are appended to the current list: entries already
+// known (same id) are kept as-is, so local unsaved edits are not overwritten —
+// discovery only ever adds new devices.
 export const discoverDevices =
 	(
-		masterId: string,
+		masterId?: string,
 		cb?: () => void
 	): ThunkAction<void, RootState, unknown, AnyAction> =>
-	async dispatch => {
+	async (dispatch, getState) => {
 		socketService.emit(
 			'front/box/discover/device',
-			{masterId},
+			masterId ? {masterId} : {},
 			(response: any) => {
-				dispatch({
-					type: ROOT_DEVICES_LOAD,
-					payload: normalizeIds(JSON.parse(response.config).devices)
-				});
-				cb?.();
+				// `cb` doit toujours être appelé (il arrête le loader de l'écran),
+				// même si la réponse est une erreur ou un `config` illisible :
+				// une exception ici l'empêcherait d'être exécuté.
+				try {
+					const raw = response?.config;
+					const config = typeof raw === 'string' ? JSON.parse(raw) : raw;
+					if (config) {
+						const found = normalizeIds(config);
+						const existing = getState().root_device.devices ?? [];
+						const knownIds = new Set(existing.map((d: any) => `${d.id}`));
+						const added = (Array.isArray(found) ? found : [found]).filter(
+							(d: any) => d?.id && !knownIds.has(`${d.id}`)
+						);
+						if (added.length) {
+							dispatch({
+								type: ROOT_DEVICES_LOAD,
+								payload: [...existing, ...added]
+							});
+						}
+					} else {
+						console.warn('[discoverDevices] unexpected response', response);
+					}
+				} catch (e) {
+					console.warn('[discoverDevices] failed to handle response', e);
+				} finally {
+					cb?.();
+				}
 			}
 		);
 	};

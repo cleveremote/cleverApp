@@ -1,18 +1,58 @@
-import React, {useEffect} from 'react';
-import {StyleSheet, Text, TouchableOpacity, View} from 'react-native';
-import Icon from 'react-native-vector-icons/FontAwesome5';
+import React, {useEffect, useRef, useState} from 'react';
+import {
+	ActivityIndicator,
+	Alert,
+	StyleSheet,
+	Text,
+	TouchableOpacity,
+	View
+} from 'react-native';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import {connect} from 'react-redux';
-import {faCog} from '@fortawesome/free-solid-svg-icons';
+import {faCog, faMagnifyingGlass} from '@fortawesome/free-solid-svg-icons';
+import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {navigationHeader} from '../../components/common/navigationHeaders';
 import {elementStack} from '../../components/cycle/moduleStack';
 import {hapticOptions} from '../../data/cycleTypes';
-import {MasterProtocol} from '../../data/modbusTypes';
-import {loadDevices} from '../../../module/process/infrasctructure/store/actions/device';
+import {
+	discoverDevices,
+	loadDevices
+} from '../../../module/process/infrasctructure/store/actions/device';
 
-// Top level of the Devices area: the list of Master devices. Same visual list
-// as the Triggers screen (white card + elementStack rows + a rotated "+" row).
+// Top level of the Devices area: the list of Master devices (white card +
+// elementStack rows) plus a "Discover Devices" action — masters are added by
+// a box-side discovery (no masterId), not created manually.
 export function DevicesScreen(props: any) {
+	// Discovery en cours : loader sur le bouton jusqu'à la réponse de la box
+	// (la liste se met à jour via ROOT_DEVICES_LOAD). Le socket n'a pas de
+	// timeout, d'où un garde-fou pour ne pas bloquer le bouton indéfiniment.
+	const [discovering, setDiscovering] = useState(false);
+	const discoverTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+	useEffect(
+		() => () => {
+			if (discoverTimeout.current) clearTimeout(discoverTimeout.current);
+		},
+		[]
+	);
+
+	const startDiscovery = () => {
+		setDiscovering(true);
+		const done = () => {
+			if (discoverTimeout.current) clearTimeout(discoverTimeout.current);
+			discoverTimeout.current = null;
+			setDiscovering(false);
+		};
+		discoverTimeout.current = setTimeout(() => {
+			discoverTimeout.current = null;
+			setDiscovering(false);
+			Alert.alert(
+				'Discovery timed out',
+				'The box did not answer. Check the connection and try again.'
+			);
+		}, DISCOVERY_TIMEOUT_MS);
+		props.discoverDevices(undefined, done);
+	};
+
 	useEffect(() => {
 		props.navigation.setOptions({
 			headerLeft: () =>
@@ -55,40 +95,44 @@ export function DevicesScreen(props: any) {
 						{name: faCog, color: styles.icon.color}
 					)
 				)}
-				<View style={styles.addRow}>
-					<TouchableOpacity
-						style={styles.addButton}
-						onPress={() => {
-							ReactNativeHapticFeedback.trigger(
-								'impactMedium',
-								hapticOptions
-							);
-							props.navigation.navigate(
-								'MasterDeviceSettingsStack',
-								{
-									screen: 'MasterDeviceSettingsMenu',
-									params: {
-								defaults: {
-									type: 'MASTER',
-									config: {protocol: MasterProtocol.TCP}
-								}
-							}
-								}
-							);
-						}}>
-						<Icon name="times-circle" style={styles.icon} />
-					</TouchableOpacity>
-					<Text style={styles.addLabel}>Add new master ...</Text>
-				</View>
+				<TouchableOpacity
+					style={[
+						styles.discoverButton,
+						discovering && styles.discoverButtonBusy
+					]}
+					disabled={discovering}
+					onPress={() => {
+						ReactNativeHapticFeedback.trigger(
+							'impactMedium',
+							hapticOptions
+						);
+						startDiscovery();
+					}}>
+					{discovering ? (
+						<ActivityIndicator size="small" color={COLORS.onPrimary} />
+					) : (
+						<FontAwesomeIcon
+							icon={faMagnifyingGlass}
+							size={16}
+							color={COLORS.onPrimary}
+						/>
+					)}
+					<Text style={styles.discoverLabel}>
+						{discovering ? 'Discovering…' : 'Discover new devices'}
+					</Text>
+				</TouchableOpacity>
 			</View>
 		</View>
 	);
 }
 
+const DISCOVERY_TIMEOUT_MS = 60000;
+
 const COLORS = {
 	primary: '#32404e',
 	shadow: '#000',
-	cardBackground: 'white'
+	cardBackground: 'white',
+	onPrimary: 'white'
 };
 
 const styles = StyleSheet.create({
@@ -109,17 +153,24 @@ const styles = StyleSheet.create({
 		shadowOpacity: 0.22,
 		shadowRadius: 2.22
 	},
-	addRow: {
-		justifyContent: 'center',
-		alignItems: 'center'
-	},
-	addButton: {
+	discoverButton: {
 		marginTop: 20,
-		transform: [{rotate: '135deg'}]
+		marginHorizontal: 8,
+		paddingVertical: 12,
+		borderRadius: 12,
+		backgroundColor: COLORS.primary,
+		flexDirection: 'row',
+		justifyContent: 'center',
+		alignItems: 'center',
+		gap: 8
 	},
-	addLabel: {
-		color: COLORS.primary,
-		fontSize: 15
+	discoverButtonBusy: {
+		opacity: 0.7
+	},
+	discoverLabel: {
+		color: COLORS.onPrimary,
+		fontSize: 15,
+		fontWeight: 'bold'
 	},
 	icon: {
 		color: COLORS.primary,
@@ -131,4 +182,7 @@ const mapStateToProps = (state: any) => ({
 	devices: state.root_device.devices
 });
 
-export default connect(mapStateToProps, {loadDevices})(DevicesScreen);
+export default connect(mapStateToProps, {
+	loadDevices,
+	discoverDevices
+})(DevicesScreen);

@@ -21,7 +21,7 @@ export function DevicesStack() {
 			<Stack.Screen
 				name="Devices"
 				component={DevicesScreen}
-				options={options('Devices')}
+				options={options('Master devices')}
 			/>
 			<Stack.Screen
 				name="MasterDeviceSettingsStack"

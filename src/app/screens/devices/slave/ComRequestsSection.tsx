@@ -1,18 +1,9 @@
 import React, {useEffect} from 'react';
-import {
-	ScrollView,
-	StyleSheet,
-	Text,
-	TouchableOpacity,
-	View
-} from 'react-native';
-import Icon from 'react-native-vector-icons/FontAwesome5';
-import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
+import {ScrollView, StyleSheet, View} from 'react-native';
 import {connect} from 'react-redux';
 import {faCog} from '@fortawesome/free-solid-svg-icons';
 import {navigationHeader} from '../../../components/common/navigationHeaders';
 import {elementStack} from '../../../components/cycle/moduleStack';
-import {hapticOptions} from '../../../data/cycleTypes';
 import {loadModbusTasks} from '../../../../module/process/infrasctructure/store/actions/modbus-task';
 import {updateDevice} from '../../../../module/process/infrasctructure/store/actions/device';
 
@@ -22,20 +13,26 @@ import {updateDevice} from '../../../../module/process/infrasctructure/store/act
 // when the master device is saved (front/box/sync/device pushes each dirty
 // slave). On first open we hydrate the slave's `comRequests` from the flat
 // modbusTasks list (linked by `deviceId`) so already-saved requests show up.
+//
+// Peut être rendue en écran plein (navigation) ou embarquée inline dans
+// l'accordéon « COM Requests » du slave (`embedded` + `slaveId` en props).
 export function ComRequestsSection(props: any) {
-	const slaveId = props.route.params?.slaveId;
+	const embedded = !!props.embedded;
+	const slaveId = embedded ? props.slaveId : props.route.params?.slaveId;
 	const device = props.device;
 	const isSlaveLoaded = !!device && `${device.id}` === `${slaveId}`;
 
 	useEffect(() => {
-		props.navigation.setOptions({
-			headerLeft: () =>
-				navigationHeader(
-					() => props.navigation.goBack(),
-					'arrow-alt-circle-left',
-					false
-				)
-		});
+		if (!embedded) {
+			props.navigation.setOptions({
+				headerLeft: () =>
+					navigationHeader(
+						() => props.navigation.goBack(),
+						'arrow-alt-circle-left',
+						false
+					)
+			});
+		}
 		props.loadModbusTasks();
 	}, []);
 
@@ -62,45 +59,33 @@ export function ComRequestsSection(props: any) {
 		return 'request';
 	};
 
-	const createComRequest = () => {
-		ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
-		props.navigation.navigate('ComRequestSettingsStack', {
-			screen: 'ComRequestSettingsMenu',
-			params: {slaveId, defaults: {deviceId: slaveId, type: []}}
-		});
-	};
+	const list = (
+		<View style={embedded ? styles.embeddedCard : styles.card}>
+			{comRequests.map((cr: any) =>
+				elementStack(
+					cr,
+					(item: any) => {
+						props.navigation.navigate(
+							'ComRequestSettingsStack',
+							{
+								screen: 'ComRequestSettingsMenu',
+								params: {slaveId, comRequestId: item.id}
+							}
+						);
+					},
+					rowLabel(cr),
+					{name: faCog, color: styles.icon.color}
+				)
+			)}
+		</View>
+	);
+
+	if (embedded) return list;
 
 	return (
 		<View style={styles.screen}>
 			<ScrollView contentContainerStyle={styles.container}>
-				<View style={styles.card}>
-					{comRequests.map((cr: any) =>
-						elementStack(
-							cr,
-							(item: any) => {
-								props.navigation.navigate(
-									'ComRequestSettingsStack',
-									{
-										screen: 'ComRequestSettingsMenu',
-										params: {slaveId, comRequestId: item.id}
-									}
-								);
-							},
-							rowLabel(cr),
-							{name: faCog, color: styles.icon.color}
-						)
-					)}
-					<View style={styles.addRow}>
-						<TouchableOpacity
-							style={styles.addButton}
-							onPress={createComRequest}>
-							<Icon name="times-circle" style={styles.icon} />
-						</TouchableOpacity>
-						<Text style={styles.addLabel}>
-							Add new COM request ...
-						</Text>
-					</View>
-				</View>
+				{list}
 			</ScrollView>
 		</View>
 	);
@@ -132,17 +117,13 @@ const styles = StyleSheet.create({
 		shadowOpacity: 0.22,
 		shadowRadius: 2.22
 	},
-	addRow: {
-		justifyContent: 'center',
-		alignItems: 'center'
-	},
-	addButton: {
-		marginTop: 20,
-		transform: [{rotate: '135deg'}]
-	},
-	addLabel: {
-		color: COLORS.primary,
-		fontSize: 15
+	// Embarqué dans l'accordéon (déjà une carte blanche) : pas d'ombre ni de
+	// marge, juste un peu de padding autour de la liste.
+	embeddedCard: {
+		alignSelf: 'stretch',
+		backgroundColor: COLORS.cardBackground,
+		padding: 8,
+		paddingBottom: 16
 	},
 	icon: {
 		color: COLORS.primary,

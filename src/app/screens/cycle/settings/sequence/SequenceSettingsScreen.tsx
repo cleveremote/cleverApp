@@ -23,6 +23,7 @@ import {
 	saveSequence
 } from '../../../../../module/process/infrasctructure/store/actions/sequence';
 import ConditionsSection from '../../conditions/ConditionsSection';
+import SequenceActuatorsSettingsSection from './SequenceActuatorsSettingsSection';
 
 function SequenceSettingsScreen(props: any) {
 	// Pas d'`id` en params = création → le rond de droite affiche un « + » (Add).
@@ -258,15 +259,13 @@ function SequenceSettingsScreen(props: any) {
 							key={51}
 							name={'Actuators'}
 							icon={faEthernet}
-							onPress={() => {
-								props.navigation.navigate(
-									'SequenceActuatorsSection',
-									{
-										sequenceData: props.sequence
-									}
-								);
-							}}
-						/>
+							onPress={() => {}}>
+							<SequenceActuatorsSettingsSection
+								embedded
+								sequenceData={sequenceRef.current}
+								navigation={props.navigation}
+							/>
+						</MenuAccordion>
 
 						{!isNew && (
 							<DeleteItemMenu

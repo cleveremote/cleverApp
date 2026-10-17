@@ -13,6 +13,7 @@ import ActuatorFilterBar, {
 import {hapticOptions} from '../../data/cycleTypes';
 import {ActuatorType, emptyActuatorConfig} from '../../data/actuatorTypes';
 import {loadActuators} from '../../../module/process/infrasctructure/store/actions/actuator';
+import {loadDevices} from '../../../module/process/infrasctructure/store/actions/device';
 
 // Top level of the Actuators area (Settings → Actuators): the master list of
 // actuators, filtered by type with the same segmented bar as the cycles screen.
@@ -35,6 +36,7 @@ export function ActuatorsScreen(props: any) {
 		// Initial load, then reload on focus so the edits made in the settings
 		// sub-navigator are reflected when the user comes back to the list.
 		props.loadActuators();
+		props.loadDevices();
 		const unsubscribe = props.navigation.addListener('focus', () => {
 			props.loadActuators();
 		});
@@ -50,6 +52,18 @@ export function ActuatorsScreen(props: any) {
 		[ActuatorType.RPI]: countOf(ActuatorType.RPI),
 		[ActuatorType.COM]: countOf(ActuatorType.COM),
 		[ActuatorType.CTRL]: countOf(ActuatorType.CTRL)
+	};
+
+	// COM actuators target a slave device (`config.deviceId`): prefix the row
+	// with that device's name.
+	const labelOf = (actuator: any) => {
+		const name = `${actuator.name ?? 'actuator'}`;
+		if (actuator.type !== ActuatorType.COM) return name;
+		const device = (props.devices ?? []).find(
+			(d: any) => `${d.id}` === `${actuator.config?.deviceId}`
+		);
+		const deviceName = device?.name ?? device?.label;
+		return deviceName ? `${deviceName} - ${name}` : name;
 	};
 
 	const openSettings = (params: any) =>
@@ -75,7 +89,7 @@ export function ActuatorsScreen(props: any) {
 									actuator,
 									(item: any) =>
 										openSettings({actuatorId: item.id}),
-									`${actuator.name ?? 'actuator'}`,
+									labelOf(actuator),
 									{name: faCog, color: styles.icon.color}
 								)
 							)}
@@ -156,7 +170,10 @@ const styles = StyleSheet.create({
 });
 
 const mapStateToProps = (state: any) => ({
-	actuators: state.root_actuator.actuators
+	actuators: state.root_actuator.actuators,
+	devices: state.root_device.devices
 });
 
-export default connect(mapStateToProps, {loadActuators})(ActuatorsScreen);
+export default connect(mapStateToProps, {loadActuators, loadDevices})(
+	ActuatorsScreen
+);

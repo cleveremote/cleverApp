@@ -123,6 +123,8 @@ export function ComRequestSettingsScreen(props: any) {
 					key={1}
 					name={'General'}
 					icon={faGear}
+					isLast
+					alwaysExpanded
 					invalid={invalidSections.general}
 					onPress={() => {}}>
 					{ready && (
@@ -135,10 +137,11 @@ export function ComRequestSettingsScreen(props: any) {
 						/>
 					)}
 				</MenuAccordion>
-				<MenuAccordion
+				{/* <MenuAccordion
 					key={2}
 					name={'Configuration'}
 					icon={faSliders}
+					isLast
 					invalid={invalidSections.configuration}
 					onPress={() => {}}>
 					{ready && (
@@ -151,7 +154,7 @@ export function ComRequestSettingsScreen(props: any) {
 						/>
 					)}
 				</MenuAccordion>
-				<DeleteItemMenu key={3} OnConfirm={deleteItem} />
+				<DeleteItemMenu key={3} OnConfirm={deleteItem} /> */}
 			</View>
 		</SettingsScrollView>
 	);

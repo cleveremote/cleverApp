@@ -17,7 +17,8 @@ export function MenuAccordion({
 	current,
 	onPress,
 	children,
-	invalid = false
+	invalid = false,
+	alwaysExpanded = false
 }: {
 	name: string;
 	icon: IconDefinition;
@@ -29,8 +30,13 @@ export function MenuAccordion({
 	children?: React.ReactNode;
 	// Encadre la section en rouge quand son sous-formulaire n'est pas conforme.
 	invalid?: boolean;
+	// Seul menu de l'accordéon : toujours déplié (pas de repli ni de chevron) et
+	// sans ligne de séparation en bas.
+	alwaysExpanded?: boolean;
 }) {
-	const [isExpanded, setExpended] = useState(false);
+	const [expandedState, setExpended] = useState(false);
+	const isExpanded = alwaysExpanded || expandedState;
+	const showSeparator = !alwaysExpanded && (!isLast || isExpanded);
 
 	// Section non conforme : icône + titre en rouge et mention « not valid ».
 	const errorColor = '#E53E3E';
@@ -46,6 +52,7 @@ export function MenuAccordion({
 					);
 					// Avec un contenu déplié, l'accordéon se déplie/replie inline
 					// au lieu de déléguer la navigation.
+					if (alwaysExpanded) return;
 					if (children) {
 						setExpended(prev => !prev);
 					}
@@ -60,9 +67,8 @@ export function MenuAccordion({
 							alignItems: 'center',
 							flexDirection: 'row',
 							transform: [{scale: pressed ? 0.99 : 1}],
-							borderBottomColor:
-								!isLast || isExpanded ? color : 'white',
-							borderBottomWidth: !isLast || isExpanded ? 1 : 0
+							borderBottomColor: showSeparator ? color : 'white',
+							borderBottomWidth: showSeparator ? 1 : 0
 						}}>
 						<View
 							style={{
@@ -118,13 +124,15 @@ export function MenuAccordion({
 									not valid
 								</Text>
 							) : null}
-							<Icon
-								name={
-									isExpanded ? 'angle-down' : 'angle-right'
-								}
-								size={20}
-								color={'grey'}
-							/>
+							{alwaysExpanded ? null : (
+								<Icon
+									name={
+										isExpanded ? 'angle-down' : 'angle-right'
+									}
+									size={20}
+									color={'grey'}
+								/>
+							)}
 						</View>
 					</View>
 				)}

@@ -432,7 +432,8 @@ export function InputForm({
 										? '#FC8181'
 										: '#CBD5E0',
 									paddingHorizontal: 12
-								}
+								},
+								disabled && InputStyle.inputDisabled
 							]}
 							placeholder={placeholder}
 							placeholderTextColor={placeholderColor}
@@ -667,7 +668,8 @@ export function TextAreaForm({
 									height: 'auto',
 									minHeight: minHeight,
 									textAlignVertical: 'top'
-								}
+								},
+								disabled && InputStyle.inputDisabled
 							]}
 							placeholder={placeholder}
 							placeholderTextColor={placeholderColor}

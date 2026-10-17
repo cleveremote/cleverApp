@@ -1,5 +1,10 @@
-import React, {useEffect, useRef} from 'react';
-import {Alert, StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import React, {useEffect, useRef, useState} from 'react';
+import {
+	ActivityIndicator,
+	Alert,
+	StyleSheet, Text, TouchableOpacity,
+	View
+} from 'react-native';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import {connect} from 'react-redux';
 import {faCog, faMagnifyingGlass} from '@fortawesome/free-solid-svg-icons';
@@ -24,6 +29,36 @@ export function SlaveDevicesSection(props: any) {
 	const embedded = !!props.embedded;
 	const masterRef = useRef(embedded ? props.master : props.route.params.master);
 	masterRef.current = embedded ? props.master : props.route.params.master;
+
+	// Discovery en cours : loader sur le bouton jusqu'à la réponse de la box
+	// (la liste se rafraîchit via ROOT_DEVICES_LOAD). Le socket n'a pas de
+	// timeout, d'où un garde-fou pour ne pas bloquer le bouton indéfiniment.
+	const [discovering, setDiscovering] = useState(false);
+	const discoverTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+	useEffect(
+		() => () => {
+			if (discoverTimeout.current) clearTimeout(discoverTimeout.current);
+		},
+		[]
+	);
+
+	const startDiscovery = () => {
+		setDiscovering(true);
+		const done = () => {
+			if (discoverTimeout.current) clearTimeout(discoverTimeout.current);
+			discoverTimeout.current = null;
+			setDiscovering(false);
+		};
+		discoverTimeout.current = setTimeout(() => {
+			discoverTimeout.current = null;
+			setDiscovering(false);
+			Alert.alert(
+				'Discovery timed out',
+				'The box did not answer. Check the connection and try again.'
+			);
+		}, DISCOVERY_TIMEOUT_MS);
+		props.discoverDevices(masterRef.current.id, done);
+	};
 
 	useEffect(() => {
 		if (!embedded) {
@@ -85,26 +120,38 @@ export function SlaveDevicesSection(props: any) {
 				)}
 
 				<TouchableOpacity
-					style={styles.discoverButton}
+					style={[
+						styles.discoverButton,
+						discovering && styles.discoverButtonBusy
+					]}
+					disabled={discovering}
 					onPress={() => {
 						ReactNativeHapticFeedback.trigger(
 							'impactMedium',
 							hapticOptions
 						);
 						if (!requireSavedMaster()) return;
-						props.discoverDevices(masterRef.current.id);
+						startDiscovery();
 					}}>
-					<FontAwesomeIcon
-						icon={faMagnifyingGlass}
-						size={16}
-						color={COLORS.onPrimary}
-					/>
-					<Text style={styles.discoverLabel}>Discover New Devices</Text>
+					{discovering ? (
+						<ActivityIndicator size="small" color={COLORS.onPrimary} />
+					) : (
+						<FontAwesomeIcon
+							icon={faMagnifyingGlass}
+							size={16}
+							color={COLORS.onPrimary}
+						/>
+					)}
+					<Text style={styles.discoverLabel}>
+						{discovering ? 'Discovering…' : 'Discover new devices'}
+					</Text>
 				</TouchableOpacity>
 			</View>
 		</View>
 	);
 }
+
+const DISCOVERY_TIMEOUT_MS = 10000;
 
 const COLORS = {
 	primary: '#32404e',
@@ -156,6 +203,9 @@ const styles = StyleSheet.create({
 		justifyContent: 'center',
 		alignItems: 'center',
 		gap: 8
+	},
+	discoverButtonBusy: {
+		opacity: 0.7
 	},
 	discoverLabel: {
 		color: COLORS.onPrimary,

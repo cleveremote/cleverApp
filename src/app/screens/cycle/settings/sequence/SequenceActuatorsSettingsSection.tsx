@@ -22,6 +22,7 @@ import {SelectForm} from '../../../../components/common/FormComponents';
 import {CollapsibleSection} from '../../../../components/common/CollapsibleSection';
 import {updateSequence} from '../../../../../module/process/infrasctructure/store/actions/sequence';
 import {emptyTimingConfig} from '../../../../../module/process/infrasctructure/store/models/sequenceModule';
+import {updateSequenceModuleConfig as mergeModuleConfig} from '../../../../../module/process/infrasctructure/store/reducers/module-reducer-helper';
 
 // The three actuator sections rendered as accordions, in order. Adding a new
 // actuator type is a single-line change here.
@@ -35,7 +36,18 @@ const ACTUATOR_SECTIONS: {
 	{type: 'CTRL', title: 'CTRL', icon: faSliders}
 ];
 
+// Rendered either as its own screen (sequence from the route params, changes
+// pushed onto the sequence on leave) or embedded in the sequence settings
+// accordion (`embedded` + `sequenceData`): there is no leave event then, so each
+// change is pushed onto the sequence right away and the sequence settings
+// screen persists it with the rest.
 export function SequenceActuatorsSettingsSection(props: any) {
+	const embedded = !!props.embedded;
+	const sequenceData = embedded
+		? props.sequenceData
+		: props.route.params?.sequenceData;
+	const sequenceDataRef = useRef(sequenceData);
+	sequenceDataRef.current = sequenceData;
 	const [saveUnchangedData, setSaveUnchangedData] = React.useState(false);
 	const moduleConfigsRef = useRef(props.moduleConfigs);
 	moduleConfigsRef.current = props.moduleConfigs;
@@ -43,26 +55,42 @@ export function SequenceActuatorsSettingsSection(props: any) {
 	saveUnchangedDataRef.current =
 		saveUnchangedData ||
 		!!moduleConfigsRef.current?.find((a: any) => a.isModified);
-	const defaultValues = {...props.route.params?.sequenceData};
+	const defaultValues = {...sequenceData};
 	const {
 		control,
 		formState: {errors}
 	} = useForm({defaultValues});
 
+	// Embedded: merge locally (props.moduleConfigs is stale until re-render) and
+	// push the result onto the sequence immediately.
+	const changeModuleConfig = (moduleConfig: any) => {
+		props.updateSequenceModuleConfig(moduleConfig);
+		if (embedded) {
+			props.updateSequence({
+				...sequenceDataRef.current,
+				moduleConfigs: mergeModuleConfig(
+					moduleConfigsRef.current || [],
+					moduleConfig
+				),
+				isModified: true
+			});
+		}
+	};
+
 	const addModuleConfig = (actuator: any) => {
-		props.updateSequenceModuleConfig({
+		changeModuleConfig({
 			moduleId: actuator.id,
 			name: actuator.name,
 			type: actuator.type,
 			configTiming: emptyTimingConfig(),
 			isModified: true
 		});
-		_saveSequence(false);
+		if (!embedded) _saveSequence(false);
 		setSaveUnchangedData(true);
 	};
 
 	const deleteModuleConfig = (item: any) => {
-		props.updateSequenceModuleConfig({
+		changeModuleConfig({
 			moduleId: item.moduleId,
 			delete: true,
 			isModified: true
@@ -110,10 +138,16 @@ export function SequenceActuatorsSettingsSection(props: any) {
 
 	useEffect(() => {
 		props.loadMasterActuators();
-		props.loadSequenceModuleConfigs(props.route.params?.sequenceData);
 	}, []);
 
+	// Embedded, the sequence may still be loading when the accordion mounts:
+	// (re)seed the slice once the right sequence is there.
 	useEffect(() => {
+		props.loadSequenceModuleConfigs(sequenceDataRef.current);
+	}, [sequenceData?.id]);
+
+	useEffect(() => {
+		if (embedded) return;
 		props.navigation.setOptions({
 			headerLeft: () =>
 				navigationHeader(
@@ -131,7 +165,7 @@ export function SequenceActuatorsSettingsSection(props: any) {
 		ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
 		if (saveUnchangedDataRef.current) {
 			props.updateSequence({
-				...props.route.params?.sequenceData,
+				...sequenceDataRef.current,
 				moduleConfigs: moduleConfigsRef.current,
 				isModified: true
 			});
@@ -143,13 +177,18 @@ export function SequenceActuatorsSettingsSection(props: any) {
 
 	const openModuleConfig = (moduleConfig: any) => {
 		props.navigation.navigate('SequenceActuatorConfigSection', {
-			sequenceData: props.route.params?.sequenceData,
+			sequenceData: sequenceDataRef.current,
 			moduleConfig
 		});
 	};
 
+	const Body: any = embedded ? View : ScrollView;
+	const bodyProps: any = embedded
+		? {}
+		: {automaticallyAdjustKeyboardInsets: true};
+
 	return (
-		<ScrollView automaticallyAdjustKeyboardInsets={true}>
+		<Body {...bodyProps}>
 			<View style={BoxFormStyle.boxForm}>
 				{ACTUATOR_SECTIONS.map(section => (
 					<CollapsibleSection
@@ -196,7 +235,7 @@ export function SequenceActuatorsSettingsSection(props: any) {
 					</CollapsibleSection>
 				))}
 			</View>
-		</ScrollView>
+		</Body>
 	);
 }
 

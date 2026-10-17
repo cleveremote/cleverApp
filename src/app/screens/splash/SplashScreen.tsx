@@ -1,6 +1,7 @@
 import React, {useEffect} from 'react';
 import {StyleSheet, useWindowDimensions, View} from 'react-native';
 import {AnimatedLogo, LOGO_ANIMATION_MS} from './AnimatedLogo';
+import {AnimatedTitle} from './AnimatedTitle';
 
 // Laisse l'animation du logo se terminer, puis un court temps d'arrêt
 const SPLASH_DURATION_MS = LOGO_ANIMATION_MS + 400;
@@ -25,6 +26,7 @@ export function SplashScreen({onFinish}: SplashScreenProps) {
 	return (
 		<View style={styles.container}>
 			<AnimatedLogo width={logoWidth} height={logoWidth * LOGO_RATIO} />
+			<AnimatedTitle />
 		</View>
 	);
 }

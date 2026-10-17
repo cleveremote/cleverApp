@@ -5,7 +5,6 @@ import {
 } from '@react-navigation/stack';
 import MasterDeviceSettingsScreen from '../screens/devices/master/MasterDeviceSettingsScreen';
 import MasterGeneralSettingsSection from '../screens/devices/master/MasterGeneralSettingsSection';
-import MasterConfigurationSettingsSection from '../screens/devices/master/MasterConfigurationSettingsSection';
 import SlaveDevicesSection from '../screens/devices/master/SlaveDevicesSection';
 import {SlaveDeviceSettingsStack} from './SlaveDeviceSettingsStack';
 
@@ -29,11 +28,6 @@ export function MasterDeviceSettingsStack() {
 				name="MasterGeneralSection"
 				component={MasterGeneralSettingsSection}
 				options={options('General')}
-			/>
-			<Stack.Screen
-				name="MasterConfigurationSection"
-				component={MasterConfigurationSettingsSection}
-				options={options('Configuration')}
 			/>
 			<Stack.Screen
 				name="SlaveDevicesSection"

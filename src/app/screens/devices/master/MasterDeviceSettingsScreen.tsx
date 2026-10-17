@@ -1,7 +1,7 @@
 import React from 'react';
 import {StyleSheet, View} from 'react-native';
 import {connect} from 'react-redux';
-import {faGear, faSitemap, faSliders} from '@fortawesome/free-solid-svg-icons';
+import {faGear, faSitemap} from '@fortawesome/free-solid-svg-icons';
 import {
 	DeleteItemMenu,
 	MenuAccordion
@@ -15,34 +15,15 @@ import {
 import {loadModbusTasks} from '../../../../module/process/infrasctructure/store/actions/modbus-task';
 import {useDeviceEntity} from '../useDeviceEntity';
 import {isEmpty} from '../../../components/common/useSectionSettingsHeader';
-import {MasterProtocol} from '../../../data/modbusTypes';
 import MasterGeneralSettingsSection from './MasterGeneralSettingsSection';
-import MasterConfigurationSettingsSection from './MasterConfigurationSettingsSection';
 import SlaveDevicesSection from './SlaveDevicesSection';
-
-// La section Configuration est « not valid » quand ses champs requis (selon le
-// protocole) ne sont pas renseignés — mêmes règles que le sous-formulaire. Le
-// protocole est pré-rempli à TCP à la création, donc le tester seul ne suffit
-// pas : il faut aussi contrôler ipAddress/port (TCP) ou path (série).
-const isMasterConfigInvalid = (config: any): boolean => {
-	const protocol = config?.protocol;
-	if (isEmpty(protocol)) return true;
-	if (protocol === MasterProtocol.TCP) {
-		return isEmpty(config?.ipAddress) || isEmpty(config?.port);
-	}
-	if (protocol === MasterProtocol.RTU || protocol === MasterProtocol.ASCII) {
-		return isEmpty(config?.path);
-	}
-	return false;
-};
 
 export function MasterDeviceSettingsScreen(props: any) {
 	const {deviceRef, deleteItem, invalidSections, ready} = useDeviceEntity(
 		props,
 		'MASTER',
 		device => ({
-			general: isEmpty(device?.name),
-			configuration: isMasterConfigInvalid(device?.config)
+			general: isEmpty(device?.name)
 		})
 	);
 
@@ -61,22 +42,6 @@ export function MasterDeviceSettingsScreen(props: any) {
 							embedded
 							deviceData={deviceRef.current}
 							showErrors={invalidSections.general}
-							navigation={props.navigation}
-						/>
-					)}
-				</MenuAccordion>
-				<MenuAccordion
-					key={2}
-					name={'Configuration'}
-					icon={faSliders}
-					invalid={invalidSections.configuration}
-					onPress={() => {}}>
-					{ready && (
-						<MasterConfigurationSettingsSection
-							key={deviceRef.current.id}
-							embedded
-							deviceData={deviceRef.current}
-							showErrors={invalidSections.configuration}
 							navigation={props.navigation}
 						/>
 					)}

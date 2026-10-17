@@ -11,6 +11,12 @@ export const InputStyle = StyleSheet.create({
 		marginTop: 5
 	},
 	input: {color: '#32404e', fontSize: 15, fontWeight: 'bold', height: 50},
+	// Champ en lecture seule : fond et texte grisés.
+	inputDisabled: {
+		backgroundColor: '#EDF2F7',
+		color: '#A0AEC0',
+		borderColor: '#E2E8F0'
+	},
 	textInputError: {
 		color: 'red',
 		fontSize: 15,
