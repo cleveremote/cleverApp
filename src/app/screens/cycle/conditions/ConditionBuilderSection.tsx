@@ -16,6 +16,7 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import {connect} from 'react-redux';
+import {isTempId, newTempId} from '../../../../services/socket';
 import {DropdownSelect} from '../../../components/common/FormComponents';
 import {placeholderColor} from '../../../styles/components/common/Input';
 
@@ -26,8 +27,9 @@ import {placeholderColor} from '../../../styles/components/common/Input';
  * un connecteur ET/OU basculable entre deux éléments, des conditions
  * (champ / opérateur / valeur) et des sous-groupes récursifs.
  *
- * Pour l'instant c'est un builder autonome (visuel) : il maintient l'arbre de
- * conditions en état local, sans être branché à la sauvegarde de la condition.
+ * Branché directement sur `parent.conditions` (liste plate persistée) : l'arbre
+ * est reconstruit depuis la liste au montage, et chaque édition renvoie la liste
+ * aplatie via `onChange(conditions)` (cf. treeToConditions / conditionsToTree).
  */
 
 // --- Palette alignée sur le design system de l'app (Chakra-like) -----------
@@ -44,6 +46,7 @@ const C = {
 	borderStrong: '#A0AEC0',
 	muted: '#718096',
 	danger: '#E53E3E',
+	errorBorder: '#FC8181',
 	text: '#32404e'
 };
 
@@ -79,6 +82,9 @@ interface ConditionNode {
 	elementId: string;
 	operator: string;
 	value: string;
+	// Condition persistée d'origine (id, parentId, …) conservée pour l'aplatir
+	// sans perdre ses champs. Absente pour une condition créée dans le builder.
+	source?: any;
 }
 interface GroupNode {
 	type: 'group';
@@ -111,17 +117,132 @@ function findAndRemove(node: BuilderNode, id: number): boolean {
 	return false;
 }
 
-function maxId(node: BuilderNode): number {
-	if (node.type !== 'group') return node.id;
-	return node.children.reduce((m, c) => Math.max(m, maxId(c)), node.id);
-}
-
 // Nombre total de groupes dans l'arbre (racine incluse). Sert à interdire la
 // suppression du dernier groupe restant.
 function countGroups(node: BuilderNode): number {
 	if (node.type !== 'group') return 0;
 	return node.children.reduce((s, c) => s + countGroups(c), 1);
 }
+
+// --- Mapping arbre <-> liste plate persistée ---------------------------------
+// Chaque condition de la liste porte :
+//  - `connector`   : 'and' | 'or', lien vers l'élément précédent (ignoré pour la
+//                    première condition) ;
+//  - `symbolStart` : parenthèses ouvrantes avant la condition (ex. '((') ;
+//  - `symbolEnd`   : parenthèses fermantes après la condition (ex. ')').
+// La racine n'est pas parenthésée. Les groupes vides ne sont pas persistés.
+const toFlatConnector = (c: Connector) => (c === 'OU' ? 'or' : 'and');
+const toNodeConnector = (c: any): Connector => (c === 'or' ? 'OU' : 'ET');
+const countChar = (s: any, ch: string) =>
+	typeof s === 'string' ? s.split(ch).length - 1 : 0;
+
+const hasCondition = (node: BuilderNode): boolean =>
+	node.type === 'condition' || node.children.some(hasCondition);
+
+export function treeToConditions(
+	root: GroupNode,
+	parent: {id?: string; parentType?: string}
+): any[] {
+	const out: any[] = [];
+	// `pendingOpen` / `pendingConnector` : à poser sur la prochaine condition émise.
+	let pendingOpen = 0;
+	let pendingConnector: Connector | undefined;
+	const walk = (group: GroupNode, isRoot: boolean) => {
+		const children = group.children.filter(hasCondition);
+		if (!isRoot) pendingOpen++;
+		children.forEach((child, i) => {
+			// Le connecteur du 1er enfant appartient au groupe (déjà posé par le
+			// parent), sinon c'est celui de l'enfant.
+			if (i > 0) pendingConnector = child.connector;
+			if (child.type === 'group') {
+				walk(child, false);
+				return;
+			}
+			const {source} = child;
+			out.push({
+				...source,
+				id: source?.id,
+				parentId: parent.id,
+				parentType: parent.parentType,
+				elementType: child.elementType,
+				elementId: child.elementId,
+				operator: child.operator,
+				value: child.value,
+				connector: toFlatConnector(pendingConnector ?? 'ET'),
+				symbolStart: '('.repeat(pendingOpen),
+				symbolEnd: '',
+				order: out.length + 1,
+				isModified: true
+			});
+			pendingOpen = 0;
+			pendingConnector = undefined;
+		});
+		if (!isRoot && out.length) out[out.length - 1].symbolEnd += ')';
+	};
+	walk(root, true);
+	return out;
+}
+
+export function conditionsToTree(
+	conditions: any[],
+	genId: () => number
+): GroupNode | undefined {
+	const list = [...(conditions ?? [])]
+		.filter(c => c && !c.delete)
+		.sort((a, b) => (a.order ?? 0) - (b.order ?? 0));
+	if (!list.length) return undefined;
+	const root: GroupNode = {
+		type: 'group',
+		id: genId(),
+		connector: 'ET',
+		children: []
+	};
+	const stack: GroupNode[] = [root];
+	list.forEach(c => {
+		const connector = toNodeConnector(c.connector);
+		const opens = countChar(c.symbolStart, '(');
+		for (let k = 0; k < opens; k++) {
+			const g: GroupNode = {
+				type: 'group',
+				id: genId(),
+				// Le connecteur de la condition remonte sur le groupe le plus
+				// externe qu'elle ouvre.
+				connector: k === 0 ? connector : 'ET',
+				children: []
+			};
+			stack[stack.length - 1].children.push(g);
+			stack.push(g);
+		}
+		stack[stack.length - 1].children.push({
+			type: 'condition',
+			id: genId(),
+			connector: opens ? 'ET' : connector,
+			elementType: c.elementType === 'SENSOR' ? 'SENSOR' : 'CYCLE',
+			elementId: c.elementId ?? '',
+			operator: c.operator ?? (c.elementType === 'SENSOR' ? '==' : '='),
+			value: c.value === undefined || c.value === null ? '' : String(c.value),
+			source: c
+		});
+		const closes = countChar(c.symbolEnd, ')');
+		for (let k = 0; k < closes && stack.length > 1; k++) stack.pop();
+	});
+	// Expression entièrement parenthésée : on retire la parenthèse superflue.
+	if (root.children.length === 1 && root.children[0].type === 'group') {
+		return root.children[0];
+	}
+	return root;
+}
+
+// Condition incomplète (élément / opérateur / valeur manquant). `symbolStart`,
+// `symbolEnd` et `connector` sont volontairement ignorés : ils sont générés par
+// le builder (structure de l'arbre), jamais saisis, donc jamais « requis ».
+export const isConditionIncomplete = (c: any) =>
+	!c?.elementId ||
+	!c?.operator ||
+	c?.value === undefined ||
+	c?.value === null ||
+	c?.value === '' ||
+	(c?.elementType === 'SENSOR' && !/^-?\d+(\.\d+)?$/.test(String(c.value)));
 
 // --- Composant principal ---------------------------------------------------
 export function ConditionBuilderSection(props: any) {
@@ -141,7 +262,10 @@ export function ConditionBuilderSection(props: any) {
 		elementType: 'CYCLE',
 		elementId: '',
 		operator: '=',
-		value: ''
+		value: '',
+		// Id temporaire (remplacé par le box à la sauvegarde), comme les autres
+		// entités créées côté app.
+		source: {id: newTempId()}
 	});
 	const newGroup = (children?: BuilderNode[]): GroupNode => ({
 		type: 'group',
@@ -151,23 +275,40 @@ export function ConditionBuilderSection(props: any) {
 	});
 
 	// Arbre maintenu dans un ref (mutations directes façon mockup), avec un
-	// compteur de version pour forcer le rendu.
+	// compteur de version pour forcer le rendu. Seedé depuis `conditions`, et
+	// re-seedé si la liste change hors du builder (ex. rechargement du parent).
 	const rootRef = React.useRef<GroupNode | undefined>(undefined);
-	if (!rootRef.current) {
-		const seed = props.value as GroupNode | undefined;
-		if (seed) {
-			uidRef.current = maxId(seed) + 1;
-			rootRef.current = seed;
-		} else {
-			rootRef.current = newGroup([newCondition()]);
-		}
+	const seededFromRef = React.useRef<any>(undefined);
+	const emittedRef = React.useRef<any>(undefined);
+	// Conditions persistées présentes au seed : celles retirées de l'arbre sont
+	// renvoyées marquées `delete` pour que le box les supprime.
+	const persistedRef = React.useRef<any[]>([]);
+	const conditions: any[] = props.conditions ?? [];
+	if (
+		!rootRef.current ||
+		(conditions !== seededFromRef.current && conditions !== emittedRef.current)
+	) {
+		seededFromRef.current = conditions;
+		persistedRef.current = conditions.filter(c => c?.id && !isTempId(c.id));
+		rootRef.current =
+			conditionsToTree(conditions, genId) ?? newGroup([newCondition()]);
 	}
 	const root = rootRef.current;
 
 	const [, setVersion] = React.useState(0);
 	const notify = () => {
 		setVersion(v => v + 1);
-		props.onChange?.(root);
+		const flat = treeToConditions(rootRef.current!, {
+			id: props.parentId,
+			parentType: props.parentType
+		});
+		const kept = new Set(flat.map(c => c.id));
+		const deleted = persistedRef.current
+			.filter(c => !kept.has(c.id))
+			.map(c => ({...c, delete: true, isModified: true}));
+		const next = [...flat, ...deleted];
+		emittedRef.current = next;
+		props.onChange?.(next);
 	};
 
 	// Un groupe peut toujours être supprimé, sauf le dernier restant.
@@ -201,6 +342,7 @@ export function ConditionBuilderSection(props: any) {
 				canDelete={canDeleteGroup}
 				cycles={cycles}
 				sensors={sensors}
+				showErrors={!!props.showErrors}
 				onChange={notify}
 				onAddCondition={g => {
 					g.children.push(newCondition());
@@ -236,6 +378,7 @@ function GroupView({
 	canDelete,
 	cycles,
 	sensors,
+	showErrors,
 	onChange,
 	onAddCondition,
 	onAddSubGroup,
@@ -247,6 +390,7 @@ function GroupView({
 	canDelete: boolean;
 	cycles: any[];
 	sensors: any[];
+	showErrors: boolean;
 	onChange: () => void;
 	onAddCondition: (g: GroupNode) => void;
 	onAddSubGroup: (g: GroupNode) => void;
@@ -288,6 +432,7 @@ function GroupView({
 							cond={child}
 							cycles={cycles}
 							sensors={sensors}
+							showErrors={showErrors}
 							onChange={onChange}
 							onRemove={onRemove}
 						/>
@@ -298,6 +443,7 @@ function GroupView({
 							canDelete={canDelete}
 							cycles={cycles}
 							sensors={sensors}
+							showErrors={showErrors}
 							onChange={onChange}
 							onAddCondition={onAddCondition}
 							onAddSubGroup={onAddSubGroup}
@@ -348,16 +494,23 @@ function ConditionRow({
 	cond,
 	cycles,
 	sensors,
+	showErrors,
 	onChange,
 	onRemove
 }: {
 	cond: ConditionNode;
 	cycles: any[];
 	sensors: any[];
+	showErrors: boolean;
 	onChange: () => void;
 	onRemove: (id: number) => void;
 }) {
 	const isSensor = cond.elementType === 'SENSOR';
+	const elementError = showErrors && !cond.elementId;
+	const operatorError = showErrors && !cond.operator;
+	const valueError =
+		showErrors &&
+		(isSensor ? !/^-?\d+(\.\d+)?$/.test(cond.value) : !cond.value);
 	const elementItems: SelectItem[] = (isSensor ? sensors : cycles).map(
 		(x: any) => ({label: x.name, value: x.id})
 	);
@@ -394,7 +547,7 @@ function ConditionRow({
 							cond.elementId = val;
 							onChange();
 						}}
-						hasError={false}
+						hasError={elementError}
 					/>
 				</View>
 				<Pressable
@@ -417,11 +570,14 @@ function ConditionRow({
 								cond.operator = val;
 								onChange();
 							}}
-							hasError={false}
+							hasError={operatorError}
 						/>
 					</View>
 					<TextInput
-						style={styles.valueInput}
+						style={[
+							styles.valueInput,
+							valueError ? styles.valueInputError : null
+						]}
 						placeholder="valeur"
 						placeholderTextColor={placeholderColor}
 						keyboardType="decimal-pad"
@@ -449,7 +605,7 @@ function ConditionRow({
 						cond.value = val;
 						onChange();
 					}}
-					hasError={false}
+					hasError={valueError}
 				/>
 			)}
 		</View>
@@ -561,6 +717,7 @@ const styles = StyleSheet.create({
 		fontSize: 15,
 		fontWeight: 'bold'
 	},
+	valueInputError: {borderWidth: 2, borderColor: C.errorBorder},
 	actions: {flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 8},
 	hint: {fontSize: 12, color: C.muted, marginTop: 10, lineHeight: 17}
 });

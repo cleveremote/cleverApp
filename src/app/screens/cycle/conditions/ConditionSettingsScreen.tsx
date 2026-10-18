@@ -8,7 +8,7 @@ import {
 } from '../../../components/common/cycleMenu';
 import {SettingsScrollView} from '../../../components/common/SettingsScrollView';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
-import {faBolt, faGear, faFilter} from '@fortawesome/free-solid-svg-icons';
+import {faBolt, faGear} from '@fortawesome/free-solid-svg-icons';
 import {hapticOptions} from '../../../data/cycleTypes';
 import {
 	loadCondition,
@@ -16,7 +16,6 @@ import {
 } from '../../../../module/process/infrasctructure/store/actions/condition';
 import ConditionGeneralSettingsSection from './ConditionGeneralSettingsSection';
 import ConditionParamSettingsSection from './ConditionParamSettingsSection';
-import ConditionBuilderSection from './ConditionBuilderSection';
 
 function ConditionSettingsScreen(props: any) {
 	// Pas d'`id` en params = création → le rond de droite affiche un « + » (Add).
@@ -231,17 +230,6 @@ function ConditionSettingsScreen(props: any) {
 						embedded
 						conditionData={conditionRef.current}
 						showErrors={invalidSections.execution}
-						navigation={props.navigation}
-					/>
-				</MenuAccordion>
-				<MenuAccordion
-					key={45}
-					name={'Condition builder'}
-					icon={faFilter}
-					onPress={() => {}}>
-					<ConditionBuilderSection
-						embedded
-						conditionData={conditionRef.current}
 						navigation={props.navigation}
 					/>
 				</MenuAccordion>

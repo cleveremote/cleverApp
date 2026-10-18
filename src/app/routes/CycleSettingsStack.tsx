@@ -11,8 +11,6 @@ import SeqSettingsSection from '../screens/cycle/settings/cycle/CycleSeqSettings
 import CycleChildrenSettingsSection from '../screens/cycle/settings/cycle/CycleChildrenSettingsSection';
 import CycleSettingsScreen from '../screens/cycle/settings/cycle/CycleSettingsScreen';
 import {SequenceSettingStack} from './SequenceSettingsStack';
-import ConditionsSection from '../screens/cycle/conditions/ConditionsSection';
-import {ConditionSettingsStack} from './ConditionSettingsStack';
 import {navigationHeader} from '../components/common/navigationHeaders';
 
 export function CycleSettingStack() {
@@ -56,16 +54,6 @@ export function CycleSettingStack() {
 			<Stack.Screen
 				name="SequenceSettingsStack"
 				component={SequenceSettingStack}
-				options={{headerShown: false}}
-			/>
-			<Stack.Screen
-				name="ConditionsSection"
-				component={ConditionsSection}
-				options={options('Conditions')}
-			/>
-			<Stack.Screen
-				name="ConditionSettingsStack"
-				component={ConditionSettingsStack}
 				options={{headerShown: false}}
 			/>
 		</Stack.Navigator>

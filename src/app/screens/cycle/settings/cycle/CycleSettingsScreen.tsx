@@ -23,13 +23,16 @@ import {
 	loadGroup,
 	loadGroups,
 	saveCycle,
-	saveGroup
+	saveGroup,
+	updateCycle
 } from '../../../../../module/process/infrasctructure/store/actions/cycle';
 import {CycleType} from '../../../../data/cycleTypes';
 import {NavigationAction} from '@react-navigation/native';
 import {isTempId} from '../../../../../services/socket';
 import SeqSettingsSection from './CycleSeqSettingsSection';
-import ConditionsSection from '../../conditions/ConditionsSection';
+import ConditionBuilderSection, {
+	isConditionIncomplete
+} from '../../conditions/ConditionBuilderSection';
 import CycleChildrenSettingsSection from './CycleChildrenSettingsSection';
 import CycleGeneralSettingsSection from './CycleGeneralSettingsSection';
 import CyclePrioritySettingsSection from './CyclePrioritySettingsSection';
@@ -92,14 +95,19 @@ export function CycleSett(props: any) {
 	// pas conforme, et validation en direct après une première tentative.
 	const [invalidSections, setInvalidSections] = useState({
 		general: false,
-		priority: false
+		priority: false,
+		conditions: false
 	});
 	const attemptedSaveRef = useRef(false);
 
-	// Réplique les règles `required` des sections General et Priority.
+	// Réplique les règles `required` des sections General et Priority, et
+	// signale les conditions incomplètes du builder.
 	const computeInvalidSections = (c: any) => ({
 		general: isEmpty(c?.name) || isEmpty(c?.style),
-		priority: !c?.modePriority || c.modePriority.length === 0
+		priority: !c?.modePriority || c.modePriority.length === 0,
+		conditions: !!c?.conditions?.some(
+			(x: any) => !x.delete && isConditionIncomplete(x)
+		)
 	});
 
 	// Validation dès l'accès à l'écran (comme la section Condition General) : on
@@ -314,7 +322,7 @@ export function CycleSett(props: any) {
 					// et on reste sur l'écran.
 					attemptedSaveRef.current = true;
 					const invalid = computeInvalidSections(cycleRef.current);
-					if (invalid.general || invalid.priority) {
+					if (invalid.general || invalid.priority || invalid.conditions) {
 						setInvalidSections(invalid);
 						ReactNativeHapticFeedback.trigger(
 							'notificationError',
@@ -323,7 +331,11 @@ export function CycleSett(props: any) {
 						e.preventDefault();
 						return;
 					}
-					setInvalidSections({general: false, priority: false});
+					setInvalidSections({
+						general: false,
+						priority: false,
+						conditions: false
+					});
 					// Rien de modifié : on laisse simplement sortir.
 					if (!hasUnsavedChanges()) return;
 					e.preventDefault();
@@ -421,12 +433,20 @@ export function CycleSett(props: any) {
 					key={31}
 					name={'Conditions'}
 					icon={faCheckDouble}
+					invalid={invalidSections.conditions}
 					onPress={() => {}}>
-					<ConditionsSection
-						embedded
-						parent={cycleRef.current}
+					<ConditionBuilderSection
+						conditions={cycleRef.current?.conditions}
+						parentId={cycleRef.current?.id}
 						parentType="CYCLE"
-						navigation={props.navigation}
+						showErrors={invalidSections.conditions}
+						onChange={(conditions: any[]) =>
+							props.updateCycle({
+								...cycleRef.current,
+								conditions,
+								isModified: true
+							})
+						}
 					/>
 				</MenuAccordion>
 				{isGroup ? (
@@ -501,5 +521,6 @@ export default connect(mapStateToProps, {
 	loadGroup,
 	loadGroups,
 	saveCycle,
-	saveGroup
+	saveGroup,
+	updateCycle
 })(CycleSett);

@@ -9,8 +9,6 @@ import SequenceSettingsScreen from '../screens/cycle/settings/sequence/SequenceS
 import SequenceGeneralSettingsSection from '../screens/cycle/settings/sequence/SequenceGeneralSettingsSection';
 import SequenceSecuritySettingsSection from '../screens/cycle/settings/sequence/SequenceSecuritySettingsSection';
 import SequenceActuatorConfigSection from '../screens/cycle/settings/sequence/SequenceActuatorConfigSection';
-import ConditionsSection from '../screens/cycle/conditions/ConditionsSection';
-import {ConditionSettingsStack} from './ConditionSettingsStack';
 import {navigationHeader} from '../components/common/navigationHeaders';
 
 export function SequenceSettingStack() {
@@ -45,16 +43,6 @@ export function SequenceSettingStack() {
 				name="SequenceActuatorConfigSection"
 				component={SequenceActuatorConfigSection}
 				options={options('Actuator Settings')}
-			/>
-			<Stack.Screen
-				name="ConditionsSection"
-				component={ConditionsSection}
-				options={options('Conditions')}
-			/>
-			<Stack.Screen
-				name="ConditionSettingsStack"
-				component={ConditionSettingsStack}
-				options={{headerShown: false}}
 			/>
 		</Stack.Navigator>
 	);

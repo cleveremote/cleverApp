@@ -12,10 +12,13 @@ import {
 import {faBolt, faCheckDouble, faGear} from '@fortawesome/free-solid-svg-icons';
 import {
 	loadTrigger,
-	saveTrigger
+	saveTrigger,
+	updateTrigger
 } from '../../../../../../module/process/infrasctructure/store/actions/trigger';
 import {saveCycle} from '../../../../../../module/process/infrasctructure/store/actions/cycle';
-import ConditionsSection from '../../../conditions/ConditionsSection';
+import ConditionBuilderSection, {
+	isConditionIncomplete
+} from '../../../conditions/ConditionBuilderSection';
 import TriggerGeneralSettingsSection from './TriggerGeneralSettingsSection';
 import TriggerExecutionSettingsSection from './TriggerExecutionSettingsSection';
 
@@ -59,7 +62,10 @@ export function TriggerSettingsScreen(props: any) {
 			general: isEmpty(triggerRef.current?.name),
 			execution:
 				isEmpty(triggerRef.current?.action) ||
-				isEmpty(triggerRef.current?.delay)
+				isEmpty(triggerRef.current?.delay),
+			conditions: !!triggerRef.current?.conditions?.some(
+				(c: any) => !c.delete && isConditionIncomplete(c)
+			)
 		})
 	});
 
@@ -99,12 +105,20 @@ export function TriggerSettingsScreen(props: any) {
 					key={51}
 					name={'Conditions'}
 					icon={faCheckDouble}
+					invalid={invalidSections.conditions}
 					onPress={() => {}}>
-					<ConditionsSection
-						embedded
-						parent={props.trigger}
+					<ConditionBuilderSection
+						conditions={props.trigger?.conditions}
+						parentId={props.trigger?.id}
 						parentType="TRIGGER"
-						navigation={props.navigation}
+						showErrors={invalidSections.conditions}
+						onChange={(conditions: any[]) =>
+							props.updateTrigger({
+								...triggerRef.current,
+								conditions,
+								isModified: true
+							})
+						}
 					/>
 				</MenuAccordion>
 				<DeleteItemMenu key={61} OnConfirm={_deleteItem} />
@@ -148,5 +162,6 @@ const mapStateToProps = (state: any) => ({
 export default connect(mapStateToProps, {
 	saveTrigger,
 	loadTrigger,
+	updateTrigger,
 	saveCycle
 })(TriggerSettingsScreen);

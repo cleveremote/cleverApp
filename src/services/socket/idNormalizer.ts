@@ -84,16 +84,61 @@ const denormalizeKeyDeep = (value: any): any => {
 };
 
 /**
- * Translate backend data for internal use: every `_id` becomes `id`.
+ * Sequence conditions boundary: the backend carries a sequence's conditions
+ * inside `securityConfig.conditions`, while the app works with
+ * `sequence.conditions` (same as cycles and triggers). A sequence is recognised
+ * by its `securityConfig` object (no other entity has one).
+ *
+ *   - liftSequenceConditionsDeep()  : incoming  `securityConfig.conditions` -> `conditions`
+ *   - nestSequenceConditionsDeep()  : outgoing  `conditions` -> `securityConfig.conditions`
+ */
+const mapSequencesDeep = (
+	value: any,
+	mapSequence: (sequence: Record<string, any>) => Record<string, any>
+): any => {
+	if (Array.isArray(value)) {
+		return value.map(item => mapSequencesDeep(item, mapSequence));
+	}
+	if (isPlainObject(value)) {
+		const result: Record<string, any> = {};
+		for (const key of Object.keys(value)) {
+			result[key] = mapSequencesDeep(value[key], mapSequence);
+		}
+		return isPlainObject(result.securityConfig) ? mapSequence(result) : result;
+	}
+	return value;
+};
+
+const liftSequenceConditionsDeep = (value: any): any =>
+	mapSequencesDeep(value, sequence => {
+		const {conditions, ...securityConfig} = sequence.securityConfig;
+		if (conditions === undefined) return sequence;
+		return {...sequence, securityConfig, conditions};
+	});
+
+const nestSequenceConditionsDeep = (value: any): any =>
+	mapSequencesDeep(value, sequence => {
+		const {conditions, ...rest} = sequence;
+		if (conditions === undefined) return sequence;
+		return {
+			...rest,
+			securityConfig: {...sequence.securityConfig, conditions}
+		};
+	});
+
+/**
+ * Translate backend data for internal use: every `_id` becomes `id`, and a
+ * sequence's `securityConfig.conditions` is lifted to `conditions`.
  * Safe to call on any value (objects, arrays, primitives, null/undefined).
  */
 export const normalizeIds = <T = any>(value: T): T =>
-	renameKeyDeep(value, '_id', 'id') as T;
+	liftSequenceConditionsDeep(renameKeyDeep(value, '_id', 'id')) as T;
 
 /**
  * Translate internal data for the backend: every `id` becomes `_id`, while a
- * client-only temp `id` is dropped so the backend assigns the real one.
+ * client-only temp `id` is dropped so the backend assigns the real one, and a
+ * sequence's `conditions` is nested into `securityConfig.conditions`.
  * Safe to call on any value (objects, arrays, primitives, null/undefined).
  */
 export const denormalizeIds = <T = any>(value: T): T =>
-	denormalizeKeyDeep(value) as T;
+	nestSequenceConditionsDeep(denormalizeKeyDeep(value)) as T;

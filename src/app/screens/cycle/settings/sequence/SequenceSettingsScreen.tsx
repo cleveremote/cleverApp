@@ -20,9 +20,12 @@ import {
 import {hapticOptions} from '../../../../data/cycleTypes';
 import {
 	loadSequence,
-	saveSequence
+	saveSequence,
+	updateSequence
 } from '../../../../../module/process/infrasctructure/store/actions/sequence';
-import ConditionsSection from '../../conditions/ConditionsSection';
+import ConditionBuilderSection, {
+	isConditionIncomplete
+} from '../../conditions/ConditionBuilderSection';
 import SequenceActuatorsSettingsSection from './SequenceActuatorsSettingsSection';
 
 function SequenceSettingsScreen(props: any) {
@@ -38,12 +41,16 @@ function SequenceSettingsScreen(props: any) {
 	// Sections en rouge au clic Save si non conformes (comme les conditions).
 	const [invalidSections, setInvalidSections] = useState({
 		general: false,
-		security: false
+		security: false,
+		conditions: false
 	});
 	const attemptedSaveRef = useRef(false);
 	const computeInvalidSections = (s: any) => ({
 		general: isEmpty(s?.name),
-		security: isEmpty(s?.securityConfig?.maxDuration)
+		security: isEmpty(s?.securityConfig?.maxDuration),
+		conditions: !!s?.conditions?.some(
+			(x: any) => !x.delete && isConditionIncomplete(x)
+		)
 	});
 
 	// Validation dès l'accès à l'écran (comme la section Condition General) :
@@ -146,7 +153,7 @@ function SequenceSettingsScreen(props: any) {
 					const invalid = computeInvalidSections(
 						sequenceRef.current
 					);
-					if (invalid.general || invalid.security) {
+					if (invalid.general || invalid.security || invalid.conditions) {
 						setInvalidSections(invalid);
 						ReactNativeHapticFeedback.trigger(
 							'notificationError',
@@ -155,7 +162,11 @@ function SequenceSettingsScreen(props: any) {
 						e.preventDefault();
 						return;
 					}
-					setInvalidSections({general: false, security: false});
+					setInvalidSections({
+						general: false,
+						security: false,
+						conditions: false
+					});
 					if (modified) persistSequence();
 					return; // laisse la navigation se poursuivre
 				}
@@ -246,12 +257,20 @@ function SequenceSettingsScreen(props: any) {
 							key={55}
 							name={'Conditions'}
 							icon={faCheckDouble}
+							invalid={invalidSections.conditions}
 							onPress={() => {}}>
-							<ConditionsSection
-								embedded
-								parent={props.sequence}
+							<ConditionBuilderSection
+								conditions={props.sequence?.conditions}
+								parentId={props.sequence?.id}
 								parentType="SEQUENCE"
-								navigation={props.navigation}
+								showErrors={invalidSections.conditions}
+								onChange={(conditions: any[]) =>
+									props.updateSequence({
+										...sequenceRef.current,
+										conditions,
+										isModified: true
+									})
+								}
 							/>
 						</MenuAccordion>
 
@@ -291,5 +310,6 @@ const mapStateToProps = (state: any) => ({
 
 export default connect(mapStateToProps, {
 	saveSequence,
-	loadSequence
+	loadSequence,
+	updateSequence
 })(SequenceSettingsScreen);
