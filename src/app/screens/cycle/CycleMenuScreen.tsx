@@ -7,7 +7,7 @@ import {
 	faSyncAlt
 } from '@fortawesome/free-solid-svg-icons';
 import {navigationHeader} from '../../components/common/navigationHeaders';
-import {MenuAccordion} from '../../components/common/cycleMenu';
+import {MenuAccordion, MenuGroup} from '../../components/common/cycleMenu';
 import {hapticOptions} from '../../data/cycleTypes';
 
 export function CycleMenuScreen(props: any) {
@@ -40,7 +40,7 @@ export function CycleMenuScreen(props: any) {
 
 	return (
 		<View style={{alignSelf: 'stretch'}}>
-			<View
+			<MenuGroup
 				style={{
 					alignSelf: 'stretch',
 					backgroundColor: 'white',
@@ -69,10 +69,9 @@ export function CycleMenuScreen(props: any) {
 					key={41}
 					name={'Create module'}
 					icon={faPowerOff}
-					isLast={true}
 					onPress={() => openCreate({type: 'MODULE'})}
 				/>
-			</View>
+			</MenuGroup>
 		</View>
 	);
 }

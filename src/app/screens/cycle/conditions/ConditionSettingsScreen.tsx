@@ -4,7 +4,8 @@ import {connect} from 'react-redux';
 import {navigationHeader} from '../../../components/common/navigationHeaders';
 import {
 	DeleteItemMenu,
-	MenuAccordion
+	MenuAccordion,
+	MenuGroup
 } from '../../../components/common/cycleMenu';
 import {SettingsScrollView} from '../../../components/common/SettingsScrollView';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
@@ -206,7 +207,7 @@ function ConditionSettingsScreen(props: any) {
 
 	return (
 		<SettingsScrollView>
-			<View style={styles.card}>
+			<MenuGroup style={styles.card}>
 				<MenuAccordion
 					key={21}
 					name={'General'}
@@ -242,7 +243,7 @@ function ConditionSettingsScreen(props: any) {
 						OnConfirm={_deleteItem}
 					/>
 				)}
-			</View>
+			</MenuGroup>
 		</SettingsScrollView>
 	);
 }

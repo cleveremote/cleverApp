@@ -5,7 +5,8 @@ import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import {faGear, faSliders} from '@fortawesome/free-solid-svg-icons';
 import {
 	DeleteItemMenu,
-	MenuAccordion
+	MenuAccordion,
+	MenuGroup
 } from '../../components/common/cycleMenu';
 import {SettingsScrollView} from '../../components/common/SettingsScrollView';
 import {
@@ -15,6 +16,7 @@ import {
 import {hapticOptions} from '../../data/cycleTypes';
 import {ActuatorType, isComBased} from '../../data/actuatorTypes';
 import {isTempId} from '../../../services/socket';
+import {IS_EXPERT} from '../../../../config/env';
 import {
 	loadActuator,
 	saveActuator,
@@ -101,9 +103,7 @@ export function ActuatorSettingsScreen(props: any) {
 			onDone();
 		},
 		validate: () => ({
-			general:
-				isEmpty(actuatorRef.current?.name) ||
-				isEmpty(actuatorRef.current?.type),
+			general: isEmpty(actuatorRef.current?.name),
 			configuration: isConfigInvalid(actuatorRef.current)
 		}),
 		backWhenPristine: true
@@ -118,7 +118,7 @@ export function ActuatorSettingsScreen(props: any) {
 
 	return (
 		<SettingsScrollView>
-			<View style={styles.card}>
+			<MenuGroup style={styles.card}>
 				<MenuAccordion
 					key={1}
 					name={'General'}
@@ -142,8 +142,8 @@ export function ActuatorSettingsScreen(props: any) {
 					invalid={invalidSections.configuration}
 					onPress={() => {}}>
 					{ready && (
-						// Keyée sur le type : changer de type dans General
-						// réinitialise la config, la section doit se remonter pour
+						// Keyée sur le type : changer de type réinitialise la
+						// config, la section doit se remonter pour
 						// re-seeder ses defaultValues.
 						<ActuatorConfigurationSettingsSection
 							key={`${actuatorRef.current.id}-${actuatorRef.current.type}`}
@@ -154,8 +154,8 @@ export function ActuatorSettingsScreen(props: any) {
 						/>
 					)}
 				</MenuAccordion>
-				<DeleteItemMenu key={3} OnConfirm={deleteItem} />
-			</View>
+				{IS_EXPERT && <DeleteItemMenu key={3} OnConfirm={deleteItem} />}
+			</MenuGroup>
 		</SettingsScrollView>
 	);
 }

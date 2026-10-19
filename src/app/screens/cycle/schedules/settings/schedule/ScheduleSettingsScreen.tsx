@@ -3,7 +3,8 @@ import {StyleSheet, View} from 'react-native';
 import {connect} from 'react-redux';
 import {
 	DeleteItemMenu,
-	MenuAccordion
+	MenuAccordion,
+	MenuGroup
 } from '../../../../../components/common/cycleMenu';
 import {SettingsScrollView} from '../../../../../components/common/SettingsScrollView';
 import {
@@ -72,7 +73,7 @@ export function ScheduleSettingsScreen(props: any) {
 
 	return (
 		<SettingsScrollView>
-			<View style={styles.card}>
+			<MenuGroup style={styles.card}>
 				<MenuAccordion
 					key={21}
 					name={'General'}
@@ -100,7 +101,7 @@ export function ScheduleSettingsScreen(props: any) {
 					/>
 				</MenuAccordion>
 				<DeleteItemMenu key={61} OnConfirm={_deleteItem} />
-			</View>
+			</MenuGroup>
 		</SettingsScrollView>
 	);
 }

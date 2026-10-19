@@ -9,7 +9,7 @@ import {
 	faPlug,
 	faUser
 } from '@fortawesome/free-solid-svg-icons';
-import {MenuAccordion} from '../../components/common/cycleMenu';
+import {MenuAccordion, MenuGroup} from '../../components/common/cycleMenu';
 import {authenticationService} from '../../../module/authentication/domain/services/auth.service';
 import {hapticOptions} from '../../data/cycleTypes';
 
@@ -20,7 +20,7 @@ import {hapticOptions} from '../../data/cycleTypes';
 export function SettingsMenuScreen(props: any) {
 	return (
 		<View style={styles.container}>
-			<View style={styles.card}>
+			<MenuGroup style={styles.card}>
 				<MenuAccordion
 					key={1}
 					name={'User Settings'}
@@ -59,12 +59,11 @@ export function SettingsMenuScreen(props: any) {
 					key={5}
 					name={'Global settings'}
 					icon={faGlobe}
-					isLast={true}
 					onPress={() =>
 						props.navigation.navigate('GlobalSettings')
 					}
 				/>
-			</View>
+			</MenuGroup>
 			<View style={styles.logout}>
 				<TouchableOpacity
 					style={{alignSelf: 'center'}}

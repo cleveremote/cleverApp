@@ -3,7 +3,7 @@ import {View} from 'react-native';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import {faPlus} from '@fortawesome/free-solid-svg-icons';
 import {navigationHeader} from '../../components/common/navigationHeaders';
-import {MenuAccordion} from '../../components/common/cycleMenu';
+import {MenuAccordion, MenuGroup} from '../../components/common/cycleMenu';
 import {hapticOptions} from '../../data/cycleTypes';
 
 export function SensorMenuScreen(props: any) {
@@ -26,7 +26,7 @@ export function SensorMenuScreen(props: any) {
 
 	return (
 		<View style={{alignSelf: 'stretch'}}>
-			<View
+			<MenuGroup
 				style={{
 					alignSelf: 'stretch',
 					backgroundColor: 'white',
@@ -43,7 +43,6 @@ export function SensorMenuScreen(props: any) {
 					key={21}
 					name={'Create sensor'}
 					icon={faPlus}
-					isLast={true}
 					onPress={() => {
 						props.navigation.navigate('Settings', {
 							screen: 'SensorSettingsMenu',
@@ -51,7 +50,7 @@ export function SensorMenuScreen(props: any) {
 						});
 					}}
 				/>
-			</View>
+			</MenuGroup>
 		</View>
 	);
 }

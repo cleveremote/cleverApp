@@ -6,7 +6,8 @@ import {isEmpty} from '../../../../components/common/useSectionSettingsHeader';
 import {SettingsScrollView} from '../../../../components/common/SettingsScrollView';
 import {
 	DeleteItemMenu,
-	MenuAccordion
+	MenuAccordion,
+	MenuGroup
 } from '../../../../components/common/cycleMenu';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import {
@@ -401,7 +402,7 @@ export function CycleSett(props: any) {
 
 	return (
 		<SettingsScrollView>
-			<View style={styles.card}>
+			<MenuGroup style={styles.card}>
 				<MenuAccordion
 					key={21}
 					name={'General'}
@@ -482,7 +483,7 @@ export function CycleSett(props: any) {
 						}}
 					/>
 				)}
-			</View>
+			</MenuGroup>
 		</SettingsScrollView>
 	);
 }

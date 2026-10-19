@@ -3,7 +3,8 @@ import {View} from 'react-native';
 import {connect} from 'react-redux';
 import {
 	DeleteItemMenu,
-	MenuAccordion
+	MenuAccordion,
+	MenuGroup
 } from '../../../components/common/cycleMenu';
 import {
 	useSectionSettingsHeader,
@@ -68,7 +69,7 @@ function SensorSettingsScreen(props: any) {
 
 	return (
 		<SettingsScrollView>
-			<View
+			<MenuGroup
 				style={{
 					alignSelf: 'stretch',
 					backgroundColor: 'white',
@@ -113,7 +114,7 @@ function SensorSettingsScreen(props: any) {
 						_deleteItem();
 					}}
 				/>
-			</View>
+			</MenuGroup>
 		</SettingsScrollView>
 	);
 }

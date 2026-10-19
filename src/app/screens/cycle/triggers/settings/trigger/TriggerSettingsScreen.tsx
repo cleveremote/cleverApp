@@ -3,7 +3,8 @@ import {ScrollView, StyleSheet, View} from 'react-native';
 import {connect} from 'react-redux';
 import {
 	DeleteItemMenu,
-	MenuAccordion
+	MenuAccordion,
+	MenuGroup
 } from '../../../../../components/common/cycleMenu';
 import {
 	useSectionSettingsHeader,
@@ -74,7 +75,7 @@ export function TriggerSettingsScreen(props: any) {
 			style={styles.scroll}
 			contentContainerStyle={styles.scrollContent}
 			keyboardShouldPersistTaps="handled">
-			<View style={styles.card}>
+			<MenuGroup style={styles.card}>
 				<MenuAccordion
 					key={21}
 					name={'General'}
@@ -122,7 +123,7 @@ export function TriggerSettingsScreen(props: any) {
 					/>
 				</MenuAccordion>
 				<DeleteItemMenu key={61} OnConfirm={_deleteItem} />
-			</View>
+			</MenuGroup>
 		</ScrollView>
 	);
 }

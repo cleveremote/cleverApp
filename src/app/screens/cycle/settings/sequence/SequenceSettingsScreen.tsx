@@ -4,7 +4,8 @@ import {connect} from 'react-redux';
 import {navigationHeader} from '../../../../components/common/navigationHeaders';
 import {
 	DeleteItemMenu,
-	MenuAccordion
+	MenuAccordion,
+	MenuGroup
 } from '../../../../components/common/cycleMenu';
 import {isEmpty} from '../../../../components/common/useSectionSettingsHeader';
 import {SettingsScrollView} from '../../../../components/common/SettingsScrollView';
@@ -225,7 +226,7 @@ function SequenceSettingsScreen(props: any) {
 					shadowRadius: 2.22
 				}}>
 				<View>
-					<View>
+					<MenuGroup>
 						<MenuAccordion
 							key={21}
 							name={'General'}
@@ -297,7 +298,7 @@ function SequenceSettingsScreen(props: any) {
 								}}
 							/>
 						)}
-					</View>
+					</MenuGroup>
 				</View>
 			</View>
 		</SettingsScrollView>

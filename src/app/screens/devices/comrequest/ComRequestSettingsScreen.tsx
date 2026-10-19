@@ -5,7 +5,8 @@ import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import {faGear, faSliders} from '@fortawesome/free-solid-svg-icons';
 import {
 	DeleteItemMenu,
-	MenuAccordion
+	MenuAccordion,
+	MenuGroup
 } from '../../../components/common/cycleMenu';
 import {SettingsScrollView} from '../../../components/common/SettingsScrollView';
 import {
@@ -118,12 +119,11 @@ export function ComRequestSettingsScreen(props: any) {
 
 	return (
 		<SettingsScrollView>
-			<View style={styles.card}>
+			<MenuGroup style={styles.card}>
 				<MenuAccordion
 					key={1}
 					name={'General'}
 					icon={faGear}
-					isLast
 					alwaysExpanded
 					invalid={invalidSections.general}
 					onPress={() => {}}>
@@ -155,7 +155,7 @@ export function ComRequestSettingsScreen(props: any) {
 					)}
 				</MenuAccordion>
 				<DeleteItemMenu key={3} OnConfirm={deleteItem} /> */}
-			</View>
+			</MenuGroup>
 		</SettingsScrollView>
 	);
 }

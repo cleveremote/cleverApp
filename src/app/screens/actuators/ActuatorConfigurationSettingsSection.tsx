@@ -12,8 +12,11 @@ import {BoxFormStyle} from '../../styles/components/common/boxForm';
 import {updateActuator} from '../../../module/process/infrasctructure/store/actions/actuator';
 import {loadDevices} from '../../../module/process/infrasctructure/store/actions/device';
 import {loadModbusTasks} from '../../../module/process/infrasctructure/store/actions/modbus-task';
+import {isTempId} from '../../../services/socket';
 import {
 	ActuatorType,
+	actuatorTypeOptions,
+	emptyActuatorConfig,
 	gpioDirectionOptions,
 	gpioEdgeOptions,
 	isComBased,
@@ -21,6 +24,7 @@ import {
 } from '../../data/actuatorTypes';
 import {toNumber} from '../devices/deviceFieldUtils';
 import {useActuatorSection} from './useActuatorSection';
+import {IS_EXPERT} from '../../../../config/env';
 
 // Les champs numériques de chaque config : react-hook-form stocke les saisies en
 // chaînes, on les recoerce avant de stager l'entité.
@@ -44,8 +48,10 @@ const CTRL_NUMERIC_FIELDS = [
 	...CTRL_REGULATION_FIELDS.map(f => f.name)
 ];
 
-// Actuator Configuration : les champs affichés dépendent du type porté par
-// l'entité (choisi dans la section General).
+// Actuator Configuration : le type (modifiable seulement à la création, comme
+// celui d'une COM request) détermine les champs affichés. Le changer
+// réinitialise la config avec les valeurs par défaut du nouveau type ; l'écran
+// parent keye la section sur le type pour la remonter.
 //  - RPI  : la broche GPIO et son paramétrage `onoff`.
 //  - COM  : le device modbus + la liste d'actions `{comRequestId, portNumber}`.
 //  - CTRL : les champs COM + le paramétrage de la boucle de régulation.
@@ -58,6 +64,9 @@ export function ActuatorConfigurationSettingsSection(props: any) {
 	const isRpi = type === ActuatorType.RPI;
 	const isCtrl = type === ActuatorType.CTRL;
 	const comBased = isComBased(type);
+	// Hors mode expert, le câblage COM (device + actions) est en lecture seule ;
+	// un CTRL reste toujours éditable, quel que soit l'env.
+	const readOnly = !IS_EXPERT && !isCtrl;
 
 	const transform = (data: any) => {
 		const config = {...data.config};
@@ -148,6 +157,24 @@ export function ActuatorConfigurationSettingsSection(props: any) {
 			)
 		);
 
+	const isNew = isTempId(source?.id);
+	// Hors mode expert, on ne peut pas créer d'actuator COM / CTRL.
+	const typeOptions = IS_EXPERT
+		? actuatorTypeOptions
+		: actuatorTypeOptions.filter(
+				o => o.value === type || !isComBased(o.value)
+		  );
+
+	const onTypeChange = (value: string) => {
+		markDirty();
+		props.updateActuator({
+			...(embedded ? props.actuatorData : source),
+			type: value,
+			config: emptyActuatorConfig(value),
+			isModified: true
+		});
+	};
+
 	// Un CTRL régule sur la mesure d'un débitmètre : on propose les sensors.
 	const flowMeterOptions = (props.sensors ?? [])
 		.filter((s: any) => !s.delete)
@@ -161,6 +188,18 @@ export function ActuatorConfigurationSettingsSection(props: any) {
 	return (
 		<View style={BoxFormStyle.boxForm}>
 			<Body {...bodyProps}>
+				<SelectForm
+					lstData={typeOptions}
+					control={control}
+					errors={errors}
+					name="type"
+					placeholder="Type*"
+					// Un CTRL garde toujours son type (lecture seule).
+					disabled={!isNew || isCtrl}
+					rules={{required: 'Type is required'}}
+					onValueChange={onTypeChange}
+				/>
+
 				{isRpi && (
 					<>
 						<InputForm
@@ -224,6 +263,7 @@ export function ActuatorConfigurationSettingsSection(props: any) {
 							name="config.deviceId"
 							placeholder="Device*"
 							rules={{required: 'Device is required'}}
+							disabled={readOnly}
 							onValueChange={() => {
 								// Les COM requests dépendent du device : les
 								// actions déjà posées ne sont plus valides.
@@ -238,7 +278,7 @@ export function ActuatorConfigurationSettingsSection(props: any) {
 								{id: action.comRequestId},
 								() => removeAction(action.comRequestId),
 								labelOfRequest(action.comRequestId),
-								{name: faMinus, color: 'red'},
+								readOnly ? null : {name: faMinus, color: 'red'},
 								{
 									value: action.portNumber,
 									onChangeValue: (text: string) =>
@@ -246,23 +286,26 @@ export function ActuatorConfigurationSettingsSection(props: any) {
 											action.comRequestId,
 											text
 										),
-									placeholder: 'port'
+									placeholder: 'port',
+									disabled: readOnly
 								}
 							)
 						)}
-						<SelectForm
-							lstData={availableRequests}
-							control={control}
-							errors={errors}
-							name="_addAction"
-							placeholder={
-								deviceId
-									? 'Add action (COM request) ...'
-									: 'Select a device first'
-							}
-							disabled={!deviceId}
-							onValueChange={value => addAction(value)}
-						/>
+						{!readOnly && (
+							<SelectForm
+								lstData={availableRequests}
+								control={control}
+								errors={errors}
+								name="_addAction"
+								placeholder={
+									deviceId
+										? 'Add action (COM request) ...'
+										: 'Select a device first'
+								}
+								disabled={!deviceId}
+								onValueChange={value => addAction(value)}
+							/>
+						)}
 					</>
 				)}
 

@@ -4,7 +4,8 @@ import {connect} from 'react-redux';
 import {faGear, faSitemap} from '@fortawesome/free-solid-svg-icons';
 import {
 	DeleteItemMenu,
-	MenuAccordion
+	MenuAccordion,
+	MenuGroup
 } from '../../../components/common/cycleMenu';
 import {SettingsScrollView} from '../../../components/common/SettingsScrollView';
 import {
@@ -29,7 +30,7 @@ export function MasterDeviceSettingsScreen(props: any) {
 
 	return (
 		<SettingsScrollView>
-			<View style={styles.card}>
+			<MenuGroup style={styles.card}>
 				<MenuAccordion
 					key={1}
 					name={'General'}
@@ -58,7 +59,7 @@ export function MasterDeviceSettingsScreen(props: any) {
 					/>
 				</MenuAccordion>
 				<DeleteItemMenu key={4} OnConfirm={deleteItem} />
-			</View>
+			</MenuGroup>
 		</SettingsScrollView>
 	);
 }

@@ -14,11 +14,12 @@ import {hapticOptions} from '../../data/cycleTypes';
 import {ActuatorType, emptyActuatorConfig} from '../../data/actuatorTypes';
 import {loadActuators} from '../../../module/process/infrasctructure/store/actions/actuator';
 import {loadDevices} from '../../../module/process/infrasctructure/store/actions/device';
+import {IS_EXPERT} from '../../../../config/env';
 
 // Top level of the Actuators area (Settings → Actuators): the master list of
 // actuators, filtered by type with the same segmented bar as the cycles screen.
 // Each row opens the actuator's own settings menu; the "+" row creates a new
-// actuator of the currently selected type.
+// actuator of the currently selected type (CTRL: always; RPI/COM: expert only).
 export function ActuatorsScreen(props: any) {
 	const [activeFilter, setActiveFilter] = React.useState<ActuatorFilterKey>(
 		ActuatorType.RPI
@@ -66,6 +67,9 @@ export function ActuatorsScreen(props: any) {
 		return deviceName ? `${deviceName} - ${name}` : name;
 	};
 
+	// CTRL : ajout toujours possible ; RPI et COM : mode expert uniquement.
+	const canAdd = IS_EXPERT || activeFilter === ActuatorType.CTRL;
+
 	const openSettings = (params: any) =>
 		props.navigation.navigate('ActuatorSettingsStack', {
 			screen: 'ActuatorSettingsMenu',
@@ -93,33 +97,35 @@ export function ActuatorsScreen(props: any) {
 									{name: faCog, color: styles.icon.color}
 								)
 							)}
-						<View style={styles.addRow}>
-							<TouchableOpacity
-								style={styles.addButton}
-								onPress={() => {
-									ReactNativeHapticFeedback.trigger(
-										'impactMedium',
-										hapticOptions
-									);
-									// Le type (et donc la forme de la config) est
-									// choisi par le filtre actif ; il reste
-									// modifiable tant que l'actuator n'est pas
-									// enregistré.
-									openSettings({
-										defaults: {
-											type: activeFilter,
-											config: emptyActuatorConfig(
-												activeFilter
-											)
-										}
-									});
-								}}>
-								<Icon name="times-circle" style={styles.icon} />
-							</TouchableOpacity>
-							<Text style={styles.addLabel}>
-								{`Add new ${activeFilter} actuator ...`}
-							</Text>
-						</View>
+						{canAdd && (
+							<View style={styles.addRow}>
+								<TouchableOpacity
+									style={styles.addButton}
+									onPress={() => {
+										ReactNativeHapticFeedback.trigger(
+											'impactMedium',
+											hapticOptions
+										);
+										// Le type (et donc la forme de la config) est
+										// choisi par le filtre actif ; il reste
+										// modifiable tant que l'actuator n'est pas
+										// enregistré.
+										openSettings({
+											defaults: {
+												type: activeFilter,
+												config: emptyActuatorConfig(
+													activeFilter
+												)
+											}
+										});
+									}}>
+									<Icon name="times-circle" style={styles.icon} />
+								</TouchableOpacity>
+								<Text style={styles.addLabel}>
+									{`Add new ${activeFilter} actuator ...`}
+								</Text>
+							</View>
+						)}
 					</View>
 				</View>
 			</ScrollView>

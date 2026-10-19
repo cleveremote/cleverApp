@@ -1,5 +1,5 @@
-import React, {useState} from 'react';
-import {Pressable, Text, View} from 'react-native';
+import React, {createContext, useContext, useState} from 'react';
+import {Pressable, Text, View, ViewProps} from 'react-native';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
@@ -8,11 +8,52 @@ import {ModalConfirmation} from '../modalDelete';
 import {faTrash} from '@fortawesome/free-solid-svg-icons';
 import {hapticOptions} from '../../data/cycleTypes';
 
+// Position d'un menu dans son MenuGroup : undefined hors groupe (la prop
+// isLast fait alors foi).
+const MenuIsLastContext = createContext<boolean | undefined>(undefined);
+
+// Aplatit fragments / tableaux et ignore null, false, undefined pour ne garder
+// que les menus réellement rendus.
+function flattenMenuChildren(children: React.ReactNode): React.ReactElement[] {
+	const out: React.ReactElement[] = [];
+	React.Children.forEach(children, child => {
+		if (!React.isValidElement(child)) return;
+		if (child.type === React.Fragment) {
+			out.push(
+				...flattenMenuChildren(
+					(child.props as {children?: React.ReactNode}).children
+				)
+			);
+		} else {
+			out.push(child);
+		}
+	});
+	return out;
+}
+
+// Conteneur de MenuAccordion / DeleteItemMenu : indique automatiquement au
+// dernier menu rendu qu'il est le dernier (pas de ligne de séparation en bas),
+// y compris quand des menus apparaissent ou disparaissent dynamiquement.
+export function MenuGroup({children, ...viewProps}: ViewProps) {
+	const items = flattenMenuChildren(children);
+	return (
+		<View {...viewProps}>
+			{items.map((item, i) => (
+				<MenuIsLastContext.Provider
+					key={item.key ?? i}
+					value={i === items.length - 1}>
+					{item}
+				</MenuIsLastContext.Provider>
+			))}
+		</View>
+	);
+}
+
 export function MenuAccordion({
 	name,
 	icon,
 	color = '#32404e',
-	isLast = false,
+	isLast: isLastProp = false,
 	closeSibillings,
 	current,
 	onPress,
@@ -34,6 +75,7 @@ export function MenuAccordion({
 	// sans ligne de séparation en bas.
 	alwaysExpanded?: boolean;
 }) {
+	const isLast = useContext(MenuIsLastContext) ?? isLastProp;
 	const [expandedState, setExpended] = useState(false);
 	const isExpanded = alwaysExpanded || expandedState;
 	const showSeparator = !alwaysExpanded && (!isLast || isExpanded);
@@ -137,7 +179,12 @@ export function MenuAccordion({
 					</View>
 				)}
 			</Pressable>
-			{children && isExpanded ? <View>{children}</View> : null}
+			{children && isExpanded ? (
+				// Les menus imbriqués dans le contenu ne dépendent pas de ce groupe.
+				<MenuIsLastContext.Provider value={undefined}>
+					<View>{children}</View>
+				</MenuIsLastContext.Provider>
+			) : null}
 		</View>
 	);
 }
@@ -146,7 +193,7 @@ export function DeleteItemMenu({
 	name = 'Remove',
 	icon = faTrash,
 	color = '#fb1900',
-	isLast = true,
+	isLast: isLastProp = true,
 	onCancel = () => {},
 	OnConfirm,
 	confirmTitle,
@@ -161,6 +208,7 @@ export function DeleteItemMenu({
 	confirmTitle?: string;
 	confirmMessage?: string;
 }) {
+	const isLast = useContext(MenuIsLastContext) ?? isLastProp;
 	const [isOpened, setOpened] = useState(false);
 	// Appui long : ouvre une modal « Are you sure ? » (Yes / No).
 	const onLongPress = () => {
