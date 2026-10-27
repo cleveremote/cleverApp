@@ -13,10 +13,7 @@ import {navigationHeader} from '../../../components/common/navigationHeaders';
 import {elementStack} from '../../../components/cycle/moduleStack';
 import {hapticOptions} from '../../../data/cycleTypes';
 import {isTempId} from '../../../../services/socket';
-import {
-	discoverDevices,
-	loadDevices
-} from '../../../../module/process/infrasctructure/store/actions/device';
+import {discoverDevices} from '../../../../module/process/infrasctructure/store/actions/device';
 
 // Slave devices attached to a master, rendered like the Triggers list, plus a
 // "Discover New Devices" action that asks the box to probe the master's
@@ -71,7 +68,11 @@ export function SlaveDevicesSection(props: any) {
 					)
 			});
 		}
-		props.loadDevices();
+		// Pas de rechargement des devices depuis la box ici : la liste est déjà
+		// chargée par DevicesScreen, et ce composant est remonté à chaque
+		// réouverture de l'accordéon — un reload écraserait les suppressions /
+		// éditions de slaves mises en attente (stageDevice) avant la sauvegarde
+		// du master, et le slave supprimé réapparaîtrait.
 	}, []);
 
 	// Slaves reference their master by id, so a not-yet-persisted (temp id)
@@ -219,6 +220,5 @@ const mapStateToProps = (state: any) => ({
 });
 
 export default connect(mapStateToProps, {
-	loadDevices,
 	discoverDevices
 })(SlaveDevicesSection);
