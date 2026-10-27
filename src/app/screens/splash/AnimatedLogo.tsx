@@ -22,8 +22,10 @@ const INK = '#32404e';
 const WATER = '#54acff';
 const SAP = '#62cf1b';
 
-// Fin de la dernière animation (ripple : 2.05s + 1s)
-const END = 3.05;
+// Départ de chaque vague d'eau (durée 1s chacune)
+const RIPPLE_STARTS = [2.05, 2.45];
+// Fin de la dernière animation (dernière vague : 2.45s + 1s)
+const END = 3.45;
 export const LOGO_ANIMATION_MS = END * 1000;
 
 const EASE_DRAW = Easing.bezierFn(0.65, 0, 0.35, 1);
@@ -135,12 +137,12 @@ const pulseProps = (t: number) => {
 	return {matrix: transformAbout(LOGO_CENTER.x, LOGO_CENTER.y, s)};
 };
 
-const rippleProps = (t: number) => {
+const rippleProps = (t: number, start: number) => {
 	'worklet';
-	if (t < 2.05) {
+	if (t < start) {
 		return {matrix: transformAbout(RIPPLE_CENTER.x, RIPPLE_CENTER.y, 0.4), opacity: 0};
 	}
-	const p = EASE_OUT(phase(t, 2.05, 1));
+	const p = EASE_OUT(phase(t, start, 1));
 	return {
 		matrix: transformAbout(RIPPLE_CENTER.x, RIPPLE_CENTER.y, 0.4 + 2.2 * p),
 		opacity: 0.7 * (1 - p)
@@ -216,13 +218,30 @@ export function AnimatedLogo({width, height}: AnimatedLogoProps) {
 	const water = useAnimatedProps(() => fillProps(t.value, 0.35, 0.5, 1.1, 1.9) as object);
 	const sap = useAnimatedProps(() => fillProps(t.value, 0.4, 1, 1, 2) as object);
 	const pulse = useAnimatedProps(() => pulseProps(t.value) as object);
-	const ripple = useAnimatedProps(() => rippleProps(t.value) as object);
+	const ripple1 = useAnimatedProps(() => rippleProps(t.value, RIPPLE_STARTS[0]) as object);
+	const ripple2 = useAnimatedProps(() => rippleProps(t.value, RIPPLE_STARTS[1]) as object);
 
 	// État initial pour le premier rendu, avant la première frame animée
 	const fallStart = fallProps(start);
 	const waterStart = fillProps(start, 0.35, 0.5, 1.1, 1.9);
 	const sapStart = fillProps(start, 0.4, 1, 1, 2);
-	const rippleStart = rippleProps(start);
+	const ripples = [ripple1, ripple2].map((animatedProps, index) => {
+		const rippleStart = rippleProps(start, RIPPLE_STARTS[index]);
+		return (
+			<AnimatedCircle
+				key={index}
+				cx={RIPPLE_CENTER.x}
+				cy={RIPPLE_CENTER.y}
+				r={9}
+				fill="none"
+				stroke={WATER}
+				strokeWidth={0.6}
+				opacity={rippleStart.opacity}
+				transform={rippleStart.matrix}
+				animatedProps={animatedProps}
+			/>
+		);
+	});
 
 	const fingers = FINGERS.map((finger, index) => (
 		<DrawPath
@@ -264,17 +283,7 @@ export function AnimatedLogo({width, height}: AnimatedLogoProps) {
 				</ClipPath>
 			</Defs>
 
-			<AnimatedCircle
-				cx={RIPPLE_CENTER.x}
-				cy={RIPPLE_CENTER.y}
-				r={9}
-				fill="none"
-				stroke={WATER}
-				strokeWidth={0.6}
-				opacity={rippleStart.opacity}
-				transform={rippleStart.matrix}
-				animatedProps={ripple}
-			/>
+			{ripples}
 
 			<AnimatedG transform={pulseProps(start).matrix} animatedProps={pulse}>
 				<G transform="translate(542.45172,-459.49724)">

@@ -14,6 +14,7 @@ import {
 	normalizeIds,
 	denormalizeIds
 } from '../../../../../services/socket';
+import {loadConfiguration} from './common';
 
 export const updateDevice =
 	(device: any): ThunkAction<void, RootState, unknown, AnyAction> =>
@@ -70,7 +71,9 @@ export const loadDevice =
 // links are expressed by nesting rather than by masterDeviceId/deviceId. The box
 // returns the refreshed full configuration, so we reload both the devices and
 // modbusTasks slices — every client-only `isModified` flag is cleared and temp
-// ids are replaced by the real ones the box assigned.
+// ids are replaced by the real ones the box assigned. When the tree carries a
+// deleted slave, the whole configuration is reloaded too: the box drops the
+// slave's dependent entities (sensors, modbus tasks...) along with it.
 export const saveDeviceTree =
 	(
 		tree: any,
@@ -90,6 +93,9 @@ export const saveDeviceTree =
 					type: MODBUS_TASKS_LOAD,
 					payload: normalizeIds(config.modbusTasks)
 				});
+				if ((tree?.slaveDevices || []).some((s: any) => !!s.delete)) {
+					dispatch(loadConfiguration());
+				}
 				onSuccess?.();
 			}
 		);
@@ -100,7 +106,9 @@ export const saveDeviceTree =
 // Without `masterId` (Devices screen), the box runs a global discovery.
 // The discovered devices are appended to the current list: entries already
 // known (same id) are kept as-is, so local unsaved edits are not overwritten —
-// discovery only ever adds new devices.
+// discovery only ever adds new devices. A slave discovery (with `masterId`)
+// then reloads the whole configuration, since the box may have created
+// entities tied to the new slaves (sensors, modbus tasks...).
 export const discoverDevices =
 	(
 		masterId?: string,
@@ -129,6 +137,9 @@ export const discoverDevices =
 								type: ROOT_DEVICES_LOAD,
 								payload: [...existing, ...added]
 							});
+						}
+						if (masterId) {
+							dispatch(loadConfiguration());
 						}
 					} else {
 						console.warn('[discoverDevices] unexpected response', response);
