@@ -20,6 +20,9 @@ import {
 } from '../../../../module/process/infrasctructure/store/actions/sensor';
 import SensorGeneralSettingsSection from './SensorGeneralSettingsSection';
 import SensorConfigurationSettingsSection from './SensorConfigurationSettingsSection';
+import SensorDataSourceSettingsSection, {
+	hasDataSource as sensorHasDataSource
+} from './SensorDataSourceSettingsSection';
 
 function SensorSettingsScreen(props: any) {
 	const isNew = !props.route.params?.id;
@@ -48,6 +51,8 @@ function SensorSettingsScreen(props: any) {
 		navigation: props.navigation,
 		entity: props.sensor,
 		isNew,
+		// Pas de bouton save tant que rien n'a été modifié (simple retour).
+		backWhenPristine: true,
 		hasChanges: () => !!sensorRef.current?.isModified,
 		save: onDone => {
 			props.saveSensor(sensorRef.current);
@@ -66,6 +71,12 @@ function SensorSettingsScreen(props: any) {
 			};
 		}
 	});
+
+	// Configuration : un sensor COM relié à une commande d'appareil (parent) ou
+	// à un parent (enfant) affiche sa source de données ; les autres (FORCAST,
+	// nouveau sensor…) gardent le formulaire de configuration.
+	const s = sensorRef.current;
+	const hasDataSource = sensorHasDataSource(s);
 
 	return (
 		<SettingsScrollView>
@@ -101,12 +112,20 @@ function SensorSettingsScreen(props: any) {
 					icon={faSliders}
 					invalid={invalidSections.configuration}
 					onPress={() => {}}>
-					<SensorConfigurationSettingsSection
-						embedded
-						sensorData={sensorRef.current}
-						showErrors={invalidSections.configuration}
-						navigation={props.navigation}
-					/>
+					{hasDataSource ? (
+						<SensorDataSourceSettingsSection
+							key={s?.id}
+							sensorData={s}
+							navigation={props.navigation}
+						/>
+					) : (
+						<SensorConfigurationSettingsSection
+							embedded
+							sensorData={sensorRef.current}
+							showErrors={invalidSections.configuration}
+							navigation={props.navigation}
+						/>
+					)}
 				</MenuAccordion>
 				<DeleteItemMenu
 					key={61}

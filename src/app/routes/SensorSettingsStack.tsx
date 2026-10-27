@@ -7,6 +7,7 @@ import {Provider} from 'react-redux';
 import {store} from '../../module/process/infrasctructure/store/store';
 import SensorGeneralSettingsSection from '../screens/sensor/settings/SensorGeneralSettingsSection';
 import SensorConfigurationSettingsSection from '../screens/sensor/settings/SensorConfigurationSettingsSection';
+import SensorFrequencySection from '../screens/sensor/settings/SensorFrequencySection';
 import SensorSettingsScreen from '../screens/sensor/settings/SensorSettingsScreen';
 import {navigationHeader} from '../components/common/navigationHeaders';
 
@@ -37,6 +38,11 @@ export function SensorSettingsStack() {
 				name="SensorConfigurationSection"
 				component={SensorConfigurationSettingsSection}
 				options={options('Configuration')}
+			/>
+			<Stack.Screen
+				name="SensorFrequencySection"
+				component={SensorFrequencySection}
+				options={options('Frequency')}
 			/>
 		</Stack.Navigator>
 	);

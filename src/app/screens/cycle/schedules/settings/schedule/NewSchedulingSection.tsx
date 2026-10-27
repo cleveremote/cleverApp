@@ -23,6 +23,11 @@ import {updateSchedule} from '../../../../../../module/process/infrasctructure/s
  * Branché au modèle `schedule.cron` : `dtoToState` initialise l'interface depuis
  * les données, `mapToDto` re-sérialise vers `{ pattern, date, sunBehavior }` et
  * stage dans redux via `updateSchedule`. Remplace l'ancienne section Execution.
+ *
+ * Réutilisable hors schedule (ex. fréquence de lecture d'un sensor) : `cron`
+ * remplace `scheduleData.cron`, `onChange(dto)` remplace le staging redux, et
+ * `cronOnly` masque la date ponctuelle et le déclencheur solaire, `hidePreview`
+ * masque l'expression et les prochaines exécutions.
  */
 
 // --- Palette alignée sur le design system de l'app (Chakra-like) -----------
@@ -688,7 +693,7 @@ function ListNumInput({
 export function NewSchedulingSection(props: any) {
 	// Initialisation depuis le modèle `schedule.cron` (une seule fois).
 	const initial = React.useMemo(
-		() => dtoToState(props.scheduleData?.cron),
+		() => dtoToState(props.cron ?? props.scheduleData?.cron),
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 		[]
 	);
@@ -720,6 +725,10 @@ export function NewSchedulingSection(props: any) {
 		const dtoStr = JSON.stringify(dto);
 		if (dtoStr !== lastDtoRef.current) {
 			lastDtoRef.current = dtoStr;
+			if (props.onChange) {
+				props.onChange(dto);
+				return;
+			}
 			props.updateSchedule?.({
 				...parentRef.current,
 				cron: dto,
@@ -813,13 +822,15 @@ export function NewSchedulingSection(props: any) {
 	return (
 		<View style={styles.wrap}>
 			{/* Date ponctuelle : planifie une seule exécution via le datetime picker. */}
-			<View style={styles.switchRow}>
-				<Text style={styles.switchLabel}>Date ponctuelle</Text>
-				<AppSwitch
-					value={oneTimeEnabled}
-					onValueChange={v => patch(n => (n.oneTime.enabled = v))}
-				/>
-			</View>
+			{!props.cronOnly && (
+				<View style={styles.switchRow}>
+					<Text style={styles.switchLabel}>Date ponctuelle</Text>
+					<AppSwitch
+						value={oneTimeEnabled}
+						onValueChange={v => patch(n => (n.oneTime.enabled = v))}
+					/>
+				</View>
+			)}
 
 			{oneTimeEnabled && (
 				<View style={styles.editorCard}>
@@ -1050,7 +1061,7 @@ export function NewSchedulingSection(props: any) {
 			)}
 
 			{/* Déclencheur solaire (masqué en mode date ponctuelle) */}
-			{!oneTimeEnabled && (
+			{!oneTimeEnabled && !props.cronOnly && (
 				<View style={styles.switchRow}>
 					<Text style={styles.switchLabel}>Ajouter un declencheur solaire</Text>
 					<AppSwitch
@@ -1129,82 +1140,86 @@ export function NewSchedulingSection(props: any) {
 				</View>
 			)}
 
-			{/* Expression */}
-			<View style={styles.outCard}>
-				{oneTimeEnabled ? (
-					<>
-						<Text style={styles.sectionLabel}>Expression</Text>
-						<Text selectable style={styles.expression}>
-							{displayStr}
-						</Text>
-						<Text style={styles.summary}>{summary}</Text>
-					</>
-				) : (
-					/* En mode « remplacer » le cron est ignoré : pas d'expression cron. */
-					!replaceMode && (
-						<>
-							<Text style={styles.sectionLabel}>Expression</Text>
-							<TextInput
-								value={exprText}
-								onChangeText={onExprChange}
-								onFocus={() => (exprFocused.current = true)}
-								onBlur={() => {
-									exprFocused.current = false;
-									setExprText(displayStr);
-								}}
-								autoCapitalize="none"
-								autoCorrect={false}
-								placeholder={combineMode ? '* * *' : '* * * * * *'}
-								placeholderTextColor={C.muted}
-								style={styles.expressionInput}
-							/>
-							<Text style={styles.hint}>
-								{combineMode
-									? 'Editez le cron jour/mois/semaine (3 champs) pour mettre a jour les champs ci-dessus.'
-									: "Editez l'expression cron pour mettre a jour les champs ci-dessus (5 ou 6 champs)."}
-							</Text>
-							<Text style={styles.summary}>{summary}</Text>
-						</>
-					)
-				)}
+			{!props.hidePreview && (
+				<>
+					{/* Expression */}
+					<View style={styles.outCard}>
+						{oneTimeEnabled ? (
+							<>
+								<Text style={styles.sectionLabel}>Expression</Text>
+								<Text selectable style={styles.expression}>
+									{displayStr}
+								</Text>
+								<Text style={styles.summary}>{summary}</Text>
+							</>
+						) : (
+							/* En mode « remplacer » le cron est ignoré : pas d'expression cron. */
+							!replaceMode && (
+								<>
+									<Text style={styles.sectionLabel}>Expression</Text>
+									<TextInput
+										value={exprText}
+										onChangeText={onExprChange}
+										onFocus={() => (exprFocused.current = true)}
+										onBlur={() => {
+											exprFocused.current = false;
+											setExprText(displayStr);
+										}}
+										autoCapitalize="none"
+										autoCorrect={false}
+										placeholder={combineMode ? '* * *' : '* * * * * *'}
+										placeholderTextColor={C.muted}
+										style={styles.expressionInput}
+									/>
+									<Text style={styles.hint}>
+										{combineMode
+											? 'Editez le cron jour/mois/semaine (3 champs) pour mettre a jour les champs ci-dessus.'
+											: "Editez l'expression cron pour mettre a jour les champs ci-dessus (5 ou 6 champs)."}
+									</Text>
+									<Text style={styles.summary}>{summary}</Text>
+								</>
+							)
+						)}
 
-				{/* Expression du déclencheur solaire (séparée, n'altère pas le cron). */}
-				{solarStr && (
-					<View style={replaceMode ? undefined : styles.solarExprBox}>
-						<Text style={styles.sectionLabel}>Declencheur solaire</Text>
-						<Text selectable style={styles.solarExpr}>
-							{solarStr}
-						</Text>
-						<Text style={styles.summary}>
-							{state.solar.mode === 'replace'
-								? 'Remplace le cron : declenche au ' + solarStr + ' chaque jour.'
-								: 'Combine au cron : aux jours du cron, a ' + solarStr + '.'}
-						</Text>
+						{/* Expression du déclencheur solaire (séparée, n'altère pas le cron). */}
+						{solarStr && (
+							<View style={replaceMode ? undefined : styles.solarExprBox}>
+								<Text style={styles.sectionLabel}>Declencheur solaire</Text>
+								<Text selectable style={styles.solarExpr}>
+									{solarStr}
+								</Text>
+								<Text style={styles.summary}>
+									{state.solar.mode === 'replace'
+										? 'Remplace le cron : declenche au ' + solarStr + ' chaque jour.'
+										: 'Combine au cron : aux jours du cron, a ' + solarStr + '.'}
+								</Text>
+							</View>
+						)}
 					</View>
-				)}
-			</View>
 
-			{/* Prochaines exécutions */}
-			<View style={styles.outCard}>
-				<Text style={styles.sectionLabel}>Prochaines executions</Text>
-				{runs.length === 0 ? (
-					<Text style={styles.hint}>
-						Aucune correspondance trouvee dans la fenetre calculee.
-					</Text>
-				) : (
-					runs.map((d, i) => (
-						<Text key={i} style={styles.runRow}>
-							{d.toLocaleDateString('fr-FR', {
-								weekday: 'short',
-								day: '2-digit',
-								month: 'short'
-							})}
-							{', '}
-							{d.toLocaleTimeString('fr-FR', {hour: '2-digit', minute: '2-digit'})}
-						</Text>
-					))
-				)}
-			</View>
+					{/* Prochaines exécutions */}
+					<View style={styles.outCard}>
+						<Text style={styles.sectionLabel}>Prochaines executions</Text>
+						{runs.length === 0 ? (
+							<Text style={styles.hint}>
+								Aucune correspondance trouvee dans la fenetre calculee.
+							</Text>
+						) : (
+							runs.map((d, i) => (
+								<Text key={i} style={styles.runRow}>
+									{d.toLocaleDateString('fr-FR', {
+										weekday: 'short',
+										day: '2-digit',
+										month: 'short'
+									})}
+									{', '}
+									{d.toLocaleTimeString('fr-FR', {hour: '2-digit', minute: '2-digit'})}
+								</Text>
+							))
+						)}
+					</View>
+				</>
+			)}
 
 			{/* Sélecteur de date ponctuelle (même picker que la section Execution). */}
 			<DateTimePickerModal
