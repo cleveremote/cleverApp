@@ -39,9 +39,11 @@ export const stageDevice =
 		});
 	};
 
+// Background refresh (re-run on every focus, the list is already on screen):
+// no global loader.
 export const loadDevices =
 	(): ThunkAction<void, RootState, unknown, AnyAction> => async dispatch => {
-		socketService.emit(
+		socketService.emitSilent(
 			'front/box/fetch/configuration',
 			{},
 			(response: any) => {
@@ -130,13 +132,15 @@ export const discoverDevices =
 		cb?: () => void
 	): ThunkAction<void, RootState, unknown, AnyAction> =>
 	async (dispatch, getState) => {
-		socketService.emit(
+		// Le bouton Discover affiche son propre loader : pas de loader global.
+		socketService.emitSilent(
 			'front/box/discover/device',
 			masterId ? {masterId} : {},
 			(response: any) => {
 				// `cb` doit toujours être appelé (il arrête le loader de l'écran),
 				// même si la réponse est une erreur ou un `config` illisible :
 				// une exception ici l'empêcherait d'être exécuté.
+				let reloading = false;
 				try {
 					const raw = response?.config;
 					const config = typeof raw === 'string' ? JSON.parse(raw) : raw;
@@ -154,7 +158,10 @@ export const discoverDevices =
 							});
 						}
 						if (masterId) {
-							dispatch(loadConfiguration());
+							// Rechargement silencieux, sous le loader du bouton : `cb`
+							// n'est appelé qu'une fois la configuration arrivée.
+							reloading = true;
+							dispatch(loadConfiguration(cb, true));
 						}
 					} else {
 						console.warn('[discoverDevices] unexpected response', response);
@@ -162,7 +169,7 @@ export const discoverDevices =
 				} catch (e) {
 					console.warn('[discoverDevices] failed to handle response', e);
 				} finally {
-					cb?.();
+					if (!reloading) cb?.();
 				}
 			}
 		);

@@ -116,10 +116,15 @@ export const loadPlan =
 		}
 	};
 
+// `silent` : pas de loader global, quand l'écran affiche déjà le sien.
 export const loadConfiguration =
-	(onDone?: () => void): ThunkAction<void, RootState, unknown, AnyAction> =>
+	(
+		onDone?: () => void,
+		silent = false
+	): ThunkAction<void, RootState, unknown, AnyAction> =>
 	async dispatch => {
-		socketService.emit(
+		(silent ? socketService.emitSilent : socketService.emit).call(
+			socketService,
 			'front/box/fetch/configuration',
 			{},
 			(response: any) => {

@@ -1,5 +1,6 @@
 import { io, Socket } from 'socket.io-client';
 import { initSSL } from './SSLConfig';
+import { pendingRequests } from './pendingRequests';
 
 export type SocketEventCallback = (...args: unknown[]) => void;
 
@@ -49,8 +50,27 @@ class SocketService {
 
 	/**
 	 * Emit an event to the server.
+	 * A trailing ack callback marks a request awaiting the box's response: it is
+	 * tracked by `pendingRequests` so the global loader shows until it answers.
 	 */
 	emit(event: string, ...args: unknown[]): void {
+		if (!this.socket) return;
+		const last = args[args.length - 1];
+		if (typeof last === 'function') {
+			args[args.length - 1] = pendingRequests.track(
+				event,
+				last as (...a: unknown[]) => unknown
+			);
+		}
+		this.socket.emit(event, ...args);
+	}
+
+	/**
+	 * Same as `emit`, without the global loader: for background refreshes of
+	 * data already on screen, or requests whose screen shows its own loader
+	 * (e.g. a busy button).
+	 */
+	emitSilent(event: string, ...args: unknown[]): void {
 		this.socket?.emit(event, ...args);
 	}
 

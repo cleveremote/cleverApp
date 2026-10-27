@@ -20,9 +20,10 @@ export const updateModbusTask =
 
 // The box's modbusTasks (config.modbusTasks). Kept as a flat list from which a
 // slave hydrates its `comRequests` on first open (linked by `deviceId`).
+// Background refresh (the list is already on screen): no global loader.
 export const loadModbusTasks =
 	(): ThunkAction<void, RootState, unknown, AnyAction> => async dispatch => {
-		socketService.emit(
+		socketService.emitSilent(
 			'front/box/fetch/configuration',
 			{},
 			(response: any) => {

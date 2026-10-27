@@ -5,6 +5,7 @@ import {activateKeepAwake, deactivateKeepAwake} from '@sayem314/react-native-kee
 import Routes from './src/app/routes';
 import {store} from './src/module/process/infrasctructure/store/store';
 import {SplashScreen} from './src/app/screens/splash/SplashScreen';
+import {GlobalLoader} from './src/app/components/common/GlobalLoader';
 
 LogBox.ignoreLogs(['Warning: ...', 'VirtualizedLists should never be nested']); // Ignore log notification by message
 LogBox.ignoreAllLogs();
@@ -42,6 +43,7 @@ export default function App() {
 			) : (
 				<Routes />
 			)}
+			<GlobalLoader />
 		</Provider>
 	);
 }
