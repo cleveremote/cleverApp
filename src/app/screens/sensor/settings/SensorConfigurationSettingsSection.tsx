@@ -34,7 +34,13 @@ export function SensorConfigurationSettingsSection(props: any) {
 	const [selectedDeviceId, setSelectedDeviceId] = React.useState(
 		source?.deviceId
 	);
-	const defaultValues = {...source};
+	// Un sensor déjà rattaché à un parent est un enfant : le toggle est forcé
+	// (isChild n'est pas toujours renvoyé par le backend) et verrouillé.
+	const isLockedChild = source?.parentId != null;
+	const defaultValues = {
+		...source,
+		isChild: !!source?.isChild || isLockedChild
+	};
 	const {
 		control,
 		handleSubmit,
@@ -57,6 +63,17 @@ export function SensorConfigurationSettingsSection(props: any) {
 	const cronRequired = isForcast || (watchedType === 'COM' && !watchedIsChild);
 
 	useValidateOnOpen(props.route, trigger);
+
+	// Le caractère obligatoire du cronPattern dépend du type et du toggle
+	// enfant : on revalide le champ quand ils changent (pas au montage).
+	const cronRulesMounted = React.useRef(false);
+	useEffect(() => {
+		if (!cronRulesMounted.current) {
+			cronRulesMounted.current = true;
+			return;
+		}
+		trigger('config.cronPattern');
+	}, [cronRequired]);
 
 	useEmbeddedSection({
 		embedded,
@@ -193,6 +210,7 @@ export function SensorConfigurationSettingsSection(props: any) {
 								errors={errors}
 								name="isChild"
 								placeholder="Is child"
+								disabled={isLockedChild}
 								onChangeText={value => {
 									if (!value) {
 										setValue('parentId', null);

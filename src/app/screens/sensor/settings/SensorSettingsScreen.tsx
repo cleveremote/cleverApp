@@ -58,7 +58,7 @@ function SensorSettingsScreen(props: any) {
 			// cronPattern obligatoire pour un FORCAST ou un COM non enfant.
 			const cronRequired =
 				s?.type === 'FORCAST' ||
-				(s?.type === 'COM' && !s?.isChild);
+				(s?.type === 'COM' && !s?.isChild && s?.parentId == null);
 			return {
 				general: isEmpty(s?.name) || isEmpty(s?.style),
 				configuration:

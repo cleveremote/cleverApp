@@ -123,7 +123,7 @@ export function SensorGeneralSettingsSection(props: any) {
 					control={control}
 					errors={errors}
 					name="name"
-					maxLength={25}
+					maxLength={250}
 					placeholder="Name*"
 					rules={{required: 'Name is required'}}
 					onChangeText={value => {

@@ -1,5 +1,5 @@
 import React, {useState} from 'react';
-import {Text, TouchableOpacity, View} from 'react-native';
+import {Pressable, Text, TouchableOpacity, View} from 'react-native';
 import Animated, {FadeInDown} from 'react-native-reanimated';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import Icon from 'react-native-vector-icons/FontAwesome5';
@@ -11,18 +11,32 @@ export function SensorStack({
 	cycleData: sensorData,
 	navigation,
 	closeSibillings,
-	current
+	current,
+	isParent = false,
+	isExpanded = true,
+	onToggleExpand
 }: Readonly<{
 	cycleData: any;
 	navigation: navigationCycleType;
 	closeSibillings: Function;
 	current: string | undefined;
+	isParent?: boolean;
+	isExpanded?: boolean;
+	onToggleExpand?: () => void;
 }>) {
 	const fontColor = sensorData.style.fontColor;
 	const bgColor = sensorData.style.bgColor;
 	return (
 		<View>
-			<View
+			<Pressable
+				disabled={!isParent}
+				onPress={() => {
+					ReactNativeHapticFeedback.trigger(
+						'impactLight',
+						hapticOptions
+					);
+					onToggleExpand?.();
+				}}
 				style={{
 					alignSelf: 'stretch',
 					backgroundColor: bgColor,
@@ -64,9 +78,17 @@ export function SensorStack({
 							{sensorData.name}
 						</Text>
 					</View>
-					<SensorValue cycleData={sensorData} />
+					{isParent ? (
+						<Icon
+							size={20}
+							name={isExpanded ? 'angle-down' : 'angle-right'}
+							color={fontColor}
+						/>
+					) : (
+						<SensorValue cycleData={sensorData} />
+					)}
 				</View>
-			</View>
+			</Pressable>
 
 			<View style={{marginTop: -37, width: 60, marginLeft: 8, zIndex: 1}}>
 				<MenuSensor

@@ -509,6 +509,7 @@ export function SwitchForm({
 						</Text>
 						<AppSwitch
 							value={value}
+							disabled={disabled}
 							onValueChange={checked => {
 								onChangeText(checked);
 								onChange(checked);
