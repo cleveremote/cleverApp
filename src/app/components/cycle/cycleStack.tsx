@@ -1,14 +1,14 @@
-import React, {useState} from 'react';
-import {Alert, TouchableOpacity, View} from 'react-native';
-import {Text} from 'react-native';
-import Animated, {FadeInDown} from 'react-native-reanimated';
+import React, { useState } from 'react';
+import { Alert, TouchableOpacity, View } from 'react-native';
+import { Text } from 'react-native';
+import Animated, { FadeInDown } from 'react-native-reanimated';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import Icon from 'react-native-vector-icons/FontAwesome5';
-import {OrientationType} from 'react-native-orientation-locker';
-import {hapticOptions, navigationCycleType} from '../../data/cycleTypes';
+import { OrientationType } from 'react-native-orientation-locker';
+import { hapticOptions, navigationCycleType } from '../../data/cycleTypes';
 import SequenceStack from './sequenceStack';
-import {ModalOverrideDuration} from '../common/modalOverrideDuration';
-import {connect} from 'react-redux';
+import { ModalOverrideDuration } from '../common/modalOverrideDuration';
+import { connect } from 'react-redux';
 import SensorStatus from './CycleStatus';
 import SeqeuncesList from './SequencesList';
 
@@ -46,7 +46,7 @@ export function CycleStack({
 					borderRadius: 12,
 					elevation: 3,
 					shadowColor: '#000',
-					shadowOffset: {width: 0, height: 1},
+					shadowOffset: { width: 0, height: 1 },
 					shadowOpacity: 0.22,
 					shadowRadius: 2.22,
 					height: 45,
@@ -62,7 +62,7 @@ export function CycleStack({
 						flex: 1,
 						marginHorizontal: 8
 					}}>
-					<View style={{flex: 2}}>
+					<View style={{ flex: 2 }}>
 						<Text
 							style={{
 								fontWeight: 'bold',
@@ -86,7 +86,7 @@ export function CycleStack({
 				</View>
 			</View>
 
-			<View style={{marginTop: -37, width: 60, marginLeft: 8}}>
+			<View style={{ marginTop: -37, width: 60, marginLeft: 8 }}>
 				<MenuCycle
 					navigation={navigation}
 					cycleData={cycleData}
@@ -150,10 +150,23 @@ export function MenuCycle({
 				closeSibillings(false);
 				navigation.navigate('Settings', {
 					screen: 'CycleSettingsMenu',
-					params: {...cycleData, isGroup}
+					params: { ...cycleData, isGroup }
 				});
 			}
 		},
+		...(isGroup
+			? []
+			: [
+				{
+					name: 'stopwatch',
+					label: 'Override',
+					action: () => {
+						onToggle();
+						onPress();
+						closeSibillings(false);
+					}
+				}
+			]),
 		{
 			name: 'history',
 			label: 'Schedules',
@@ -164,20 +177,14 @@ export function MenuCycle({
 				);
 				navigation.navigate('SchedulesStack', {
 					screen: 'Schedules',
-					params: {cycle: cycleData}
+					params: { cycle: cycleData }
 				});
 				onToggle();
-			},
-			onLongPress: () => {
-				ReactNativeHapticFeedback.trigger(
-					'impactMedium',
-					hapticOptions
-				);
-				onToggle();
-				onPress();
-				closeSibillings(false);
 			}
 		},
+		// Override duration is only offered for classic and MODULE cycles,
+		// not for fertigation groups.
+
 		{
 			name: 'bullseye',
 			label: 'Triggers',
@@ -189,7 +196,7 @@ export function MenuCycle({
 				closeSibillings(false);
 				navigation.navigate('TriggersStack', {
 					screen: 'Triggers',
-					params: {cycle: cycleData}
+					params: { cycle: cycleData }
 				});
 			}
 		},
@@ -202,7 +209,7 @@ export function MenuCycle({
 					hapticOptions
 				);
 				closeSibillings(false);
-				navigation.navigate('EventsScreen', {cycle: cycleData});
+				navigation.navigate('EventsScreen', { cycle: cycleData });
 			}
 		}
 	];
@@ -254,8 +261,7 @@ export function MenuCycle({
 										alignItems: 'center',
 										gap: 8
 									}}
-									onPress={item.action}
-									onLongPress={item.onLongPress}>
+									onPress={item.action}>
 									<Icon
 										name={item.name}
 										size={25}
