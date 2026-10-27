@@ -1,5 +1,5 @@
 import React, {useEffect, useRef} from 'react';
-import {ScrollView, View} from 'react-native';
+import {View} from 'react-native';
 import {navigationHeader} from '../../../../components/common/navigationHeaders';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import {hapticOptions} from '../../../../data/cycleTypes';
@@ -11,6 +11,7 @@ import {updateSequence} from '../../../../../module/process/infrasctructure/stor
 import {useForm} from 'react-hook-form';
 import {InputForm} from '../../../../components/common/FormComponents';
 import {CollapsibleSection} from '../../../../components/common/CollapsibleSection';
+import {KeyboardAwareScrollView} from '../../../../components/common/KeyboardAwareScrollView';
 import {emptyTimingConfig} from '../../../../../module/process/infrasctructure/store/models/sequenceModule';
 
 // The four timing fields making up a `ModuleTimingConfig`, in display order.
@@ -100,7 +101,7 @@ export function SequenceActuatorConfigSection(props: any) {
 	}, [props.moduleConfigs]);
 
 	return (
-		<ScrollView automaticallyAdjustKeyboardInsets={true}>
+		<KeyboardAwareScrollView>
 			<View style={BoxFormStyle.boxForm}>
 				<CollapsibleSection
 					title="Timing Config"
@@ -135,7 +136,7 @@ export function SequenceActuatorConfigSection(props: any) {
 					</CollapsibleSection>
 				)}
 			</View>
-		</ScrollView>
+		</KeyboardAwareScrollView>
 	);
 }
 

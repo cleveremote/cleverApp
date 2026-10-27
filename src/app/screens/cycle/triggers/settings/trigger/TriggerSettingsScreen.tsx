@@ -1,5 +1,6 @@
 import React, {useEffect, useRef} from 'react';
-import {ScrollView, StyleSheet, View} from 'react-native';
+import {StyleSheet, View} from 'react-native';
+import {KeyboardAwareScrollView} from '../../../../../components/common/KeyboardAwareScrollView';
 import {connect} from 'react-redux';
 import {
 	DeleteItemMenu,
@@ -71,10 +72,9 @@ export function TriggerSettingsScreen(props: any) {
 	});
 
 	return (
-		<ScrollView
+		<KeyboardAwareScrollView
 			style={styles.scroll}
-			contentContainerStyle={styles.scrollContent}
-			keyboardShouldPersistTaps="handled">
+			contentContainerStyle={styles.scrollContent}>
 			<MenuGroup style={styles.card}>
 				<MenuAccordion
 					key={21}
@@ -124,7 +124,7 @@ export function TriggerSettingsScreen(props: any) {
 				</MenuAccordion>
 				<DeleteItemMenu key={61} OnConfirm={_deleteItem} />
 			</MenuGroup>
-		</ScrollView>
+		</KeyboardAwareScrollView>
 	);
 }
 

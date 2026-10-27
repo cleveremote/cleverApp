@@ -33,10 +33,12 @@ const MOCK_ACTUATORS = [
 // (same level as `cycles`, `sensors`). Each entry follows `ActuatorModel`:
 // `{ id, name, description, type, config }` where `type` is 'RPI' | 'COM' |
 // 'CTRL' and `config` carries the matching Rpi/Com/Ctrl shape.
+// Re-run on every focus: global loader only while the list is still empty.
 export const loadActuators =
 	(): ThunkAction<void, RootState, unknown, AnyAction> =>
 	async (dispatch, getState) => {
-		socketService.emit(
+		socketService.emitRefresh(
+			!!getState().root_actuator.actuators?.length,
 			'front/box/fetch/configuration',
 			{},
 			(response: any) => {

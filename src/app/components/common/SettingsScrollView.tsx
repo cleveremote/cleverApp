@@ -1,16 +1,17 @@
 import React from 'react';
-import {ScrollView, StyleSheet} from 'react-native';
+import {StyleSheet} from 'react-native';
+import {KeyboardAwareScrollView} from './KeyboardAwareScrollView';
 
 // Conteneur scrollable pour les écrans de réglages à sections : permet de faire
-// défiler quand plusieurs accordéons (sections embarquées) sont dépliés.
+// défiler quand plusieurs accordéons (sections embarquées) sont dépliés, et
+// garder le champ focus (et son erreur) au-dessus du clavier.
 export function SettingsScrollView({children}: {children: React.ReactNode}) {
 	return (
-		<ScrollView
+		<KeyboardAwareScrollView
 			style={styles.scroll}
-			contentContainerStyle={styles.content}
-			keyboardShouldPersistTaps="handled">
+			contentContainerStyle={styles.content}>
 			{children}
-		</ScrollView>
+		</KeyboardAwareScrollView>
 	);
 }
 

@@ -4,7 +4,6 @@ import {
 	Alert,
 	Linking,
 	Pressable,
-	ScrollView,
 	StyleSheet,
 	Text,
 	View
@@ -16,6 +15,7 @@ import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {faSyncAlt} from '@fortawesome/free-solid-svg-icons';
 import {navigationHeader} from '../../components/common/navigationHeaders';
 import {InputForm} from '../../components/common/FormComponents';
+import {KeyboardAwareScrollView} from '../../components/common/KeyboardAwareScrollView';
 import {BoxFormStyle} from '../../styles/components/common/boxForm';
 import {hapticOptions} from '../../data/cycleTypes';
 import {
@@ -192,7 +192,7 @@ export function GlobalSettingsScreen(props: any) {
 	}, [isDirty]);
 
 	return (
-		<ScrollView automaticallyAdjustKeyboardInsets={true}>
+		<KeyboardAwareScrollView>
 			<View style={styles.header}>
 				<Text style={styles.headerLabel}>Local coordinates</Text>
 				{permissionStatus === 'denied' ? null : (
@@ -269,7 +269,7 @@ export function GlobalSettingsScreen(props: any) {
 					<Text style={styles.value}>{settings.version}</Text>
 				</View>
 			) : null}
-		</ScrollView>
+		</KeyboardAwareScrollView>
 	);
 }
 

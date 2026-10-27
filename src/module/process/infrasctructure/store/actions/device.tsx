@@ -39,11 +39,12 @@ export const stageDevice =
 		});
 	};
 
-// Background refresh (re-run on every focus, the list is already on screen):
-// no global loader.
+// Re-run on every focus: global loader only while the list is still empty.
 export const loadDevices =
-	(): ThunkAction<void, RootState, unknown, AnyAction> => async dispatch => {
-		socketService.emitSilent(
+	(): ThunkAction<void, RootState, unknown, AnyAction> =>
+	async (dispatch, getState) => {
+		socketService.emitRefresh(
+			!!getState().root_device.devices?.length,
 			'front/box/fetch/configuration',
 			{},
 			(response: any) => {

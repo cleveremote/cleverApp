@@ -75,6 +75,18 @@ class SocketService {
 	}
 
 	/**
+	 * Reload of a list: global loader only while the list is still empty (first
+	 * entry on a screen); a refresh of data already on screen stays silent.
+	 */
+	emitRefresh(hasData: boolean, event: string, ...args: unknown[]): void {
+		if (hasData) {
+			this.emitSilent(event, ...args);
+		} else {
+			this.emit(event, ...args);
+		}
+	}
+
+	/**
 	 * Listen for an event from the server.
 	 */
 	on(event: string, callback: SocketEventCallback): void {
