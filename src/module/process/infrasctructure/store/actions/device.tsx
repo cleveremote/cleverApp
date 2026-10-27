@@ -45,9 +45,15 @@ export const loadDevices =
 			'front/box/fetch/configuration',
 			{},
 			(response: any) => {
+				const devices = JSON.parse(response.config).devices;
+				// TEMP diagnostic: which reload blanks the masters list.
+				console.log(
+					'[devices] loadDevices',
+					(devices || []).filter((d: any) => d.type === 'MASTER').length
+				);
 				dispatch({
 					type: ROOT_DEVICES_LOAD,
-					payload: normalizeIds(JSON.parse(response.config).devices)
+					payload: normalizeIds(devices)
 				});
 			}
 		);
@@ -84,7 +90,19 @@ export const saveDeviceTree =
 			'front/box/sync/device',
 			denormalizeIds(tree),
 			(response: any) => {
+				// A deleted slave: skip the sync response's snapshot and leave only
+				// once the full configuration reload has landed, so the lists are
+				// replaced a single time with the final state (no flicker).
+				if ((tree?.slaveDevices || []).some((s: any) => !!s.delete)) {
+					dispatch(loadConfiguration(onSuccess));
+					return;
+				}
 				const config = JSON.parse(response.config);
+				// TEMP diagnostic: which reload blanks the masters list.
+				console.log(
+					'[devices] saveDeviceTree',
+					(config.devices || []).filter((d: any) => d.type === 'MASTER').length
+				);
 				dispatch({
 					type: ROOT_DEVICES_LOAD,
 					payload: normalizeIds(config.devices)
@@ -93,9 +111,6 @@ export const saveDeviceTree =
 					type: MODBUS_TASKS_LOAD,
 					payload: normalizeIds(config.modbusTasks)
 				});
-				if ((tree?.slaveDevices || []).some((s: any) => !!s.delete)) {
-					dispatch(loadConfiguration());
-				}
 				onSuccess?.();
 			}
 		);

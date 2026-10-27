@@ -117,7 +117,8 @@ export const loadPlan =
 	};
 
 export const loadConfiguration =
-	(): ThunkAction<void, RootState, unknown, AnyAction> => async dispatch => {
+	(onDone?: () => void): ThunkAction<void, RootState, unknown, AnyAction> =>
+	async dispatch => {
 		socketService.emit(
 			'front/box/fetch/configuration',
 			{},
@@ -151,6 +152,11 @@ export const loadConfiguration =
 					payload: config.modbusTasks
 				});
 
+				// TEMP diagnostic: which reload blanks the masters list.
+				console.log(
+					'[devices] loadConfiguration',
+					(config.devices || []).filter((d: any) => d.type === 'MASTER').length
+				);
 				dispatch({
 					type: ROOT_DEVICES_LOAD,
 					payload: config.devices
@@ -169,6 +175,8 @@ export const loadConfiguration =
 					payload: statusFromConfiguration(config.cycles),
 					replace: true
 				});
+
+				onDone?.();
 			}
 		);
 	};

@@ -18,6 +18,8 @@ const initialState = {
 export default (state = initialState, action: any) => {
 	switch (action.type) {
 		case ROOT_DEVICES_LOAD: {
+			// A malformed answer (no `devices` array) must not blank the list.
+			if (!Array.isArray(action.payload)) return state;
 			return {
 				...state,
 				devices: loadDevices(action.payload)
