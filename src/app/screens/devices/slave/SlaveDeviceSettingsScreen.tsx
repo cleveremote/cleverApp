@@ -1,7 +1,7 @@
 import React from 'react';
 import {StyleSheet, View} from 'react-native';
 import {connect} from 'react-redux';
-import {faExchangeAlt, faGear} from '@fortawesome/free-solid-svg-icons';
+import {faGear, faMicrochip} from '@fortawesome/free-solid-svg-icons';
 import {
 	DeleteItemMenu,
 	MenuAccordion,
@@ -16,7 +16,7 @@ import {
 import {useDeviceEntity} from '../useDeviceEntity';
 import {isEmpty} from '../../../components/common/useSectionSettingsHeader';
 import SlaveGeneralSettingsSection from './SlaveGeneralSettingsSection';
-import ComRequestsSection from './ComRequestsSection';
+import SlaveModelSection from './SlaveModelSection';
 
 export function SlaveDeviceSettingsScreen(props: any) {
 	const {deviceRef, deleteItem, invalidSections, ready} = useDeviceEntity(
@@ -48,16 +48,10 @@ export function SlaveDeviceSettingsScreen(props: any) {
 				</MenuAccordion>
 				<MenuAccordion
 					key={3}
-					name={'COM Requests'}
-					icon={faExchangeAlt}
+					name={'Model'}
+					icon={faMicrochip}
 					onPress={() => {}}>
-					{ready && (
-						<ComRequestsSection
-							embedded
-							slaveId={deviceRef.current.id}
-							navigation={props.navigation}
-						/>
-					)}
+					{ready && <SlaveModelSection device={deviceRef.current} />}
 				</MenuAccordion>
 				<DeleteItemMenu key={4} OnConfirm={deleteItem} />
 			</MenuGroup>

@@ -12,7 +12,8 @@ import {
 	MODBUS_CONNECTIONS_LOAD,
 	MODBUS_TASKS_LOAD,
 	ROOT_DEVICES_LOAD,
-	GROUPS_LOAD
+	GROUPS_LOAD,
+	DEVICE_MODELS_LOAD
 } from './types';
 import {ThunkAction} from 'redux-thunk';
 import {AnyAction} from 'redux';
@@ -168,6 +169,11 @@ export const loadConfiguration =
 				dispatch({
 					type: ROOT_DEVICES_LOAD,
 					payload: config.devices
+				});
+
+				dispatch({
+					type: DEVICE_MODELS_LOAD,
+					payload: config.models
 				});
 
 				dispatch({
