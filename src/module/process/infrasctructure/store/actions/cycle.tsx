@@ -73,14 +73,19 @@ export const updateCycle =
 		onSuccess?.();
 	};
 
+// Global loader only while no status is loaded yet.
 export const loadValues =
 	(
 		type: string,
 		query?: any
 	): ThunkAction<void, RootState, unknown, AnyAction> =>
-	async dispatch => {
+	async (dispatch, getState) => {
 		//dispatch({ type: CYCLE_EXECUTE, payload: true });
-		socketService.emit(
+		const state = getState() as any;
+		socketService.emitRefresh(
+			type === 'DATA'
+				? !!state.root_cycle.data?.length
+				: !!state.root_cycle.status?.length,
 			'front/box/fetch/status',
 			denormalizeIds({type, query}),
 			(response: any) => {
@@ -123,9 +128,12 @@ export const loadEvents =
 		);
 	};
 
+// Re-run on every focus: global loader only while the list is still empty.
 export const loadCycles =
-	(): ThunkAction<void, RootState, unknown, AnyAction> => async dispatch => {
-		socketService.emit(
+	(): ThunkAction<void, RootState, unknown, AnyAction> =>
+	async (dispatch, getState) => {
+		socketService.emitRefresh(
+			!!(getState() as any).root_cycle.cycles?.length,
 			'front/box/fetch/configuration',
 			{},
 			(response: any) => {
@@ -162,9 +170,12 @@ export const loadCycle =
 		});
 	};
 
+// Re-run on every focus: global loader only while the list is still empty.
 export const loadGroups =
-	(): ThunkAction<void, RootState, unknown, AnyAction> => async dispatch => {
-		socketService.emit(
+	(): ThunkAction<void, RootState, unknown, AnyAction> =>
+	async (dispatch, getState) => {
+		socketService.emitRefresh(
+			!!(getState() as any).root_cycle.cycles?.length,
 			'front/box/fetch/configuration',
 			{},
 			(response: any) => {

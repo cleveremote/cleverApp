@@ -46,6 +46,8 @@ class SocketService {
 			auth: { token },
 			...(extraHeaders ? { extraHeaders } : {})
 		});
+		// Coupure réseau ou côté box : les acks en attente sont perdus.
+		this.socket.on('disconnect', () => pendingRequests.releaseAll());
 	}
 
 	/**
@@ -111,6 +113,7 @@ class SocketService {
 		if (this.socket?.connected) {
 			this.socket.disconnect();
 		}
+		pendingRequests.releaseAll();
 	}
 
 	/**
@@ -122,6 +125,7 @@ class SocketService {
 			this.socket.disconnect();
 			this.socket = null;
 		}
+		pendingRequests.releaseAll();
 	}
 
 	/**
@@ -139,6 +143,7 @@ class SocketService {
 	reconnect(): void {
 		if (this.socket) {
 			this.socket.disconnect();
+			pendingRequests.releaseAll();
 			this.socket.connect();
 		}
 	}

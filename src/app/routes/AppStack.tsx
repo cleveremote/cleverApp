@@ -71,7 +71,8 @@ export function AppStack(props: any) {
 		if (props.isServerConnected && props.isBoxConnected) {
 			props.listenerEvents();
 			props.loadValues('PROCESS');
-			props.loadConfiguration();
+			// Reconnexion avec des données déjà à l'écran : pas de loader global.
+			props.loadConfiguration(undefined, props.hasConfiguration);
 			props.loadPlan();
 		}
 	}, [props.isServerConnected, props.isBoxConnected]);
@@ -103,7 +104,9 @@ export function AppStack(props: any) {
 							clearTimeout(reconnectTimer);
 							reconnectTimer = null;
 						}
-						props.loadConfiguration();
+						// Retour au premier plan : les données sont déjà à
+						// l'écran, on les rafraîchit sans loader global.
+						props.loadConfiguration(undefined, true);
 						props.loadPlan();
 						props.loadValues('PROCESS');
 					}
@@ -207,7 +210,10 @@ export function AppStack(props: any) {
 const mapStateToProps = (state: any) => ({
 	isConnected: state.status.isConnected,
 	isBoxConnected: state.status.isBoxConnected,
-	isServerConnected: state.status.isServerConnected
+	isServerConnected: state.status.isServerConnected,
+	hasConfiguration: !!(
+		state.root_cycle.cycles?.length || state.root_device.devices?.length
+	)
 });
 
 export default connect(mapStateToProps, {

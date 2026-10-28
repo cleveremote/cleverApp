@@ -21,6 +21,8 @@ const SILENT_EVENTS = new Set([
 
 let pending = 0;
 const listeners = new Set<Listener>();
+// `release` de chaque requête en vol, pour pouvoir toutes les libérer d'un coup.
+const inFlight = new Set<() => void>();
 
 const notify = () => listeners.forEach(listener => listener());
 
@@ -34,6 +36,16 @@ export const pendingRequests = {
 		return () => {
 			listeners.delete(listener);
 		};
+	},
+
+	/**
+	 * Libère toutes les requêtes en vol : à la coupure du socket, leurs acks ne
+	 * reviendront jamais (socket.io les abandonne), et le loader resterait
+	 * affiché jusqu'au timeout. Un ack qui arriverait quand même plus tard
+	 * s'exécute normalement, sans redécompter.
+	 */
+	releaseAll(): void {
+		[...inFlight].forEach(release => release());
 	},
 
 	/**
@@ -52,11 +64,13 @@ export const pendingRequests = {
 			if (done) return;
 			done = true;
 			clearTimeout(timer);
+			inFlight.delete(release);
 			pending = Math.max(0, pending - 1);
 			notify();
 		};
 		const timer = setTimeout(release, REQUEST_TIMEOUT_MS);
 
+		inFlight.add(release);
 		pending += 1;
 		notify();
 

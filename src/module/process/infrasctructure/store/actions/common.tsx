@@ -92,12 +92,15 @@ export const listenerEvents =
 //     });
 // };
 
+// Global loader only while no plan is loaded yet.
 export const loadPlan =
-	(): ThunkAction<void, RootState, unknown, AnyAction> => async dispatch => {
+	(): ThunkAction<void, RootState, unknown, AnyAction> =>
+	async (dispatch, getState) => {
 		await AsyncStorage.setItem('test_plan', ``);
 		const plan = await AsyncStorage.getItem('test_plan');
 		if (!plan) {
-			socketService.emit(
+			socketService.emitRefresh(
+				!!(getState() as any).root_cycle.plan,
 				'front/box/fetch/configuration',
 				{plan: 123},
 				async (response: any) => {
