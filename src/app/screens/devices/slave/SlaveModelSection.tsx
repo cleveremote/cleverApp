@@ -2,6 +2,7 @@ import React from 'react';
 import {Pressable, StyleSheet, Text, View} from 'react-native';
 import {connect} from 'react-redux';
 import Icon from 'react-native-vector-icons/FontAwesome5';
+import CommandExecuteForm from './CommandExecuteForm';
 
 // Modèle du slave (`config.modelId`) dans `config.models`.
 export const findModel = (models: any[], device: any) =>
@@ -43,6 +44,11 @@ const resultFields = (command: any): any[] =>
 
 const textColor = '#32404e';
 const mutedColor = '#8a96a3';
+const COLORS = {
+	cardBackground: 'white',
+	border: '#e5e7eb',
+	chip: '#eef1f4'
+};
 
 function Row({
 	icon,
@@ -72,7 +78,10 @@ function Chip({text}: Readonly<{text: string}>) {
 	);
 }
 
-function CommandCard({command}: Readonly<{command: any}>) {
+function CommandCard({
+	command,
+	deviceId
+}: Readonly<{command: any; deviceId: string}>) {
 	const [open, setOpen] = React.useState(false);
 	const params = command.params ?? {};
 	const fields = resultFields(command);
@@ -159,14 +168,15 @@ function CommandCard({command}: Readonly<{command: any}>) {
 							.filter(Boolean)
 							.join(' / ')}
 					</Text>
+					<CommandExecuteForm command={command} deviceId={deviceId} />
 				</View>
 			) : null}
 		</View>
 	);
 }
 
-// Modèle d'un slave (lecture seule) : identité de l'appareil puis la liste de
-// ses device commands, dépliables pour voir leurs paramètres.
+// Modèle d'un slave : identité de l'appareil puis la liste de ses device
+// commands, dépliables pour voir leurs paramètres et les exécuter en test.
 export function SlaveModelSection(props: any) {
 	const model = findModel(props.models, props.device);
 
@@ -215,7 +225,11 @@ export function SlaveModelSection(props: any) {
 				<Text style={styles.empty}>No command for this model.</Text>
 			) : (
 				commands.map((c: any) => (
-					<CommandCard key={c.id ?? c.name} command={c} />
+					<CommandCard
+						key={c.id ?? c.name}
+						command={c}
+						deviceId={props.device?.id}
+					/>
 				))
 			)}
 		</View>
@@ -227,7 +241,7 @@ const styles = StyleSheet.create({
 	// marge, juste un peu de padding.
 	embeddedCard: {
 		alignSelf: 'stretch',
-		backgroundColor: 'white',
+		backgroundColor: COLORS.cardBackground,
 		paddingHorizontal: 16,
 		paddingTop: 8,
 		paddingBottom: 16
@@ -245,11 +259,11 @@ const styles = StyleSheet.create({
 		marginBottom: 4,
 		paddingTop: 10,
 		borderTopWidth: 1,
-		borderTopColor: '#e5e7eb'
+		borderTopColor: COLORS.border
 	},
 	command: {
 		borderWidth: 1,
-		borderColor: '#e5e7eb',
+		borderColor: COLORS.border,
 		borderRadius: 10,
 		marginTop: 8
 	},
@@ -262,7 +276,7 @@ const styles = StyleSheet.create({
 	commandBody: {paddingHorizontal: 10, paddingBottom: 10},
 	chips: {flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginTop: 4},
 	chip: {
-		backgroundColor: '#eef1f4',
+		backgroundColor: COLORS.chip,
 		borderRadius: 8,
 		paddingHorizontal: 6,
 		paddingVertical: 2

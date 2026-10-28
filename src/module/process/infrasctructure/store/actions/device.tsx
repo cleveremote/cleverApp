@@ -175,3 +175,31 @@ export const discoverDevices =
 			}
 		);
 	};
+
+// Exécute une device command du modèle d'un slave, hors cycle, pour la tester.
+// `params` porte les valeurs saisies dans le formulaire (channel, value,
+// range…), indexées comme dans la définition de la commande (à partir de 0).
+// Pas de loader global : le formulaire affiche le sien. `cb` reçoit la réponse
+// brute de la box (JSON parsé si c'est une chaîne).
+export const executeDeviceCommand =
+	(
+		payload: {deviceId: string; commandId: string; params: Record<string, any>},
+		cb: (response: any) => void
+	): ThunkAction<void, RootState, unknown, AnyAction> =>
+	async () => {
+		socketService.emitSilent(
+			'front/box/execute/device-command',
+			denormalizeIds(payload),
+			(response: any) => {
+				let parsed = response;
+				if (typeof response === 'string') {
+					try {
+						parsed = JSON.parse(response);
+					} catch {
+						parsed = response;
+					}
+				}
+				cb(normalizeIds(parsed));
+			}
+		);
+	};
