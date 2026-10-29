@@ -6,6 +6,12 @@ import Icon from 'react-native-vector-icons/FontAwesome5';
 
 import {hapticOptions, navigationCycleType} from '../../data/cycleTypes';
 import SensorValue from './SensorValue';
+import {
+	DeviceDisconnectedIcon,
+	ExecutableConnectivityDot,
+	WARNING_BORDER,
+	useUnreachableDevices
+} from '../device/DeviceConnectivity';
 
 export function SensorStack({
 	cycleData: sensorData,
@@ -26,11 +32,24 @@ export function SensorStack({
 }>) {
 	const fontColor = sensorData.style.fontColor;
 	const bgColor = sensorData.style.bgColor;
+	const disconnected = !!useUnreachableDevices(sensorData, 'SENSOR').length;
+	const waiting = sensorData.status === 'WAITTING_CONFIRMATION';
+	// Déconnecté : un tap n'importe où sur la carte (hors menu) ouvre le
+	// détail, à la place du dépliage d'un parent.
+	const [detailsOpen, setDetailsOpen] = useState(false);
 	return (
 		<View>
 			<Pressable
-				disabled={!isParent}
+				disabled={!isParent && !disconnected}
 				onPress={() => {
+					if (disconnected) {
+						ReactNativeHapticFeedback.trigger(
+							'impactMedium',
+							hapticOptions
+						);
+						setDetailsOpen(true);
+						return;
+					}
 					ReactNativeHapticFeedback.trigger(
 						'impactLight',
 						hapticOptions
@@ -45,12 +64,13 @@ export function SensorStack({
 					marginHorizontal: 4,
 					marginTop: 4,
 					flex: 1,
-					borderColor:
-						sensorData.status === 'WAITTING_CONFIRMATION'
-							? '#fc8181'
-							: 'black',
-					borderWidth:
-						sensorData.status === 'WAITTING_CONFIRMATION' ? 2 : 0,
+					// Une attente de confirmation prime sur le contour « déconnecté ».
+					borderColor: waiting
+						? '#fc8181'
+						: disconnected
+						? WARNING_BORDER
+						: 'black',
+					borderWidth: waiting || disconnected ? 2 : 0,
 					elevation: 3,
 					shadowColor: '#000',
 					shadowOffset: {width: 0, height: 1},
@@ -65,13 +85,33 @@ export function SensorStack({
 						flex: 1,
 						marginHorizontal: 8
 					}}>
-					<View style={{flex: 2}}>
+					<View
+						style={{
+							flex: 2,
+							flexDirection: 'row',
+							alignItems: 'center',
+							marginLeft: 40,
+							gap: 6
+						}}>
+						{/* Juste après l'icône menu, comme sur une carte de cycle. */}
+						<DeviceDisconnectedIcon
+							item={sensorData}
+							kind="SENSOR"
+							navigation={navigation}
+							open={detailsOpen}
+							onOpenChange={setDetailsOpen}
+						/>
+						<ExecutableConnectivityDot
+							item={sensorData}
+							kind="SENSOR"
+						/>
+
 						<Text
 							style={{
+								flexShrink: 1,
 								fontWeight: 'bold',
 								color: fontColor,
-								fontSize: 15,
-								marginLeft: 40
+								fontSize: 15
 							}}
 							numberOfLines={1}
 							ellipsizeMode="middle">

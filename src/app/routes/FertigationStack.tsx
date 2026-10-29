@@ -10,6 +10,7 @@ import {SettingsScreen} from '../screens/settings/settings';
 import {CycleSettingStack} from './CycleSettingsStack';
 import {TriggersStack} from './TriggersStack';
 import {SchedulesStack} from './SchedulesStack';
+import {MasterDeviceSettingsStack} from './MasterDeviceSettingsStack';
 
 export function FertigationStack() {
 	const options = (title: string) =>
@@ -27,6 +28,13 @@ export function FertigationStack() {
 				name="Cycles"
 				component={GroupsScreen}
 				options={options('Fertigation')}
+			/>
+			{/* Ouvert depuis l'icône « déconnecté » d'une carte : le retour
+			    ramène ici plutôt que dans l'onglet Settings. */}
+			<Stack.Screen
+				name="DeviceSettings"
+				component={MasterDeviceSettingsStack}
+				options={{headerShown: false}}
 			/>
 			<Stack.Screen
 				name="Settings"

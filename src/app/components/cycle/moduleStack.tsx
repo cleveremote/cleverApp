@@ -13,7 +13,11 @@ import {hapticOptions} from '../../data/cycleTypes';
 // the element. When `settingsAction` is provided (CTRL actuators), a gear icon
 // is rendered before the main action so the row can open a dedicated config.
 // A null `icon` hides the main action; `numericInput.disabled` greys the field
-// out as read-only.
+// out as read-only. `badge` is rendered before the label (e.g. a device's
+// connectivity dot). `warning` outlines the row in orange and shows its text
+// under the label (e.g. an unreachable device).
+const WARNING_BORDER = '#fdba74';
+
 export function elementStack(
 	item: any,
 	actionElement: Function,
@@ -25,13 +29,17 @@ export function elementStack(
 		placeholder?: string;
 		disabled?: boolean;
 	},
-	settingsAction?: () => void
+	settingsAction?: () => void,
+	badge?: React.ReactNode,
+	warning?: string
 ) {
 	return (
 		<View
 			style={{
 				alignSelf: 'stretch',
 				backgroundColor: 'white',
+				borderWidth: warning ? 2 : 0,
+				borderColor: WARNING_BORDER,
 				borderRadius: 12,
 				margin: 4,
 				elevation: 3,
@@ -42,10 +50,17 @@ export function elementStack(
 			}}
 			key={item.id}>
 			<View style={{flexDirection: 'row', alignItems: 'center'}}>
-				<Text
-					style={[styles.textSequence, {flex: 1, marginVertical: 8, marginLeft: 8}]}>
-					{label}
-				</Text>
+				{badge ? <View style={{marginLeft: 10}}>{badge}</View> : null}
+				<View style={{flex: 1, marginVertical: 8, marginLeft: 8}}>
+					<Text style={styles.textSequence}>{label}</Text>
+					{warning ? (
+						<Text
+							style={{color: '#6b7280', fontSize: 11}}
+							numberOfLines={2}>
+							{warning}
+						</Text>
+					) : null}
+				</View>
 				{numericInput ? (
 					<TextInput
 						keyboardType="numeric"

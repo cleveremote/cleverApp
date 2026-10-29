@@ -18,6 +18,11 @@ import {
 	discoverDevices,
 	loadDevices
 } from '../../../module/process/infrasctructure/store/actions/device';
+import {
+	CheckDevicesButton,
+	DeviceConnectivityDot,
+	deviceRowWarning
+} from '../../components/device/DeviceConnectivity';
 
 // Top level of the Devices area: the list of Master devices (white card +
 // elementStack rows) plus a "Discover Devices" action — masters are added by
@@ -92,12 +97,24 @@ export function DevicesScreen(props: any) {
 							);
 						},
 						`${master.name ?? 'device'}`,
-						{name: faCog, color: styles.icon.color}
+						{name: faCog, color: styles.icon.color},
+						undefined,
+						undefined,
+						<DeviceConnectivityDot device={master} />,
+						deviceRowWarning(master, props.devices, props.connectivity)
 					)
+				)}
+				{masters.length > 0 && (
+					<CheckDevicesButton
+						label="Check all devices"
+						variant="outline"
+						style={styles.checkButton}
+					/>
 				)}
 				<TouchableOpacity
 					style={[
 						styles.discoverButton,
+						masters.length > 0 && {marginTop: 8},
 						discovering && styles.discoverButtonBusy
 					]}
 					disabled={discovering}
@@ -164,6 +181,10 @@ const styles = StyleSheet.create({
 		alignItems: 'center',
 		gap: 8
 	},
+	checkButton: {
+		marginTop: 20,
+		marginHorizontal: 8
+	},
 	discoverButtonBusy: {
 		opacity: 0.7
 	},
@@ -179,7 +200,8 @@ const styles = StyleSheet.create({
 });
 
 const mapStateToProps = (state: any) => ({
-	devices: state.root_device.devices
+	devices: state.root_device.devices,
+	connectivity: state.root_device.connectivity
 });
 
 export default connect(mapStateToProps, {

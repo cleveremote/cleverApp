@@ -1,12 +1,19 @@
-import React from 'react';
-import {Text, View} from 'react-native';
+import React, {useState} from 'react';
+import {Pressable, Text, View} from 'react-native';
 import {OrientationType} from 'react-native-orientation-locker';
+import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
+import {hapticOptions} from '../../data/cycleTypes';
 import {connect} from 'react-redux';
 import SensorStatus from './CycleStatus';
 import CycleNotification, {
 	useBelowCard,
 	isConflictShown
 } from './CycleNotification';
+import {
+	DeviceDisconnectedIcon,
+	WARNING_BORDER,
+	useUnreachableDevices
+} from '../device/DeviceConnectivity';
 import {MenuCycle} from './cycleStack';
 import CycleStack from './cycleStack';
 
@@ -62,6 +69,10 @@ export function GroupStack({
 
 	const groupWithStyle = {...groupData, style: groupStyle};
 	const belowCard = useBelowCard();
+	const disconnected = !!useUnreachableDevices(groupData, 'CYCLE').length;
+	// Déconnecté : un tap n'importe où sur la carte (hors menu, posé
+	// par-dessus) ouvre le détail.
+	const [detailsOpen, setDetailsOpen] = useState(false);
 
 	// Les cycles enfants d'un groupe sont désormais référencés par le groupe
 	// lui-même via `childCycles` ({cycleId, config:{order,…}}). On résout chaque
@@ -78,7 +89,12 @@ export function GroupStack({
 
 	return (
 		<View>
-			<View
+			<Pressable
+				disabled={!disconnected}
+				onPress={() => {
+					ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
+					setDetailsOpen(true);
+				}}
 				onLayout={belowCard.onCardLayout}
 				style={{
 					alignSelf: 'stretch',
@@ -92,7 +108,9 @@ export function GroupStack({
 					height: 45,
 					marginHorizontal: 4,
 					marginTop: 4,
-					flex: 1
+					flex: 1,
+					borderWidth: disconnected ? 2 : 0,
+					borderColor: WARNING_BORDER
 				}}>
 				<View
 					style={{
@@ -102,13 +120,28 @@ export function GroupStack({
 						flex: 1,
 						marginHorizontal: 8
 					}}>
-					<View style={{flex: 2}}>
+					{/* L'icône « déconnecté » suit directement l'icône menu. */}
+					<View
+						style={{
+							flex: 2,
+							flexDirection: 'row',
+							alignItems: 'center',
+							marginLeft: 40,
+							gap: 6
+						}}>
+						<DeviceDisconnectedIcon
+							item={groupData}
+							kind="CYCLE"
+							navigation={navigation}
+							open={detailsOpen}
+							onOpenChange={setDetailsOpen}
+						/>
 						<Text
 							style={{
+								flexShrink: 1,
 								fontWeight: 'bold',
 								color: fontColor,
-								fontSize: 15,
-								marginLeft: 40
+								fontSize: 15
 							}}
 							numberOfLines={1}
 							ellipsizeMode="middle">
@@ -126,7 +159,7 @@ export function GroupStack({
 						navigation={navigation}
 					/>
 				</View>
-			</View>
+			</Pressable>
 
 			<View
 				onLayout={belowCard.onMenuLayout}

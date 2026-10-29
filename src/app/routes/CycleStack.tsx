@@ -13,6 +13,7 @@ import {SettingsScreen} from '../screens/settings/settings';
 import {CycleSettingStack} from './CycleSettingsStack';
 import {TriggersStack} from './TriggersStack';
 import {SchedulesStack} from './SchedulesStack';
+import {MasterDeviceSettingsStack} from './MasterDeviceSettingsStack';
 
 export function CycleStack({typeFilter}: {typeFilter?: string} = {}) {
 	const options = (title: string) =>
@@ -36,6 +37,13 @@ export function CycleStack({typeFilter}: {typeFilter?: string} = {}) {
 				name="CycleMenu"
 				component={CycleMenuScreen}
 				options={options('Cycles Settings')}
+			/>
+			{/* Ouvert depuis l'icône « déconnecté » d'une carte : le retour
+			    ramène ici plutôt que dans l'onglet Settings. */}
+			<Stack.Screen
+				name="DeviceSettings"
+				component={MasterDeviceSettingsStack}
+				options={{headerShown: false}}
 			/>
 			<Stack.Screen
 				name="Settings"

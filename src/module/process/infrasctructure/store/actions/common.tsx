@@ -13,7 +13,9 @@ import {
 	MODBUS_TASKS_LOAD,
 	ROOT_DEVICES_LOAD,
 	GROUPS_LOAD,
-	DEVICE_MODELS_LOAD
+	DEVICE_MODELS_LOAD,
+	DEVICE_CONNECTIVITY_UPDATE,
+	ACTUATORS_LOAD
 } from './types';
 import {ThunkAction} from 'redux-thunk';
 import {AnyAction} from 'redux';
@@ -22,6 +24,7 @@ import {Alert} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {socketService, normalizeIds} from '../../../../../services/socket';
 import {statusFromConfiguration} from './cycle';
+import {parseConnectivity} from '../models/deviceConnectivity';
 
 export const listenerEvents =
 	(): ThunkAction<void, RootState, unknown, AnyAction> => async dispatch => {
@@ -29,6 +32,7 @@ export const listenerEvents =
 		socketService.off('front/synchronize/status');
 		socketService.off('front/synchronize/sensor-value');
 		socketService.off('server/front/box-status');
+		socketService.off('front/synchronize/device-status');
 		
 			socketService.on(
 				'UPDATE_CONFIGURATION',
@@ -68,6 +72,20 @@ export const listenerEvents =
 						type: SENSOR_STATUS,
 						payload: normalizeIds(JSON.parse(message))
 					});
+				}
+			);
+
+			// Changement de joignabilité d'un master/slave, poussé par le box.
+			socketService.on(
+				'front/synchronize/device-status',
+				message => {
+					const entry = parseConnectivity(message);
+					if (entry) {
+						dispatch({
+							type: DEVICE_CONNECTIVITY_UPDATE,
+							payload: entry
+						});
+					}
 				}
 			);
 
@@ -170,6 +188,16 @@ export const loadConfiguration =
 					type: ROOT_DEVICES_LOAD,
 					payload: config.devices
 				});
+
+				// Nécessaires pour relier les séquences à leurs devices (cf.
+				// deviceConnectivity). Le mock de loadActuators reste en place
+				// tant que le box ne renvoie pas de liste.
+				if (config.actuators?.length) {
+					dispatch({
+						type: ACTUATORS_LOAD,
+						payload: config.actuators
+					});
+				}
 
 				dispatch({
 					type: DEVICE_MODELS_LOAD,

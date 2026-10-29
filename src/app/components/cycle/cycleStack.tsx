@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Alert, TouchableOpacity, View } from 'react-native';
+import { Alert, Pressable, TouchableOpacity, View } from 'react-native';
 import { Text } from 'react-native';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
@@ -15,6 +15,11 @@ import CycleNotification, {
 	useBelowCard,
 	isConflictShown
 } from './CycleNotification';
+import {
+	DeviceDisconnectedIcon,
+	WARNING_BORDER,
+	useUnreachableDevices
+} from '../device/DeviceConnectivity';
 
 export function CycleStack({
 	cycleData,
@@ -45,10 +50,19 @@ export function CycleStack({
 	const iconColorSwitch = cycleData.style.iconColor.base;
 	const bgColor = cycleData.style.bgColor;
 	const belowCard = useBelowCard();
+	const disconnected = !!useUnreachableDevices(cycleData, 'CYCLE').length;
+	// Déconnecté : un tap n'importe où sur la carte (hors menu, posé
+	// par-dessus) ouvre le détail.
+	const [detailsOpen, setDetailsOpen] = useState(false);
 
 	return (
 		<View>
-			<View
+			<Pressable
+				disabled={!disconnected}
+				onPress={() => {
+					ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
+					setDetailsOpen(true);
+				}}
 				onLayout={belowCard.onCardLayout}
 				style={{
 					alignSelf: 'stretch',
@@ -62,7 +76,9 @@ export function CycleStack({
 					height: 45,
 					marginHorizontal: 4,
 					marginTop: 4,
-					flex: 1
+					flex: 1,
+					borderWidth: disconnected ? 2 : 0,
+					borderColor: WARNING_BORDER
 				}}>
 				<View
 					style={{
@@ -72,13 +88,28 @@ export function CycleStack({
 						flex: 1,
 						marginHorizontal: 8
 					}}>
-					<View style={{ flex: 2 }}>
+					{/* L'icône « déconnecté » suit directement l'icône menu. */}
+					<View
+						style={{
+							flex: 2,
+							flexDirection: 'row',
+							alignItems: 'center',
+							marginLeft: 40,
+							gap: 6
+						}}>
+						<DeviceDisconnectedIcon
+							item={cycleData}
+							kind="CYCLE"
+							navigation={navigation}
+							open={detailsOpen}
+							onOpenChange={setDetailsOpen}
+						/>
 						<Text
 							style={{
+								flexShrink: 1,
 								fontWeight: 'bold',
 								color: fontColor,
-								fontSize: 15,
-								marginLeft: 40
+								fontSize: 15
 							}}
 							numberOfLines={1}
 							ellipsizeMode="middle">
@@ -94,7 +125,7 @@ export function CycleStack({
 						navigation={navigation}
 					/>
 				</View>
-			</View>
+			</Pressable>
 
 			<View
 				onLayout={belowCard.onMenuLayout}

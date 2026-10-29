@@ -3,6 +3,7 @@ import { View } from 'react-native';
 import { AppSwitch } from '../common/AppSwitch';
 import { connect } from 'react-redux';
 import { notificationMessage } from './CycleNotification';
+import { useUnreachableDevices } from '../device/DeviceConnectivity';
 
 export function SensorStatus(props: any) {
 	const [status, setStatus] = useState('');
@@ -29,11 +30,17 @@ export function SensorStatus(props: any) {
 		props.status
 	);
 
+	// Un device requis injoignable empêche le démarrage (cf. icône
+	// DeviceDisconnectedIcon) ; un cycle en cours peut toujours être arrêté.
+	const unreachable = useUnreachableDevices(props.cycleData, 'CYCLE');
+	const locked =
+		hasNotification || (!!unreachable.length && status !== 'IN_PROCCESS');
+
 	return (
 		<View style={{ alignItems: 'flex-end' }}>
 			<AppSwitch
-				disabled={hasNotification}
-				style={{ marginTop: 2, opacity: hasNotification ? 0.4 : 1 }}
+				disabled={locked}
+				style={{ marginTop: 2, opacity: locked ? 0.4 : 1 }}
 				value={status === 'IN_PROCCESS'}
 				trackColor={{
 					true: props.iconColorSwitch,

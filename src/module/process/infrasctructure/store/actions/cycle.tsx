@@ -8,7 +8,8 @@ import {
 	DATA_LOAD,
 	EVENTS_LOAD,
 	GROUPS_LOAD,
-	GROUP_SAVE
+	GROUP_SAVE,
+	DEVICE_CONNECTIVITY_LOAD
 } from './types';
 
 import {ThunkAction} from 'redux-thunk';
@@ -22,6 +23,12 @@ import {
 	newTempId
 } from '../../../../../services/socket';
 import {cleanCycleModuleConfigs} from '../models/sequenceModule';
+import {Alert} from 'react-native';
+import {
+	describeUnreachable,
+	findExecutable,
+	selectUnreachableDevices
+} from '../models/deviceConnectivity';
 
 export const listenerEvents =
 	(): ThunkAction<void, RootState, unknown, AnyAction> => async dispatch => {
@@ -137,10 +144,15 @@ export const loadCycles =
 			'front/box/fetch/configuration',
 			{},
 			(response: any) => {
-				const cycles = normalizeIds(JSON.parse(response.config).cycles);
+				const config = normalizeIds(JSON.parse(response.config));
+				const cycles = config.cycles;
 				dispatch({
 					type: CYCLES_LOAD,
 					payload: cycles
+				});
+				dispatch({
+					type: DEVICE_CONNECTIVITY_LOAD,
+					payload: config.devices
 				});
 				dispatch({
 					type: CYCLE_STATUS,
@@ -183,6 +195,10 @@ export const loadGroups =
 				dispatch({
 					type: CYCLES_LOAD,
 					payload: config.cycles
+				});
+				dispatch({
+					type: DEVICE_CONNECTIVITY_LOAD,
+					payload: config.devices
 				});
 				dispatch({
 					type: GROUPS_LOAD,
@@ -303,9 +319,30 @@ export const saveGroup =
 		}
 	};
 
+// Démarrages refusés tant qu'un master/slave requis est injoignable. Les
+// arrêts (OFF, SKIP, IGNORE) restent toujours possibles.
+const isStart = (data: any) =>
+	data?.action === 'ON' && !['SKIP', 'IGNORE'].includes(data?.type);
+
 export const executeCycle =
 	(data: any): ThunkAction<void, RootState, unknown, AnyAction> =>
-	async dispatch => {
+	async (dispatch, getState) => {
+		if (isStart(data)) {
+			const state = getState() as any;
+			const target = findExecutable(state.root_cycle.cycles, data.id);
+			const unreachable = target
+				? selectUnreachableDevices(state, target.item, target.kind)
+				: [];
+			if (unreachable.length) {
+				Alert.alert(
+					'Devices unreachable',
+					`"${target!.item.name}" cannot start:\n${describeUnreachable(
+						unreachable
+					)}`
+				);
+				return;
+			}
+		}
 		dispatch({type: CYCLE_EXECUTE, payload: true});
 		return new Promise((resolve, reject) => {
 			if (!socketService.connected) {

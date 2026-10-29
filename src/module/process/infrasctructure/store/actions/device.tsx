@@ -3,7 +3,8 @@ import {
 	ROOT_DEVICE_LOAD,
 	ROOT_DEVICE_UPDATE,
 	ROOT_DEVICES_LOAD,
-	MODBUS_TASKS_LOAD
+	MODBUS_TASKS_LOAD,
+	DEVICE_CONNECTIVITY_UPDATE
 } from './types';
 
 import {ThunkAction} from 'redux-thunk';
@@ -15,6 +16,7 @@ import {
 	denormalizeIds
 } from '../../../../../services/socket';
 import {loadConfiguration} from './common';
+import {parseConnectivity} from '../models/deviceConnectivity';
 
 export const updateDevice =
 	(device: any): ThunkAction<void, RootState, unknown, AnyAction> =>
@@ -83,6 +85,21 @@ export const loadDevice =
 // ids are replaced by the real ones the box assigned. When the tree carries a
 // deleted slave, the whole configuration is reloaded too: the box drops the
 // slave's dependent entities (sensors, modbus tasks...) along with it.
+// La connectivité est un état du box, pas une donnée éditable : elle ne
+// repart pas avec l'arbre sauvegardé.
+const withoutConnectivity = (tree: any) => {
+	if (!tree) return tree;
+	const {connectivity, ...master} = tree;
+	return master.slaveDevices
+		? {
+				...master,
+				slaveDevices: master.slaveDevices.map(
+					({connectivity: _c, ...slave}: any) => slave
+				)
+		  }
+		: master;
+};
+
 export const saveDeviceTree =
 	(
 		tree: any,
@@ -91,7 +108,7 @@ export const saveDeviceTree =
 	async dispatch => {
 		socketService.emit(
 			'front/box/sync/device',
-			denormalizeIds(tree),
+			denormalizeIds(withoutConnectivity(tree)),
 			(response: any) => {
 				// A deleted slave: skip the sync response's snapshot and leave only
 				// once the full configuration reload has landed, so the lists are
@@ -200,6 +217,41 @@ export const executeDeviceCommand =
 					}
 				}
 				cb(normalizeIds(parsed));
+			}
+		);
+	};
+
+// Vérifie la joignabilité des devices (front/box/check/device) :
+// - un master : le master, puis ses slaves s'il répond ;
+// - un slave : d'abord son master, puis le slave si le master répond ;
+// - sans deviceId : tous les masters et leurs slaves.
+// Les états arrivent sur `front/synchronize/device-status` (cf. listenerEvents) ;
+// ceux éventuellement portés par la réponse sont appliqués aussi. Pas de loader
+// global : le bouton affiche le sien, `cb` est toujours appelé.
+export const checkDevices =
+	(
+		deviceId?: string,
+		cb?: (response: any) => void
+	): ThunkAction<void, RootState, unknown, AnyAction> =>
+	async dispatch => {
+		socketService.emitSilent(
+			'front/box/check/device',
+			deviceId ? denormalizeIds({deviceId}) : {},
+			(response: any) => {
+				try {
+					let raw = response?.config ?? response?.data ?? response;
+					if (typeof raw === 'string') raw = JSON.parse(raw);
+					const entries = (Array.isArray(raw) ? raw : [raw])
+						.map(parseConnectivity)
+						.filter(Boolean);
+					if (entries.length) {
+						dispatch({type: DEVICE_CONNECTIVITY_UPDATE, payload: entries});
+					}
+				} catch (e) {
+					console.warn('[checkDevices] failed to handle response', e);
+				} finally {
+					cb?.(response);
+				}
 			}
 		);
 	};

@@ -9,6 +9,7 @@ import {
 } from '../../components/common/navigationHeaders';
 import {SensorStack} from '../../components/sensor/SensorStack';
 import {loadSensors} from '../../../module/process/infrasctructure/store/actions/sensor';
+import {useSensorsConnectivity} from '../../components/device/DeviceConnectivity';
 // Bouton d'ajout masqué : la navigation et les formulaires de création
 // restent en place, il suffit de repasser ce flag à true pour le réafficher.
 const SHOW_ADD_SENSOR = false;
@@ -143,6 +144,36 @@ export function Sensor(props: any) {
 			(x: any) =>
 				isNestedChild(x) && `${getParentId(x)}` === `${parent.id}`
 		);
+
+	// Un parent dont le device est déconnecté replie ses enfants (leurs mesures
+	// ne sont plus lues) ; il les redéplie quand le device redevient joignable.
+	// On ne réagit qu'aux changements d'état : l'utilisateur garde la main entre
+	// deux transitions.
+	const parentStates = useSensorsConnectivity(
+		rootSensors.filter((x: any) => getChildren(x).length > 0)
+	);
+	const previousStates = useRef<Record<string, string>>({});
+	useEffect(() => {
+		const states: Record<string, string> = Object.fromEntries(
+			(parentStates ? parentStates.split('|') : []).map(entry => {
+				const at = entry.lastIndexOf(':');
+				return [entry.slice(0, at), entry.slice(at + 1)];
+			})
+		);
+		const previous = previousStates.current;
+		previousStates.current = states;
+		const toCollapse = Object.keys(states).filter(
+			id => states[id] === 'DISCONNECTED' && previous[id] !== 'DISCONNECTED'
+		);
+		const toExpand = Object.keys(states).filter(
+			id => states[id] === 'CONNECTED' && previous[id] === 'DISCONNECTED'
+		);
+		if (!toCollapse.length && !toExpand.length) return;
+		setCollapsed(prev => [
+			...prev.filter(id => !toExpand.includes(id)),
+			...toCollapse.filter(id => !prev.includes(id))
+		]);
+	}, [parentStates]);
 
 	return (
 		<ScrollView

@@ -12,6 +12,10 @@ import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {navigationHeader} from '../../../components/common/navigationHeaders';
 import {elementStack} from '../../../components/cycle/moduleStack';
 import {hapticOptions} from '../../../data/cycleTypes';
+import {
+	DeviceConnectivityDot,
+	deviceRowWarning
+} from '../../../components/device/DeviceConnectivity';
 import {isTempId} from '../../../../services/socket';
 import {discoverDevices} from '../../../../module/process/infrasctructure/store/actions/device';
 
@@ -116,7 +120,11 @@ export function SlaveDevicesSection(props: any) {
 							);
 						},
 						`${slave.name ?? 'slave'}`,
-						{name: faCog, color: styles.icon.color}
+						{name: faCog, color: styles.icon.color},
+						undefined,
+						undefined,
+						<DeviceConnectivityDot device={slave} />,
+						deviceRowWarning(slave, props.devices, props.connectivity)
 					)
 				)}
 
@@ -216,7 +224,8 @@ const styles = StyleSheet.create({
 });
 
 const mapStateToProps = (state: any) => ({
-	devices: state.root_device.devices
+	devices: state.root_device.devices,
+	connectivity: state.root_device.connectivity
 });
 
 export default connect(mapStateToProps, {

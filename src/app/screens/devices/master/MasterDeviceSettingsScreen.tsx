@@ -1,7 +1,7 @@
 import React from 'react';
 import {StyleSheet, View} from 'react-native';
 import {connect} from 'react-redux';
-import {faGear, faSitemap} from '@fortawesome/free-solid-svg-icons';
+import {faGear, faSitemap, faPlug} from '@fortawesome/free-solid-svg-icons';
 import {
 	DeleteItemMenu,
 	MenuAccordion,
@@ -15,7 +15,9 @@ import {
 } from '../../../../module/process/infrasctructure/store/actions/device';
 import {loadModbusTasks} from '../../../../module/process/infrasctructure/store/actions/modbus-task';
 import {useDeviceEntity} from '../useDeviceEntity';
+import {DeviceConnectivityPanel} from '../../../components/device/DeviceConnectivity';
 import {isEmpty} from '../../../components/common/useSectionSettingsHeader';
+import {isTempId} from '../../../../services/socket';
 import MasterGeneralSettingsSection from './MasterGeneralSettingsSection';
 import SlaveDevicesSection from './SlaveDevicesSection';
 
@@ -60,6 +62,18 @@ export function MasterDeviceSettingsScreen(props: any) {
 						navigation={props.navigation}
 					/>
 				</MenuAccordion>
+				{ready && !isTempId(deviceRef.current?.id) && (
+					<MenuAccordion
+						key={5}
+						name={'Connectivity'}
+						icon={faPlug}
+						defaultExpanded={
+							props.route.params?.section === 'connectivity'
+						}
+						onPress={() => {}}>
+						<DeviceConnectivityPanel device={deviceRef.current} />
+					</MenuAccordion>
+				)}
 				<DeleteItemMenu key={4} OnConfirm={deleteItem} />
 			</MenuGroup>
 		</SettingsScrollView>

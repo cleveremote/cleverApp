@@ -55,6 +55,10 @@ export const ROOT_DEVICES_LOAD = 'ROOT_DEVICES_LOAD';
 export const ROOT_DEVICE_LOAD = 'ROOT_DEVICE_LOAD';
 export const ROOT_DEVICE_UPDATE = 'ROOT_DEVICE_UPDATE';
 export const ROOT_DEVICE_SAVE = 'ROOT_DEVICE_SAVE';
+// Joignabilité des masters/slaves : relue sur `devices[].connectivity` de la
+// configuration (LOAD) ou poussée par `front/synchronize/device-status`.
+export const DEVICE_CONNECTIVITY_LOAD = 'DEVICE_CONNECTIVITY_LOAD';
+export const DEVICE_CONNECTIVITY_UPDATE = 'DEVICE_CONNECTIVITY_UPDATE';
 
 /////////////Actuator (master typed list + per-sequence module refs)
 export const ACTUATORS_LOAD = 'ACTUATORS_LOAD';
