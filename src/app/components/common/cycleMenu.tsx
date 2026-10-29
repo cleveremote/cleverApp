@@ -59,7 +59,8 @@ export function MenuAccordion({
 	onPress,
 	children,
 	invalid = false,
-	alwaysExpanded = false
+	alwaysExpanded = false,
+	defaultExpanded = false
 }: {
 	name: string;
 	icon: IconDefinition;
@@ -74,9 +75,11 @@ export function MenuAccordion({
 	// Seul menu de l'accordéon : toujours déplié (pas de repli ni de chevron) et
 	// sans ligne de séparation en bas.
 	alwaysExpanded?: boolean;
+	// Déplié à l'ouverture de l'écran, mais repliable.
+	defaultExpanded?: boolean;
 }) {
 	const isLast = useContext(MenuIsLastContext) ?? isLastProp;
-	const [expandedState, setExpended] = useState(false);
+	const [expandedState, setExpended] = useState(defaultExpanded);
 	const isExpanded = alwaysExpanded || expandedState;
 	const showSeparator = !alwaysExpanded && (!isLast || isExpanded);
 

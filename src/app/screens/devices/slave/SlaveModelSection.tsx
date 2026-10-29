@@ -6,9 +6,7 @@ import CommandExecuteForm from './CommandExecuteForm';
 
 // Modèle du slave (`config.modelId`) dans `config.models`.
 export const findModel = (models: any[], device: any) =>
-	(models ?? []).find(
-		(m: any) => `${m.id}` === `${device?.config?.modelId}`
-	);
+	(models ?? []).find((m: any) => `${m.id}` === `${device?.config?.modelId}`);
 
 export const modelKind = (model: any): string | undefined =>
 	model?.kind ?? model?.device?.kind;
@@ -59,7 +57,9 @@ function Row({
 	return (
 		<View style={styles.row}>
 			<View style={styles.rowIcon}>
-				{icon ? <Icon name={icon} size={14} color={mutedColor} /> : null}
+				{icon ? (
+					<Icon name={icon} size={14} color={mutedColor} />
+				) : null}
 			</View>
 			<Text style={styles.rowLabel}>{rowLabel}</Text>
 			<View style={{flex: 1}}>
@@ -80,8 +80,9 @@ function Chip({text}: Readonly<{text: string}>) {
 
 function CommandCard({
 	command,
-	deviceId
-}: Readonly<{command: any; deviceId: string}>) {
+	deviceId,
+	model
+}: Readonly<{command: any; deviceId: string; model: any}>) {
 	const [open, setOpen] = React.useState(false);
 	const params = command.params ?? {};
 	const fields = resultFields(command);
@@ -103,9 +104,12 @@ function CommandCard({
 				style={({pressed}) => [
 					styles.commandHeader,
 					{opacity: pressed ? 0.6 : 1}
-				]}>
+				]}
+			>
 				<View style={{flex: 1}}>
-					<Text style={styles.commandName}>{command.name}</Text>
+					<Text style={styles.commandName}>
+						{command.name ?? command.label}
+					</Text>
 					<View style={styles.chips}>
 						{(command.types ?? []).map((t: string) => (
 							<Chip key={t} text={t} />
@@ -113,7 +117,9 @@ function CommandCard({
 						{params.isConfirmRequired ? (
 							<Chip text="confirm" />
 						) : null}
-						{params.isPersistable ? <Chip text="persisted" /> : null}
+						{params.isPersistable ? (
+							<Chip text="persisted" />
+						) : null}
 					</View>
 				</View>
 				<Icon
@@ -158,7 +164,11 @@ function CommandCard({
 									value={[f.type, f.unit]
 										.filter(Boolean)
 										.join(' · ')}
-									sub={f.autoCreate ? 'auto-created sensor' : undefined}
+									sub={
+										f.autoCreate
+											? 'auto-created sensor'
+											: undefined
+									}
 								/>
 							))}
 						</>
@@ -168,7 +178,11 @@ function CommandCard({
 							.filter(Boolean)
 							.join(' / ')}
 					</Text>
-					<CommandExecuteForm command={command} deviceId={deviceId} />
+					<CommandExecuteForm
+						command={command}
+						deviceId={deviceId}
+						model={model}
+					/>
 				</View>
 			) : null}
 		</View>
@@ -183,7 +197,9 @@ export function SlaveModelSection(props: any) {
 	if (!model) {
 		return (
 			<View style={styles.embeddedCard}>
-				<Text style={styles.empty}>No model linked to this device.</Text>
+				<Text style={styles.empty}>
+					No model linked to this device.
+				</Text>
 			</View>
 		);
 	}
@@ -229,6 +245,7 @@ export function SlaveModelSection(props: any) {
 						key={c.id ?? c.name}
 						command={c}
 						deviceId={props.device?.id}
+						model={model}
 					/>
 				))
 			)}

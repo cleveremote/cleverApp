@@ -35,6 +35,7 @@ export function MasterDeviceSettingsScreen(props: any) {
 					key={1}
 					name={'General'}
 					icon={faGear}
+					defaultExpanded
 					invalid={invalidSections.general}
 					onPress={() => {}}>
 					{ready && (
@@ -51,6 +52,7 @@ export function MasterDeviceSettingsScreen(props: any) {
 					key={3}
 					name={'Slave Devices'}
 					icon={faSitemap}
+					defaultExpanded
 					onPress={() => {}}>
 					<SlaveDevicesSection
 						embedded
@@ -90,7 +92,8 @@ const styles = StyleSheet.create({
 const mapStateToProps = (state: any) => ({
 	device: state.root_device.device,
 	devices: state.root_device.devices,
-	modbusTasks: state.root_modbus_task.modbusTasks
+	modbusTasks: state.root_modbus_task.modbusTasks,
+	modbusTasksLoaded: state.root_modbus_task.modbusTasksLoaded
 });
 
 export default connect(mapStateToProps, {

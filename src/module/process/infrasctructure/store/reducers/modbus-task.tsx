@@ -3,6 +3,9 @@ import {loadModbusTasks} from './modbus-task-reducer-helper';
 
 const initialState = {
 	modbusTasks: [],
+	// La liste a été reçue au moins une fois (même vide) : distingue « pas
+	// encore chargée » d'une box sans modbusTasks.
+	modbusTasksLoaded: false,
 	modbusTask: undefined
 };
 
@@ -11,7 +14,8 @@ export default (state = initialState, action: any) => {
 		case MODBUS_TASKS_LOAD: {
 			return {
 				...state,
-				modbusTasks: loadModbusTasks(action.payload)
+				modbusTasks: loadModbusTasks(action.payload),
+				modbusTasksLoaded: true
 			};
 		}
 

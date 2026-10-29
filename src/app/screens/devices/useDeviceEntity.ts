@@ -124,9 +124,14 @@ export function useDeviceEntity(
 			props.route.params?.deviceId,
 			props.route.params?.defaults
 		);
-		// Master only: preload the flat modbusTasks so buildTree can hydrate the
-		// comRequests of slaves the user hasn't opened.
-		props.loadModbusTasks?.();
+		// Master only: buildTree needs the flat modbusTasks to hydrate the
+		// comRequests of slaves the user hasn't opened. They come with the
+		// configuration (app start, master save): fetch them only if they were
+		// never received, instead of reloading the whole configuration — and
+		// showing the global loader — on every landing.
+		if (!props.modbusTasksLoaded) {
+			props.loadModbusTasks?.();
+		}
 	}, []);
 
 	const {invalidSections} = useSectionSettingsHeader({
