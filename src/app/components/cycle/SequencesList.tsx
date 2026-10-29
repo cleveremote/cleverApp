@@ -2,6 +2,9 @@ import React, {useEffect, useState} from 'react';
 import {View} from 'react-native';
 import {connect} from 'react-redux';
 import SequenceStack from './sequenceStack';
+import CycleNotification from './CycleNotification';
+
+const IN_PROCESS = 'IN_PROCCESS';
 
 export function SeqeuncesList(props: any) {
 	const [status, setStatus] = useState('');
@@ -17,19 +20,44 @@ export function SeqeuncesList(props: any) {
 		setStatus(getStatus());
 	}, [props.status, props.cycleData.id]);
 
+	const sequences: any[] = props.cycleData.sequences || [];
+	const statusOf = (id: string) =>
+		(props.status || []).find((x: any) => x?.id === id)?.status;
+
+	// Une séquence dont les conditions ne sont pas vérifiées est sautée : le
+	// box démarre la suivante vérifiée. Forcer la met en file : elle démarre
+	// à la fin de la séquence en cours, s'il y en a une.
+	const runningSequence = (sequenceId: string) =>
+		sequences.find(
+			(x: any) => x.id !== sequenceId && statusOf(x.id) === IN_PROCESS
+		);
+
 	return status === 'IN_PROCCESS'
-		? props.cycleData.sequences.map((sequence: any, index: number) => (
-				<View key={'sequence_' + index} style={{marginLeft: 20, marginTop: 8}}>
-					<SequenceStack
-						navigation={props.navigation}
-						cycleId={props.cycleData.id}
-						item={sequence}
-						isActive={false}
-						onSkip={() => props.onSkip(sequence.id)}
-						stackParent={true}
-					/>
-				</View>
-		  ))
+		? sequences.map((sequence: any, index: number) => {
+				const running = runningSequence(sequence.id);
+				return (
+					<View key={'sequence_' + index} style={{marginLeft: 20, marginTop: 8}}>
+						<SequenceStack
+							navigation={props.navigation}
+							cycleId={props.cycleData.id}
+							item={sequence}
+							isActive={false}
+							onSkip={() => props.onSkip(sequence.id)}
+							stackParent={true}
+						/>
+						<CycleNotification
+							item={sequence}
+							onForce={() => props.onForceSequence(sequence.id)}
+							forceLabel="Force and queue"
+							forceHint={
+								running
+									? `Will start after "${running.name}" finishes`
+									: undefined
+							}
+						/>
+					</View>
+				);
+		  })
 		: null;
 }
 

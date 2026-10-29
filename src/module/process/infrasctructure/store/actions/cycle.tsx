@@ -322,3 +322,18 @@ export const executeCycle =
 			);
 		});
 	};
+
+// Masque localement la notification portée par le status d'un cycle (ex.
+// CONDITIONS_NOT_VERIFIED) sans toucher au status lui-même.
+export const dismissCycleNotification =
+	(id: string): ThunkAction<void, RootState, unknown, AnyAction> =>
+	(dispatch, getState) => {
+		const entry = ((getState() as any).root_cycle.status || []).find(
+			(x: any) => x?.id === id
+		);
+		if (!entry) {
+			return;
+		}
+		const {notification, causes, ...rest} = entry;
+		dispatch({type: CYCLE_STATUS, payload: rest});
+	};

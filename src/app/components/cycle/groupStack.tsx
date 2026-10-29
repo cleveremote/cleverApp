@@ -3,6 +3,10 @@ import {Text, View} from 'react-native';
 import {OrientationType} from 'react-native-orientation-locker';
 import {connect} from 'react-redux';
 import SensorStatus from './CycleStatus';
+import CycleNotification, {
+	useBelowCard,
+	isConflictShown
+} from './CycleNotification';
 import {MenuCycle} from './cycleStack';
 import CycleStack from './cycleStack';
 
@@ -33,6 +37,8 @@ export function GroupStack({
 	current,
 	onSwitch,
 	onSkip,
+	onForceSequence,
+	onQueueCycle,
 	onExecute,
 	status
 }: Readonly<{
@@ -44,6 +50,8 @@ export function GroupStack({
 	current: string | undefined;
 	onSwitch: (item: any, value: boolean, type: string, executableType?: string) => void | Promise<void>;
 	onSkip: (sequenceId: any, executableType?: string) => void;
+	onForceSequence: (sequenceId: string) => void;
+	onQueueCycle: (cycleId: string) => void;
 	onExecute: (id: string, ms: number, executableType?: string) => void;
 	status?: any;
 }>) {
@@ -53,6 +61,7 @@ export function GroupStack({
 	const bgColor = groupStyle.bgColor;
 
 	const groupWithStyle = {...groupData, style: groupStyle};
+	const belowCard = useBelowCard();
 
 	// Les cycles enfants d'un groupe sont désormais référencés par le groupe
 	// lui-même via `childCycles` ({cycleId, config:{order,…}}). On résout chaque
@@ -70,6 +79,7 @@ export function GroupStack({
 	return (
 		<View>
 			<View
+				onLayout={belowCard.onCardLayout}
 				style={{
 					alignSelf: 'stretch',
 					backgroundColor: bgColor,
@@ -118,7 +128,9 @@ export function GroupStack({
 				</View>
 			</View>
 
-			<View style={{marginTop: -37, width: 60, marginLeft: 8}}>
+			<View
+				onLayout={belowCard.onMenuLayout}
+				style={{marginTop: -37, width: 60, marginLeft: 8}}>
 				<MenuCycle
 					navigation={navigation}
 					cycleData={groupWithStyle}
@@ -129,8 +141,19 @@ export function GroupStack({
 					status={
 						status?.find((x: any) => x?.id === groupData.id)?.status
 					}
+					isConflict={isConflictShown(
+						status?.find((x: any) => x?.id === groupData.id),
+						status
+					)}
 				/>
 			</View>
+			<CycleNotification
+				marginTop={belowCard.marginTop}
+				item={groupWithStyle}
+				onForce={() => onSwitch(groupData, true, 'FORCE', 'TASK')}
+				onIgnore={() => onSwitch(groupData, false, 'IGNORE', 'TASK')}
+				onQueue={() => onQueueCycle(groupData.id)}
+			/>
 
 			{groupCycles.map((cycle: any, index: number) => (
 				<View
@@ -146,6 +169,8 @@ export function GroupStack({
 							onSwitch(cycle, value, type)
 						}
 						onSkip={onSkip}
+						onForceSequence={onForceSequence}
+						onQueueCycle={onQueueCycle}
 						onExecute={onExecute}
 					/>
 				</View>

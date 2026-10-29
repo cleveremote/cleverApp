@@ -11,6 +11,10 @@ import { ModalOverrideDuration } from '../common/modalOverrideDuration';
 import { connect } from 'react-redux';
 import SensorStatus from './CycleStatus';
 import SeqeuncesList from './SequencesList';
+import CycleNotification, {
+	useBelowCard,
+	isConflictShown
+} from './CycleNotification';
 
 export function CycleStack({
 	cycleData,
@@ -20,6 +24,8 @@ export function CycleStack({
 	current,
 	onSwitch,
 	onSkip,
+	onForceSequence,
+	onQueueCycle,
 	onExecute,
 	status
 }: Readonly<{
@@ -30,16 +36,20 @@ export function CycleStack({
 	current: string | undefined;
 	onSwitch: (value: boolean, type: string) => void | Promise<void>;
 	onSkip: (sequenceId: any) => void;
+	onForceSequence: (sequenceId: string) => void;
+	onQueueCycle: (cycleId: string) => void;
 	onExecute: (seqeunceId: string, ms: number) => void;
 	status?: any;
 }>) {
 	const fontColor = cycleData.style.fontColor;
 	const iconColorSwitch = cycleData.style.iconColor.base;
 	const bgColor = cycleData.style.bgColor;
+	const belowCard = useBelowCard();
 
 	return (
 		<View>
 			<View
+				onLayout={belowCard.onCardLayout}
 				style={{
 					alignSelf: 'stretch',
 					backgroundColor: bgColor,
@@ -86,7 +96,9 @@ export function CycleStack({
 				</View>
 			</View>
 
-			<View style={{ marginTop: -37, width: 60, marginLeft: 8 }}>
+			<View
+				onLayout={belowCard.onMenuLayout}
+				style={{ marginTop: -37, width: 60, marginLeft: 8 }}>
 				<MenuCycle
 					navigation={navigation}
 					cycleData={cycleData}
@@ -96,11 +108,23 @@ export function CycleStack({
 					status={
 						status.find((x: any) => x?.id === cycleData.id)?.status
 					}
+					isConflict={isConflictShown(
+						status.find((x: any) => x?.id === cycleData.id),
+						status
+					)}
 				/>
 			</View>
+			<CycleNotification
+				marginTop={belowCard.marginTop}
+				item={cycleData}
+				onForce={() => onSwitch(true, 'FORCE')}
+				onIgnore={() => onSwitch(false, 'IGNORE')}
+				onQueue={() => onQueueCycle(cycleData.id)}
+			/>
 			<SeqeuncesList
 				cycleData={cycleData}
 				onSkip={onSkip}
+				onForceSequence={onForceSequence}
 				navigation={navigation}
 			/>
 		</View>
@@ -114,6 +138,7 @@ export function MenuCycle({
 	current,
 	onExecute,
 	status,
+	isConflict,
 	isGroup
 }: Readonly<{
 	navigation: any;
@@ -122,6 +147,8 @@ export function MenuCycle({
 	current: string | undefined;
 	onExecute: (sequenceId: string, ms: number) => void;
 	status: any;
+	// Conflit en cours (bandeau affiché) : l'icône d'attente remplace le menu.
+	isConflict?: boolean;
 	isGroup?: boolean;
 }>) {
 	const [isOpen, setIsOpen] = useState(false);
@@ -216,7 +243,7 @@ export function MenuCycle({
 
 	return (
 		<View>
-			{status !== 'WAITTING_CONFIRMATION' ? (
+			{!isConflict ? (
 				<TouchableOpacity
 					onPress={() => {
 						ReactNativeHapticFeedback.trigger(

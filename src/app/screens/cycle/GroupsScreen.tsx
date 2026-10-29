@@ -122,6 +122,25 @@ export function Groups(props: any) {
 		props.executeCycle(dto);
 	};
 
+	// Force une séquence dont les conditions ne sont pas vérifiées : le box la
+	// met en file et la démarre dès que la séquence en cours est terminée.
+	const onForceSequence = (sequenceId: string) => {
+		props.executeCycle({
+			id: sequenceId,
+			type: 'FORCE_SEQUENCE',
+			action: 'ON'
+		});
+	};
+
+	// Conflit : met le cycle en file, il démarrera après celui en cours.
+	const onQueueCycle = (cycleId: string) => {
+		props.executeCycle({
+			id: cycleId,
+			type: 'QUEUED',
+			action: 'ON'
+		});
+	};
+
 	const onRefresh = async () => {
 		setRefreshing(true);
 		await props.loadGroups();
@@ -170,6 +189,8 @@ export function Groups(props: any) {
 							closeSibillings={closeSibillings}
 							onSwitch={onSwitch}
 							onSkip={onSkip}
+							onForceSequence={onForceSequence}
+							onQueueCycle={onQueueCycle}
 							onExecute={onExecute}
 						/>
 					))}
