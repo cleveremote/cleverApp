@@ -17,6 +17,8 @@ import {
 	updateSequenceModuleConfig
 } from '../../../../../module/process/infrasctructure/store/actions/module';
 import {loadActuators as loadMasterActuators} from '../../../../../module/process/infrasctructure/store/actions/actuator';
+import {loadDevices} from '../../../../../module/process/infrasctructure/store/actions/device';
+import {actuatorLabel} from '../../../../data/actuatorTypes';
 import {useForm} from 'react-hook-form';
 import {SelectForm} from '../../../../components/common/FormComponents';
 import {CollapsibleSection} from '../../../../components/common/CollapsibleSection';
@@ -58,8 +60,9 @@ export function SequenceActuatorsSettingsSection(props: any) {
 	const defaultValues = {...sequenceData};
 	const {
 		control,
+		setValue,
 		formState: {errors}
-	} = useForm({defaultValues});
+	} = useForm<any>({defaultValues});
 
 	// Embedded: merge locally (props.moduleConfigs is stale until re-render) and
 	// push the result onto the sequence immediately.
@@ -78,11 +81,14 @@ export function SequenceActuatorsSettingsSection(props: any) {
 	};
 
 	const addModuleConfig = (actuator: any) => {
+		// `delete: false` explicitly: re-adding an actuator removed earlier merges
+		// onto its existing entry, which would otherwise keep `delete: true`.
 		changeModuleConfig({
 			moduleId: actuator.id,
 			name: actuator.name,
 			type: actuator.type,
 			configTiming: emptyTimingConfig(),
+			delete: false,
 			isModified: true
 		});
 		if (!embedded) _saveSequence(false);
@@ -119,7 +125,10 @@ export function SequenceActuatorsSettingsSection(props: any) {
 				return {
 					...a,
 					type: a.type ?? master?.type,
-					name: a.name ?? master?.name
+					name: a.name ?? master?.name,
+					label: master
+						? actuatorLabel(master, props.devices)
+						: a.name
 				};
 			})
 			.filter((a: any) => a.type === type);
@@ -133,11 +142,15 @@ export function SequenceActuatorsSettingsSection(props: any) {
 				(a: any) =>
 					a.type === type && usedIds.indexOf(`${a.id}`) < 0
 			)
-			.map((a: any) => ({label: a.name, value: a.id}));
+			.map((a: any) => ({
+				label: actuatorLabel(a, props.devices),
+				value: a.id
+			}));
 	};
 
 	useEffect(() => {
 		props.loadMasterActuators();
+		props.loadDevices();
 	}, []);
 
 	// Embedded, the sequence may still be loading when the accordion mounts:
@@ -202,7 +215,7 @@ export function SequenceActuatorsSettingsSection(props: any) {
 								() => {
 									deleteModuleConfig(moduleConfig);
 								},
-								`${moduleConfig.name}`,
+								`${moduleConfig.label}`,
 								{name: faTrash, color: '#E53E3E'},
 								undefined,
 								() => openModuleConfig(moduleConfig)
@@ -229,6 +242,9 @@ export function SequenceActuatorsSettingsSection(props: any) {
 									if (actuator) {
 										addModuleConfig(actuator);
 									}
+									// Clear the picker so the added actuator
+									// doesn't stay shown as selected.
+									setValue(`actuator_${section.type}`, null);
 								}}
 							/>
 						</View>
@@ -242,11 +258,13 @@ export function SequenceActuatorsSettingsSection(props: any) {
 const mapStateToProps = (state: any) => ({
 	masterActuators: state.root_actuator.actuators,
 	moduleConfigs: state.sequence_module.moduleConfigs,
+	devices: state.root_device.devices,
 	cycle: state.root_cycle.cycle
 });
 
 export default connect(mapStateToProps, {
 	loadMasterActuators,
+	loadDevices,
 	loadSequenceModuleConfigs,
 	updateSequenceModuleConfig,
 	updateSequence

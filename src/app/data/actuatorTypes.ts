@@ -82,3 +82,15 @@ export const emptyActuatorConfig = (type: string): Record<string, any> => {
 // COM et CTRL partagent le couple deviceId + actions[] (CTRL étend COM).
 export const isComBased = (type?: string) =>
 	type === ActuatorType.COM || type === ActuatorType.CTRL;
+
+// COM actuators target a slave device (`config.deviceId`): their label is
+// prefixed with that device's name.
+export const actuatorLabel = (actuator: any, devices: any[] = []) => {
+	const name = `${actuator?.name ?? 'actuator'}`;
+	if (actuator?.type !== ActuatorType.COM) return name;
+	const device = devices.find(
+		(d: any) => `${d.id}` === `${actuator.config?.deviceId}`
+	);
+	const deviceName = device?.name ?? device?.label;
+	return deviceName ? `${deviceName} - ${name}` : name;
+};

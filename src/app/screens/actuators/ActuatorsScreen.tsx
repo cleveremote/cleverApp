@@ -11,7 +11,11 @@ import ActuatorFilterBar, {
 	ActuatorFilterKey
 } from '../../components/actuator/ActuatorFilterBar';
 import {hapticOptions} from '../../data/cycleTypes';
-import {ActuatorType, emptyActuatorConfig} from '../../data/actuatorTypes';
+import {
+	ActuatorType,
+	actuatorLabel,
+	emptyActuatorConfig
+} from '../../data/actuatorTypes';
 import {loadActuators} from '../../../module/process/infrasctructure/store/actions/actuator';
 import {loadDevices} from '../../../module/process/infrasctructure/store/actions/device';
 import {IS_EXPERT} from '../../../../config/env';
@@ -55,17 +59,7 @@ export function ActuatorsScreen(props: any) {
 		[ActuatorType.CTRL]: countOf(ActuatorType.CTRL)
 	};
 
-	// COM actuators target a slave device (`config.deviceId`): prefix the row
-	// with that device's name.
-	const labelOf = (actuator: any) => {
-		const name = `${actuator.name ?? 'actuator'}`;
-		if (actuator.type !== ActuatorType.COM) return name;
-		const device = (props.devices ?? []).find(
-			(d: any) => `${d.id}` === `${actuator.config?.deviceId}`
-		);
-		const deviceName = device?.name ?? device?.label;
-		return deviceName ? `${deviceName} - ${name}` : name;
-	};
+	const labelOf = (actuator: any) => actuatorLabel(actuator, props.devices);
 
 	// CTRL : ajout toujours possible ; RPI et COM : mode expert uniquement.
 	const canAdd = IS_EXPERT || activeFilter === ActuatorType.CTRL;

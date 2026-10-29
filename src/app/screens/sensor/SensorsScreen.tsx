@@ -9,6 +9,10 @@ import {
 } from '../../components/common/navigationHeaders';
 import {SensorStack} from '../../components/sensor/SensorStack';
 import {loadSensors} from '../../../module/process/infrasctructure/store/actions/sensor';
+// Bouton d'ajout masqué : la navigation et les formulaires de création
+// restent en place, il suffit de repasser ce flag à true pour le réafficher.
+const SHOW_ADD_SENSOR = false;
+
 export function Sensor(props: any) {
 	const [activeMenu, setActiveMenu] = React.useState<string>();
 	const [orientation, setOrientation] = React.useState<OrientationType>(
@@ -28,17 +32,19 @@ export function Sensor(props: any) {
 
 	useEffect(() => {
 		props.navigation.setOptions({
-			headerRight: () =>
-				navigationHeader(
-					() => {
-						props.navigation.navigate('Settings', {
-							screen: 'SensorSettingsMenu',
-							params: null
-						});
-					},
-					'times-circle',
-					true
-				),
+			headerRight: SHOW_ADD_SENSOR
+				? () =>
+						navigationHeader(
+							() => {
+								props.navigation.navigate('Settings', {
+									screen: 'SensorSettingsMenu',
+									params: null
+								});
+							},
+							'times-circle',
+							true
+						)
+				: undefined,
 			headerLeft: brandLogo
 		});
 

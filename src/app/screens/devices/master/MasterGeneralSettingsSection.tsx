@@ -9,8 +9,10 @@ import {BoxFormStyle} from '../../../styles/components/common/boxForm';
 import {updateDevice} from '../../../../module/process/infrasctructure/store/actions/device';
 import {useDeviceSection} from '../useDeviceSection';
 
-// Master General: Name + Description. `type` = 'MASTER' is a hidden field —
-// seeded via defaultValues (route.params.deviceData) and never rendered.
+// Master General: Name, IP address + port (`config.ipAddress` / `config.port`,
+// read-only) and Description. `type` = 'MASTER' is a hidden field — seeded via
+// defaultValues (route.params.deviceData) and never rendered. `config` is not
+// an owned field: the read-only connection values are never staged.
 export function MasterGeneralSettingsSection(props: any) {
 	const embedded = !!props.embedded;
 	const {control, errors, markDirty} = useDeviceSection(props, undefined, [
@@ -34,6 +36,21 @@ export function MasterGeneralSettingsSection(props: any) {
 					placeholder="Name*"
 					rules={{required: 'Name is required'}}
 					onChangeText={() => markDirty()}
+				/>
+				<InputForm
+					control={control}
+					errors={errors}
+					name="config.ipAddress"
+					placeholder="IP address"
+					disabled
+				/>
+				<InputForm
+					control={control}
+					errors={errors}
+					name="config.port"
+					placeholder="Port"
+					keyboardType="numeric"
+					disabled
 				/>
 				<TextAreaForm
 					control={control}
