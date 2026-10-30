@@ -8,6 +8,8 @@ import {
 import {BoxFormStyle} from '../../../styles/components/common/boxForm';
 import {updateDevice} from '../../../../module/process/infrasctructure/store/actions/device';
 import {useDeviceSection} from '../useDeviceSection';
+import {DeviceConnectivityStatus} from '../../../components/device/DeviceConnectivity';
+import {isTempId} from '../../../../services/socket';
 
 // Master General: Name, IP address + port (`config.ipAddress` / `config.port`,
 // read-only) and Description. `type` = 'MASTER' is a hidden field — seeded via
@@ -28,6 +30,9 @@ export function MasterGeneralSettingsSection(props: any) {
 	return (
 		<View style={BoxFormStyle.boxForm}>
 			<Body {...bodyProps}>
+				{!isTempId(props.deviceData?.id) && (
+					<DeviceConnectivityStatus device={props.deviceData} />
+				)}
 				<InputForm
 					control={control}
 					errors={errors}
@@ -37,21 +42,27 @@ export function MasterGeneralSettingsSection(props: any) {
 					rules={{required: 'Name is required'}}
 					onChangeText={() => markDirty()}
 				/>
-				<InputForm
-					control={control}
-					errors={errors}
-					name="config.ipAddress"
-					placeholder="IP address"
-					disabled
-				/>
-				<InputForm
-					control={control}
-					errors={errors}
-					name="config.port"
-					placeholder="Port"
-					keyboardType="numeric"
-					disabled
-				/>
+				<View style={{flexDirection: 'row', gap: 10}}>
+					<View style={{flex: 2}}>
+						<InputForm
+							control={control}
+							errors={errors}
+							name="config.ipAddress"
+							placeholder="IP address"
+							disabled
+						/>
+					</View>
+					<View style={{flex: 1}}>
+						<InputForm
+							control={control}
+							errors={errors}
+							name="config.port"
+							placeholder="Port"
+							keyboardType="numeric"
+							disabled
+						/>
+					</View>
+				</View>
 				<TextAreaForm
 					control={control}
 					errors={errors}

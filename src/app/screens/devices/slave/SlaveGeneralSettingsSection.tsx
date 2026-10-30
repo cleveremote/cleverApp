@@ -9,6 +9,8 @@ import {BoxFormStyle} from '../../../styles/components/common/boxForm';
 import {updateDevice} from '../../../../module/process/infrasctructure/store/actions/device';
 import {useDeviceSection} from '../useDeviceSection';
 import {toNumber} from '../deviceFieldUtils';
+import {DeviceConnectivityStatus} from '../../../components/device/DeviceConnectivity';
+import {isTempId} from '../../../../services/socket';
 
 // Slave General: Name, Modbus unit id (`config.slaveId`, read-only) and
 // Description.
@@ -38,6 +40,9 @@ export function SlaveGeneralSettingsSection(props: any) {
 	return (
 		<View style={BoxFormStyle.boxForm}>
 			<Body {...bodyProps}>
+				{!isTempId(props.deviceData?.id) && (
+					<DeviceConnectivityStatus device={props.deviceData} />
+				)}
 				<InputForm
 					control={control}
 					errors={errors}

@@ -26,7 +26,8 @@ import {updateSchedule} from '../../../../../../module/process/infrasctructure/s
  *
  * Réutilisable hors schedule (ex. fréquence de lecture d'un sensor) : `cron`
  * remplace `scheduleData.cron`, `onChange(dto)` remplace le staging redux, et
- * `cronOnly` masque la date ponctuelle et le déclencheur solaire, `hidePreview`
+ * `cronOnly` masque la date ponctuelle et le déclencheur solaire, `hideRuns`
+ * masque les prochaines exécutions, `hidePreview`
  * masque l'expression et les prochaines exécutions.
  */
 
@@ -361,7 +362,21 @@ function mapToDto(s: CronState): CronDto {
 function dtoToState(cron: CronDto | undefined | null): CronState {
 	const s: CronState = JSON.parse(JSON.stringify(initialState));
 	if (!cron) return s;
-	if (cron.pattern) applyCronString(s, cron.pattern);
+	if (cron.pattern) {
+		applyCronString(s, cron.pattern);
+		// Ouvre l'onglet du champ qui porte la récurrence (ex. « */10 » en
+		// secondes, « */5 » en minutes) plutôt que Minutes par défaut.
+		const significant = ORDER.find(k => {
+			const f = s.fields[k];
+			return (
+				f.mode === 'step' ||
+				f.mode === 'range' ||
+				f.mode === 'free' ||
+				(f.mode === 'list' && f.list.length > 1)
+			);
+		});
+		if (significant) s.tab = significant;
+	}
 	if (cron.sunBehavior) {
 		s.solar.enabled = true;
 		s.solar.mode = cron.pattern ? 'combine' : 'replace';
@@ -581,8 +596,7 @@ const MODES: [FieldMode, string][] = [
 	['every', 'Chaque'],
 	['list', 'Liste'],
 	['range', 'Intervalle'],
-	['step', 'Pas'],
-	['free', 'Texte libre']
+	['step', 'Pas']
 ];
 
 // --- Petits composants d'UI ------------------------------------------------
@@ -617,12 +631,33 @@ function NumInput({
 	width?: number;
 	invalid?: boolean;
 }) {
+	// Texte local : pendant la saisie le champ peut être vidé (pour taper « 10 »
+	// à la place de « 5 ») sans être aussitôt réécrit par la valeur numérique.
+	// Seuls les nombres saisis remontent ; au blur, le texte reprend la valeur.
+	const [txt, setTxt] = React.useState(String(value));
+	const focused = React.useRef(false);
+	React.useEffect(() => {
+		if (!focused.current) setTxt(String(value));
+	}, [value]);
 	return (
 		<TextInput
 			keyboardType="number-pad"
-			value={String(value)}
-			onChangeText={t => onChange(parseInt(t, 10) || 0)}
-			style={[styles.numInput, {width}, invalid && styles.inputInvalid]}
+			value={txt}
+			onFocus={() => (focused.current = true)}
+			onBlur={() => {
+				focused.current = false;
+				setTxt(String(value));
+			}}
+			onChangeText={t => {
+				const digits = t.replace(/[^0-9]/g, '');
+				setTxt(digits);
+				if (digits !== '') onChange(parseInt(digits, 10));
+			}}
+			style={[
+				styles.numInput,
+				{width},
+				(invalid || txt === '') && styles.inputInvalid
+			]}
 		/>
 	);
 }
@@ -869,14 +904,25 @@ export function NewSchedulingSection(props: any) {
 
 					<View style={styles.editorCard}>
 						<Text style={styles.fieldLabel}>{cfg.label}</Text>
-						<View style={styles.chipsWrap}>
-							{MODES.map(m => (
-								<Chip
-									key={m[0]}
-									label={m[1]}
-									active={f.mode === m[0]}
-									onPress={() => patch(n => (n.fields[activeTab].mode = m[0]))}
-								/>
+						{/* Modes en grille 2 x 2, boutons de taille identique ; une
+						    ligne incomplète est complétée par des cases vides pour
+						    garder l'alignement. */}
+						<View style={styles.modeGrid}>
+							{[MODES.slice(0, 2), MODES.slice(2)].map((row, r) => (
+								<View key={r} style={styles.modeRow}>
+									{row.map(m => (
+										<Chip
+											key={m[0]}
+											label={m[1]}
+											active={f.mode === m[0]}
+											onPress={() => patch(n => (n.fields[activeTab].mode = m[0]))}
+											style={styles.modeChip}
+										/>
+									))}
+									{Array.from({length: 2 - row.length}).map((_, i) => (
+										<View key={'pad' + i} style={styles.modeCell} />
+									))}
+								</View>
 							))}
 						</View>
 
@@ -981,7 +1027,7 @@ export function NewSchedulingSection(props: any) {
 												styles.segTxt,
 												f.stepBase === 'every' && styles.segTxtActive
 											]}>
-											A partir de chaque
+											A partir de
 										</Text>
 									</TouchableOpacity>
 									<TouchableOpacity
@@ -1198,6 +1244,7 @@ export function NewSchedulingSection(props: any) {
 					</View>
 
 					{/* Prochaines exécutions */}
+					{!props.hideRuns && (
 					<View style={styles.outCard}>
 						<Text style={styles.sectionLabel}>Prochaines executions</Text>
 						{runs.length === 0 ? (
@@ -1218,6 +1265,7 @@ export function NewSchedulingSection(props: any) {
 							))
 						)}
 					</View>
+					)}
 				</>
 			)}
 
@@ -1341,6 +1389,10 @@ const styles = StyleSheet.create({
 		borderWidth: 1
 	},
 	chipIdle: {backgroundColor: C.surface, borderColor: C.border},
+	modeGrid: {gap: 8, marginBottom: 4},
+	modeRow: {flexDirection: 'row', gap: 8},
+	modeCell: {flex: 1},
+	modeChip: {flex: 1, alignItems: 'center', paddingHorizontal: 6},
 	chipActive: {backgroundColor: C.chipActiveBg, borderColor: C.chipActiveBorder},
 	chipTxt: {fontSize: 13, color: C.text, fontWeight: '600'},
 	chipTxtActive: {color: '#ffffff', fontWeight: '700'},

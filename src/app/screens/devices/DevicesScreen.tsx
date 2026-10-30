@@ -84,6 +84,14 @@ export function DevicesScreen(props: any) {
 	return (
 		<View style={styles.container}>
 			<View style={styles.card}>
+				{masters.length > 0 && (
+					<CheckDevicesButton
+						label="Refresh status"
+						variant="text"
+						color={COLORS.primary}
+						style={styles.checkButton}
+					/>
+				)}
 				{masters.map((master: any) =>
 					elementStack(
 						master,
@@ -103,13 +111,6 @@ export function DevicesScreen(props: any) {
 						<DeviceConnectivityDot device={master} />,
 						deviceRowWarning(master, props.devices, props.connectivity)
 					)
-				)}
-				{masters.length > 0 && (
-					<CheckDevicesButton
-						label="Check all devices"
-						variant="outline"
-						style={styles.checkButton}
-					/>
 				)}
 				<TouchableOpacity
 					style={[
@@ -182,7 +183,7 @@ const styles = StyleSheet.create({
 		gap: 8
 	},
 	checkButton: {
-		marginTop: 20,
+		alignSelf: 'flex-end',
 		marginHorizontal: 8
 	},
 	discoverButtonBusy: {

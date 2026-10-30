@@ -42,6 +42,13 @@ const LABELS: Record<ConnectivityState, string> = {
 	UNKNOWN: 'Unknown'
 };
 
+// Fond pâle du cadre d'état (DeviceConnectivityStatus).
+const BACKGROUNDS: Record<ConnectivityState, string> = {
+	CONNECTED: '#f0fdf4',
+	DISCONNECTED: '#fef2f2',
+	UNKNOWN: '#f9fafb'
+};
+
 const pad = (n: number) => `${n}`.padStart(2, '0');
 
 // "29/10 08:12" : Intl n'est pas fiable sous Hermes/Android.
@@ -239,26 +246,25 @@ export function CheckDevicesButton(
 	props: Readonly<{
 		deviceIds?: string[];
 		label: string;
-		variant?: 'primary' | 'outline';
+		// 'text' : simple lien discret, sans cadre ni fond.
+		variant?: 'primary' | 'outline' | 'text';
 		color?: string;
 		style?: any;
 	}>
 ) {
 	const {busy, check} = useCheckDevices();
 	const outline = props.variant === 'outline';
-	const color = props.color ?? '#32404e';
-	const fg = outline ? color : 'white';
+	const text = props.variant === 'text';
+	const color = props.color ?? (text ? '#6b7280' : '#32404e');
+	const fg = outline || text ? color : 'white';
+	let frame: any = {backgroundColor: color};
+	if (outline) frame = {borderWidth: 1, borderColor: color};
+	if (text) frame = styles.textButton;
 	return (
 		<TouchableOpacity
-			style={[
-				styles.button,
-				outline
-					? {borderWidth: 1, borderColor: color}
-					: {backgroundColor: color},
-				busy && {opacity: 0.7},
-				props.style
-			]}
+			style={[styles.button, frame, busy && {opacity: 0.7}, props.style]}
 			disabled={busy}
+			hitSlop={text ? 8 : undefined}
 			onPress={() => {
 				ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
 				check(props.deviceIds);
@@ -266,45 +272,39 @@ export function CheckDevicesButton(
 			{busy ? (
 				<ActivityIndicator size="small" color={fg} />
 			) : (
-				<Icon name="sync-alt" size={outline ? 12 : 15} color={fg} />
+				<Icon name="sync-alt" size={outline || text ? 12 : 15} color={fg} />
 			)}
-			<Text style={[styles.buttonLabel, {color: fg}, outline && {fontSize: 14}]}>
+			<Text
+				style={[
+					styles.buttonLabel,
+					{color: fg},
+					outline && {fontSize: 14},
+					text && styles.textButtonLabel
+				]}>
 				{busy ? 'Checking…' : props.label}
 			</Text>
 		</TouchableOpacity>
 	);
 }
 
-// État détaillé d'un master/slave et vérification manuelle (écran de réglages).
-export function DeviceConnectivityPanel({device}: Readonly<{device: any}>) {
-	const {state, changedAt, error} = useDeviceConnectivity(device);
+// État compact d'un device : pastille, libellé et date du dernier changement.
+export function DeviceConnectivityStatus({device}: Readonly<{device: any}>) {
+	const {state, changedAt} = useDeviceConnectivity(device);
 	const at = formatChangedAt(changedAt);
-	let detail = 'Never checked';
-	if (state === 'CONNECTED') detail = at ? `Connected since ${at}` : 'Connected';
-	if (state === 'DISCONNECTED') detail = at ? `Lost at ${at}` : 'Unreachable';
-	const scope =
-		device?.type === 'MASTER'
-			? 'Checks the master, then its slaves if it answers.'
-			: 'Checks the master first, then this slave if the master answers.';
 	return (
-		<View style={styles.panel}>
-			<View style={styles.row}>
-				<View style={[styles.dot, {backgroundColor: COLORS[state]}]} />
-				<Text style={[styles.state, {color: COLORS[state]}]}>
-					{LABELS[state]}
-				</Text>
-			</View>
-			<Text style={styles.detail}>{detail}</Text>
-			{state === 'DISCONNECTED' && error ? (
-				<Text style={styles.error} numberOfLines={3}>
-					{error}
-				</Text>
+		<View
+			style={[
+				styles.row,
+				styles.status,
+				{borderColor: COLORS[state], backgroundColor: BACKGROUNDS[state]}
+			]}>
+			<View style={[styles.dot, {backgroundColor: COLORS[state]}]} />
+			<Text style={[styles.state, {color: COLORS[state]}]}>
+				{LABELS[state]}
+			</Text>
+			{state !== 'UNKNOWN' && at ? (
+				<Text style={styles.detail}>{`since ${at}`}</Text>
 			) : null}
-			<Text style={styles.hint}>{scope}</Text>
-			<CheckDevicesButton
-				deviceIds={device?.id != null ? [`${device.id}`] : []}
-				label="Check now"
-			/>
 		</View>
 	);
 }
@@ -317,7 +317,7 @@ const ALERT = {
 
 // Écran de réglages du device, enregistré sous `DeviceSettings` dans les
 // stacks Cycles / Fertigation / Sensors : le retour ramène à la carte.
-// L'accordéon Connectivity est ouvert d'office.
+// La section General, qui porte l'état de connexion, est ouverte d'office.
 export const openDeviceSettings = (navigation: any, device: any) => {
 	const params = {deviceId: device.id, section: 'connectivity'};
 	navigation.navigate(
@@ -480,9 +480,12 @@ const styles = StyleSheet.create({
 		alignItems: 'center',
 		gap: 8
 	},
-	panel: {
-		padding: 12,
-		gap: 6
+	// Même gabarit qu'un InputForm.
+	status: {
+		height: 50,
+		borderRadius: 12,
+		borderWidth: 1,
+		paddingHorizontal: 12
 	},
 	state: {
 		fontWeight: 'bold',
@@ -546,5 +549,13 @@ const styles = StyleSheet.create({
 	buttonLabel: {
 		fontSize: 15,
 		fontWeight: 'bold'
+	},
+	textButton: {
+		marginTop: 0,
+		paddingVertical: 6,
+		gap: 6
+	},
+	textButtonLabel: {
+		fontSize: 14
 	}
 });

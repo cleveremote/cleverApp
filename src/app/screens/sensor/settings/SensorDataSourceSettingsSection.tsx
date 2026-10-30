@@ -6,7 +6,11 @@ import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import {BoxFormStyle} from '../../../styles/components/common/boxForm';
 import {hapticOptions} from '../../../data/cycleTypes';
 import {isTempId} from '../../../../services/socket';
-import {saveSensor} from '../../../../module/process/infrasctructure/store/actions/sensor';
+import {
+	saveSensor,
+	updateSensor
+} from '../../../../module/process/infrasctructure/store/actions/sensor';
+import {NewSchedulingSection} from '../../cycle/schedules/settings/schedule/NewSchedulingSection';
 
 const textColor = '#32404e';
 const mutedColor = '#8a96a3';
@@ -98,13 +102,16 @@ function InfoRow({
 	label,
 	value,
 	sub,
-	onPress
+	onPress,
+	expanded
 }: Readonly<{
 	icon?: string;
 	label: string;
 	value?: string;
 	sub?: string;
 	onPress?: () => void;
+	// Ligne pliable : chevron vers le bas quand le contenu est déplié.
+	expanded?: boolean;
 }>) {
 	const content = (
 		<View style={{flexDirection: 'row', paddingVertical: 8}}>
@@ -135,7 +142,11 @@ function InfoRow({
 				) : null}
 			</View>
 			{onPress ? (
-				<Icon name="chevron-right" size={14} color={mutedColor} />
+				<Icon
+					name={expanded ? 'chevron-down' : 'chevron-right'}
+					size={14}
+					color={mutedColor}
+				/>
 			) : null}
 		</View>
 	);
@@ -171,7 +182,10 @@ function SectionTitle({children}: Readonly<{children: React.ReactNode}>) {
 
 export function SensorDataSourceSettingsSection(props: any) {
 	const source = props.sensorData;
+	const sourceRef = React.useRef(source);
+	sourceRef.current = source;
 	const [showTechnical, setShowTechnical] = React.useState(false);
+	const [showFrequency, setShowFrequency] = React.useState(false);
 
 	const sensors: any[] = (props.sensors || []).filter((x: any) => !x.delete);
 	const isChild = source?.parentId != null;
@@ -315,14 +329,37 @@ export function SensorDataSourceSettingsSection(props: any) {
 				label="Frequency"
 				value={describeCron(cronPattern) || cronPattern || 'Not set'}
 				sub={describeCron(cronPattern) ? cronPattern : undefined}
+				expanded={showFrequency}
 				onPress={() => {
 					ReactNativeHapticFeedback.trigger(
 						'impactMedium',
 						hapticOptions
 					);
-					props.navigation.navigate('SensorFrequencySection');
+					setShowFrequency(prev => !prev);
 				}}
 			/>
+			{showFrequency ? (
+				// Fréquence de lecture (config.cronPattern) : même builder cron
+				// que les schedules, sans date ponctuelle ni solaire. Monté à
+				// l'ouverture pour relire le pattern courant ; les changements
+				// sont stagés sur le sensor, la sauvegarde reste celle de l'écran.
+				<NewSchedulingSection
+					key={source?.id}
+					cronOnly
+					hideRuns
+					cron={{pattern: cronPattern}}
+					onChange={(dto: any) =>
+						props.updateSensor({
+							...sourceRef.current,
+							config: {
+								...sourceRef.current?.config,
+								cronPattern: dto.pattern
+							},
+							isModified: true
+						})
+					}
+				/>
+			) : null}
 			<SectionTitle>
 				Measures produced ({linkedCount} / {measureFields.length})
 			</SectionTitle>
@@ -459,5 +496,6 @@ const mapStateToProps = (state: any) => ({
 });
 
 export default connect(mapStateToProps, {
-	saveSensor
+	saveSensor,
+	updateSensor
 })(SensorDataSourceSettingsSection);
