@@ -19,10 +19,11 @@ import {
 	emptyActuatorConfig,
 	gpioDirectionOptions,
 	gpioEdgeOptions,
-	isComBased,
-	valveTypeOptions
+	isComBased
 } from '../../data/actuatorTypes';
 import {toNumber} from '../devices/deviceFieldUtils';
+import {findModel} from '../devices/slave/SlaveModelSection';
+import {hasActuatorsSection} from '../devices/slave/SlaveActuatorsSection';
 import {useActuatorSection} from './useActuatorSection';
 import {IS_EXPERT} from '../../../../config/env';
 
@@ -30,23 +31,18 @@ import {IS_EXPERT} from '../../../../config/env';
 // chaînes, on les recoerce avant de stager l'entité.
 const RPI_NUMERIC_FIELDS = ['rpiPin', 'debounceTimeout'];
 
-// Boucle de régulation d'une vanne CTRL, dans l'ordre d'affichage.
+// Paramétrage d'une vanne CTRL affiché, dans l'ordre. Les autres champs de la
+// boucle de régulation gardent leurs valeurs par défaut (emptyCtrlConfig).
 const CTRL_REGULATION_FIELDS: {name: string; label: string}[] = [
-	{name: 'maxFlowRate', label: 'Max flow rate'},
-	{name: 'kP', label: 'kP (gain)'},
 	{name: 'minOpening', label: 'Min opening (%)'},
 	{name: 'maxOpening', label: 'Max opening (%)'},
 	{name: 'openingPercent', label: 'Opening (%)'},
-	{name: 'tolerance', label: 'Tolerance'},
-	{name: 'maxIterations', label: 'Max iterations'},
-	{name: 'iterationDelayMs', label: 'Iteration delay (ms)'},
-	{name: 'fullStrokeMs', label: 'Full stroke (ms)'}
+	{name: 'fullStrokeMs', label: 'Full stroke (ms)'},
+	{name: 'minOutputValue', label: 'Min output value'},
+	{name: 'maxOutputValue', label: 'Max output value'}
 ];
 
-const CTRL_NUMERIC_FIELDS = [
-	'channel',
-	...CTRL_REGULATION_FIELDS.map(f => f.name)
-];
+const CTRL_NUMERIC_FIELDS = CTRL_REGULATION_FIELDS.map(f => f.name);
 
 // Actuator Configuration : le type (modifiable seulement à la création, comme
 // celui d'une COM request) détermine les champs affichés. Le changer
@@ -54,7 +50,8 @@ const CTRL_NUMERIC_FIELDS = [
 // parent keye la section sur le type pour la remonter.
 //  - RPI  : la broche GPIO et son paramétrage `onoff`.
 //  - COM  : le device modbus + la liste d'actions `{comRequestId, portNumber}`.
-//  - CTRL : les champs COM + le paramétrage de la boucle de régulation.
+//  - CTRL : le device + la liste d'actions `{commandId, channel}` (device
+//    commands du modèle du slave) + l'ouverture et la course de la vanne.
 export function ActuatorConfigurationSettingsSection(props: any) {
 	const embedded = !!props.embedded;
 	const source = embedded
@@ -78,7 +75,12 @@ export function ActuatorConfigurationSettingsSection(props: any) {
 		numericFields.forEach(field => {
 			config[field] = toNumber(config[field]);
 		});
-		if (comBased) {
+		if (isCtrl) {
+			config.actions = (config.actions ?? []).map((action: any) => ({
+				commandId: action.commandId,
+				channel: toNumber(action.channel)
+			}));
+		} else if (comBased) {
 			config.actions = (config.actions ?? []).map((action: any) => ({
 				comRequestId: action.comRequestId,
 				portNumber: toNumber(action.portNumber)
@@ -107,53 +109,86 @@ export function ActuatorConfigurationSettingsSection(props: any) {
 
 	// Un actuator modbus s'adresse à un device esclave (les COM requests sont
 	// portées par les esclaves).
-	const deviceOptions = (props.devices ?? [])
-		.filter((d: any) => d.type === 'SLAVE' && !d.delete)
-		.map((d: any) => ({label: d.name ?? d.label, value: d.id}));
-
-	const comRequestsOfDevice = (props.modbusTasks ?? []).filter(
-		(t: any) => `${t.deviceId}` === `${deviceId}`
+	const slaves = (props.devices ?? []).filter(
+		(d: any) => d.type === 'SLAVE' && !d.delete
 	);
+	const deviceOptions = slaves.map((d: any) => ({
+		label: d.name ?? d.label,
+		value: d.id
+	}));
 
-	const labelOfRequest = (comRequestId: any) => {
-		const request = comRequestsOfDevice.find(
-			(t: any) => `${t.id}` === `${comRequestId}`
-		);
-		return request?.name ?? request?.label ?? `${comRequestId}`;
+	// Une action COM pointe une COM request du device (`comRequestId`, paramètre
+	// `portNumber`) ; une action CTRL pointe une device command du modèle du
+	// slave (`commandId`, paramètre `channel`).
+	const actionKey = isCtrl ? 'commandId' : 'comRequestId';
+	const paramKey = isCtrl ? 'channel' : 'portNumber';
+
+	const device = (props.devices ?? []).find(
+		(d: any) => `${d.id}` === `${deviceId}`
+	);
+	const actionSources: any[] = isCtrl
+		? findModel(props.models, device)?.deviceCommands ?? []
+		: (props.modbusTasks ?? []).filter(
+				(t: any) => `${t.deviceId}` === `${deviceId}`
+		  );
+
+	const labelOfAction = (id: any) => {
+		const source = actionSources.find((t: any) => `${t.id}` === `${id}`);
+		return source?.name ?? source?.label ?? `${id}`;
 	};
 
-	const availableRequests = comRequestsOfDevice
+	const availableActions = actionSources
 		.filter(
-			(t: any) =>
-				!actions.some((a: any) => `${a.comRequestId}` === `${t.id}`)
+			(t: any) => !actions.some((a: any) => `${a[actionKey]}` === `${t.id}`)
 		)
 		.map((t: any) => ({label: t.name ?? t.label, value: t.id}));
+
+	// Un CTRL n'a pas de champ Device : on propose les device commands de tous
+	// les slaves pilotant des actuators, et la commande choisie fixe le device.
+	const CTRL_OPTION_SEPARATOR = '::';
+	const ctrlActionOptions = slaves
+		.filter((d: any) => hasActuatorsSection(props.models, d))
+		.flatMap((d: any) =>
+			(findModel(props.models, d)?.deviceCommands ?? []).map((c: any) => ({
+				label: `${d.name ?? d.label} - ${c.name ?? c.label}`,
+				value: `${d.id}${CTRL_OPTION_SEPARATOR}${c.id}`
+			}))
+		);
 
 	const setActions = (next: any[]) => {
 		setValue('config.actions', next, {shouldDirty: true});
 		markDirty();
 	};
 
-	const addAction = (comRequestId: any) => {
-		if (!comRequestId) return;
-		if (actions.some((a: any) => `${a.comRequestId}` === `${comRequestId}`))
-			return;
-		setActions([...actions, {comRequestId, portNumber: undefined}]);
+	// Un CTRL ne pilote qu'une seule device command.
+	const canAddAction = !readOnly && !(isCtrl && actions.length >= 1);
+
+	const addAction = (id: any) => {
+		if (!id || !canAddAction) return;
+		if (actions.some((a: any) => `${a[actionKey]}` === `${id}`)) return;
+		setActions([...actions, {[actionKey]: id, [paramKey]: undefined}]);
 	};
 
-	const removeAction = (comRequestId: any) =>
-		setActions(
-			actions.filter(
-				(a: any) => `${a.comRequestId}` !== `${comRequestId}`
-			)
-		);
+	const addCtrlAction = (value: any) => {
+		if (!value || !canAddAction) return;
+		const [slaveId, commandId] = `${value}`.split(CTRL_OPTION_SEPARATOR);
+		const slave = slaves.find((d: any) => `${d.id}` === slaveId);
+		setValue('config.deviceId', slave?.id ?? slaveId, {shouldDirty: true});
+		setActions([{commandId, channel: undefined}]);
+	};
 
-	const setPortNumber = (comRequestId: any, value: string) =>
+	const labelOfCtrlAction = (id: any) =>
+		[device?.name ?? device?.label, labelOfAction(id)]
+			.filter(Boolean)
+			.join(' - ');
+
+	const removeAction = (id: any) =>
+		setActions(actions.filter((a: any) => `${a[actionKey]}` !== `${id}`));
+
+	const setActionParam = (id: any, value: string) =>
 		setActions(
 			actions.map((a: any) =>
-				`${a.comRequestId}` === `${comRequestId}`
-					? {...a, portNumber: value}
-					: a
+				`${a[actionKey]}` === `${id}` ? {...a, [paramKey]: value} : a
 			)
 		);
 
@@ -175,11 +210,6 @@ export function ActuatorConfigurationSettingsSection(props: any) {
 		});
 	};
 
-	// Un CTRL régule sur la mesure d'un débitmètre : on propose les sensors.
-	const flowMeterOptions = (props.sensors ?? [])
-		.filter((s: any) => !s.delete)
-		.map((s: any) => ({label: s.name, value: s.id}));
-
 	const Body: any = embedded ? View : ScrollView;
 	const bodyProps: any = embedded
 		? {}
@@ -188,17 +218,19 @@ export function ActuatorConfigurationSettingsSection(props: any) {
 	return (
 		<View style={BoxFormStyle.boxForm}>
 			<Body {...bodyProps}>
-				<SelectForm
-					lstData={typeOptions}
-					control={control}
-					errors={errors}
-					name="type"
-					placeholder="Type*"
-					// Un CTRL garde toujours son type (lecture seule).
-					disabled={!isNew || isCtrl}
-					rules={{required: 'Type is required'}}
-					onValueChange={onTypeChange}
-				/>
+				{/* Un CTRL garde toujours son type : le champ est masqué. */}
+				{!isCtrl && (
+					<SelectForm
+						lstData={typeOptions}
+						control={control}
+						errors={errors}
+						name="type"
+						placeholder="Type*"
+						disabled={!isNew}
+						rules={{required: 'Type is required'}}
+						onValueChange={onTypeChange}
+					/>
+				)}
 
 				{isRpi && (
 					<>
@@ -256,44 +288,55 @@ export function ActuatorConfigurationSettingsSection(props: any) {
 
 				{comBased && (
 					<>
-						<SelectForm
-							lstData={deviceOptions}
-							control={control}
-							errors={errors}
-							name="config.deviceId"
-							placeholder="Device*"
-							rules={{required: 'Device is required'}}
-							disabled={readOnly}
-							onValueChange={() => {
-								// Les COM requests dépendent du device : les
-								// actions déjà posées ne sont plus valides.
-								setActions([]);
-								markDirty();
-							}}
-						/>
+						{!isCtrl && (
+							<SelectForm
+								lstData={deviceOptions}
+								control={control}
+								errors={errors}
+								name="config.deviceId"
+								placeholder="Device*"
+								rules={{required: 'Device is required'}}
+								disabled={readOnly}
+								onValueChange={() => {
+									// Les actions dépendent du device : celles
+									// déjà posées ne sont plus valides.
+									setActions([]);
+									markDirty();
+								}}
+							/>
+						)}
 
 						<Text style={styles.subSectionTitle}>Actions</Text>
 						{actions.map((action: any) =>
 							elementStack(
-								{id: action.comRequestId},
-								() => removeAction(action.comRequestId),
-								labelOfRequest(action.comRequestId),
+								{id: action[actionKey]},
+								() => removeAction(action[actionKey]),
+								isCtrl
+									? labelOfCtrlAction(action[actionKey])
+									: labelOfAction(action[actionKey]),
 								readOnly ? null : {name: faMinus, color: 'red'},
 								{
-									value: action.portNumber,
+									value: action[paramKey],
 									onChangeValue: (text: string) =>
-										setPortNumber(
-											action.comRequestId,
-											text
-										),
-									placeholder: 'port',
+										setActionParam(action[actionKey], text),
+									placeholder: isCtrl ? 'channel' : 'port',
 									disabled: readOnly
 								}
 							)
 						)}
-						{!readOnly && (
+						{canAddAction && isCtrl && (
 							<SelectForm
-								lstData={availableRequests}
+								lstData={ctrlActionOptions}
+								control={control}
+								errors={errors}
+								name="_addAction"
+								placeholder="Add action (device command) ..."
+								onValueChange={value => addCtrlAction(value)}
+							/>
+						)}
+						{canAddAction && !isCtrl && (
+							<SelectForm
+								lstData={availableActions}
 								control={control}
 								errors={errors}
 								name="_addAction"
@@ -312,32 +355,6 @@ export function ActuatorConfigurationSettingsSection(props: any) {
 				{isCtrl && (
 					<>
 						<Text style={styles.subSectionTitle}>Regulation</Text>
-						<InputForm
-							control={control}
-							errors={errors}
-							name="config.channel"
-							placeholder="Channel*"
-							keyboardType="numeric"
-							rules={{required: 'Channel is required'}}
-							onChangeText={() => markDirty()}
-						/>
-						<SelectForm
-							lstData={valveTypeOptions}
-							control={control}
-							errors={errors}
-							name="config.valveType"
-							placeholder="Valve type*"
-							rules={{required: 'Valve type is required'}}
-							onValueChange={() => markDirty()}
-						/>
-						<SelectForm
-							lstData={flowMeterOptions}
-							control={control}
-							errors={errors}
-							name="config.flowMeterId"
-							placeholder="Flow meter"
-							onValueChange={() => markDirty()}
-						/>
 						{CTRL_REGULATION_FIELDS.map(field => (
 							<InputForm
 								key={field.name}
@@ -369,7 +386,7 @@ const styles = {
 const mapStateToProps = (state: any) => ({
 	devices: state.root_device.devices,
 	modbusTasks: state.root_modbus_task.modbusTasks,
-	sensors: state.root_sensor.sensors
+	models: state.root_device_model.models
 });
 
 export default connect(mapStateToProps, {

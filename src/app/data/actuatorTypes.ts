@@ -55,9 +55,11 @@ export const emptyComConfig = () => ({
 	actions: [] as {comRequestId?: string; portNumber?: number}[]
 });
 
+// Les actions d'un CTRL pointent des device commands du modèle du slave, avec
+// le channel (voie) à piloter en paramètre.
 export const emptyCtrlConfig = () => ({
-	...emptyComConfig(),
-	channel: undefined,
+	deviceId: undefined,
+	actions: [] as {commandId?: string; channel?: number}[],
 	flowMeterId: undefined,
 	maxFlowRate: 100,
 	kP: 5,
@@ -70,6 +72,9 @@ export const emptyCtrlConfig = () => ({
 	// Temps que met la vanne pour parcourir toute sa course (minOpening <->
 	// maxOpening), en ms.
 	fullStrokeMs: 7000,
+	// Bornes de la valeur envoyée sur la sortie (channel) du slave.
+	minOutputValue: undefined,
+	maxOutputValue: undefined,
 	valveType: ValveType.PROPORTIONAL
 });
 
