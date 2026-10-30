@@ -38,7 +38,23 @@ export const updateSensor = (
 	if (sensor) {
 		const index = previous.findIndex(x => x.id === sensor?.id);
 		if (index > -1) {
-			previous[index] = sensor;
+			// La réponse de sync ne renvoie pas les champs résolus du fetch
+			// complet (deviceCommand, model…) : on fusionne avec le sensor connu
+			// au lieu de le remplacer, sinon la section Configuration se vide
+			// jusqu'au prochain refresh. Si la commande liée a changé, on ne
+			// garde pas une deviceCommand / un model périmés.
+			const prev = previous[index];
+			const sameCommand =
+				`${prev?.config?.commandId}` === `${sensor?.config?.commandId}`;
+			previous[index] = {
+				...prev,
+				...sensor,
+				deviceCommand:
+					sensor.deviceCommand ??
+					(sameCommand ? prev?.deviceCommand : undefined),
+				model: sensor.model ?? (sameCommand ? prev?.model : undefined),
+				isModified: false
+			};
 		} else {
 			previous.push(sensor);
 		}
