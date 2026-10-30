@@ -18,7 +18,12 @@ import {
 } from '../../../../../module/process/infrasctructure/store/actions/module';
 import {loadActuators as loadMasterActuators} from '../../../../../module/process/infrasctructure/store/actions/actuator';
 import {loadDevices} from '../../../../../module/process/infrasctructure/store/actions/device';
-import {actuatorLabel} from '../../../../data/actuatorTypes';
+import {
+	ActuatorType,
+	actuatorLabel,
+	compareLabels,
+	listedRpiActuators
+} from '../../../../data/actuatorTypes';
 import {useForm} from 'react-hook-form';
 import {SelectForm} from '../../../../components/common/FormComponents';
 import {CollapsibleSection} from '../../../../components/common/CollapsibleSection';
@@ -116,9 +121,9 @@ export function SequenceActuatorsSettingsSection(props: any) {
 	// Selected module refs of the given type (excluding the ones flagged for
 	// deletion) so we can both render them and keep them out of the picker.
 	// `type`/`name` are resolved from the master actuator when the persisted ref
-	// no longer carries them.
-	const selectedOfType = (type: string) =>
-		(props.moduleConfigs || [])
+	// no longer carries them. RPI ones are listed by label, as in My RPI.
+	const selectedOfType = (type: string) => {
+		const selected = (props.moduleConfigs || [])
 			.filter((a: any) => !a.delete)
 			.map((a: any) => {
 				const master = masterOf(a.moduleId);
@@ -132,16 +137,24 @@ export function SequenceActuatorsSettingsSection(props: any) {
 				};
 			})
 			.filter((a: any) => a.type === type);
+		return type === ActuatorType.RPI
+			? selected.sort((a: any, b: any) => compareLabels(a.label, b.label))
+			: selected;
+	};
 
 	// Picker options: master actuators of the given type minus the already
-	// selected ones, mapped to `{label, value}` (SelectForm shape).
+	// selected ones, mapped to `{label, value}` (SelectForm shape). RPI ones
+	// are the same list as My RPI (not deleted, sorted by label).
 	const availableOfType = (type: string) => {
 		const usedIds = selectedOfType(type).map((a: any) => `${a.moduleId}`);
-		return (props.masterActuators || [])
-			.filter(
-				(a: any) =>
-					a.type === type && usedIds.indexOf(`${a.id}`) < 0
-			)
+		const ofType =
+			type === ActuatorType.RPI
+				? listedRpiActuators(props.masterActuators, props.devices)
+				: (props.masterActuators || []).filter(
+						(a: any) => a.type === type
+				  );
+		return ofType
+			.filter((a: any) => usedIds.indexOf(`${a.id}`) < 0)
 			.map((a: any) => ({
 				label: actuatorLabel(a, props.devices),
 				value: a.id

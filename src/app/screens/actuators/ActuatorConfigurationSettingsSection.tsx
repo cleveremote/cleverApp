@@ -11,7 +11,6 @@ import {elementStack} from '../../components/cycle/moduleStack';
 import {BoxFormStyle} from '../../styles/components/common/boxForm';
 import {updateActuator} from '../../../module/process/infrasctructure/store/actions/actuator';
 import {loadDevices} from '../../../module/process/infrasctructure/store/actions/device';
-import {loadModbusTasks} from '../../../module/process/infrasctructure/store/actions/modbus-task';
 import {isTempId} from '../../../services/socket';
 import {
 	ActuatorType,
@@ -48,10 +47,10 @@ const CTRL_NUMERIC_FIELDS = CTRL_REGULATION_FIELDS.map(f => f.name);
 // celui d'une COM request) détermine les champs affichés. Le changer
 // réinitialise la config avec les valeurs par défaut du nouveau type ; l'écran
 // parent keye la section sur le type pour la remonter.
-//  - RPI  : la broche GPIO et son paramétrage `onoff`.
-//  - COM  : le device modbus + la liste d'actions `{comRequestId, portNumber}`.
-//  - CTRL : le device + la liste d'actions `{commandId, channel}` (device
-//    commands du modèle du slave) + l'ouverture et la course de la vanne.
+//  - RPI  : le type, la broche GPIO et son paramétrage `onoff`.
+//  - COM  : une seule action `{commandId, channel}` (device command du modèle
+//    d'un slave, qui fixe `deviceId`).
+//  - CTRL : la même action + l'ouverture et la course de la vanne.
 export function ActuatorConfigurationSettingsSection(props: any) {
 	const embedded = !!props.embedded;
 	const source = embedded
@@ -61,9 +60,9 @@ export function ActuatorConfigurationSettingsSection(props: any) {
 	const isRpi = type === ActuatorType.RPI;
 	const isCtrl = type === ActuatorType.CTRL;
 	const comBased = isComBased(type);
-	// Hors mode expert, le câblage COM (device + actions) est en lecture seule ;
-	// un CTRL reste toujours éditable, quel que soit l'env.
-	const readOnly = !IS_EXPERT && !isCtrl;
+	// Hors mode expert, l'action d'un COM / CTRL est en lecture seule (la
+	// régulation d'un CTRL reste éditable).
+	const readOnly = !IS_EXPERT;
 
 	const transform = (data: any) => {
 		const config = {...data.config};
@@ -75,15 +74,10 @@ export function ActuatorConfigurationSettingsSection(props: any) {
 		numericFields.forEach(field => {
 			config[field] = toNumber(config[field]);
 		});
-		if (isCtrl) {
+		if (comBased) {
 			config.actions = (config.actions ?? []).map((action: any) => ({
 				commandId: action.commandId,
 				channel: toNumber(action.channel)
-			}));
-		} else if (comBased) {
-			config.actions = (config.actions ?? []).map((action: any) => ({
-				comRequestId: action.comRequestId,
-				portNumber: toNumber(action.portNumber)
 			}));
 		}
 		return {...data, config};
@@ -96,99 +90,74 @@ export function ActuatorConfigurationSettingsSection(props: any) {
 	);
 
 	useEffect(() => {
-		// Les listes viennent de la configuration box (chargée au démarrage) ; on
-		// les rafraîchit à l'ouverture pour refléter un device/COM request créé
+		// La liste des devices vient de la configuration box (chargée au
+		// démarrage) ; on la rafraîchit à l'ouverture pour refléter un slave créé
 		// entre-temps dans l'espace Devices.
 		if (!comBased) return;
 		props.loadDevices();
-		props.loadModbusTasks();
 	}, []);
 
 	const deviceId = watch('config.deviceId');
 	const actions: any[] = watch('config.actions') ?? [];
 
-	// Un actuator modbus s'adresse à un device esclave (les COM requests sont
-	// portées par les esclaves).
 	const slaves = (props.devices ?? []).filter(
 		(d: any) => d.type === 'SLAVE' && !d.delete
 	);
-	const deviceOptions = slaves.map((d: any) => ({
-		label: d.name ?? d.label,
-		value: d.id
-	}));
+	const device = slaves.find((d: any) => `${d.id}` === `${deviceId}`);
 
-	// Une action COM pointe une COM request du device (`comRequestId`, paramètre
-	// `portNumber`) ; une action CTRL pointe une device command du modèle du
-	// slave (`commandId`, paramètre `channel`).
-	const actionKey = isCtrl ? 'commandId' : 'comRequestId';
-	const paramKey = isCtrl ? 'channel' : 'portNumber';
-
-	const device = (props.devices ?? []).find(
-		(d: any) => `${d.id}` === `${deviceId}`
-	);
-	const actionSources: any[] = isCtrl
-		? findModel(props.models, device)?.deviceCommands ?? []
-		: (props.modbusTasks ?? []).filter(
-				(t: any) => `${t.deviceId}` === `${deviceId}`
-		  );
-
-	const labelOfAction = (id: any) => {
-		const source = actionSources.find((t: any) => `${t.id}` === `${id}`);
-		return source?.name ?? source?.label ?? `${id}`;
-	};
-
-	const availableActions = actionSources
-		.filter(
-			(t: any) => !actions.some((a: any) => `${a[actionKey]}` === `${t.id}`)
-		)
-		.map((t: any) => ({label: t.name ?? t.label, value: t.id}));
-
-	// Un CTRL n'a pas de champ Device : on propose les device commands de tous
-	// les slaves pilotant des actuators, et la commande choisie fixe le device.
-	const CTRL_OPTION_SEPARATOR = '::';
-	const ctrlActionOptions = slaves
+	// Pas de champ Device : on propose les device commands de tous les slaves
+	// pilotant des actuators, et la commande choisie fixe le device.
+	const OPTION_SEPARATOR = '::';
+	const actionOptions = slaves
 		.filter((d: any) => hasActuatorsSection(props.models, d))
 		.flatMap((d: any) =>
-			(findModel(props.models, d)?.deviceCommands ?? []).map((c: any) => ({
-				label: `${d.name ?? d.label} - ${c.name ?? c.label}`,
-				value: `${d.id}${CTRL_OPTION_SEPARATOR}${c.id}`
-			}))
+			(findModel(props.models, d)?.deviceCommands ?? []).map(
+				(c: any) => ({
+					label: `${d.name ?? d.label} - ${c.name ?? c.label}`,
+					value: `${d.id}${OPTION_SEPARATOR}${c.id}`
+				})
+			)
 		);
+
+	const labelOfAction = (commandId: any) => {
+		const command = (
+			findModel(props.models, device)?.deviceCommands ?? []
+		).find((c: any) => `${c.id}` === `${commandId}`);
+		return [
+			device?.name ?? device?.label,
+			command?.name ?? command?.label ?? `${commandId}`
+		]
+			.filter(Boolean)
+			.join(' - ');
+	};
 
 	const setActions = (next: any[]) => {
 		setValue('config.actions', next, {shouldDirty: true});
 		markDirty();
 	};
 
-	// Un CTRL ne pilote qu'une seule device command.
-	const canAddAction = !readOnly && !(isCtrl && actions.length >= 1);
+	// Un actuator COM / CTRL ne pilote qu'une seule device command.
+	const canAddAction = !readOnly && actions.length === 0;
 
-	const addAction = (id: any) => {
-		if (!id || !canAddAction) return;
-		if (actions.some((a: any) => `${a[actionKey]}` === `${id}`)) return;
-		setActions([...actions, {[actionKey]: id, [paramKey]: undefined}]);
-	};
-
-	const addCtrlAction = (value: any) => {
+	const addAction = (value: any) => {
 		if (!value || !canAddAction) return;
-		const [slaveId, commandId] = `${value}`.split(CTRL_OPTION_SEPARATOR);
+		const [slaveId, commandId] = `${value}`.split(OPTION_SEPARATOR);
 		const slave = slaves.find((d: any) => `${d.id}` === slaveId);
-		setValue('config.deviceId', slave?.id ?? slaveId, {shouldDirty: true});
+		setValue('config.deviceId', slave?.id ?? slaveId, {
+			shouldDirty: true
+		});
 		setActions([{commandId, channel: undefined}]);
 	};
 
-	const labelOfCtrlAction = (id: any) =>
-		[device?.name ?? device?.label, labelOfAction(id)]
-			.filter(Boolean)
-			.join(' - ');
+	const removeAction = (commandId: any) =>
+		setActions(
+			actions.filter((a: any) => `${a.commandId}` !== `${commandId}`)
+		);
 
-	const removeAction = (id: any) =>
-		setActions(actions.filter((a: any) => `${a[actionKey]}` !== `${id}`));
-
-	const setActionParam = (id: any, value: string) =>
+	const setChannel = (commandId: any, value: string) =>
 		setActions(
 			actions.map((a: any) =>
-				`${a[actionKey]}` === `${id}` ? {...a, [paramKey]: value} : a
+				`${a.commandId}` === `${commandId}` ? {...a, channel: value} : a
 			)
 		);
 
@@ -218,8 +187,8 @@ export function ActuatorConfigurationSettingsSection(props: any) {
 	return (
 		<View style={BoxFormStyle.boxForm}>
 			<Body {...bodyProps}>
-				{/* Un CTRL garde toujours son type : le champ est masqué. */}
-				{!isCtrl && (
+				{/* Un COM / CTRL garde toujours son type : le champ est masqué. */}
+				{!comBased && (
 					<SelectForm
 						lstData={typeOptions}
 						control={control}
@@ -288,64 +257,29 @@ export function ActuatorConfigurationSettingsSection(props: any) {
 
 				{comBased && (
 					<>
-						{!isCtrl && (
-							<SelectForm
-								lstData={deviceOptions}
-								control={control}
-								errors={errors}
-								name="config.deviceId"
-								placeholder="Device*"
-								rules={{required: 'Device is required'}}
-								disabled={readOnly}
-								onValueChange={() => {
-									// Les actions dépendent du device : celles
-									// déjà posées ne sont plus valides.
-									setActions([]);
-									markDirty();
-								}}
-							/>
-						)}
-
 						<Text style={styles.subSectionTitle}>Actions</Text>
 						{actions.map((action: any) =>
 							elementStack(
-								{id: action[actionKey]},
-								() => removeAction(action[actionKey]),
-								isCtrl
-									? labelOfCtrlAction(action[actionKey])
-									: labelOfAction(action[actionKey]),
+								{id: action.commandId},
+								() => removeAction(action.commandId),
+								labelOfAction(action.commandId),
 								readOnly ? null : {name: faMinus, color: 'red'},
 								{
-									value: action[paramKey],
+									value: action.channel,
 									onChangeValue: (text: string) =>
-										setActionParam(action[actionKey], text),
-									placeholder: isCtrl ? 'channel' : 'port',
+										setChannel(action.commandId, text),
+									placeholder: 'channel',
 									disabled: readOnly
 								}
 							)
 						)}
-						{canAddAction && isCtrl && (
+						{canAddAction && (
 							<SelectForm
-								lstData={ctrlActionOptions}
+								lstData={actionOptions}
 								control={control}
 								errors={errors}
 								name="_addAction"
 								placeholder="Add action (device command) ..."
-								onValueChange={value => addCtrlAction(value)}
-							/>
-						)}
-						{canAddAction && !isCtrl && (
-							<SelectForm
-								lstData={availableActions}
-								control={control}
-								errors={errors}
-								name="_addAction"
-								placeholder={
-									deviceId
-										? 'Add action (COM request) ...'
-										: 'Select a device first'
-								}
-								disabled={!deviceId}
 								onValueChange={value => addAction(value)}
 							/>
 						)}
@@ -385,12 +319,10 @@ const styles = {
 
 const mapStateToProps = (state: any) => ({
 	devices: state.root_device.devices,
-	modbusTasks: state.root_modbus_task.modbusTasks,
 	models: state.root_device_model.models
 });
 
 export default connect(mapStateToProps, {
 	updateActuator,
-	loadDevices,
-	loadModbusTasks
+	loadDevices
 })(ActuatorConfigurationSettingsSection);

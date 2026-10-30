@@ -38,12 +38,9 @@ const isConfigInvalid = (actuator: any): boolean => {
 	}
 	if (isComBased(actuator?.type)) {
 		if (isEmpty(config?.deviceId)) return true;
-		if (actuator?.type === ActuatorType.CTRL) {
-			// Une seule action (device command), qui doit porter son channel.
-			const actions = config?.actions ?? [];
-			return actions.length !== 1 || isEmpty(actions[0]?.channel);
-		}
-		return false;
+		// Une seule action (device command), qui doit porter son channel.
+		const actions = config?.actions ?? [];
+		return actions.length !== 1 || isEmpty(actions[0]?.channel);
 	}
 	return true;
 };

@@ -50,16 +50,15 @@ export const emptyRpiConfig = () => ({
 	reconfigureDirection: true
 });
 
+// Les actions d'un COM / CTRL pointent une device command du modèle du slave,
+// avec le channel (voie) à piloter en paramètre.
 export const emptyComConfig = () => ({
 	deviceId: undefined,
-	actions: [] as {comRequestId?: string; portNumber?: number}[]
+	actions: [] as {commandId?: string; channel?: number}[]
 });
 
-// Les actions d'un CTRL pointent des device commands du modèle du slave, avec
-// le channel (voie) à piloter en paramètre.
 export const emptyCtrlConfig = () => ({
-	deviceId: undefined,
-	actions: [] as {commandId?: string; channel?: number}[],
+	...emptyComConfig(),
 	flowMeterId: undefined,
 	maxFlowRate: 100,
 	kP: 5,
@@ -88,10 +87,11 @@ export const emptyActuatorConfig = (type: string): Record<string, any> => {
 export const isComBased = (type?: string) =>
 	type === ActuatorType.COM || type === ActuatorType.CTRL;
 
-// COM actuators target a slave device (`config.deviceId`): their label is
-// prefixed with that device's name.
+// RPI actuators are labelled `RPI - <name>`; COM actuators target a slave device
+// (`config.deviceId`): their label is prefixed with that device's name.
 export const actuatorLabel = (actuator: any, devices: any[] = []) => {
 	const name = `${actuator?.name ?? 'actuator'}`;
+	if (actuator?.type === ActuatorType.RPI) return `RPI - ${name}`;
 	if (actuator?.type !== ActuatorType.COM) return name;
 	const device = devices.find(
 		(d: any) => `${d.id}` === `${actuator.config?.deviceId}`
@@ -99,3 +99,19 @@ export const actuatorLabel = (actuator: any, devices: any[] = []) => {
 	const deviceName = device?.name ?? device?.label;
 	return deviceName ? `${deviceName} - ${name}` : name;
 };
+
+// Tri naturel sur le libellé : « Relay 2 » avant « Relay 10 ».
+export const compareLabels = (a: string, b: string) =>
+	`${a}`.localeCompare(`${b}`, undefined, {
+		numeric: true,
+		sensitivity: 'base'
+	});
+
+// Les actuators RPI listés (My RPI, section RPI des séquences) : non supprimés,
+// triés par libellé.
+export const listedRpiActuators = (actuators: any[] = [], devices: any[] = []) =>
+	actuators
+		.filter((a: any) => !a.delete && a.type === ActuatorType.RPI)
+		.sort((a: any, b: any) =>
+			compareLabels(actuatorLabel(a, devices), actuatorLabel(b, devices))
+		);

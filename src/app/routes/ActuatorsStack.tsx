@@ -21,7 +21,7 @@ export function ActuatorsStack() {
 			<Stack.Screen
 				name="Actuators"
 				component={ActuatorsScreen}
-				options={options('Actuators')}
+				options={options('My RPI')}
 			/>
 			<Stack.Screen
 				name="ActuatorSettingsStack"

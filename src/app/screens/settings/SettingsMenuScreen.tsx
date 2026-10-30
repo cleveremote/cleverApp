@@ -1,12 +1,19 @@
-import React from 'react';
-import {StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import React, {useEffect} from 'react';
+import {
+	StyleSheet,
+	Text,
+	TouchableOpacity,
+	View,
+	useWindowDimensions
+} from 'react-native';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
-import Icon from 'react-native-vector-icons/FontAwesome5';
+import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {
 	faEye,
 	faGlobe,
 	faMicrochip,
-	faPlug,
+	faNetworkWired,
+	faPowerOff,
 	faUser
 } from '@fortawesome/free-solid-svg-icons';
 import {MenuAccordion, MenuGroup} from '../../components/common/cycleMenu';
@@ -15,9 +22,49 @@ import {hapticOptions} from '../../data/cycleTypes';
 
 // Landing screen of the bottom "Settings" tab: routes to the relocated user
 // settings and to the new Modbus devices area. Mirrors the card+MenuAccordion
-// layout used by the cycle/trigger settings menus. The logout action, formerly
-// buried in the user settings, now sits at the bottom of the sections.
+// layout used by the cycle/trigger settings menus. The logout action sits in
+// the header, top right, as a circled button like the section icons; a long
+// press is required so a stray tap doesn't sign the user out.
+// Place laissée au libellé du bouton de déconnexion à droite du titre centré :
+// moitié de l'écran, moins la demi-largeur du titre, le cercle et les marges.
+const HALF_TITLE_WIDTH = 50;
+const LOGOUT_CIRCLE_AND_MARGINS = 35 + 10 + 6 + 8;
+
 export function SettingsMenuScreen(props: any) {
+	const {width} = useWindowDimensions();
+	const hintMaxWidth = width / 2 - HALF_TITLE_WIDTH - LOGOUT_CIRCLE_AND_MARGINS;
+
+	useEffect(() => {
+		props.navigation.setOptions({
+			headerRight: () => (
+				<TouchableOpacity
+					style={styles.logoutButton}
+					onLongPress={async () => {
+						ReactNativeHapticFeedback.trigger(
+							'impactMedium',
+							hapticOptions
+						);
+						await authenticationService.signout();
+					}}>
+					<Text
+						style={[styles.logoutHint, {maxWidth: hintMaxWidth}]}
+						numberOfLines={1}
+						adjustsFontSizeToFit
+						minimumFontScale={0.5}>
+						(Long press to logout)
+					</Text>
+					<View style={styles.logoutCircle}>
+						<FontAwesomeIcon
+							icon={faPowerOff}
+							size={16}
+							color={COLORS.logout}
+						/>
+					</View>
+				</TouchableOpacity>
+			)
+		});
+	}, [props.navigation, hintMaxWidth]);
+
 	return (
 		<View style={styles.container}>
 			<MenuGroup style={styles.card}>
@@ -38,7 +85,7 @@ export function SettingsMenuScreen(props: any) {
 				<MenuAccordion
 					key={3}
 					name={'Devices'}
-					icon={faMicrochip}
+					icon={faNetworkWired}
 					onPress={() =>
 						props.navigation.navigate('DevicesStack', {
 							screen: 'Devices'
@@ -47,8 +94,8 @@ export function SettingsMenuScreen(props: any) {
 				/>
 				<MenuAccordion
 					key={4}
-					name={'Actuators'}
-					icon={faPlug}
+					name={'My RPI'}
+					icon={faMicrochip}
 					onPress={() =>
 						props.navigation.navigate('ActuatorsStack', {
 							screen: 'Actuators'
@@ -64,20 +111,6 @@ export function SettingsMenuScreen(props: any) {
 					}
 				/>
 			</MenuGroup>
-			<View style={styles.logout}>
-				<TouchableOpacity
-					style={{alignSelf: 'center'}}
-					onPress={async () => {
-						ReactNativeHapticFeedback.trigger(
-							'impactMedium',
-							hapticOptions
-						);
-						await authenticationService.signout();
-					}}>
-					<Icon name="sign-out-alt" size={25} color={COLORS.text} />
-				</TouchableOpacity>
-				<Text style={styles.logoutLabel}>logout</Text>
-			</View>
 		</View>
 	);
 }
@@ -85,7 +118,8 @@ export function SettingsMenuScreen(props: any) {
 const COLORS = {
 	shadow: '#000',
 	cardBackground: 'white',
-	text: '#32404e'
+	text: '#32404e',
+	logout: '#E53E3E'
 };
 
 const styles = StyleSheet.create({
@@ -105,14 +139,26 @@ const styles = StyleSheet.create({
 		shadowOpacity: 0.22,
 		shadowRadius: 2.22
 	},
-	logout: {
-		marginTop: 30,
-		alignSelf: 'center',
+	logoutButton: {
+		marginHorizontal: 10,
+		flexDirection: 'row',
 		alignItems: 'center'
 	},
-	logoutLabel: {
-		color: COLORS.text,
-		fontSize: 15
+	logoutHint: {
+		marginRight: 6,
+		color: COLORS.logout,
+		// Taille max : réduite automatiquement pour tenir sur une ligne.
+		fontSize: 12
+	},
+	// Même cercle que les icônes des sections (MenuAccordion).
+	logoutCircle: {
+		width: 35,
+		height: 35,
+		borderRadius: 0.5 * 45,
+		justifyContent: 'center',
+		alignItems: 'center',
+		borderColor: COLORS.logout,
+		borderWidth: 2.5
 	}
 });
 
