@@ -1,7 +1,7 @@
 import React from 'react';
 import {StyleSheet, View} from 'react-native';
 import {connect} from 'react-redux';
-import {faGear, faMicrochip} from '@fortawesome/free-solid-svg-icons';
+import {faGear, faMicrochip, faPlug} from '@fortawesome/free-solid-svg-icons';
 import {
 	DeleteItemMenu,
 	MenuAccordion,
@@ -17,6 +17,9 @@ import {useDeviceEntity} from '../useDeviceEntity';
 import {isEmpty} from '../../../components/common/useSectionSettingsHeader';
 import SlaveGeneralSettingsSection from './SlaveGeneralSettingsSection';
 import SlaveModelSection from './SlaveModelSection';
+import SlaveActuatorsSection, {
+	hasActuatorsSection
+} from './SlaveActuatorsSection';
 
 export function SlaveDeviceSettingsScreen(props: any) {
 	const {deviceRef, deleteItem, invalidSections, ready} = useDeviceEntity(
@@ -47,6 +50,18 @@ export function SlaveDeviceSettingsScreen(props: any) {
 						/>
 					)}
 				</MenuAccordion>
+				{ready && hasActuatorsSection(props.models, deviceRef.current) && (
+					<MenuAccordion
+						key={2}
+						name={'Actuators'}
+						icon={faPlug}
+						onPress={() => {}}>
+						<SlaveActuatorsSection
+							device={deviceRef.current}
+							navigation={props.navigation}
+						/>
+					</MenuAccordion>
+				)}
 				<MenuAccordion
 					key={3}
 					name={'Model'}
@@ -85,7 +100,8 @@ const styles = StyleSheet.create({
 
 const mapStateToProps = (state: any) => ({
 	device: state.root_device.device,
-	devices: state.root_device.devices
+	devices: state.root_device.devices,
+	models: state.root_device_model.models
 });
 
 export default connect(mapStateToProps, {

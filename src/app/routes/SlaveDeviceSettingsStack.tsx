@@ -7,6 +7,7 @@ import SlaveDeviceSettingsScreen from '../screens/devices/slave/SlaveDeviceSetti
 import SlaveGeneralSettingsSection from '../screens/devices/slave/SlaveGeneralSettingsSection';
 import ComRequestsSection from '../screens/devices/slave/ComRequestsSection';
 import {ComRequestSettingsStack} from './ComRequestSettingsStack';
+import {ActuatorSettingsStack} from './ActuatorSettingsStack';
 
 export function SlaveDeviceSettingsStack() {
 	const options = (title: string) =>
@@ -37,6 +38,11 @@ export function SlaveDeviceSettingsStack() {
 			<Stack.Screen
 				name="ComRequestSettingsStack"
 				component={ComRequestSettingsStack}
+				options={{headerShown: false}}
+			/>
+			<Stack.Screen
+				name="ActuatorSettingsStack"
+				component={ActuatorSettingsStack}
 				options={{headerShown: false}}
 			/>
 		</Stack.Navigator>
