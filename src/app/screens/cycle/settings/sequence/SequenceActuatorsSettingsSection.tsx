@@ -5,8 +5,10 @@ import {elementStack} from '../../../../components/cycle/moduleStack';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import {hapticOptions} from '../../../../data/cycleTypes';
 import {connect} from 'react-redux';
+import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {
 	faEthernet,
+	faGaugeHigh,
 	faTrash,
 	faMicrochip,
 	faSliders
@@ -18,6 +20,8 @@ import {
 } from '../../../../../module/process/infrasctructure/store/actions/module';
 import {loadActuators as loadMasterActuators} from '../../../../../module/process/infrasctructure/store/actions/actuator';
 import {loadDevices} from '../../../../../module/process/infrasctructure/store/actions/device';
+import {loadControlLoops} from '../../../../../module/process/infrasctructure/store/actions/control-loop';
+import {enabledLoopOf} from '../../../../data/controlLoopTypes';
 import {
 	ActuatorType,
 	actuatorLabel,
@@ -164,6 +168,7 @@ export function SequenceActuatorsSettingsSection(props: any) {
 	useEffect(() => {
 		props.loadMasterActuators();
 		props.loadDevices();
+		props.loadControlLoops();
 	}, []);
 
 	// Embedded, the sequence may still be loading when the accordion mounts:
@@ -231,7 +236,19 @@ export function SequenceActuatorsSettingsSection(props: any) {
 								`${moduleConfig.label}`,
 								{name: faTrash, color: '#E53E3E'},
 								undefined,
-								() => openModuleConfig(moduleConfig)
+								() => openModuleConfig(moduleConfig),
+								// Vanne régulée (ControlLoop activée).
+								section.type === 'CTRL' &&
+									enabledLoopOf(
+										props.controlLoops,
+										moduleConfig.moduleId
+									) ? (
+									<FontAwesomeIcon
+										icon={faGaugeHigh}
+										size={14}
+										color="#32404e"
+									/>
+								) : undefined
 							)
 						)}
 						<View
@@ -272,12 +289,14 @@ const mapStateToProps = (state: any) => ({
 	masterActuators: state.root_actuator.actuators,
 	moduleConfigs: state.sequence_module.moduleConfigs,
 	devices: state.root_device.devices,
+	controlLoops: state.root_control_loop.loops,
 	cycle: state.root_cycle.cycle
 });
 
 export default connect(mapStateToProps, {
 	loadMasterActuators,
 	loadDevices,
+	loadControlLoops,
 	loadSequenceModuleConfigs,
 	updateSequenceModuleConfig,
 	updateSequence

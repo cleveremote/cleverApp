@@ -1,9 +1,12 @@
 import React, {useEffect} from 'react';
 import {StyleSheet, Text, View} from 'react-native';
 import {connect} from 'react-redux';
-import {faCog} from '@fortawesome/free-solid-svg-icons';
+import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
+import {faCog, faGaugeHigh} from '@fortawesome/free-solid-svg-icons';
 import {elementStack} from '../../../components/cycle/moduleStack';
 import {loadActuators} from '../../../../module/process/infrasctructure/store/actions/actuator';
+import {loadControlLoops} from '../../../../module/process/infrasctructure/store/actions/control-loop';
+import {enabledLoopOf} from '../../../data/controlLoopTypes';
 import {findModel, modelKind} from './SlaveModelSection';
 
 // Kinds de modèle pour lesquels un slave pilote des actuators : seuls ceux-là
@@ -27,8 +30,10 @@ export function SlaveActuatorsSection(props: any) {
 		// Rechargé au retour sur le slave pour refléter les éditions faites dans
 		// le menu de l'actuator.
 		props.loadActuators();
+		props.loadControlLoops();
 		const unsubscribe = props.navigation.addListener('focus', () => {
 			props.loadActuators();
+			props.loadControlLoops();
 		});
 		return unsubscribe;
 	}, []);
@@ -56,7 +61,17 @@ export function SlaveActuatorsSection(props: any) {
 								params: {actuatorId: item.id}
 							}),
 						`${actuator.name ?? 'actuator'}`,
-						{name: faCog, color: styles.icon.color}
+						{name: faCog, color: styles.icon.color},
+						undefined,
+						undefined,
+						// Vanne régulée (ControlLoop activée).
+						enabledLoopOf(props.controlLoops, actuator.id) ? (
+							<FontAwesomeIcon
+								icon={faGaugeHigh}
+								size={14}
+								color={styles.icon.color}
+							/>
+						) : undefined
 					)
 				)
 			)}
@@ -91,9 +106,10 @@ const styles = StyleSheet.create({
 });
 
 const mapStateToProps = (state: any) => ({
-	actuators: state.root_actuator.actuators
+	actuators: state.root_actuator.actuators,
+	controlLoops: state.root_control_loop.loops
 });
 
-export default connect(mapStateToProps, {loadActuators})(
+export default connect(mapStateToProps, {loadActuators, loadControlLoops})(
 	SlaveActuatorsSection
 );

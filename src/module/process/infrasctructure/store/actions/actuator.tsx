@@ -14,6 +14,7 @@ import {
 	denormalizeIds,
 	isTempId
 } from '../../../../../services/socket';
+import {SYNC_VALVE_EVENT} from '../../../../../app/data/controlLoopTypes';
 
 // TEMPORARY MOCK — remove once the backend delivers `config.actuators`.
 // Lets us exercise the three RPI/COM/CTRL accordions and the CTRL config flow
@@ -96,20 +97,29 @@ export const updateActuator =
 // La liste est d'abord mise à jour de façon optimiste pour que l'écran des
 // actuators reflète l'édition immédiatement — y compris tant que la box ne
 // renvoie pas encore d'`actuators` dans sa configuration (voir loadActuators) —
-// puis réalignée sur l'entité renvoyée par la box.
+// puis réalignée sur l'entité renvoyée par la box. Une vanne CTRL passe par
+// `sync/valve` (sa régulation est synchronisée à part, cf. saveControlLoop).
+// `onSaved` reçoit l'actuator renvoyé par la box (avec son id définitif).
 export const saveActuator =
-	(data: any): ThunkAction<void, RootState, unknown, AnyAction> =>
+	(
+		data: any,
+		onSaved?: (saved: any) => void
+	): ThunkAction<void, RootState, unknown, AnyAction> =>
 	async dispatch => {
 		const tempId = isTempId(data.id) ? data.id : undefined;
 		const {isModified, ...persisted} = data;
 		dispatch({type: ACTUATOR_SAVE, payload: persisted});
+		const isValve = data.type === 'CTRL';
 		socketService.emit(
-			'front/box/sync/actuator',
-			denormalizeIds(data),
+			isValve ? SYNC_VALVE_EVENT : 'front/box/sync/actuator',
+			denormalizeIds(persisted),
 			(response: any) => {
 				let saved;
 				try {
-					saved = normalizeIds(JSON.parse(response.config).actuator);
+					const config = JSON.parse(response.config);
+					saved = normalizeIds(
+						isValve ? config.valve ?? config.actuator : config.actuator
+					);
 				} catch {
 					saved = undefined;
 				}
@@ -119,6 +129,7 @@ export const saveActuator =
 					payload: saved,
 					tempId
 				});
+				onSaved?.(saved);
 			}
 		);
 	};

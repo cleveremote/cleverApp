@@ -14,6 +14,7 @@ import {
 	ROOT_DEVICES_LOAD,
 	GROUPS_LOAD,
 	DEVICE_MODELS_LOAD,
+	CONTROL_LOOPS_LOAD,
 	DEVICE_CONNECTIVITY_UPDATE,
 	ACTUATORS_LOAD
 } from './types';
@@ -25,6 +26,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {socketService, normalizeIds} from '../../../../../services/socket';
 import {statusFromConfiguration} from './cycle';
 import {parseConnectivity} from '../models/deviceConnectivity';
+import {CONTROL_LOOPS_CONFIG_KEY} from '../../../../../app/data/controlLoopTypes';
 
 export const listenerEvents =
 	(): ThunkAction<void, RootState, unknown, AnyAction> => async dispatch => {
@@ -196,6 +198,16 @@ export const loadConfiguration =
 					dispatch({
 						type: ACTUATORS_LOAD,
 						payload: config.actuators
+					});
+				}
+
+				// Boucles de régulation des vannes CTRL : chargées dès le départ
+				// pour les badges et la valeur CTRL des séquences. Clé absente :
+				// on garde la liste déjà connue.
+				if (Array.isArray(config[CONTROL_LOOPS_CONFIG_KEY])) {
+					dispatch({
+						type: CONTROL_LOOPS_LOAD,
+						payload: config[CONTROL_LOOPS_CONFIG_KEY]
 					});
 				}
 

@@ -57,17 +57,13 @@ export const emptyComConfig = () => ({
 	actions: [] as {commandId?: string; channel?: number}[]
 });
 
+// Une vanne CTRL ne porte que ses paramètres physiques ; sa régulation
+// (capteur, consigne, gains) est une ControlLoop (cf. controlLoopTypes).
 export const emptyCtrlConfig = () => ({
 	...emptyComConfig(),
-	flowMeterId: undefined,
-	maxFlowRate: 100,
-	kP: 5,
 	minOpening: 0,
 	maxOpening: 100,
 	openingPercent: 0,
-	tolerance: 1,
-	maxIterations: 20,
-	iterationDelayMs: 500,
 	// Temps que met la vanne pour parcourir toute sa course (minOpening <->
 	// maxOpening), en ms.
 	fullStrokeMs: 7000,

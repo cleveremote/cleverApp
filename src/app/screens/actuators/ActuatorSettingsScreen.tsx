@@ -2,7 +2,7 @@ import React, {useEffect, useRef} from 'react';
 import {StyleSheet, View} from 'react-native';
 import {connect} from 'react-redux';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
-import {faGear, faSliders} from '@fortawesome/free-solid-svg-icons';
+import {faGaugeHigh, faGear, faSliders} from '@fortawesome/free-solid-svg-icons';
 import {
 	DeleteItemMenu,
 	MenuAccordion,
@@ -15,6 +15,7 @@ import {
 } from '../../components/common/useSectionSettingsHeader';
 import {hapticOptions} from '../../data/cycleTypes';
 import {ActuatorType, isComBased} from '../../data/actuatorTypes';
+import {loopOf} from '../../data/controlLoopTypes';
 import {isTempId} from '../../../services/socket';
 import {IS_EXPERT} from '../../../../config/env';
 import {
@@ -22,8 +23,14 @@ import {
 	saveActuator,
 	updateActuator
 } from '../../../module/process/infrasctructure/store/actions/actuator';
+import {
+	loadControlLoops,
+	saveControlLoop,
+	updateControlLoop
+} from '../../../module/process/infrasctructure/store/actions/control-loop';
 import ActuatorGeneralSettingsSection from './ActuatorGeneralSettingsSection';
 import ActuatorConfigurationSettingsSection from './ActuatorConfigurationSettingsSection';
+import ActuatorRegulationSettingsSection from './ActuatorRegulationSettingsSection';
 
 // La section Configuration est « not valid » tant que les champs requis du type
 // courant ne sont pas renseignés — mêmes règles que le sous-formulaire.
@@ -45,6 +52,10 @@ const isConfigInvalid = (actuator: any): boolean => {
 	return true;
 };
 
+// Régulation activée : il faut un capteur de retour et une consigne.
+const isRegulationInvalid = (loop: any): boolean =>
+	!!loop?.isEnabled && (isEmpty(loop?.sensorId) || isEmpty(loop?.setpoint));
+
 // Menu de réglages d'un actuator (création ou modification) : General +
 // Configuration en accordéons embarqués, puis suppression. Même plomberie que
 // les devices — le slot partagé `root_actuator.actuator` porte l'entité en cours
@@ -58,6 +69,9 @@ export function ActuatorSettingsScreen(props: any) {
 	);
 	const entityId = useRef<string | undefined>(props.route.params?.actuatorId);
 	const actuatorRef = useRef<any>(isCreateFlow ? undefined : props.actuator);
+	// Boucle de régulation de la vanne (CTRL) : celle stagée par la section
+	// Regulation si elle concerne cette vanne, sinon celle relue de la box.
+	const loopRef = useRef<any>(undefined);
 
 	if (props.actuator) {
 		if (
@@ -72,6 +86,17 @@ export function ActuatorSettingsScreen(props: any) {
 			actuatorRef.current = props.actuator;
 		}
 	}
+	const savedLoop = loopOf(props.loops, entityId.current);
+	if (
+		props.loop &&
+		`${props.loop.actuatorId}` === `${entityId.current}` &&
+		props.loop.isModified
+	) {
+		loopRef.current = props.loop;
+	} else if (!loopRef.current?.isModified) {
+		loopRef.current = savedLoop;
+	}
+	const isCtrl = actuatorRef.current?.type === ActuatorType.CTRL;
 
 	const deleteItem = () => {
 		ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
@@ -82,6 +107,11 @@ export function ActuatorSettingsScreen(props: any) {
 			delete: true,
 			isModified: true
 		};
+		// La boucle d'une vanne supprimée part avec elle.
+		loopRef.current =
+			loopRef.current && !isTempId(loopRef.current.id)
+				? {...loopRef.current, delete: true, isModified: true}
+				: undefined;
 		props.navigation.goBack();
 	};
 
@@ -90,20 +120,46 @@ export function ActuatorSettingsScreen(props: any) {
 			props.route.params?.actuatorId,
 			props.route.params?.defaults
 		);
+		// Vide le slot d'édition (boucle d'une autre vanne) puis relit les boucles.
+		props.updateControlLoop(undefined);
+		props.loadControlLoops();
 	}, []);
+
+	// Sauvegarde de la boucle : une vanne neuve n'a son id définitif qu'une fois
+	// enregistrée, la boucle est alors envoyée avec cet id.
+	const saveLoop = (actuatorId: any) => {
+		const loop = loopRef.current;
+		if (!loop?.isModified) return;
+		if (loop.delete && isTempId(loop.id)) return;
+		props.saveControlLoop({...loop, actuatorId});
+	};
 
 	const {invalidSections} = useSectionSettingsHeader({
 		navigation: props.navigation,
 		entity: props.actuator,
 		isNew: isCreateFlow,
-		hasChanges: () => !!actuatorRef.current?.isModified,
+		hasChanges: () =>
+			!!actuatorRef.current?.isModified || !!loopRef.current?.isModified,
 		save: onDone => {
-			props.saveActuator(actuatorRef.current);
+			const actuator = actuatorRef.current;
+			if (actuator?.isModified) {
+				const isNewActuator = isTempId(actuator.id);
+				props.saveActuator(
+					actuator,
+					isNewActuator ? (saved: any) => saveLoop(saved.id) : undefined
+				);
+				if (!isNewActuator) saveLoop(actuator.id);
+			} else {
+				saveLoop(actuator?.id);
+			}
 			onDone();
 		},
 		validate: () => ({
 			general: isEmpty(actuatorRef.current?.name),
-			configuration: isConfigInvalid(actuatorRef.current)
+			configuration: isConfigInvalid(actuatorRef.current),
+			regulation:
+				actuatorRef.current?.type === ActuatorType.CTRL &&
+				isRegulationInvalid(loopRef.current)
 		}),
 		backWhenPristine: true
 	});
@@ -153,7 +209,26 @@ export function ActuatorSettingsScreen(props: any) {
 						/>
 					)}
 				</MenuAccordion>
-				{IS_EXPERT && <DeleteItemMenu key={3} OnConfirm={deleteItem} />}
+				{isCtrl && (
+					<MenuAccordion
+						key={3}
+						name={'Regulation'}
+						icon={faGaugeHigh}
+						invalid={invalidSections.regulation}
+						onPress={() => {}}>
+						{ready && (
+							// Keyée sur la boucle relue : elle se remonte quand la
+							// liste des boucles arrive de la box.
+							<ActuatorRegulationSettingsSection
+								key={`${actuatorRef.current.id}-${savedLoop?.id ?? 'none'}`}
+								actuatorData={actuatorRef.current}
+								loopData={loopRef.current}
+								showErrors={invalidSections.regulation}
+							/>
+						)}
+					</MenuAccordion>
+				)}
+				{IS_EXPERT && <DeleteItemMenu key={4} OnConfirm={deleteItem} />}
 			</MenuGroup>
 		</SettingsScrollView>
 	);
@@ -181,11 +256,16 @@ const styles = StyleSheet.create({
 
 const mapStateToProps = (state: any) => ({
 	actuator: state.root_actuator.actuator,
-	actuators: state.root_actuator.actuators
+	actuators: state.root_actuator.actuators,
+	loop: state.root_control_loop.loop,
+	loops: state.root_control_loop.loops
 });
 
 export default connect(mapStateToProps, {
 	loadActuator,
 	updateActuator,
-	saveActuator
+	saveActuator,
+	loadControlLoops,
+	updateControlLoop,
+	saveControlLoop
 })(ActuatorSettingsScreen);

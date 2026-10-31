@@ -1,5 +1,5 @@
 import React, {useEffect, useRef} from 'react';
-import {View} from 'react-native';
+import {StyleSheet, Text, View} from 'react-native';
 import {navigationHeader} from '../../../../components/common/navigationHeaders';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import {hapticOptions} from '../../../../data/cycleTypes';
@@ -9,10 +9,15 @@ import {faClock, faSliders} from '@fortawesome/free-solid-svg-icons';
 import {updateSequenceModuleConfig} from '../../../../../module/process/infrasctructure/store/actions/module';
 import {updateSequence} from '../../../../../module/process/infrasctructure/store/actions/sequence';
 import {useForm} from 'react-hook-form';
-import {InputForm} from '../../../../components/common/FormComponents';
+import {
+	InputForm,
+	SwitchForm
+} from '../../../../components/common/FormComponents';
 import {CollapsibleSection} from '../../../../components/common/CollapsibleSection';
 import {KeyboardAwareScrollView} from '../../../../components/common/KeyboardAwareScrollView';
 import {emptyTimingConfig} from '../../../../../module/process/infrasctructure/store/models/sequenceModule';
+import {loadControlLoops} from '../../../../../module/process/infrasctructure/store/actions/control-loop';
+import {enabledLoopOf, sensorUnit} from '../../../../data/controlLoopTypes';
 
 // The four timing fields making up a `ModuleTimingConfig`, in display order.
 const TIMING_FIELDS: {name: keyof ReturnType<typeof emptyTimingConfig>; label: string}[] = [
@@ -37,6 +42,19 @@ export function SequenceActuatorConfigSection(props: any) {
 		(a: any) => `${a.id}` === `${moduleConfig?.moduleId}`
 	);
 	const isCtrl = (moduleConfig?.type ?? master?.type) === 'CTRL';
+	// Vanne régulée : la box ignore la valeur (seul compte qu'elle soit ≠ 0) et
+	// régule jusqu'à la consigne de sa boucle. Sinon la valeur est l'ouverture %.
+	const loop = isCtrl
+		? enabledLoopOf(props.controlLoops, moduleConfig?.moduleId)
+		: undefined;
+	const loopSensor = (props.sensors || []).find(
+		(s: any) => `${s.id}` === `${loop?.sensorId}`
+	);
+	const loopTarget = loop
+		? `Regulates to ${loop.setpoint ?? '?'}${
+				sensorUnit(loopSensor) ? ` ${sensorUnit(loopSensor)}` : ''
+		  }${loopSensor?.name ? ` (${loopSensor.name})` : ''}.`
+		: '';
 	const isModifiedRef = useRef(false);
 	const {
 		control,
@@ -48,7 +66,11 @@ export function SequenceActuatorConfigSection(props: any) {
 			waitAfterExec: `${timing.waitAfterExec}`,
 			waitBeforeExecOff: `${timing.waitBeforeExecOff}`,
 			waitAfterExecOff: `${timing.waitAfterExecOff}`,
-			customValue: `${moduleConfig?.customValue ?? 0}`
+			customValue: `${moduleConfig?.customValue ?? 0}`,
+			// Sans valeur posée, une vanne régulée est lancée par défaut.
+			runRegulation:
+				moduleConfig?.customValue == null ||
+				Number(moduleConfig.customValue) !== 0
 		}
 	});
 
@@ -62,9 +84,11 @@ export function SequenceActuatorConfigSection(props: any) {
 				waitBeforeExecOff: toNumber(values.waitBeforeExecOff),
 				waitAfterExecOff: toNumber(values.waitAfterExecOff)
 			};
-			const customConfig = isCtrl
-				? {customValue: toNumber(values.customValue)}
-				: {};
+			const customConfig = !isCtrl
+				? {}
+				: loop
+				? {customValue: values.runRegulation ? 1 : 0}
+				: {customValue: toNumber(values.customValue)};
 			props.updateSequenceModuleConfig({
 				moduleId: moduleConfig?.moduleId,
 				configTiming,
@@ -88,6 +112,11 @@ export function SequenceActuatorConfigSection(props: any) {
 			props.navigation.goBack();
 		}
 	};
+
+	useEffect(() => {
+		if (isCtrl) props.loadControlLoops();
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, []);
 
 	useEffect(() => {
 		props.navigation.setOptions({
@@ -121,13 +150,38 @@ export function SequenceActuatorConfigSection(props: any) {
 						/>
 					))}
 				</CollapsibleSection>
-				{isCtrl && (
-					<CollapsibleSection title="Custom Value" icon={faSliders}>
+				{isCtrl && loop && (
+					<CollapsibleSection
+						title="Regulation"
+						icon={faSliders}
+						initiallyExpanded={true}>
+						<SwitchForm
+							control={control}
+							errors={errors}
+							name="runRegulation"
+							placeholder="Run regulation"
+							onChangeText={() => {
+								isModifiedRef.current = true;
+							}}
+						/>
+						<Text style={styles.hint}>
+							{loopTarget}
+						</Text>
+					</CollapsibleSection>
+				)}
+				{isCtrl && !loop && (
+					<CollapsibleSection
+						title="Opening"
+						icon={faSliders}
+						initiallyExpanded={true}>
 						<InputForm
 							control={control}
 							errors={errors}
 							name="customValue"
-							placeholder="Custom value"
+							placeholder={`Opening (%) · ${
+								master?.config?.minOpening ?? 0
+							}–${master?.config?.maxOpening ?? 100}`}
+							keyboardType="numeric"
 							rules={{required: false}}
 							onChangeText={() => {
 								isModifiedRef.current = true;
@@ -140,12 +194,23 @@ export function SequenceActuatorConfigSection(props: any) {
 	);
 }
 
+const styles = StyleSheet.create({
+	hint: {
+		color: '#8a96a3',
+		fontSize: 13,
+		marginTop: 8
+	}
+});
+
 const mapStateToProps = (state: any) => ({
 	masterActuators: state.root_actuator.actuators,
-	moduleConfigs: state.sequence_module.moduleConfigs
+	moduleConfigs: state.sequence_module.moduleConfigs,
+	controlLoops: state.root_control_loop.loops,
+	sensors: state.root_sensor.sensors
 });
 
 export default connect(mapStateToProps, {
 	updateSequenceModuleConfig,
-	updateSequence
+	updateSequence,
+	loadControlLoops
 })(SequenceActuatorConfigSection);

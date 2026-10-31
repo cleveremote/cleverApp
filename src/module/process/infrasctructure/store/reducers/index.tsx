@@ -12,6 +12,7 @@ import modbusTask from './modbus-task';
 import device from './device';
 import deviceModel from './device-model';
 import actuator from './actuator';
+import controlLoop from './control-loop';
 import settings from './settings';
 
 export default combineReducers({
@@ -22,6 +23,7 @@ export default combineReducers({
 	root_device: device,
 	root_device_model: deviceModel,
 	root_actuator: actuator,
+	root_control_loop: controlLoop,
 	root_sensor: sensor,
 	root_cycle: cycle,
 	cycle_sequence: sequence,
