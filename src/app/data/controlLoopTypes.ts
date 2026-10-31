@@ -4,6 +4,8 @@
 // retour (`sensorId`) et vise une consigne (`setpoint`, unité du capteur).
 // Quand une séquence envoie une action ≠ 0 à une vanne dont la boucle est
 // activée, la box régule jusqu'à la consigne ; sinon l'action est l'ouverture %.
+// En mode FOLLOW, la boucle n'a pas de consigne : pendant le ON, la box recopie
+// l'entrée analogique (potentiomètre, `follow.inputMin..inputMax`) en ouverture %.
 
 import {newTempId} from '../../services/socket';
 
@@ -18,6 +20,52 @@ export enum ControlAlgorithm {
 	PI = 'PI',
 	PID = 'PID'
 }
+
+export enum ControlLoopMode {
+	REGULATION = 'REGULATION',
+	FOLLOW = 'FOLLOW'
+}
+
+export const modeOptions = [
+	{label: 'Regulation (setpoint)', value: ControlLoopMode.REGULATION},
+	{label: 'Potentiometer follow', value: ControlLoopMode.FOLLOW}
+];
+
+export interface ControlLoopParams {
+	kP?: number;
+	kI?: number;
+	kD?: number;
+	tolerance?: number;
+	maxIterations?: number;
+	iterationDelayMs?: number;
+}
+
+export interface ControlLoopFollow {
+	inputMin: number;
+	inputMax: number;
+	deadband: number;
+}
+
+// Boucle telle que renvoyée par getStructure (`structure.controlLoops`) et par
+// `box/synchronize/control-loop`.
+export interface ControlLoop {
+	id: any;
+	name?: string;
+	actuatorId: any;
+	sensorId?: any;
+	isEnabled: boolean;
+	mode: ControlLoopMode | `${ControlLoopMode}`;
+	setpoint?: number;
+	algorithm?: ControlAlgorithm;
+	params?: ControlLoopParams;
+	follow?: ControlLoopFollow;
+	delete?: boolean;
+	isModified?: boolean;
+}
+
+// Les boucles antérieures au mode FOLLOW n'ont pas de `mode` : régulation.
+export const isFollowLoop = (loop?: Partial<ControlLoop>) =>
+	loop?.mode === ControlLoopMode.FOLLOW;
 
 export const algorithmOptions = Object.values(ControlAlgorithm).map(value => ({
 	label: value,
@@ -34,20 +82,31 @@ export const emptyControlParams = () => ({
 	iterationDelayMs: 500
 });
 
+// Valeurs par défaut du suivi potentiomètre (deadband en %).
+export const emptyFollowParams = (): ControlLoopFollow => ({
+	inputMin: 0,
+	inputMax: 100,
+	deadband: 1
+});
+
 // Boucle créée à la première activation de la régulation d'une vanne.
-export const emptyControlLoop = (actuator: any) => ({
+export const emptyControlLoop = (actuator: any): ControlLoop => ({
 	id: newTempId(),
 	name: actuator?.name,
 	actuatorId: actuator?.id,
 	sensorId: undefined,
 	isEnabled: true,
+	mode: ControlLoopMode.REGULATION,
 	setpoint: undefined,
 	algorithm: ControlAlgorithm.P,
 	params: emptyControlParams()
 });
 
 // La boucle d'une vanne (une seule par vanne côté app), activée ou non.
-export const loopOf = (loops: any[] = [], actuatorId: any) =>
+export const loopOf = (
+	loops: any[] = [],
+	actuatorId: any
+): ControlLoop | undefined =>
 	(loops ?? []).find(
 		(l: any) => !l.delete && `${l.actuatorId}` === `${actuatorId}`
 	);

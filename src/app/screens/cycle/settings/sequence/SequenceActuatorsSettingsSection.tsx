@@ -5,10 +5,8 @@ import {elementStack} from '../../../../components/cycle/moduleStack';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import {hapticOptions} from '../../../../data/cycleTypes';
 import {connect} from 'react-redux';
-import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {
 	faEthernet,
-	faGaugeHigh,
 	faTrash,
 	faMicrochip,
 	faSliders
@@ -22,6 +20,7 @@ import {loadActuators as loadMasterActuators} from '../../../../../module/proces
 import {loadDevices} from '../../../../../module/process/infrasctructure/store/actions/device';
 import {loadControlLoops} from '../../../../../module/process/infrasctructure/store/actions/control-loop';
 import {enabledLoopOf} from '../../../../data/controlLoopTypes';
+import {controlLoopBadge} from '../../../../components/cycle/controlLoopBadge';
 import {
 	ActuatorType,
 	actuatorLabel,
@@ -238,17 +237,14 @@ export function SequenceActuatorsSettingsSection(props: any) {
 								undefined,
 								() => openModuleConfig(moduleConfig),
 								// Vanne régulée (ControlLoop activée).
-								section.type === 'CTRL' &&
-									enabledLoopOf(
-										props.controlLoops,
-										moduleConfig.moduleId
-									) ? (
-									<FontAwesomeIcon
-										icon={faGaugeHigh}
-										size={14}
-										color="#32404e"
-									/>
-								) : undefined
+								section.type === 'CTRL'
+									? controlLoopBadge(
+											enabledLoopOf(
+												props.controlLoops,
+												moduleConfig.moduleId
+											)
+									  )
+									: undefined
 							)
 						)}
 						<View

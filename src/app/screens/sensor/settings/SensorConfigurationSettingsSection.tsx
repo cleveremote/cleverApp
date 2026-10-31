@@ -20,6 +20,7 @@ import {updateSensor} from '../../../../module/process/infrasctructure/store/act
 const typeOptions = [
 	{label: 'FORCAST', value: 'FORCAST'},
 	{label: 'COM', value: 'COM'},
+	{label: 'ANALOG', value: 'ANALOG'},
 	{label: 'MASTER_COM', value: 'MASTER_COM'}
 ];
 

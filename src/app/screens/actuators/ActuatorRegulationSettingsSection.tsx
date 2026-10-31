@@ -14,20 +14,25 @@ import {BoxFormStyle} from '../../styles/components/common/boxForm';
 import {updateControlLoop} from '../../../module/process/infrasctructure/store/actions/control-loop';
 import {
 	ControlAlgorithm,
+	ControlLoopMode,
 	algorithmOptions,
 	emptyControlLoop,
 	emptyControlParams,
+	emptyFollowParams,
+	modeOptions,
 	sensorUnit
 } from '../../data/controlLoopTypes';
 import {toNumber} from '../devices/deviceFieldUtils';
 
 const PARAM_FIELDS = Object.keys(emptyControlParams());
+const FOLLOW_FIELDS = Object.keys(emptyFollowParams());
 
 const withUnit = (label: string, unit?: string) =>
 	unit ? `${label} (${unit})` : label;
 
 // Section « Regulation » des réglages d'une vanne CTRL : la ControlLoop de la
-// vanne (capteur de retour, consigne, algorithme, gains). Embarquée dans
+// vanne (capteur de retour, consigne, algorithme, gains), ou en mode FOLLOW le
+// suivi d'un potentiomètre (plage d'entrée, deadband). Embarquée dans
 // l'écran de la vanne, elle stage la boucle dans `root_control_loop.loop` ;
 // l'écran parent la sauvegarde avec la vanne. Sans boucle, une boucle
 // désactivée est proposée : elle n'est créée qu'à la première modification.
@@ -47,25 +52,47 @@ export function ActuatorRegulationSettingsSection(props: any) {
 	} = useForm<any>({
 		defaultValues: {
 			...base,
-			params: {...emptyControlParams(), ...base.params}
+			mode: base.mode ?? ControlLoopMode.REGULATION,
+			params: {...emptyControlParams(), ...base.params},
+			follow: {...emptyFollowParams(), ...base.follow}
 		},
 		mode: 'onChange'
 	});
 
 	// Les saisies sont des chaînes : on recoerce les nombres avant de stager.
+	// En FOLLOW, la boucle part sans consigne, algorithme ni gains : seule la
+	// période de lecture est gardée dans `params`.
 	const toLoop = (values: any) => {
-		const params: Record<string, any> = {...values.params};
-		PARAM_FIELDS.forEach(field => {
-			params[field] = toNumber(params[field]);
-		});
-		return {
+		const common = {
 			...base,
 			...values,
 			name: base.name ?? actuator?.name,
 			actuatorId: actuator?.id,
-			setpoint: toNumber(values.setpoint),
-			params,
 			isModified: true
+		};
+		if (values.mode === ControlLoopMode.FOLLOW) {
+			const {setpoint, algorithm, ...loop} = common;
+			const follow: Record<string, any> = {};
+			FOLLOW_FIELDS.forEach(field => {
+				follow[field] = toNumber(values.follow?.[field]);
+			});
+			return {
+				...loop,
+				follow,
+				params: {
+					iterationDelayMs: toNumber(values.params?.iterationDelayMs)
+				}
+			};
+		}
+		const params: Record<string, any> = {...values.params};
+		PARAM_FIELDS.forEach(field => {
+			params[field] = toNumber(params[field]);
+		});
+		const {follow, ...loop} = common;
+		return {
+			...loop,
+			setpoint: toNumber(values.setpoint),
+			params
 		};
 	};
 
@@ -79,6 +106,7 @@ export function ActuatorRegulationSettingsSection(props: any) {
 	});
 
 	const isEnabled = !!watch('isEnabled');
+	const isFollow = watch('mode') === ControlLoopMode.FOLLOW;
 	const algorithm = watch('algorithm');
 	const sensorId = watch('sensorId');
 
@@ -99,8 +127,61 @@ export function ActuatorRegulationSettingsSection(props: any) {
 				name="isEnabled"
 				placeholder="Enable regulation"
 			/>
-			{isEnabled ? (
+			{isEnabled && isFollow ? (
 				<>
+					<SelectForm
+						lstData={modeOptions}
+						control={control}
+						errors={errors}
+						name="mode"
+						placeholder="Mode"
+					/>
+					<SelectForm
+						lstData={sensorOptions}
+						control={control}
+						errors={errors}
+						name="sensorId"
+						placeholder="Potentiometer / analog input*"
+						rules={{required: 'Analog input is required'}}
+					/>
+					<InputForm
+						control={control}
+						errors={errors}
+						name="follow.inputMin"
+						placeholder={withUnit('Input min', unit)}
+						keyboardType="numeric"
+					/>
+					<InputForm
+						control={control}
+						errors={errors}
+						name="follow.inputMax"
+						placeholder={withUnit('Input max', unit)}
+						keyboardType="numeric"
+					/>
+					<InputForm
+						control={control}
+						errors={errors}
+						name="follow.deadband"
+						placeholder="Deadband (%)"
+						keyboardType="numeric"
+					/>
+					<InputForm
+						control={control}
+						errors={errors}
+						name="params.iterationDelayMs"
+						placeholder="Read period (ms)"
+						keyboardType="numeric"
+					/>
+				</>
+			) : isEnabled ? (
+				<>
+					<SelectForm
+						lstData={modeOptions}
+						control={control}
+						errors={errors}
+						name="mode"
+						placeholder="Mode"
+					/>
 					<SelectForm
 						lstData={sensorOptions}
 						control={control}

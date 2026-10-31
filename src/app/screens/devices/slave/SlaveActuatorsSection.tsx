@@ -1,12 +1,12 @@
 import React, {useEffect} from 'react';
 import {StyleSheet, Text, View} from 'react-native';
 import {connect} from 'react-redux';
-import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
-import {faCog, faGaugeHigh} from '@fortawesome/free-solid-svg-icons';
+import {faCog} from '@fortawesome/free-solid-svg-icons';
 import {elementStack} from '../../../components/cycle/moduleStack';
 import {loadActuators} from '../../../../module/process/infrasctructure/store/actions/actuator';
 import {loadControlLoops} from '../../../../module/process/infrasctructure/store/actions/control-loop';
 import {enabledLoopOf} from '../../../data/controlLoopTypes';
+import {controlLoopBadge} from '../../../components/cycle/controlLoopBadge';
 import {findModel, modelKind} from './SlaveModelSection';
 
 // Kinds de modèle pour lesquels un slave pilote des actuators : seuls ceux-là
@@ -65,13 +65,10 @@ export function SlaveActuatorsSection(props: any) {
 						undefined,
 						undefined,
 						// Vanne régulée (ControlLoop activée).
-						enabledLoopOf(props.controlLoops, actuator.id) ? (
-							<FontAwesomeIcon
-								icon={faGaugeHigh}
-								size={14}
-								color={styles.icon.color}
-							/>
-						) : undefined
+						controlLoopBadge(
+							enabledLoopOf(props.controlLoops, actuator.id),
+							styles.icon.color
+						)
 					)
 				)
 			)}

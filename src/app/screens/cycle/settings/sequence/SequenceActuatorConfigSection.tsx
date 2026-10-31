@@ -17,7 +17,7 @@ import {CollapsibleSection} from '../../../../components/common/CollapsibleSecti
 import {KeyboardAwareScrollView} from '../../../../components/common/KeyboardAwareScrollView';
 import {emptyTimingConfig} from '../../../../../module/process/infrasctructure/store/models/sequenceModule';
 import {loadControlLoops} from '../../../../../module/process/infrasctructure/store/actions/control-loop';
-import {enabledLoopOf, sensorUnit} from '../../../../data/controlLoopTypes';
+import {enabledLoopOf, isFollowLoop, sensorUnit} from '../../../../data/controlLoopTypes';
 
 // The four timing fields making up a `ModuleTimingConfig`, in display order.
 const TIMING_FIELDS: {name: keyof ReturnType<typeof emptyTimingConfig>; label: string}[] = [
@@ -50,11 +50,16 @@ export function SequenceActuatorConfigSection(props: any) {
 	const loopSensor = (props.sensors || []).find(
 		(s: any) => `${s.id}` === `${loop?.sensorId}`
 	);
-	const loopTarget = loop
-		? `Regulates to ${loop.setpoint ?? '?'}${
-				sensorUnit(loopSensor) ? ` ${sensorUnit(loopSensor)}` : ''
-		  }${loopSensor?.name ? ` (${loopSensor.name})` : ''}.`
-		: '';
+	const unit = sensorUnit(loopSensor) ? ` ${sensorUnit(loopSensor)}` : '';
+	const loopTarget = !loop
+		? ''
+		: isFollowLoop(loop)
+		? `Follows ${loopSensor?.name ?? 'the analog input'} (${
+				loop.follow?.inputMin ?? 0
+		  }–${loop.follow?.inputMax ?? 100}${unit}) while ON.`
+		: `Regulates to ${loop.setpoint ?? '?'}${unit}${
+				loopSensor?.name ? ` (${loopSensor.name})` : ''
+		  }.`;
 	const isModifiedRef = useRef(false);
 	const {
 		control,

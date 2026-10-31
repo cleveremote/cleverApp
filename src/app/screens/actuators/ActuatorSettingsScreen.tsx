@@ -15,7 +15,7 @@ import {
 } from '../../components/common/useSectionSettingsHeader';
 import {hapticOptions} from '../../data/cycleTypes';
 import {ActuatorType, isComBased} from '../../data/actuatorTypes';
-import {loopOf} from '../../data/controlLoopTypes';
+import {isFollowLoop, loopOf} from '../../data/controlLoopTypes';
 import {isTempId} from '../../../services/socket';
 import {IS_EXPERT} from '../../../../config/env';
 import {
@@ -53,8 +53,10 @@ const isConfigInvalid = (actuator: any): boolean => {
 };
 
 // Régulation activée : il faut un capteur de retour et une consigne.
+// En FOLLOW il n'y a pas de consigne : seule l'entrée analogique est requise.
 const isRegulationInvalid = (loop: any): boolean =>
-	!!loop?.isEnabled && (isEmpty(loop?.sensorId) || isEmpty(loop?.setpoint));
+	!!loop?.isEnabled &&
+	(isEmpty(loop?.sensorId) || (!isFollowLoop(loop) && isEmpty(loop?.setpoint)));
 
 // Menu de réglages d'un actuator (création ou modification) : General +
 // Configuration en accordéons embarqués, puis suppression. Même plomberie que
