@@ -3,7 +3,7 @@ import {Pressable, StyleSheet, Text, View} from 'react-native';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {
-	faFlask,
+	faLayerGroup,
 	faPlug,
 	faPowerOff,
 	faSyncAlt,
@@ -15,7 +15,7 @@ export type FilterKey = 'CYCLE' | 'FERTIGATION' | 'MODULE';
 
 const SEGMENTS: {key: FilterKey; label: string; icon: IconDefinition}[] = [
 	{key: 'CYCLE', label: 'Cycles', icon: faSyncAlt},
-	{key: 'FERTIGATION', label: 'Fertigation', icon: faFlask},
+	{key: 'FERTIGATION', label: 'Groups', icon: faLayerGroup},
 	{key: 'MODULE', label: 'Modules', icon: faPowerOff}
 ];
 

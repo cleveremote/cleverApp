@@ -111,6 +111,20 @@ export const useUnreachableDevices = (item: any, kind: ExecutableKind) => {
 	);
 };
 
+// Nom du device lu par un sensor (celui de son parent pour un enfant) ;
+// undefined quand aucun device n'est résolu.
+export const useSensorDeviceName = (sensor: any): string | undefined => {
+	const devices = useSelector((s: any) => s.root_device.devices);
+	const ids = useDependencyIds(sensor, 'SENSOR');
+	return useMemo(
+		() =>
+			ids
+				.map(id => (devices || []).find((d: any) => `${d.id}` === id))
+				.find((d: any) => d?.name)?.name,
+		[ids, devices]
+	);
+};
+
 // État agrégé des devices de chaque sensor, sous forme de signature stable
 // "id:état|…" pour réagir aux seuls changements d'état.
 export const useSensorsConnectivity = (list: any[]) => {

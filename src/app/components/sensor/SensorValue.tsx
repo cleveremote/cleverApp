@@ -4,8 +4,12 @@ import {connect} from 'react-redux';
 
 // Unité d'un sensor : `config.unit` si renseignée, sinon celle du champ lu
 // (`config.field`) dans la commande de l'appareil — le backend ne renvoie pas
-// d'unité propre pour les mesures issues d'une commande.
+// d'unité propre pour les mesures issues d'une commande. Un ANALOG affiche la
+// valeur convertie : l'unité de son échelle prime.
 export const getSensorUnit = (sensor: any): string => {
+	if (sensor?.type === 'ANALOG' && sensor?.config?.scaling?.unit) {
+		return sensor.config.scaling.unit;
+	}
 	if (sensor?.config?.unit) return sensor.config.unit;
 	const fieldName = sensor?.config?.field;
 	if (!fieldName) return '';

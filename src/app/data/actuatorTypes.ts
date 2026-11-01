@@ -111,3 +111,38 @@ export const listedRpiActuators = (actuators: any[] = [], devices: any[] = []) =
 		.sort((a: any, b: any) =>
 			compareLabels(actuatorLabel(a, devices), actuatorLabel(b, devices))
 		);
+
+// Port d'un actuator : la pin GPIO d'un RPI, le channel de l'action d'un
+// COM / CTRL. undefined quand il n'est pas renseigné.
+export const actuatorPort = (actuator: any): number | undefined => {
+	const port =
+		actuator?.type === ActuatorType.RPI
+			? actuator?.config?.rpiPin
+			: actuator?.config?.actions?.[0]?.channel;
+	if (port === undefined || port === null || port === '') return undefined;
+	const value = Number(port);
+	return Number.isNaN(value) ? undefined : value;
+};
+
+// Tri par device (nom du slave pour COM / CTRL), puis par numéro de port, puis
+// par libellé. Les ports non renseignés passent en dernier.
+export const compareByDeviceAndPort =
+	(devices: any[] = []) =>
+	(a: any, b: any) => {
+		const deviceName = (actuator: any) => {
+			if (!isComBased(actuator?.type)) return '';
+			const device = devices.find(
+				(d: any) => `${d.id}` === `${actuator.config?.deviceId}`
+			);
+			return `${device?.name ?? device?.label ?? ''}`;
+		};
+		const byDevice = compareLabels(deviceName(a), deviceName(b));
+		if (byDevice !== 0) return byDevice;
+		const portA = actuatorPort(a) ?? Number.POSITIVE_INFINITY;
+		const portB = actuatorPort(b) ?? Number.POSITIVE_INFINITY;
+		if (portA !== portB) return portA < portB ? -1 : 1;
+		return compareLabels(
+			actuatorLabel(a, devices),
+			actuatorLabel(b, devices)
+		);
+	};

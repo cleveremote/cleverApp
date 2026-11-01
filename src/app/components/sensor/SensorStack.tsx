@@ -10,6 +10,7 @@ import {
 	DeviceDisconnectedIcon,
 	ExecutableConnectivityDot,
 	WARNING_BORDER,
+	useSensorDeviceName,
 	useUnreachableDevices
 } from '../device/DeviceConnectivity';
 
@@ -34,6 +35,12 @@ export function SensorStack({
 	const bgColor = sensorData.style.bgColor;
 	const disconnected = !!useUnreachableDevices(sensorData, 'SENSOR').length;
 	const waiting = sensorData.status === 'WAITTING_CONFIRMATION';
+	// ANALOG : le nom est préfixé par celui du device lu.
+	const deviceName = useSensorDeviceName(sensorData);
+	const displayName =
+		sensorData.type === 'ANALOG' && deviceName
+			? `${deviceName} - ${sensorData.name}`
+			: sensorData.name;
 	// Déconnecté : un tap n'importe où sur la carte (hors menu) ouvre le
 	// détail, à la place du dépliage d'un parent.
 	const [detailsOpen, setDetailsOpen] = useState(false);
@@ -115,7 +122,7 @@ export function SensorStack({
 							}}
 							numberOfLines={1}
 							ellipsizeMode="middle">
-							{sensorData.name}
+							{displayName}
 						</Text>
 					</View>
 					{isParent ? (

@@ -24,7 +24,7 @@ import {controlLoopBadge} from '../../../../components/cycle/controlLoopBadge';
 import {
 	ActuatorType,
 	actuatorLabel,
-	compareLabels,
+	compareByDeviceAndPort,
 	listedRpiActuators
 } from '../../../../data/actuatorTypes';
 import {useForm} from 'react-hook-form';
@@ -124,9 +124,10 @@ export function SequenceActuatorsSettingsSection(props: any) {
 	// Selected module refs of the given type (excluding the ones flagged for
 	// deletion) so we can both render them and keep them out of the picker.
 	// `type`/`name` are resolved from the master actuator when the persisted ref
-	// no longer carries them. RPI ones are listed by label, as in My RPI.
+	// no longer carries them. Sorted by device, then by port number.
 	const selectedOfType = (type: string) => {
-		const selected = (props.moduleConfigs || [])
+		const byDeviceAndPort = compareByDeviceAndPort(props.devices);
+		return (props.moduleConfigs || [])
 			.filter((a: any) => !a.delete)
 			.map((a: any) => {
 				const master = masterOf(a.moduleId);
@@ -139,15 +140,19 @@ export function SequenceActuatorsSettingsSection(props: any) {
 						: a.name
 				};
 			})
-			.filter((a: any) => a.type === type);
-		return type === ActuatorType.RPI
-			? selected.sort((a: any, b: any) => compareLabels(a.label, b.label))
-			: selected;
+			.filter((a: any) => a.type === type)
+			.sort((a: any, b: any) =>
+				byDeviceAndPort(
+					masterOf(a.moduleId) ?? a,
+					masterOf(b.moduleId) ?? b
+				)
+			);
 	};
 
 	// Picker options: master actuators of the given type minus the already
-	// selected ones, mapped to `{label, value}` (SelectForm shape). RPI ones
-	// are the same list as My RPI (not deleted, sorted by label).
+	// selected ones, mapped to `{label, value}` (SelectForm shape), sorted by
+	// device then by port number. RPI ones are the same list as My RPI (not
+	// deleted).
 	const availableOfType = (type: string) => {
 		const usedIds = selectedOfType(type).map((a: any) => `${a.moduleId}`);
 		const ofType =
@@ -158,6 +163,7 @@ export function SequenceActuatorsSettingsSection(props: any) {
 				  );
 		return ofType
 			.filter((a: any) => usedIds.indexOf(`${a.id}`) < 0)
+			.sort(compareByDeviceAndPort(props.devices))
 			.map((a: any) => ({
 				label: actuatorLabel(a, props.devices),
 				value: a.id
