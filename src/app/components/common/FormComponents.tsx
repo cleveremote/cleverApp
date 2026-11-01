@@ -819,7 +819,8 @@ export function DragableForm({
 																(x: any) =>
 																	x.mode ===
 																	item.mode
-															) === 4
+															) ===
+															(value ?? []).length - 1
 																? 'flex'
 																: 'none',
 														margin: 8

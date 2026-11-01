@@ -30,7 +30,6 @@ export function TriggersStack() {
 				options={{headerShown: false}}
 			/>
 			{/*<Stack.Screen name="CycleGeneralSection" component={GeneralSettingsSection} options={options('General')} />
-                    <Stack.Screen name="CyclePrioritySection" component={PrioritySettingsSection} options={options('Priority')} />
                     <Stack.Screen name="CycleSequenceSection" component={SeqSettingsSection} options={options('Sequences')} />
                     */}
 		</Stack.Navigator>

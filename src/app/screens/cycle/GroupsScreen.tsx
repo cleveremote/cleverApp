@@ -54,7 +54,7 @@ export function Groups(props: any) {
 						props.navigation.navigate('Settings', {
 							screen: 'CycleSettingsMenu',
 							// No id + isGroup → CycleSettingsScreen creates a blank
-							// GROUP cycle (General / Priority / Cycles).
+							// GROUP cycle (General / Cycles).
 							params: {id: undefined, isGroup: true}
 						}),
 					'times-circle',

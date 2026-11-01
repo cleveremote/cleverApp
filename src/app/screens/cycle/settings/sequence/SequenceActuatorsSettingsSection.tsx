@@ -170,15 +170,39 @@ export function SequenceActuatorsSettingsSection(props: any) {
 			}));
 	};
 
+	const canAddActuator =
+		!props.isModule ||
+		!(props.moduleConfigs || []).some((a: any) => !a.delete);
+	// MODULE with its actuator defined: only that actuator's section is shown
+	// (e.g. a COM one hides RPI and CTRL).
+	const visibleSections = canAddActuator
+		? ACTUATOR_SECTIONS
+		: ACTUATOR_SECTIONS.filter(
+				section => selectedOfType(section.type).length > 0
+		  );
+
 	useEffect(() => {
 		props.loadMasterActuators();
 		props.loadDevices();
 		props.loadControlLoops();
 	}, []);
 
+	// MODULE sequence: it drives a single actuator. Once one is selected no
+	// other can be added, and the one it already had when opened can't be
+	// removed (one picked in this session can, until saved).
+	const lockedModuleIdsRef = useRef<string[]>([]);
+	const isLocked = (moduleConfig: any) =>
+		!!props.isModule &&
+		lockedModuleIdsRef.current.indexOf(`${moduleConfig.moduleId}`) > -1;
+
 	// Embedded, the sequence may still be loading when the accordion mounts:
 	// (re)seed the slice once the right sequence is there.
 	useEffect(() => {
+		lockedModuleIdsRef.current = (
+			sequenceDataRef.current?.moduleConfigs || []
+		)
+			.filter((a: any) => !a.delete)
+			.map((a: any) => `${a.moduleId}`);
 		props.loadSequenceModuleConfigs(sequenceDataRef.current);
 	}, [sequenceData?.id]);
 
@@ -226,7 +250,7 @@ export function SequenceActuatorsSettingsSection(props: any) {
 	return (
 		<Body {...bodyProps}>
 			<View style={BoxFormStyle.boxForm}>
-				{ACTUATOR_SECTIONS.map(section => (
+				{visibleSections.map(section => (
 					<CollapsibleSection
 						key={section.type}
 						title={section.title}
@@ -239,7 +263,9 @@ export function SequenceActuatorsSettingsSection(props: any) {
 									deleteModuleConfig(moduleConfig);
 								},
 								`${moduleConfig.label}`,
-								{name: faTrash, color: '#E53E3E'},
+								isLocked(moduleConfig)
+									? null
+									: {name: faTrash, color: '#E53E3E'},
 								undefined,
 								() => openModuleConfig(moduleConfig),
 								// Vanne régulée (ControlLoop activée).
@@ -253,33 +279,35 @@ export function SequenceActuatorsSettingsSection(props: any) {
 									: undefined
 							)
 						)}
-						<View
-							style={{
-								justifyContent: 'center',
-								alignItems: 'center'
-							}}>
-							<SelectForm
-								lstData={availableOfType(section.type)}
-								control={control}
-								errors={errors}
-								name={`actuator_${section.type}`}
-								placeholder={`Select ${section.title} actuator`}
-								rules={{required: false}}
-								onValueChange={value => {
-									const actuator = (
-										props.masterActuators || []
-									).find(
-										(a: any) => `${a.id}` === `${value}`
-									);
-									if (actuator) {
-										addModuleConfig(actuator);
-									}
-									// Clear the picker so the added actuator
-									// doesn't stay shown as selected.
-									setValue(`actuator_${section.type}`, null);
-								}}
-							/>
-						</View>
+						{canAddActuator && (
+							<View
+								style={{
+									justifyContent: 'center',
+									alignItems: 'center'
+								}}>
+								<SelectForm
+									lstData={availableOfType(section.type)}
+									control={control}
+									errors={errors}
+									name={`actuator_${section.type}`}
+									placeholder={`Select ${section.title} actuator`}
+									rules={{required: false}}
+									onValueChange={value => {
+										const actuator = (
+											props.masterActuators || []
+										).find(
+											(a: any) => `${a.id}` === `${value}`
+										);
+										if (actuator) {
+											addModuleConfig(actuator);
+										}
+										// Clear the picker so the added actuator
+										// doesn't stay shown as selected.
+										setValue(`actuator_${section.type}`, null);
+									}}
+								/>
+							</View>
+						)}
 					</CollapsibleSection>
 				))}
 			</View>

@@ -43,28 +43,54 @@ export const useBelowCard = () => {
 	};
 };
 
-// Conflit : le box attend une confirmation pour démarrer l'exécutable.
+// Le box attend une confirmation pour démarrer l'exécutable.
 const CONFLICT = 'WAITTING_CONFIRMATION';
 
 const MESSAGES: Record<string, string> = {
 	CONDITIONS_NOT_VERIFIED: 'Not started: conditions not verified',
-	[CONFLICT]: 'Conflict: waiting for confirmation to start'
+	[CONFLICT]: 'waiting for confirmation to start'
+};
+
+const CONFIRMATION_MESSAGES = {
+	CONFLICT: 'Conflict: waiting for confirmation to start',
+	SCHEDULED: 'Scheduled start: waiting for confirmation'
 };
 
 const IN_PROCESS = 'IN_PROCCESS';
 const EXECUTABLE_TYPES = ['CYCLE', 'SEQUENCE'];
 
-// Un conflit n'a de sens que tant que l'exécutable en face tourne. Les causes
-// de type CYCLE/SEQUENCE désignent les exécutables en conflit ; sans elles, on
-// retombe sur « un autre cycle est en cours ».
-const conflictActive = (entry: any, statusList: any[]) => {
-	const running = (id: string) =>
-		statusList.find((x: any) => x?.id === id)?.status === IN_PROCESS;
+type ConfirmationConflict = {
+	cycleId: string;
+	name: string;
+	mode: string;
+	// true : confirmer stoppera ce cycle ; false : rang égal ou plus grand.
+	isWinning: boolean;
+};
+
+type ConfirmationKind = keyof typeof CONFIRMATION_MESSAGES;
+
+const isRunning = (id: string, statusList: any[]) =>
+	statusList.find((x: any) => x?.id === id)?.status === IN_PROCESS;
+
+// Conflits encore d'actualité : un conflit n'a de sens que tant que le cycle
+// en face tourne.
+const activeConflicts = (
+	entry: any,
+	statusList: any[]
+): ConfirmationConflict[] =>
+	(entry?.confirmation?.conflicts || []).filter((c: ConfirmationConflict) =>
+		isRunning(c.cycleId, statusList)
+	);
+
+// Ancien payload (sans `confirmation`) : les causes de type CYCLE/SEQUENCE
+// désignent les exécutables en conflit ; sans elles, on retombe sur « un
+// autre cycle est en cours ».
+const legacyConflictActive = (entry: any, statusList: any[]) => {
 	const others = (entry.causes || []).filter((c: any) =>
 		EXECUTABLE_TYPES.includes(c?.type)
 	);
 	return others.length
-		? others.some((c: any) => running(c.id))
+		? others.some((c: any) => isRunning(c.id, statusList))
 		: statusList.some(
 				(x: any) =>
 					x?.id !== entry.id &&
@@ -73,10 +99,29 @@ const conflictActive = (entry: any, statusList: any[]) => {
 		  );
 };
 
+// Origine de l'attente de confirmation : conflit perdu (un cycle de rang égal
+// ou supérieur tourne) ou schedule/trigger avec shouldConfirmation. undefined
+// si plus rien n'est à confirmer.
+const confirmationKind = (
+	entry: any,
+	statusList: any[]
+): ConfirmationKind | undefined => {
+	if (entry?.status !== CONFLICT) {
+		return undefined;
+	}
+	if (!entry.confirmation) {
+		return legacyConflictActive(entry, statusList) ? 'CONFLICT' : undefined;
+	}
+	if (activeConflicts(entry, statusList).some(c => !c.isWinning)) {
+		return 'CONFLICT';
+	}
+	return entry.confirmation.isRequested ? 'SCHEDULED' : undefined;
+};
+
 // Vrai tant que le bandeau de conflit est affiché pour cette entrée : le
 // menu de la carte (icône d'attente) suit la même règle.
 export const isConflictShown = (entry: any, statusList: any[] = []) =>
-	entry?.status === CONFLICT && conflictActive(entry, statusList);
+	!!confirmationKind(entry, statusList);
 
 // Message du bandeau pour une entrée de status, ou undefined s'il n'y en a
 // pas. `withConflict` : l'appelant gère les actions d'un conflit ; le
@@ -87,12 +132,19 @@ export const notificationMessage = (
 	statusList: any[] = []
 ): string | undefined => {
 	if (withConflict && entry?.status === CONFLICT) {
-		return conflictActive(entry, statusList)
-			? MESSAGES[CONFLICT]
-			: undefined;
+		const kind = confirmationKind(entry, statusList);
+		if (!kind) {
+			return undefined;
+		}
+		return entry.confirmation
+			? CONFIRMATION_MESSAGES[kind]
+			: MESSAGES[CONFLICT];
 	}
 	return MESSAGES[entry?.notification];
 };
+
+const quoted = (conflicts: ConfirmationConflict[]) =>
+	conflicts.map(c => `"${c.name}"`).join(', ');
 
 type Action = {
 	label: string;
@@ -171,20 +223,61 @@ export function CycleNotification(
 		return null;
 	}
 
-	const causes: any[] = entry.causes || [];
+	const kind = isConflict
+		? confirmationKind(entry, props.status || [])
+		: undefined;
+	// Nouveau payload : on liste les cycles en conflit plutôt que les causes
+	// textuelles (CONFIRMATION / FORCE).
+	const conflicts = entry.confirmation
+		? activeConflicts(entry, props.status || [])
+		: [];
+	const toStop = conflicts.filter(c => c.isWinning);
+	const lines: string[] = entry.confirmation
+		? kind === 'CONFLICT'
+			? conflicts.map(
+					c =>
+						`"${c.name}" is running` +
+						(c.isWinning ? '' : ' (equal or higher priority)')
+			  )
+			: []
+		: (entry.causes || []).map((cause: any) =>
+				describeCause(
+					cause,
+					props.item,
+					props.cycles || [],
+					props.sensors || []
+				)
+		  );
+	const hint =
+		kind === 'CONFLICT' && conflicts.length
+			? `Force will stop ${quoted(conflicts)}`
+			: kind === 'SCHEDULED' && toStop.length
+			? `Confirming will stop ${quoted(toStop)}`
+			: props.forceHint;
 
-	const actions: Action[] = isConflict
-		? [
-				{ label: 'Ignore', icon: 'times', onPress: props.onIgnore! },
-				{ label: 'Queue', icon: 'stream', onPress: props.onQueue! },
-				{
-					label: 'Force',
-					icon: 'play',
-					onPress: props.onForce,
-					primary: true
-				}
-		  ]
-		: [
+	const actions: Action[] =
+		kind === 'SCHEDULED'
+			? [
+					{ label: 'Ignore', icon: 'times', onPress: props.onIgnore! },
+					{
+						label: 'Confirm start',
+						icon: 'play',
+						onPress: props.onForce,
+						primary: true
+					}
+			  ]
+			: isConflict
+			? [
+					{ label: 'Ignore', icon: 'times', onPress: props.onIgnore! },
+					{ label: 'Queue', icon: 'stream', onPress: props.onQueue! },
+					{
+						label: 'Force',
+						icon: 'play',
+						onPress: props.onForce,
+						primary: true
+					}
+			  ]
+			: [
 				// Conditions non vérifiées : Ignore masque simplement le bandeau.
 				{ label: 'Ignore', icon: 'times', onPress: () => {} },
 				{
@@ -242,24 +335,18 @@ export function CycleNotification(
 					</Text>
 				</View>
 
-				{causes.map((cause: any) => (
+				{lines.map((line, index) => (
 					<Text
-						key={cause.id}
+						key={'line_' + index}
 						style={{ color: TEXT, fontSize: 13, marginLeft: 24 }}
 						numberOfLines={2}
 						ellipsizeMode="middle"
 					>
-						{'• ' +
-							describeCause(
-								cause,
-								props.item,
-								props.cycles || [],
-								props.sensors || []
-							)}
+						{'• ' + line}
 					</Text>
 				))}
 
-				{props.forceHint ? (
+				{hint ? (
 					<Text
 						style={{
 							color: TEXT,
@@ -267,7 +354,7 @@ export function CycleNotification(
 							fontStyle: 'italic'
 						}}
 					>
-						{props.forceHint}
+						{hint}
 					</Text>
 				) : null}
 

@@ -1,4 +1,4 @@
-import React, {useCallback, useEffect, useState} from 'react';
+import React, {useCallback, useEffect, useMemo, useState} from 'react';
 import {FlatList, Platform, Text, TouchableOpacity, View} from 'react-native';
 import {connect} from 'react-redux';
 import Spinner from 'react-native-loading-spinner-overlay';
@@ -12,6 +12,19 @@ import {useForm} from 'react-hook-form';
 import {BoxFormStyle} from '../../../styles/components/common/boxForm';
 import {navigationHeader} from '../../../components/common/navigationHeaders';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
+import {
+	formatDateTime,
+	RunCard
+} from '../../../components/cycle/RunCard';
+import {
+	CycleHistory,
+	CycleRun
+} from '../../../../module/process/infrasctructure/store/models/cycleHistory';
+
+type Row =
+	| {key: string; type: 'run'; run: CycleRun}
+	| {key: string; type: 'legacyHeader'}
+	| {key: string; type: 'legacy'; event: any};
 
 const hapticOptions = {
 	enableVibrateFallback: false,
@@ -77,24 +90,8 @@ function EventsScreen(props: any) {
 		handleSubmit(onSubmit)();
 	}, []);
 
-	const pad = (n: number) => (n < 10 ? '0' + n : '' + n);
-
-	const formatDateTime = (value: any) => {
-		const date = new Date(value);
-		const day = pad(date.getDate());
-		const month = pad(date.getMonth() + 1);
-		const year = pad(date.getFullYear() % 100);
-		const time =
-			pad(date.getHours()) +
-			':' +
-			pad(date.getMinutes()) +
-			':' +
-			pad(date.getSeconds());
-		return day + '/' + month + '/' + year + ' ' + time;
-	};
-
-	const renderItem = useCallback(
-		({item}: {item: any}) => {
+	const renderLegacy = useCallback(
+		(item: any) => {
 			const additionalData = item.additionalData || {};
 			const causes: {type: string; cause: string}[] =
 				additionalData.causes || [];
@@ -118,7 +115,21 @@ function EventsScreen(props: any) {
 							? String(additionalData.duration)
 							: undefined
 				},
-				{label: 'Element', value: item.elementType}
+				{label: 'Element', value: item.elementType},
+				{
+					label: 'Confirmation',
+					value: additionalData.confirmation?.isRequested
+						? 'requested'
+						: undefined
+				},
+				...(additionalData.confirmation?.conflicts || []).map(
+					(c: any) => ({
+						label: 'Conflict',
+						value:
+							`${c.name} (${c.mode}) : ` +
+							(c.isWinning ? 'will be stopped' : 'lost')
+					})
+				)
 			].filter(d => d.value !== undefined && d.value !== null);
 
 			const isExpandable = hasCauses || details.length > 0;
@@ -248,6 +259,73 @@ function EventsScreen(props: any) {
 		[expandedId]
 	);
 
+	const history: CycleHistory = props.events;
+	const cycle = props.route.params.cycle;
+
+	// Noms des cycles/séquences : timeline des runs, séquences du cycle, puis
+	// liste des cycles ; à défaut l'id.
+	const nameOf = useMemo(() => {
+		const names: Record<string, string> = {};
+		(props.cycles || []).forEach((c: any) => {
+			if (c?.id && c.name) names[c.id] = c.name;
+		});
+		(cycle?.sequences || []).forEach((sq: any) => {
+			if (sq?.id && sq.name) names[sq.id] = sq.name;
+		});
+		if (cycle?.id && cycle.name) names[cycle.id] = cycle.name;
+		(history?.runs || []).forEach(run =>
+			(run.timeline || []).forEach(t => {
+				if (t.elementId && t.name) names[t.elementId] = t.name;
+			})
+		);
+		return (id: string) => names[id] || id;
+	}, [history, props.cycles, cycle]);
+
+	const rows: Row[] = useMemo(() => {
+		const runs: Row[] = (history?.runs || []).map(run => ({
+			key: 'run_' + run.runId,
+			type: 'run',
+			run
+		}));
+		const legacy: Row[] = (history?.legacy || []).map((event, i) => ({
+			key: 'legacy_' + (event.id ?? i),
+			type: 'legacy',
+			event
+		}));
+		return legacy.length && runs.length
+			? [...runs, {key: 'legacyHeader', type: 'legacyHeader'}, ...legacy]
+			: [...runs, ...legacy];
+	}, [history]);
+
+	const renderItem = ({item}: {item: Row}) => {
+		if (item.type === 'run') {
+			const expanded = expandedId === item.key;
+			return (
+				<RunCard
+					run={item.run}
+					expanded={expanded}
+					onToggle={() => setExpandedId(expanded ? null : item.key)}
+					nameOf={nameOf}
+				/>
+			);
+		}
+		if (item.type === 'legacyHeader') {
+			return (
+				<Text
+					style={{
+						color: '#777',
+						fontSize: 12,
+						marginTop: 12,
+						marginBottom: 2,
+						marginHorizontal: 8
+					}}>
+					Older events
+				</Text>
+			);
+		}
+		return renderLegacy(item.event);
+	};
+
 	return (
 		<View style={{gap: 8, marginVertical: 4, alignSelf: 'stretch'}}>
 			<View style={BoxFormStyle.boxForm}>
@@ -291,12 +369,24 @@ function EventsScreen(props: any) {
 				animation="fade"
 			/>
 			<FlatList
-				data={props.events}
+				data={rows}
 				renderItem={renderItem}
-				keyExtractor={item => item.id}
+				keyExtractor={item => item.key}
 				extraData={expandedId}
 				onRefresh={() => onRefresh()}
 				refreshing={refreshing}
+				ListEmptyComponent={
+					props.isLoading ? null : (
+						<Text
+							style={{
+								color: '#777',
+								textAlign: 'center',
+								marginTop: 24
+							}}>
+							No run in this period
+						</Text>
+					)
+				}
 			/>
 		</View>
 	);
@@ -304,7 +394,8 @@ function EventsScreen(props: any) {
 
 const mapStateToProps = (state: any) => ({
 	data: state.root_cycle.data,
-	events: state.root_cycle.events
+	events: state.root_cycle.events,
+	cycles: state.root_cycle.cycles
 });
 
 export default connect(mapStateToProps, {

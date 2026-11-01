@@ -20,6 +20,9 @@ import {
 	ResolvedService
 } from '../../../../services/mdns/mdnsResolver';
 import {getBoxEndpoint} from '../../../../services/hotspot';
+
+const USER_NAME_KEY = 'userName';
+
 class AuthenticationService {
 	public newEvent = new EventEmitter();
 	public socketChangeEvent = new EventEmitter();
@@ -160,10 +163,42 @@ class AuthenticationService {
 		}
 	}
 
+	// Login de l'utilisateur connecté (gardé au login, survit au refresh
+	// token), envoyé au box comme auteur des commandes. Session ouverte avant
+	// qu'on le garde : on le relit dans les claims du token d'accès.
+	public async getCurrentUserName(): Promise<string | undefined> {
+		const stored = await AsyncStorage.getItem(USER_NAME_KEY);
+		if (stored) {
+			return stored;
+		}
+		const token = await AsyncStorage.getItem('accessToken');
+		if (!token) {
+			return undefined;
+		}
+		try {
+			global.atob = decode;
+			const claims: any = jwtDecode(token);
+			const name = [
+				claims.username,
+				claims.login,
+				claims.name,
+				claims.user,
+				claims.sub
+			].find(v => typeof v === 'string' && v);
+			if (name) {
+				await AsyncStorage.setItem(USER_NAME_KEY, name);
+			}
+			return name;
+		} catch {
+			return undefined;
+		}
+	}
+
 	public async signout() {
 		socketService.disconnect();
 		await AsyncStorage.removeItem('refreshToken');
 		await AsyncStorage.removeItem('accessToken');
+		await AsyncStorage.removeItem(USER_NAME_KEY);
 		this.resolvedLocalService = null;
 		this.setIsExpired(true);
 	}
@@ -304,6 +339,7 @@ class AuthenticationService {
 							resolve({res: false, error: response.error});
 						} else {
 							await this.saveTokens(response);
+							await AsyncStorage.setItem(USER_NAME_KEY, login);
 							socketService.updateAuthToken(response.accessToken);
 							socketService.reconnect();
 							this.dispatchExpireTokenEvent(response.accessToken);

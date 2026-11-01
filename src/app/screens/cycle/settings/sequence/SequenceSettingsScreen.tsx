@@ -35,6 +35,12 @@ function SequenceSettingsScreen(props: any) {
 	const isModified = useRef(!props.route.params.item?.id);
 	const sequenceRef = useRef(props.sequence);
 	sequenceRef.current = props.sequence;
+	// Séquence d'un MODULE : on ne peut ni la supprimer ni retirer ses
+	// actionneurs déjà définis (seulement en ajouter). Le cycle parent est celui
+	// ouvert dans CycleSettingsScreen (slice partagé), vérifié par son id.
+	const isModule =
+		props.cycle?.id === props.route.params?.cycleId &&
+		props.cycle?.type === 'MODULE';
 
 	// Intention de sortie déclenchée par les boutons d'entête (voir plus bas).
 	const leaveIntentRef = useRef<'save' | 'cancel' | null>(null);
@@ -283,11 +289,12 @@ function SequenceSettingsScreen(props: any) {
 							<SequenceActuatorsSettingsSection
 								embedded
 								sequenceData={sequenceRef.current}
+								isModule={isModule}
 								navigation={props.navigation}
 							/>
 						</MenuAccordion>
 
-						{!isNew && (
+						{!isNew && !isModule && (
 							<DeleteItemMenu
 								key={61}
 								name="Remove"
@@ -306,7 +313,8 @@ function SequenceSettingsScreen(props: any) {
 }
 
 const mapStateToProps = (state: any) => ({
-	sequence: state.cycle_sequence.sequence
+	sequence: state.cycle_sequence.sequence,
+	cycle: state.root_cycle.cycle
 });
 
 export default connect(mapStateToProps, {

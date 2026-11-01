@@ -34,6 +34,15 @@ export function SeqSettingsSec(props: any) {
 	// suppression) → on ré-établit la baseline sans marquer le cycle modifié.
 	const seqPrevTokenRef = useRef<number>(props.sequencesToken);
 
+	// Un MODULE porte une seule séquence : une fois définie, on ne peut plus en
+	// ajouter (le bouton reste disponible tant que le module n'en a aucune, sinon
+	// un module fraîchement créé serait inutilisable).
+	const isModule = cycleData?.type === 'MODULE';
+	const hasSequence =
+		props.sequencesParentId === cycleData?.id &&
+		!!(props.sequences || []).some((x: any) => !x.delete);
+	const canAddSequence = !(isModule && hasSequence);
+
 	const {
 		control,
 		handleSubmit,
@@ -157,29 +166,31 @@ export function SeqSettingsSec(props: any) {
 					name="sequences"
 					onDragEnd={() => handleSubmit(save)()}
 				/>
-				<View style={styles.addButtonWrapper}>
-					<TouchableOpacity
-						style={styles.addButton}
-						onPress={() => {
-							ReactNativeHapticFeedback.trigger(
-								'impactMedium',
-								hapticOptions
-							);
-							props.navigation.navigate('SequenceSettingsStack', {
-								screen: 'SequenceSettingsMenu',
-								params: {
-									cycleId: cycleParamRef.current.id
-								}
-							});
-						}}>
-						<Icon
-							name="times-circle"
-							size={30}
-							color={colors.dark}
-						/>
-					</TouchableOpacity>
-					<Text style={styles.addLabel}>Add new sequence ...</Text>
-				</View>
+				{canAddSequence && (
+					<View style={styles.addButtonWrapper}>
+						<TouchableOpacity
+							style={styles.addButton}
+							onPress={() => {
+								ReactNativeHapticFeedback.trigger(
+									'impactMedium',
+									hapticOptions
+								);
+								props.navigation.navigate('SequenceSettingsStack', {
+									screen: 'SequenceSettingsMenu',
+									params: {
+										cycleId: cycleParamRef.current.id
+									}
+								});
+							}}>
+							<Icon
+								name="times-circle"
+								size={30}
+								color={colors.dark}
+							/>
+						</TouchableOpacity>
+						<Text style={styles.addLabel}>Add new sequence ...</Text>
+					</View>
+				)}
 			</View>
 		</View>
 	);

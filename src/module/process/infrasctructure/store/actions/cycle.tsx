@@ -23,7 +23,9 @@ import {
 	newTempId
 } from '../../../../../services/socket';
 import {cleanCycleModuleConfigs} from '../models/sequenceModule';
+import {toCycleHistory} from '../models/cycleHistory';
 import {Alert} from 'react-native';
+import {authenticationService} from '../../../../authentication/domain/services/auth.service';
 import {
 	describeUnreachable,
 	findExecutable,
@@ -126,10 +128,9 @@ export const loadEvents =
 			'front/box/fetch/events',
 			denormalizeIds(query),
 			(response: any) => {
-				const raw = response?.config;
 				dispatch({
 					type: EVENTS_LOAD,
-					payload: normalizeIds(raw) || []
+					payload: toCycleHistory(normalizeIds(response?.config))
 				});
 			}
 		);
@@ -344,6 +345,7 @@ export const executeCycle =
 			}
 		}
 		dispatch({type: CYCLE_EXECUTE, payload: true});
+		const requestedBy = await authenticationService.getCurrentUserName();
 		return new Promise((resolve, reject) => {
 			if (!socketService.connected) {
 				reject(new Error('No server connexion!'));
@@ -351,7 +353,7 @@ export const executeCycle =
 
 			socketService.emit(
 				'front/box/execute/process',
-				denormalizeIds(data),
+				denormalizeIds({...data, requestedBy}),
 				(response: any) => {
 					dispatch({type: CYCLE_EXECUTE, payload: false});
 					resolve(response);

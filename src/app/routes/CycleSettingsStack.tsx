@@ -6,7 +6,6 @@ import {
 import {Provider} from 'react-redux';
 import {store} from '../../module/process/infrasctructure/store/store';
 import CycleGeneralSettingsSection from '../screens/cycle/settings/cycle/CycleGeneralSettingsSection';
-import CyclePrioritySettingsSection from '../screens/cycle/settings/cycle/CyclePrioritySettingsSection';
 import SeqSettingsSection from '../screens/cycle/settings/cycle/CycleSeqSettingsSection';
 import CycleChildrenSettingsSection from '../screens/cycle/settings/cycle/CycleChildrenSettingsSection';
 import CycleSettingsScreen from '../screens/cycle/settings/cycle/CycleSettingsScreen';
@@ -35,11 +34,6 @@ export function CycleSettingStack() {
 				name="CycleGeneralSection"
 				component={CycleGeneralSettingsSection}
 				options={options('General')}
-			/>
-			<Stack.Screen
-				name="CyclePrioritySection"
-				component={CyclePrioritySettingsSection}
-				options={options('Priority')}
 			/>
 			<Stack.Screen
 				name="CycleSequenceSection"
