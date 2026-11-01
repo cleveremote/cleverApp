@@ -16,6 +16,7 @@ import {
 	useEmbeddedSection
 } from '../../../components/common/useSectionSettingsHeader';
 import {updateSensor} from '../../../../module/process/infrasctructure/store/actions/sensor';
+import {isDeviceCommandType} from './SensorDataSourceSettingsSection';
 
 const typeOptions = [
 	{label: 'FORCAST', value: 'FORCAST'},
@@ -59,9 +60,11 @@ export function SensorConfigurationSettingsSection(props: any) {
 	// champs conditionnés par le type s'affichent une fois la sélection faite.
 	const typeSelected = typeOptions.some(o => o.value === watchedType);
 	const isForcast = watchedType === 'FORCAST';
-	// Le cronPattern est obligatoire pour un FORCAST ou pour un COM non enfant
-	// (un enfant COM hérite le cronPattern de son parent).
-	const cronRequired = isForcast || (watchedType === 'COM' && !watchedIsChild);
+	// COM et ANALOG partagent le modèle parent/enfant.
+	const isDeviceCommand = isDeviceCommandType(watchedType);
+	// Le cronPattern est obligatoire pour un FORCAST ou pour un COM/ANALOG non
+	// enfant (un enfant hérite le cronPattern de son parent).
+	const cronRequired = isForcast || (isDeviceCommand && !watchedIsChild);
 
 	useValidateOnOpen(props.route, trigger);
 
@@ -89,7 +92,9 @@ export function SensorConfigurationSettingsSection(props: any) {
 				isChild: data.isChild,
 				enabled: data.enabled,
 				parentId:
-					data.type === 'COM' && data.isChild ? data.parentId : null,
+					isDeviceCommandType(data.type) && data.isChild
+						? data.parentId
+						: null,
 				deviceId: data.deviceId,
 				config: {...parentRef.current?.config, ...data.config},
 				isModified: true
@@ -101,7 +106,9 @@ export function SensorConfigurationSettingsSection(props: any) {
 			...source,
 			...data,
 			parentId:
-				data.type === 'COM' && data.isChild ? data.parentId : null,
+				isDeviceCommandType(data.type) && data.isChild
+					? data.parentId
+					: null,
 			isModified: saveUnchangedData
 		});
 		props.navigation.goBack();
@@ -220,7 +227,7 @@ export function SensorConfigurationSettingsSection(props: any) {
 								}}
 							/>
 						)}
-						{watchedType === 'COM' && watchedIsChild && (
+						{isDeviceCommand && watchedIsChild && (
 							<SelectForm
 								lstData={getParentSensors()}
 								control={control}

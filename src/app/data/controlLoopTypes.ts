@@ -119,4 +119,4 @@ export const enabledLoopOf = (loops: any[] = [], actuatorId: any) => {
 
 // Unité du capteur de retour, affichée à côté de la consigne et de la tolérance.
 export const sensorUnit = (sensor: any): string | undefined =>
-	sensor?.config?.unit ?? sensor?.unit;
+	sensor?.config?.scaling?.unit ?? sensor?.config?.unit ?? sensor?.unit;

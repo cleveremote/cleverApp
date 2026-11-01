@@ -17,7 +17,8 @@ const mutedColor = '#8a96a3';
 // Même couleur que les icônes des sections (MenuAccordion).
 const accentColor = '#32404e';
 
-// Section « Data source » : montre d'où vient la valeur d'un sensor COM.
+// Section « Data source » : montre d'où vient la valeur d'un sensor COM ou
+// ANALOG.
 //  - parent (pas de parentId) : la lecture planifiée (modèle, commande,
 //    fréquence) et les mesures qu'elle produit, c.-à-d. les `fields` de la
 //    commande, reliés à leurs sensors enfants (`config.field`).
@@ -28,12 +29,19 @@ const accentColor = '#32404e';
 // autres (centièmes, valeurs brutes…) restent des champs techniques.
 const isMeasureField = (field: any) => field?.autoCreate === true;
 
-// Sensor COM du modèle « commande d'appareil » : parent relié à une commande
-// (`config.commandId`) ou enfant lisant un champ de cette commande
+// Types de sensor lus via une commande d'appareil (lecture planifiée par un
+// parent, mesures portées par ses enfants).
+export const DEVICE_COMMAND_SENSOR_TYPES = ['COM', 'ANALOG'];
+
+export const isDeviceCommandType = (type?: string) =>
+	DEVICE_COMMAND_SENSOR_TYPES.includes(type ?? '');
+
+// Sensor COM/ANALOG du modèle « commande d'appareil » : parent relié à une
+// commande (`config.commandId`) ou enfant lisant un champ de cette commande
 // (`config.field`). Les COM de l'ancien modèle (comRequestId / code) n'en sont
 // pas.
 export const hasDataSource = (sensor: any) =>
-	sensor?.type === 'COM' &&
+	isDeviceCommandType(sensor?.type) &&
 	(!!sensor?.deviceCommand ||
 		!!sensor?.config?.commandId ||
 		(sensor?.parentId != null && !!sensor?.config?.field));
@@ -237,7 +245,8 @@ export function SensorDataSourceSettingsSection(props: any) {
 						description: `${model?.name || source?.name} ${
 							field.label || field.name
 						}`,
-						type: 'COM',
+						// L'enfant garde le type de son parent (COM ou ANALOG).
+						type: source.type,
 						parentId: source.id,
 						isEnabled: true,
 						display: true,
@@ -274,7 +283,9 @@ export function SensorDataSourceSettingsSection(props: any) {
 	if (isChild) {
 		const field = fields.find(f => f.name === source?.config?.field);
 		const {value, date} = liveValue(source);
-		const unit = field?.unit ?? source?.config?.unit;
+		// Un ANALOG affiche la valeur convertie : unité de son échelle.
+		const unit =
+			source?.config?.scaling?.unit ?? field?.unit ?? source?.config?.unit;
 		return (
 			<View style={BoxFormStyle.boxForm}>
 				<InfoRow
@@ -307,6 +318,22 @@ export function SensorDataSourceSettingsSection(props: any) {
 	}
 
 	const linkedCount = measureFields.filter(childFor).length;
+
+	// ANALOG : le sensor lit lui-même une voie (`config.field`) avec la
+	// commande `config.commandId` ; sa valeur (convertie par l'échelle) est la
+	// mesure produite. Une voie numérique est stockée à partir de 0 et affichée
+	// à partir du `labelStart` de la commande.
+	const isAnalog = source?.type === 'ANALOG';
+	const channel = source?.config?.field;
+	const channelSpec = command?.params?.channel;
+	const channelLabel =
+		channel === undefined || channel === null || channel === ''
+			? undefined
+			: Number.isNaN(Number(channel))
+			? `${channel}`
+			: `${Number(channel) + (channelSpec?.labelStart ?? 0)}`;
+	const analogValue = liveValue(source);
+	const analogUnit = source?.config?.scaling?.unit ?? source?.config?.unit;
 
 	return (
 		<View style={BoxFormStyle.boxForm}>
@@ -360,10 +387,33 @@ export function SensorDataSourceSettingsSection(props: any) {
 					}
 				/>
 			) : null}
-			<SectionTitle>
-				Measures produced ({linkedCount} / {measureFields.length})
-			</SectionTitle>
-			{linkedCount === 0 ? (
+			{isAnalog ? (
+				<>
+					<SectionTitle>Measure produced</SectionTitle>
+					<InfoRow
+						icon="random"
+						label="Channel"
+						value={channelLabel ?? 'Not set'}
+					/>
+					<InfoRow
+						icon="tachometer-alt"
+						label="Value read"
+						value={`${formatValue(analogValue.value)}${
+							analogUnit ? ` ${analogUnit}` : ''
+						}`}
+						sub={
+							formatAge(analogValue.date) &&
+							`Updated ${formatAge(analogValue.date)}`
+						}
+					/>
+				</>
+			) : null}
+			{isAnalog && !measureFields.length ? null : (
+				<SectionTitle>
+					Measures produced ({linkedCount} / {measureFields.length})
+				</SectionTitle>
+			)}
+			{linkedCount === 0 && !isAnalog ? (
 				<Text
 					style={{color: mutedColor, fontSize: 13, marginBottom: 4}}
 				>
@@ -374,6 +424,7 @@ export function SensorDataSourceSettingsSection(props: any) {
 			{measureFields.map(field => {
 				const child = childFor(field);
 				const {value, date} = liveValue(child);
+				const childUnit = child?.config?.scaling?.unit ?? field.unit;
 				return (
 					<Pressable
 						key={field.name}
@@ -419,7 +470,7 @@ export function SensorDataSourceSettingsSection(props: any) {
 									}}
 								>
 									{formatValue(value)}
-									{field.unit ? ` ${field.unit}` : ''}
+									{childUnit ? ` ${childUnit}` : ''}
 								</Text>
 								<Icon
 									name="chevron-right"

@@ -12,8 +12,13 @@ import {
 } from '../../../components/common/useSectionSettingsHeader';
 import {SettingsScrollView} from '../../../components/common/SettingsScrollView';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
-import {faTrafficLight, faSliders} from '@fortawesome/free-solid-svg-icons';
+import {
+	faTrafficLight,
+	faSliders,
+	faRulerHorizontal
+} from '@fortawesome/free-solid-svg-icons';
 import {hapticOptions} from '../../../data/cycleTypes';
+import {isScalingValid} from '../../../data/analogTypes';
 import {
 	loadSensor,
 	saveSensor
@@ -21,8 +26,10 @@ import {
 import SensorGeneralSettingsSection from './SensorGeneralSettingsSection';
 import SensorConfigurationSettingsSection from './SensorConfigurationSettingsSection';
 import SensorDataSourceSettingsSection, {
-	hasDataSource as sensorHasDataSource
+	hasDataSource as sensorHasDataSource,
+	isDeviceCommandType
 } from './SensorDataSourceSettingsSection';
+import SensorAnalogScalingSection from './SensorAnalogScalingSection';
 
 function SensorSettingsScreen(props: any) {
 	const isNew = !props.route.params?.id;
@@ -60,21 +67,26 @@ function SensorSettingsScreen(props: any) {
 		},
 		validate: () => {
 			const s = sensorRef.current;
-			// cronPattern obligatoire pour un FORCAST ou un COM non enfant.
+			// cronPattern obligatoire pour un FORCAST ou un COM/ANALOG non enfant.
 			const cronRequired =
 				s?.type === 'FORCAST' ||
-				(s?.type === 'COM' && !s?.isChild && s?.parentId == null);
+				(isDeviceCommandType(s?.type) &&
+					!s?.isChild &&
+					s?.parentId == null);
 			return {
 				general: isEmpty(s?.name) || isEmpty(s?.style),
 				configuration:
-					cronRequired && isEmpty(s?.config?.cronPattern)
+					cronRequired && isEmpty(s?.config?.cronPattern),
+				// Un sensor ANALOG n'est exploitable qu'avec une échelle complète.
+				scaling:
+					s?.type === 'ANALOG' && !isScalingValid(s?.config?.scaling)
 			};
 		}
 	});
 
-	// Configuration : un sensor COM relié à une commande d'appareil (parent) ou
-	// à un parent (enfant) affiche sa source de données ; les autres (FORCAST,
-	// nouveau sensor…) gardent le formulaire de configuration.
+	// Configuration : un sensor COM/ANALOG relié à une commande d'appareil
+	// (parent) ou à un parent (enfant) affiche sa source de données ; les
+	// autres (FORCAST, nouveau sensor…) gardent le formulaire de configuration.
 	const s = sensorRef.current;
 	const hasDataSource = sensorHasDataSource(s);
 
@@ -127,6 +139,20 @@ function SensorSettingsScreen(props: any) {
 						/>
 					)}
 				</MenuAccordion>
+				{s?.type === 'ANALOG' ? (
+					<MenuAccordion
+						key={55}
+						name={'Scaling'}
+						icon={faRulerHorizontal}
+						invalid={invalidSections.scaling}
+						onPress={() => {}}>
+						<SensorAnalogScalingSection
+							key={s?.id}
+							sensorData={s}
+							showErrors={invalidSections.scaling}
+						/>
+					</MenuAccordion>
+				) : null}
 				<DeleteItemMenu
 					key={61}
 					OnConfirm={() => {
