@@ -1,4 +1,5 @@
 import React from 'react';
+import {useTranslation} from 'react-i18next';
 import {
 	StackNavigationOptions,
 	createStackNavigator
@@ -11,6 +12,7 @@ import SensorSettingsScreen from '../screens/sensor/settings/SensorSettingsScree
 import {navigationHeader} from '../components/common/navigationHeaders';
 
 export function SensorSettingsStack() {
+	const {t} = useTranslation('navigation');
 	const options = (title: string) =>
 		({
 			headerTitleAlign: 'center',
@@ -26,17 +28,17 @@ export function SensorSettingsStack() {
 			<Stack.Screen
 				name="SensorSettingsMenu"
 				component={SensorSettingsScreen}
-				options={options('Sensor Settings')}
+				options={options(t('sensorSettings'))}
 			/>
 			<Stack.Screen
 				name="SensorGeneralSection"
 				component={SensorGeneralSettingsSection}
-				options={options('General')}
+				options={options(t('general'))}
 			/>
 			<Stack.Screen
 				name="SensorConfigurationSection"
 				component={SensorConfigurationSettingsSection}
-				options={options('Configuration')}
+				options={options(t('configuration'))}
 			/>
 		</Stack.Navigator>
 	);

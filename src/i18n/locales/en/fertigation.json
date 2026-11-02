@@ -1,0 +1,8 @@
+{
+	"system": "Fertigation system",
+	"zoomHint": "Pinch to zoom · drag to move · double-tap to reset",
+	"stopCircuit": "Stop the circuit",
+	"startCircuit": "Start the circuit",
+	"stopFertigation": "Stop fertigation",
+	"startFertigation": "Start fertigation"
+}

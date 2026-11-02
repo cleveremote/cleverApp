@@ -1,4 +1,5 @@
 import React from 'react';
+import {useTranslation} from 'react-i18next';
 import {Pressable, StyleSheet, Text, View} from 'react-native';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
@@ -12,10 +13,10 @@ import {hapticOptions} from '../../data/cycleTypes';
 
 export type SynoptiqueKey = 'FERTIGATION' | 'WELLHEAD' | 'FIELDVUE';
 
-const SEGMENTS: {key: SynoptiqueKey; label: string; icon: IconDefinition}[] = [
-	{key: 'FERTIGATION', label: 'Fertigation', icon: faWater},
-	{key: 'WELLHEAD', label: 'Wellhead', icon: faDiagramProject},
-	{key: 'FIELDVUE', label: 'FieldVue', icon: faBorderAll}
+const SEGMENTS: {key: SynoptiqueKey; icon: IconDefinition}[] = [
+	{key: 'FERTIGATION', icon: faWater},
+	{key: 'WELLHEAD', icon: faDiagramProject},
+	{key: 'FIELDVUE', icon: faBorderAll}
 ];
 
 export function SynoptiqueFilterBar({
@@ -25,9 +26,10 @@ export function SynoptiqueFilterBar({
 	active: SynoptiqueKey;
 	onChange: (key: SynoptiqueKey) => void;
 }>) {
+	const {t} = useTranslation('synoptique');
 	return (
 		<View style={styles.bar}>
-			{SEGMENTS.map(({key, label, icon}) => {
+			{SEGMENTS.map(({key, icon}) => {
 				const isActive = active === key;
 				return (
 					<Pressable
@@ -52,7 +54,7 @@ export function SynoptiqueFilterBar({
 						<Text
 							numberOfLines={1}
 							style={[styles.label, isActive && styles.labelActive]}>
-							{label}
+							{t(`filter.${key}`)}
 						</Text>
 					</Pressable>
 				);

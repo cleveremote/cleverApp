@@ -1,4 +1,5 @@
 import React, {useEffect, useRef, useState} from 'react';
+import i18n from 'i18next';
 import {
 	View,
 	Text,
@@ -253,7 +254,7 @@ export function TanksScreen() {
 				<Rect x={460} y={14} width={20} height={16} rx={3} fill="#2C2A28" stroke="#444441" strokeWidth={1} />
 				<Circle cx={466} cy={22} r={2.2} fill="#5F5E5A" />
 				<Circle cx={474} cy={22} r={2.2} fill="#5F5E5A" />
-				<SvgText x={484} y={27} fontSize={10} fill="#888780">220V</SvgText>
+				<SvgText x={484} y={27} fontSize={10} fill="#888780">{'220V' /* repère technique, non traduit */}</SvgText>
 
 				<Rect x={328} y={210} width={24} height={12} rx={4} fill="#185FA5" stroke="#0C447C" strokeWidth={1.2} />
 
@@ -330,7 +331,7 @@ export function TanksScreen() {
 				activeOpacity={0.8}>
 				<Icon name={running ? 'pause' : 'play'} size={18} color="#fff" style={{marginRight: 10}} />
 				<Text style={styles.buttonText}>
-					{running ? 'Arrêter l’animation' : 'Démarrer l’animation'}
+					{running ? i18n.t('tanks:stopAnimation') : i18n.t('tanks:startAnimation')}
 				</Text>
 			</TouchableOpacity>
 		</View>

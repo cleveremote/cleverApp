@@ -1,5 +1,5 @@
 import React from 'react';
-import {Alert, Pressable, Text, View} from 'react-native';
+import {Alert, I18nManager, Pressable, Text, View} from 'react-native';
 import {connect} from 'react-redux';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
@@ -11,6 +11,8 @@ import {
 	updateSensor
 } from '../../../../module/process/infrasctructure/store/actions/sensor';
 import {NewSchedulingSection} from '../../cycle/schedules/settings/schedule/NewSchedulingSection';
+import i18n from 'i18next';
+import {directionalIcon} from '../../../../i18n/rtl';
 
 const textColor = '#32404e';
 const mutedColor = '#8a96a3';
@@ -59,14 +61,14 @@ export const describeCron = (pattern?: string): string | undefined => {
 	if (parts.length !== 6) return undefined;
 	const [sec, min, hour, dom, month, dow] = parts;
 	const restIsStar = (xs: string[]) => xs.every(x => x === '*');
-	const every = (n: string, unit: string) =>
-		n === '1' ? `Every ${unit}` : `Every ${n} ${unit}s`;
+	const every = (n: string, unit: 'second' | 'minute' | 'hour') =>
+		i18n.t(`sensor:every.${unit}`, {count: Number(n)});
 	let m = /^\*\/(\d+)$/.exec(sec);
 	if (m && restIsStar([min, hour, dom, month, dow])) {
 		return every(m[1], 'second');
 	}
 	if (sec === '*' && restIsStar([min, hour, dom, month, dow])) {
-		return 'Every second';
+		return every('1', 'second');
 	}
 	m = /^\*\/(\d+)$/.exec(min);
 	if (/^\d+$/.test(sec) && m && restIsStar([hour, dom, month, dow])) {
@@ -77,7 +79,7 @@ export const describeCron = (pattern?: string): string | undefined => {
 		min === '*' &&
 		restIsStar([hour, dom, month, dow])
 	) {
-		return 'Every minute';
+		return every('1', 'minute');
 	}
 	m = /^\*\/(\d+)$/.exec(hour);
 	if (
@@ -99,10 +101,10 @@ const formatAge = (date?: string) => {
 	const t = new Date(date).getTime();
 	if (isNaN(t)) return undefined;
 	const s = Math.max(0, Math.round((Date.now() - t) / 1000));
-	if (s < 60) return 'just now';
-	if (s < 3600) return `${Math.floor(s / 60)} min ago`;
-	if (s < 86400) return `${Math.floor(s / 3600)} h ago`;
-	return new Date(t).toLocaleDateString();
+	if (s < 60) return i18n.t('sensor:age.justNow');
+	if (s < 3600) return i18n.t('sensor:age.minutes', {count: Math.floor(s / 60)});
+	if (s < 86400) return i18n.t('sensor:age.hours', {count: Math.floor(s / 3600)});
+	return new Date(t).toLocaleDateString(i18n.language);
 };
 
 function InfoRow({
@@ -151,7 +153,7 @@ function InfoRow({
 			</View>
 			{onPress ? (
 				<Icon
-					name={expanded ? 'chevron-down' : 'chevron-right'}
+					name={expanded ? 'chevron-down' : directionalIcon('chevron-right')}
 					size={14}
 					color={mutedColor}
 				/>
@@ -230,15 +232,18 @@ export function SensorDataSourceSettingsSection(props: any) {
 		ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
 		if (isTempId(source?.id)) {
 			Alert.alert(
-				'Save first',
-				'Save this sensor before creating its measures.'
+				i18n.t('sensor:dataSource.saveFirst'),
+				i18n.t('sensor:dataSource.saveFirstMessage')
 			);
 			return;
 		}
-		Alert.alert('Create measure', `Create the sensor "${field.label}"?`, [
-			{text: 'Cancel', style: 'cancel'},
+		Alert.alert(
+			i18n.t('sensor:dataSource.createMeasure'),
+			i18n.t('sensor:dataSource.createMeasureMessage', {name: field.label}),
+			[
+			{text: i18n.t('common:cancel'), style: 'cancel'},
 			{
-				text: 'Create',
+				text: i18n.t('sensor:dataSource.create'),
 				onPress: () =>
 					props.saveSensor({
 						name: field.label || field.name,
@@ -273,8 +278,7 @@ export function SensorDataSourceSettingsSection(props: any) {
 		return (
 			<View style={BoxFormStyle.boxForm}>
 				<Text style={{color: mutedColor}}>
-					No device command linked to this sensor yet. Pick a device
-					and a request in Configuration.
+					{i18n.t('sensor:dataSource.noCommand')}
 				</Text>
 			</View>
 		);
@@ -290,26 +294,31 @@ export function SensorDataSourceSettingsSection(props: any) {
 			<View style={BoxFormStyle.boxForm}>
 				<InfoRow
 					icon="tachometer-alt"
-					label="Value"
+					label={i18n.t('sensor:dataSource.value')}
 					value={`${formatValue(value)}${unit ? ` ${unit}` : ''}`}
-					sub={formatAge(date) && `Updated ${formatAge(date)}`}
+					sub={
+						formatAge(date) &&
+						i18n.t('sensor:dataSource.updated', {age: formatAge(date)})
+					}
 				/>
 				<InfoRow
 					icon="link"
-					label="From"
-					value={parent?.name || 'Unknown parent'}
+					label={i18n.t('sensor:dataSource.from')}
+					value={parent?.name || i18n.t('sensor:dataSource.unknownParent')}
 					sub={
 						cronPattern
-							? `Read ${(
-									describeCron(cronPattern) || cronPattern
-							  ).toLowerCase()} (inherited)`
+							? i18n.t('sensor:dataSource.readInherited', {
+									frequency: (
+										describeCron(cronPattern) || cronPattern
+									).toLowerCase()
+							  })
 							: undefined
 					}
 					onPress={parent ? () => openSensor(parent) : undefined}
 				/>
 				<InfoRow
 					icon="microchip"
-					label="Device"
+					label={i18n.t('sensor:dataSource.device')}
 					value={model?.name}
 					sub={command?.name}
 				/>
@@ -339,7 +348,7 @@ export function SensorDataSourceSettingsSection(props: any) {
 		<View style={BoxFormStyle.boxForm}>
 			<InfoRow
 				icon="microchip"
-				label="Device"
+				label={i18n.t('sensor:dataSource.device')}
 				value={model?.name}
 				sub={[model?.kind, model?.description]
 					.filter(Boolean)
@@ -347,14 +356,18 @@ export function SensorDataSourceSettingsSection(props: any) {
 			/>
 			<InfoRow
 				icon="sync-alt"
-				label="Reading"
+				label={i18n.t('sensor:dataSource.reading')}
 				value={command?.name}
 				sub={command?.description}
 			/>
 			<InfoRow
 				icon="clock"
-				label="Frequency"
-				value={describeCron(cronPattern) || cronPattern || 'Not set'}
+				label={i18n.t('sensor:dataSource.frequency')}
+				value={
+					describeCron(cronPattern) ||
+					cronPattern ||
+					i18n.t('sensor:dataSource.notSet')
+				}
 				sub={describeCron(cronPattern) ? cronPattern : undefined}
 				expanded={showFrequency}
 				onPress={() => {
@@ -389,36 +402,40 @@ export function SensorDataSourceSettingsSection(props: any) {
 			) : null}
 			{isAnalog ? (
 				<>
-					<SectionTitle>Measure produced</SectionTitle>
+					<SectionTitle>{i18n.t('sensor:dataSource.measureProduced')}</SectionTitle>
 					<InfoRow
 						icon="random"
-						label="Channel"
-						value={channelLabel ?? 'Not set'}
+						label={i18n.t('sensor:dataSource.channel')}
+						value={channelLabel ?? i18n.t('sensor:dataSource.notSet')}
 					/>
 					<InfoRow
 						icon="tachometer-alt"
-						label="Value read"
+						label={i18n.t('sensor:dataSource.valueRead')}
 						value={`${formatValue(analogValue.value)}${
 							analogUnit ? ` ${analogUnit}` : ''
 						}`}
 						sub={
 							formatAge(analogValue.date) &&
-							`Updated ${formatAge(analogValue.date)}`
+							i18n.t('sensor:dataSource.updated', {
+								age: formatAge(analogValue.date)
+							})
 						}
 					/>
 				</>
 			) : null}
 			{isAnalog && !measureFields.length ? null : (
 				<SectionTitle>
-					Measures produced ({linkedCount} / {measureFields.length})
+					{i18n.t('sensor:dataSource.measuresProduced', {
+						linked: linkedCount,
+						total: measureFields.length
+					})}
 				</SectionTitle>
 			)}
 			{linkedCount === 0 && !isAnalog ? (
 				<Text
 					style={{color: mutedColor, fontSize: 13, marginBottom: 4}}
 				>
-					This reading does not produce any measure yet. Create the
-					ones you want to follow.
+					{i18n.t('sensor:dataSource.noMeasure')}
 				</Text>
 			) : null}
 			{measureFields.map(field => {
@@ -473,7 +490,7 @@ export function SensorDataSourceSettingsSection(props: any) {
 									{childUnit ? ` ${childUnit}` : ''}
 								</Text>
 								<Icon
-									name="chevron-right"
+									name={directionalIcon('chevron-right')}
 									size={14}
 									color={mutedColor}
 								/>
@@ -504,7 +521,7 @@ export function SensorDataSourceSettingsSection(props: any) {
 										fontSize: 13
 									}}
 								>
-									Create
+									{i18n.t('sensor:dataSource.create')}
 								</Text>
 							</Pressable>
 						)}
@@ -517,8 +534,10 @@ export function SensorDataSourceSettingsSection(props: any) {
 					style={{paddingVertical: 8}}
 				>
 					<Text style={{color: mutedColor, fontSize: 13}}>
-						{showTechnical ? '▾' : '▸'} Technical fields (
-						{technicalFields.length})
+						{showTechnical ? '▾' : I18nManager.isRTL ? '◂' : '▸'}{' '}
+						{i18n.t('sensor:dataSource.technicalFields', {
+							count: technicalFields.length
+						})}
 					</Text>
 				</Pressable>
 			) : null}

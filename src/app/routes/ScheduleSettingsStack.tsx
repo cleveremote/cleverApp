@@ -1,4 +1,5 @@
 import React from 'react';
+import {useTranslation} from 'react-i18next';
 import {
 	StackNavigationOptions,
 	createStackNavigator
@@ -8,6 +9,7 @@ import ScheduleGeneralSettingsSection from '../screens/cycle/schedules/settings/
 import {navigationHeader} from '../components/common/navigationHeaders';
 
 export function ScheduleSettingsStack() {
+	const {t} = useTranslation('navigation');
 	const options = (title: string) =>
 		({
 			headerTitleAlign: 'center',
@@ -25,12 +27,12 @@ export function ScheduleSettingsStack() {
 			<Stack.Screen
 				name="ScheduleSettingsMenu"
 				component={ScheduleSettingsScreen}
-				options={options('Trigger Settings')}
+				options={options(t('scheduleSettings'))}
 			/>
 			<Stack.Screen
 				name="ScheduleGeneralSettingsSection"
 				component={ScheduleGeneralSettingsSection}
-				options={options('General')}
+				options={options(t('general'))}
 			/>
 		</Stack.Navigator>
 	);

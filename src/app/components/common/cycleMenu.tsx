@@ -1,5 +1,6 @@
 import React, {createContext, useContext, useState} from 'react';
 import {Pressable, Text, View, ViewProps} from 'react-native';
+import i18n from 'i18next';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
@@ -7,6 +8,7 @@ import {IconDefinition} from '@fortawesome/fontawesome-svg-core';
 import {ModalConfirmation} from '../modalDelete';
 import {faTrash} from '@fortawesome/free-solid-svg-icons';
 import {hapticOptions} from '../../data/cycleTypes';
+import {directionalIcon} from '../../../i18n/rtl';
 
 // Position d'un menu dans son MenuGroup : undefined hors groupe (la prop
 // isLast fait alors foi).
@@ -166,13 +168,13 @@ export function MenuAccordion({
 										fontWeight: 'bold',
 										marginRight: 8
 									}}>
-									not valid
+									{i18n.t('common:notValid')}
 								</Text>
 							) : null}
 							{alwaysExpanded ? null : (
 								<Icon
 									name={
-										isExpanded ? 'angle-down' : 'angle-right'
+										isExpanded ? 'angle-down' : directionalIcon('angle-right')
 									}
 									size={20}
 									color={'grey'}
@@ -193,7 +195,7 @@ export function MenuAccordion({
 }
 
 export function DeleteItemMenu({
-	name = 'Remove',
+	name = i18n.t('common:remove'),
 	icon = faTrash,
 	color = '#fb1900',
 	isLast: isLastProp = true,
@@ -260,6 +262,8 @@ export function DeleteItemMenu({
 							</View>
 							<Text
 								style={{
+									// 'left' = côté de début : RN l'inverse en RTL (titre à droite en arabe).
+									textAlign: 'left',
 									flex: 1,
 									fontWeight: 'bold',
 									color: '#E53E3E',
@@ -271,13 +275,14 @@ export function DeleteItemMenu({
 							</Text>
 							<Text
 								style={{
+									textAlign: 'left',
 									flex: 2,
 									fontWeight: 'bold',
 									color: '#E53E3E',
 									fontSize: 10
 								}}>
 								{' '}
-								(long press to remove){' '}
+								{i18n.t('common:longPressToRemove')}{' '}
 							</Text>
 						</View>
 					</View>

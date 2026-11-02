@@ -1,0 +1,149 @@
+{
+	"openWifiSettings": "Open Wi-Fi settings",
+	"openSettings": "Open settings",
+	"profile": "Profile",
+	"hotspotError": {
+		"INVALID_QR": "This QR code is not a CleverBox pairing code.",
+		"PERMISSION_DENIED": "Permission denied. Grant it in settings to join the box.",
+		"TIMEOUT": "The box did not respond. Check that it is powered on and in range, then try again.",
+		"USER_CANCELLED": "Connection cancelled.",
+		"UNSUPPORTED": "This device cannot join a Wi-Fi network from the app.",
+		"LOCATION_DISABLED": "Turn on location so the phone can join the box's network.",
+		"NOT_IMPLEMENTED": "",
+		"UNKNOWN": "Failed to connect to the hotspot."
+	},
+	"scan": {
+		"testTimeout": "Timed out after {{seconds}} s — no response from {{url}}",
+		"cameraUnavailable": "Camera unavailable",
+		"cameraModuleMissing": "The native camera module is missing from this build of the app. Rebuild the app (react-native run-android / run-ios): a Metro reload is not enough.",
+		"networkTest": "Network test",
+		"testRunning": "Test running ...",
+		"runTest": "Run test",
+		"backToScan": "Back to scan",
+		"joinBoxNetwork": "Join the box's network",
+		"joinManually": "Automatic connection is not available here yet. Join this network from your Wi-Fi settings, then come back.",
+		"network": "Network",
+		"copyPassword": "Copy password",
+		"joinedNetwork": "I joined the network",
+		"pairingFailed": "Pairing failed",
+		"connecting": "Connecting to the box ..."
+	},
+	"qr": {
+		"cameraRequired": "Camera access required",
+		"cameraRequiredBody": "The app needs the camera to read the QR code on your box.",
+		"noCamera": "Camera unavailable",
+		"noCameraBody": "No back camera was found on this device.",
+		"aim": "Point at the QR code on the box",
+		"missingField": "Field \"{{field}}\" is missing or empty in the QR code.",
+		"hostIsIp": "The box must advertise a hostname, not an IP address (\"{{host}}\"). Its certificate is issued for a .local name.",
+		"hostHasPort": "Invalid hostname (\"{{host}}\"): it must not contain a port or scheme.",
+		"hostNotLocal": "Invalid hostname (\"{{host}}\"): the box must be reachable on .local (only mDNS is available on the hotspot network).",
+		"hostTooLong": "Hostname too long.",
+		"hostInvalid": "Invalid hostname (\"{{host}}\").",
+		"portInvalid": "Invalid port (\"{{port}}\"): expected an integer between 1 and 65535.",
+		"securityUnknown": "Unknown security type (\"{{security}}\"). Expected: {{expected}}.",
+		"notCleverBox": "This QR code is not a CleverBox pairing code.",
+		"wrongType": "This QR code is not a CleverBox pairing code (type \"{{type}}\")."
+	},
+	"validation": {
+		"emailRequired": "Email address is required.",
+		"emailInvalid": "Invalid email address.",
+		"passwordRequired": "Password is required.",
+		"passwordTooShort": "Password too short ({{min}} characters minimum).",
+		"passwordWeak": "The password must contain at least one letter and one digit.",
+		"deviceNameRequired": "Box name is required.",
+		"ssidRequired": "Select a Wi-Fi network.",
+		"pskRequired": "Wi-Fi key is required.",
+		"confirmRequired": "Confirmation is required.",
+		"passwordMismatch": "The two passwords do not match."
+	},
+	"boxConfig": {
+		"searchingNetworks": "Searching for networks ...",
+		"noResponse": "The box did not respond. Check that the phone is connected to its network.",
+		"networksUnavailable": "Network list unavailable — {{error}}",
+		"configuring": "Configuring the box ...",
+		"refusedHttp": "Configuration refused — HTTP {{status}} {{body}}",
+		"refused": "Configuration refused by the box — {{body}}",
+		"wifiNetwork": "Wi-Fi network",
+		"deviceName": "Box name",
+		"noNetwork": "No network — search again",
+		"psk": "Wi-Fi key (psk)",
+		"login": "Login (email address)",
+		"confirmPassword": "Confirm password",
+		"configure": "Configure",
+		"configuredTag": "(configured)"
+	},
+	"handover": {
+		"yourNetwork": "your Wi-Fi network",
+		"signIn": "Sign in",
+		"rescan": "Rescan the box to fix",
+		"retryCheck": "Check again",
+		"continueAnyway": "Continue anyway",
+		"continueNow": "Continue without waiting",
+		"phoneJoins": "The phone joins {{network}}",
+		"boxJoins": "The box joins {{network}}",
+		"pending": "pending",
+		"title": {
+			"waiting": "Switching networks",
+			"confirmed": "Box configured",
+			"rejected": "Wi-Fi key rejected",
+			"offNetwork": "The phone is not on the right network",
+			"unconfirmed": "Box not found yet"
+		},
+		"box": {
+			"searching": "looking for the box… {{seconds}} s",
+			"connected": "connected — {{state}}",
+			"mode": "mode {{mode}} — {{state}}",
+			"noResponse": "no response on the network"
+		},
+		"phone": {
+			"currentlyOn": "currently on “{{ssid}}”",
+			"reconnecting": "reconnecting to Wi-Fi…",
+			"stayedOn": "stayed on “{{ssid}}”",
+			"unknownNetwork": "unknown network",
+			"connectedTo": "connected to {{ssid}}",
+			"unverifiable": "network cannot be checked on this platform"
+		},
+		"body": {
+			"confirmedNamed": "The box “{{name}}” reports being connected to {{network}} and responds on your network.",
+			"confirmed": "The box reports being connected to {{network}} and responds on your network.",
+			"rejected": "The box received the configuration, but {{network}} rejected the key you entered. It has reopened its access point: rescan its QR code to rejoin it and fix the key — the rest of your input is kept.",
+			"offNetwork": "The phone stayed on a network other than {{network}}. While it is there, the box is out of reach: reconnect it, then check again.",
+			"apReleased": "The box's access point has been released. Reconnect the phone to {{network}} if it hasn't already.",
+			"applying": "The box is applying its configuration and joining {{network}}. Looking for it on that network.",
+			"noAnswer": "The configuration was sent, but the box is not responding on {{network}} yet. Check that the phone is connected to it — and that the Wi-Fi key you entered was correct.",
+			"otherNetwork": "The box responds, but it is connected to “{{reported}}” instead of {{network}}.",
+			"notJoined": "The box responds, but it has not joined {{network}} yet (state: {{state}})."
+		}
+	},
+	"deviceSettings": {
+		"newProfile": "New profile",
+		"configured": "configured",
+		"permissionDenied": "Permission denied: check your password.",
+		"selectNetwork": "Select network",
+		"psk": "Wi-Fi key"
+	},
+	"device": {
+		"select": "Select the device to configure:",
+		"label": "device: {{name}}",
+		"scanning": "Scan in progress ...",
+		"scanNetwork": "Scan network"
+	},
+	"profiles": {
+		"add": "Add new profile ...",
+		"deleteHint": "(long press a profile to delete it)",
+		"scanBox": "Scan a box",
+		"connectivity": "Connectivity settings"
+	},
+	"noConnection": {
+		"title": "No connection established!",
+		"tryLater": "please try again later...",
+		"retrying": "Trying to connect to the server automatically ..."
+	},
+	"signIn": {
+		"missingInfo": "Required information missing!",
+		"boxId": "Box ID",
+		"rememberMe": "Remember me",
+		"submit": "Sign in"
+	}
+}

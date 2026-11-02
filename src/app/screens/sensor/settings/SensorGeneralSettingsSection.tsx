@@ -14,6 +14,7 @@ import {
 	useEmbeddedSection
 } from '../../../components/common/useSectionSettingsHeader';
 import {updateSensor} from '../../../../module/process/infrasctructure/store/actions/sensor';
+import i18n from 'i18next';
 
 export function SensorGeneralSettingsSection(props: any) {
 	const embedded = !!props.embedded;
@@ -104,14 +105,14 @@ export function SensorGeneralSettingsSection(props: any) {
 					marginTop: 5,
 					marginBottom: 5
 				}}>
-				Theme
+				{i18n.t('cycle:settings.theme')}
 			</Text>
 			<SelectColor
 				control={control}
 				errors={errors}
 				name="style"
-				placeholder="Sensor theme*"
-				rules={{required: 'Theme is required'}}
+				placeholder={i18n.t('sensor:theme')}
+				rules={{required: i18n.t('cycle:settings.themeRequired')}}
 				style={{...sensorData?.style}}
 				onChangeText={value => {
 					setSensorData({...sensorData, style: JSON.parse(value)});
@@ -124,8 +125,8 @@ export function SensorGeneralSettingsSection(props: any) {
 					errors={errors}
 					name="name"
 					maxLength={250}
-					placeholder="Name*"
-					rules={{required: 'Name is required'}}
+					placeholder={i18n.t('common:form.name')}
+					rules={{required: i18n.t('common:form.nameRequired')}}
 					onChangeText={value => {
 						setSaveUnchangedData(true);
 					}}
@@ -134,7 +135,7 @@ export function SensorGeneralSettingsSection(props: any) {
 					control={control}
 					errors={errors}
 					name="description"
-					placeholder="Description"
+					placeholder={i18n.t('common:form.description')}
 					onChangeText={value => {
 						setSaveUnchangedData(true);
 					}}

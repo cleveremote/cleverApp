@@ -24,7 +24,9 @@ import {
 } from '../../../../../services/socket';
 import {cleanCycleModuleConfigs} from '../models/sequenceModule';
 import {toCycleHistory} from '../models/cycleHistory';
+import {currentLanguage} from '../../../../../i18n/language';
 import {Alert} from 'react-native';
+import i18n from 'i18next';
 import {authenticationService} from '../../../../authentication/domain/services/auth.service';
 import {
 	describeUnreachable,
@@ -126,7 +128,7 @@ export const loadEvents =
 	async dispatch => {
 		socketService.emit(
 			'front/box/fetch/events',
-			denormalizeIds(query),
+			{...denormalizeIds(query), lang: currentLanguage()},
 			(response: any) => {
 				dispatch({
 					type: EVENTS_LOAD,
@@ -250,8 +252,8 @@ export const saveCycle =
 const newGroup = () => ({
 	id: newTempId(),
 	type: 'GROUP',
-	name: 'new group',
-	description: 'new group',
+	name: i18n.t('common:defaults.newGroup'),
+	description: i18n.t('common:defaults.newGroup'),
 	parentCycleId: null,
 	style: {
 		bgColor: '#a5f3fc',
@@ -336,10 +338,11 @@ export const executeCycle =
 				: [];
 			if (unreachable.length) {
 				Alert.alert(
-					'Devices unreachable',
-					`"${target!.item.name}" cannot start:\n${describeUnreachable(
-						unreachable
-					)}`
+					i18n.t('common:devicesUnreachable.title'),
+					i18n.t('common:devicesUnreachable.message', {
+						name: target!.item.name,
+						devices: describeUnreachable(unreachable)
+					})
 				);
 				return;
 			}
@@ -348,7 +351,7 @@ export const executeCycle =
 		const requestedBy = await authenticationService.getCurrentUserName();
 		return new Promise((resolve, reject) => {
 			if (!socketService.connected) {
-				reject(new Error('No server connexion!'));
+				reject(new Error(i18n.t('common:errors.noServer')));
 			}
 
 			socketService.emit(

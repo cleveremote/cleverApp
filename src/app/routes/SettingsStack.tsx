@@ -1,4 +1,5 @@
 import React from 'react';
+import {useTranslation} from 'react-i18next';
 import {
 	StackNavigationOptions,
 	createStackNavigator
@@ -11,6 +12,7 @@ import {DevicesStack} from './DevicesStack';
 import {ActuatorsStack} from './ActuatorsStack';
 
 export function SettingsStack() {
+	const {t} = useTranslation('navigation');
 	const options = (title: string) =>
 		({
 			headerTitleAlign: 'center',
@@ -25,22 +27,22 @@ export function SettingsStack() {
 			<Stack.Screen
 				name="SettingsMenu"
 				component={SettingsMenuScreen}
-				options={options('Settings')}
+				options={options(t('settings'))}
 			/>
 			<Stack.Screen
 				name="UserSettings"
 				component={UserSettingsScreen}
-				options={options('User Settings')}
+				options={options(t('userSettings'))}
 			/>
 			<Stack.Screen
 				name="DisplayManager"
 				component={DisplayManagerScreen}
-				options={options('Display manager')}
+				options={options(t('displayManager'))}
 			/>
 			<Stack.Screen
 				name="GlobalSettings"
 				component={GlobalSettingsScreen}
-				options={options('Global settings')}
+				options={options(t('globalSettings'))}
 			/>
 			<Stack.Screen
 				name="DevicesStack"

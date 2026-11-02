@@ -26,6 +26,8 @@ import {
 	unreachableDevices
 } from '../../../module/process/infrasctructure/store/models/deviceConnectivity';
 import {isTempId} from '../../../services/socket';
+import i18n from 'i18next';
+import {directionalIcon} from '../../../i18n/rtl';
 
 // Le socket n'a pas de timeout : garde-fou pour ne pas bloquer le bouton.
 const CHECK_TIMEOUT_MS = 30000;
@@ -36,11 +38,8 @@ const COLORS: Record<ConnectivityState, string> = {
 	UNKNOWN: '#9ca3af'
 };
 
-const LABELS: Record<ConnectivityState, string> = {
-	CONNECTED: 'Connected',
-	DISCONNECTED: 'Unreachable',
-	UNKNOWN: 'Unknown'
-};
+const label = (state: ConnectivityState) =>
+	i18n.t(`devices:connectivity.state.${state}`);
 
 // Fond pâle du cadre d'état (DeviceConnectivityStatus).
 const BACKGROUNDS: Record<ConnectivityState, string> = {
@@ -200,7 +199,12 @@ export const deviceRowWarning = (
 	);
 	if (state !== 'DISCONNECTED') return undefined;
 	const at = formatChangedAt(changedAt);
-	return [`Unreachable${at ? ` since ${at}` : ''}`, error]
+	return [
+		at
+			? i18n.t('devices:connectivity.unreachableSince', {at})
+			: i18n.t('devices:connectivity.state.DISCONNECTED'),
+		error
+	]
 		.filter(Boolean)
 		.join(' — ');
 };
@@ -222,8 +226,8 @@ export const useCheckDevices = () => {
 		const ids = (deviceIds || []).filter(id => !isTempId(id));
 		if (deviceIds?.length && !ids.length) {
 			Alert.alert(
-				'Save the device first',
-				'A device must be saved before its connectivity can be checked.'
+				i18n.t('devices:connectivity.saveFirst'),
+				i18n.t('devices:connectivity.saveFirstMessage')
 			);
 			return;
 		}
@@ -237,8 +241,8 @@ export const useCheckDevices = () => {
 			timeout.current = null;
 			setBusy(false);
 			Alert.alert(
-				'Check timed out',
-				'The box did not answer. Check the connection and try again.'
+				i18n.t('devices:connectivity.timeout'),
+				i18n.t('devices:connectivity.timeoutMessage')
 			);
 		}, CHECK_TIMEOUT_MS);
 		let pending = ids.length || 1;
@@ -295,7 +299,7 @@ export function CheckDevicesButton(
 					outline && {fontSize: 14},
 					text && styles.textButtonLabel
 				]}>
-				{busy ? 'Checking…' : props.label}
+				{busy ? i18n.t('devices:connectivity.checking') : props.label}
 			</Text>
 		</TouchableOpacity>
 	);
@@ -314,10 +318,12 @@ export function DeviceConnectivityStatus({device}: Readonly<{device: any}>) {
 			]}>
 			<View style={[styles.dot, {backgroundColor: COLORS[state]}]} />
 			<Text style={[styles.state, {color: COLORS[state]}]}>
-				{LABELS[state]}
+				{label(state)}
 			</Text>
 			{state !== 'UNKNOWN' && at ? (
-				<Text style={styles.detail}>{`since ${at}`}</Text>
+				<Text style={styles.detail}>
+					{i18n.t('devices:connectivity.since', {at})}
+				</Text>
 			) : null}
 		</View>
 	);
@@ -389,8 +395,8 @@ export function DeviceDisconnectedIcon(
 	const sources = failingSources(unreachable);
 	const title =
 		props.kind === 'SENSOR'
-			? 'No reading: device disconnected'
-			: 'Cannot start: device disconnected';
+			? i18n.t('devices:connectivity.noReading')
+			: i18n.t('devices:connectivity.cannotStart');
 
 	return (
 		<>
@@ -445,30 +451,40 @@ export function DeviceDisconnectedIcon(
 									}}>
 									<View style={{flex: 1, gap: 2}}>
 										<Text style={styles.sourceName} numberOfLines={1}>
-											{`${source.type === 'MASTER' ? 'Master' : 'Slave'} · ${
-												source.name ?? source.id
-											}`}
+											{`${
+												source.type === 'MASTER'
+													? i18n.t('devices:master')
+													: i18n.t('devices:slave')
+											} · ${source.name ?? source.id}`}
 										</Text>
 										<Text style={styles.error} numberOfLines={3}>
-											{error ?? own.error ?? 'unreachable'}
+											{error ??
+												own.error ??
+												i18n.t('devices:connectivity.unreachable')}
 										</Text>
 										{slaves.length ? (
 											<Text style={styles.hint} numberOfLines={2}>
-												{`Slaves affected: ${slaves
-													.map(d => d.name ?? d.id)
-													.join(', ')}`}
+												{i18n.t('devices:connectivity.slavesAffected', {
+													slaves: slaves.map(d => d.name ?? d.id).join(', ')
+												})}
 											</Text>
 										) : null}
 										{at ? (
-											<Text style={styles.hint}>{`Lost at ${at}`}</Text>
+											<Text style={styles.hint}>
+												{i18n.t('devices:connectivity.lostAt', {at})}
+											</Text>
 										) : null}
 									</View>
-									<Icon name="chevron-right" size={14} color={ALERT.muted} />
+									<Icon
+										name={directionalIcon('chevron-right')}
+										size={14}
+										color={ALERT.muted}
+									/>
 								</TouchableOpacity>
 							);
 						})}
 						<CheckDevicesButton
-							label="Check again"
+							label={i18n.t('devices:connectivity.checkAgain')}
 							deviceIds={sources.map(({source}) => `${source.id}`)}
 						/>
 					</Pressable>

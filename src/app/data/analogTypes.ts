@@ -4,6 +4,8 @@
 // outputMax] (unité physique). Plages inversées admises (ex : 4-20 mA ->
 // 10-0 bar), mais inputMin !== inputMax.
 
+import i18n from 'i18next';
+
 export enum AnalogSignalType {
 	// Bornes en V.
 	VOLTAGE = 'VOLTAGE',
@@ -31,16 +33,24 @@ export interface AnalogScaling {
 	outOfRange: OutOfRangePolicy | `${OutOfRangePolicy}`;
 }
 
+// Libellés en getters : lus dans la langue courante à chaque rendu.
+const option = <T extends string>(prefix: string, value: T) => ({
+	get label() {
+		return i18n.t(`${prefix}.${value}` as never) as string;
+	},
+	value
+});
+
 export const signalTypeOptions = [
-	{label: 'Voltage (V)', value: AnalogSignalType.VOLTAGE},
-	{label: 'Current (mA)', value: AnalogSignalType.CURRENT},
-	{label: 'Raw value', value: AnalogSignalType.RAW}
+	option('sensor:analog.signal', AnalogSignalType.VOLTAGE),
+	option('sensor:analog.signal', AnalogSignalType.CURRENT),
+	option('sensor:analog.signal', AnalogSignalType.RAW)
 ];
 
 export const outOfRangeOptions = [
-	{label: 'Clamp to output range', value: OutOfRangePolicy.CLAMP},
-	{label: 'Extrapolate', value: OutOfRangePolicy.EXTRAPOLATE},
-	{label: 'Error', value: OutOfRangePolicy.ERROR}
+	option('sensor:analog.outOfRange', OutOfRangePolicy.CLAMP),
+	option('sensor:analog.outOfRange', OutOfRangePolicy.EXTRAPOLATE),
+	option('sensor:analog.outOfRange', OutOfRangePolicy.ERROR)
 ];
 
 // Unité des bornes d'entrée selon le type de signal (aucune en RAW).

@@ -1,4 +1,6 @@
 import React from 'react';
+import i18n from 'i18next';
+import {useTranslation} from 'react-i18next';
 import {
 	Modal,
 	Text,
@@ -10,8 +12,8 @@ export function ModalConfirmation({
 	isOpen,
 	onClose,
 	onDelete,
-	title = 'Confirmation required !',
-	message = 'This action cannot be reversed. Deleted data can not be recovered.'
+	title = i18n.t('common:confirm.title'),
+	message = i18n.t('common:confirm.irreversible')
 }: {
 	isOpen: boolean;
 	onClose: () => void;
@@ -19,6 +21,7 @@ export function ModalConfirmation({
 	title?: string;
 	message?: string;
 }) {
+	const {t} = useTranslation();
 	return (
 		<Modal
 			visible={isOpen}
@@ -57,7 +60,7 @@ export function ModalConfirmation({
 						<TouchableOpacity
 							onPress={onClose}
 							style={{paddingVertical: 8, paddingHorizontal: 16}}>
-							<Text style={{color: '#718096'}}>No</Text>
+							<Text style={{color: '#718096'}}>{t('no')}</Text>
 						</TouchableOpacity>
 						<TouchableOpacity
 							onPress={onDelete}
@@ -68,7 +71,7 @@ export function ModalConfirmation({
 								borderRadius: 6
 							}}>
 							<Text style={{color: 'white', fontWeight: 'bold'}}>
-								Yes
+								{t('yes')}
 							</Text>
 						</TouchableOpacity>
 					</View>

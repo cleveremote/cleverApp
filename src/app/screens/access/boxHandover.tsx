@@ -2,6 +2,8 @@ import React, {useCallback, useEffect, useRef, useState} from 'react';
 import {ActivityIndicator, StyleSheet, Text, View} from 'react-native';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import Icon from 'react-native-vector-icons/FontAwesome5';
+import i18n from 'i18next';
+import {useTranslation} from 'react-i18next';
 import {useNavigation} from '@react-navigation/native';
 import {hapticOptions} from '../../data/cycleTypes';
 import {
@@ -110,6 +112,7 @@ export function BoxHandover(props: any) {
 	// laisser deux boucles écrire la même phase.
 	const attempt = useRef(0);
 
+	const {t} = useTranslation('access');
 	const nav = useNavigation();
 
 	/** Sortie normale : la pile d'appairage est morte, on la remplace. */
@@ -266,7 +269,7 @@ export function BoxHandover(props: any) {
 		return () => clearInterval(timer);
 	}, [phase]);
 
-	const network = ssid || 'votre réseau Wi-Fi';
+	const network = ssid || t('handover.yourNetwork');
 	const summary = SUMMARIES[phase];
 
 	/**
@@ -276,20 +279,20 @@ export function BoxHandover(props: any) {
 	const actions = () => {
 		switch (phase) {
 			case 'confirmed':
-				return <PrimaryButton label="Se connecter" onPress={goToSignin} />;
+				return <PrimaryButton label={t('handover.signIn')} onPress={goToSignin} />;
 			case 'rejected':
 				return (
 					<>
 						<PrimaryButton
-							label="Rescanner la box pour corriger"
+							label={t('handover.rescan')}
 							onPress={goToScan}
 						/>
 						<LinkButton
-							label="Ouvrir les réglages Wi-Fi"
+							label={t('openWifiSettings')}
 							onPress={openWifiSettings}
 						/>
 						<LinkButton
-							label="Réessayer la vérification"
+							label={t('handover.retryCheck')}
 							onPress={() => verify()}
 						/>
 					</>
@@ -298,15 +301,15 @@ export function BoxHandover(props: any) {
 				return (
 					<>
 						<PrimaryButton
-							label="Ouvrir les réglages Wi-Fi"
+							label={t('openWifiSettings')}
 							onPress={openWifiSettings}
 						/>
 						<LinkButton
-							label="Réessayer la vérification"
+							label={t('handover.retryCheck')}
 							onPress={() => verify()}
 						/>
 						<LinkButton
-							label="Continuer quand même"
+							label={t('handover.continueAnyway')}
 							onPress={goToSignin}
 						/>
 					</>
@@ -315,19 +318,19 @@ export function BoxHandover(props: any) {
 				return (
 					<>
 						<PrimaryButton
-							label="Réessayer la vérification"
+							label={t('handover.retryCheck')}
 							onPress={() => verify()}
 						/>
 						<LinkButton
-							label="Ouvrir les réglages Wi-Fi"
+							label={t('openWifiSettings')}
 							onPress={openWifiSettings}
 						/>
 						<LinkButton
-							label="Rescanner la box pour corriger"
+							label={t('handover.rescan')}
 							onPress={goToScan}
 						/>
 						<LinkButton
-							label="Continuer quand même"
+							label={t('handover.continueAnyway')}
 							onPress={goToSignin}
 						/>
 					</>
@@ -336,11 +339,11 @@ export function BoxHandover(props: any) {
 				return (
 					<>
 						<LinkButton
-							label="Ouvrir les réglages Wi-Fi"
+							label={t('openWifiSettings')}
 							onPress={openWifiSettings}
 						/>
 						<LinkButton
-							label="Continuer sans attendre"
+							label={t('handover.continueNow')}
 							onPress={goToSignin}
 						/>
 					</>
@@ -351,7 +354,7 @@ export function BoxHandover(props: any) {
 	return (
 		<Centered>
 			<Icon name={summary.icon} size={40} color={summary.color} />
-			<Text style={styles.title}>{summary.title}</Text>
+			<Text style={styles.title}>{t(summary.title)}</Text>
 			<Text style={styles.body}>
 				{bodyFor({phase, progress, status, ssid, network, deviceName})}
 			</Text>
@@ -360,13 +363,13 @@ export function BoxHandover(props: any) {
 				<Step
 					index={1}
 					state={progress.phone}
-					label={`Le téléphone rejoint ${network}`}
+					label={t('handover.phoneJoins', {network})}
 					detail={phoneDetail(progress.phone, phoneSsid)}
 				/>
 				<Step
 					index={2}
 					state={progress.box}
-					label={`La box rejoint ${network}`}
+					label={t('handover.boxJoins', {network})}
 					detail={boxDetail(progress.box, status, ssid, elapsed)}
 				/>
 			</View>
@@ -422,23 +425,30 @@ const STEP_COLORS: Record<StepState, string> = {
 };
 
 /** Icône, couleur et titre annonçant l'issue — ou l'attente en cours. */
-const SUMMARIES: Record<Phase, {icon: string; color: string; title: string}> = {
-	waiting: {icon: 'wifi', color: COLORS.primary, title: 'Bascule en cours'},
+const SUMMARIES: Record<
+	Phase,
+	{icon: string; color: string; title: `handover.title.${Phase}`}
+> = {
+	waiting: {icon: 'wifi', color: COLORS.primary, title: 'handover.title.waiting'},
 	confirmed: {
 		icon: 'check-circle',
 		color: COLORS.success,
-		title: 'Box configurée'
+		title: 'handover.title.confirmed'
 	},
-	rejected: {icon: 'key', color: COLORS.danger, title: 'Clé Wi-Fi refusée'},
+	rejected: {
+		icon: 'key',
+		color: COLORS.danger,
+		title: 'handover.title.rejected'
+	},
 	offNetwork: {
 		icon: 'mobile-alt',
 		color: COLORS.danger,
-		title: "Le téléphone n'est pas sur le bon réseau"
+		title: 'handover.title.offNetwork'
 	},
 	unconfirmed: {
 		icon: 'exclamation-triangle',
 		color: COLORS.danger,
-		title: "Box introuvable pour l'instant"
+		title: 'handover.title.unconfirmed'
 	}
 };
 
@@ -449,10 +459,14 @@ function boxDetail(
 	ssid: string,
 	elapsed: number
 ): string {
-	if (state === 'running') return `recherche de la box… ${elapsed} s`;
+	if (state === 'running') {
+		return i18n.t('access:handover.box.searching', {seconds: elapsed});
+	}
 
 	if (state === 'done' && hasJoined(status, ssid)) {
-		return `connectée — ${status.deviceState}`;
+		return i18n.t('access:handover.box.connected', {
+			state: status.deviceState
+		});
 	}
 
 	if (state === 'failed') {
@@ -460,32 +474,37 @@ function boxDetail(
 		// dit qu'elle n'a pas basculé, un autre SSID qu'elle s'est trompée de
 		// réseau — deux pannes qui ne se corrigent pas pareil.
 		return status
-			? `mode ${status.mode} — ${status.deviceState}`
-			: 'aucune réponse sur le réseau';
+			? i18n.t('access:handover.box.mode', {
+					mode: status.mode,
+					state: status.deviceState
+			  })
+			: i18n.t('access:handover.box.noResponse');
 	}
 
-	return 'en attente';
+	return i18n.t('access:handover.pending');
 }
 
 /** Sur quel réseau le téléphone se trouve, quand il consent à le dire. */
 function phoneDetail(state: StepState, phoneSsid: string | null): string {
 	if (state === 'running') {
 		return phoneSsid
-			? `actuellement sur « ${phoneSsid} »`
-			: 'reconnexion au Wi-Fi…';
+			? i18n.t('access:handover.phone.currentlyOn', {ssid: phoneSsid})
+			: i18n.t('access:handover.phone.reconnecting');
 	}
 
 	if (state === 'failed') {
-		return phoneSsid ? `resté sur « ${phoneSsid} »` : 'réseau inconnu';
+		return phoneSsid
+			? i18n.t('access:handover.phone.stayedOn', {ssid: phoneSsid})
+			: i18n.t('access:handover.phone.unknownNetwork');
 	}
 
 	if (state === 'done') {
 		return phoneSsid
-			? `connecté à ${phoneSsid}`
-			: 'réseau non vérifiable sur cette plateforme';
+			? i18n.t('access:handover.phone.connectedTo', {ssid: phoneSsid})
+			: i18n.t('access:handover.phone.unverifiable');
 	}
 
-	return 'en attente';
+	return i18n.t('access:handover.pending');
 }
 
 /** Le texte qui explique où l'on en est, ou pourquoi on s'est arrêté là. */
@@ -501,25 +520,28 @@ function bodyFor(args: {
 
 	switch (phase) {
 		case 'confirmed':
-			return `La box ${
-				deviceName ? `« ${deviceName} » ` : ''
-			}déclare être connectée à ${
-				status?.ssid || network
-			} et répond sur votre réseau.`;
+			return deviceName
+				? i18n.t('access:handover.body.confirmedNamed', {
+						name: deviceName,
+						network: status?.ssid || network
+				  })
+				: i18n.t('access:handover.body.confirmed', {
+						network: status?.ssid || network
+				  });
 
 		case 'rejected':
-			return `La box a bien reçu la configuration, mais ${network} a rejeté la clé saisie. Elle a rouvert son point d'accès : rescannez son QR code pour l'y rejoindre et corriger la clé — le reste de votre saisie est conservé.`;
+			return i18n.t('access:handover.body.rejected', {network});
 
 		case 'offNetwork':
-			return `Le téléphone est resté sur un autre réseau que ${network}. Tant qu'il y est, la box reste hors de portée : reconnectez-le, puis relancez la vérification.`;
+			return i18n.t('access:handover.body.offNetwork', {network});
 
 		case 'unconfirmed':
 			return unconfirmedReason(status, ssid, network);
 
 		default:
 			return progress.phone === 'running'
-				? `Le point d'accès de la box est relâché. Reconnectez le téléphone à ${network} s'il ne l'a pas déjà fait.`
-				: `La box applique sa configuration et rejoint ${network}. On la cherche sur ce réseau.`;
+				? i18n.t('access:handover.body.apReleased', {network})
+				: i18n.t('access:handover.body.applying', {network});
 	}
 }
 
@@ -548,7 +570,7 @@ function unconfirmedReason(
 	network: string
 ): string {
 	if (!status) {
-		return `La configuration a bien été envoyée, mais la box ne répond pas encore sur ${network}. Vérifiez que le téléphone y est connecté — et que la clé Wi-Fi saisie était la bonne.`;
+		return i18n.t('access:handover.body.noAnswer', {network});
 	}
 
 	const reported = (status.ssid ?? '').trim();
@@ -558,13 +580,16 @@ function unconfirmedReason(
 		reported.toLowerCase() !== ssid.trim().toLowerCase();
 
 	if (onAnotherNetwork) {
-		return `La box répond, mais elle est connectée à « ${reported} » et non à ${network}.`;
+		return i18n.t('access:handover.body.otherNetwork', {reported, network});
 	}
 
 	// Reste le cas où elle annonce le bon réseau sans que la connexion soit
 	// établie : c'est `deviceState` qui le dit, et le montrer évite d'avoir à
 	// deviner entre une tentative en cours et une tentative perdue.
-	return `La box répond, mais elle n'a pas encore rejoint ${network} (état : ${status.deviceState}).`;
+	return i18n.t('access:handover.body.notJoined', {
+		network,
+		state: status.deviceState
+	});
 }
 
 /* eslint-disable react-native/no-unused-styles */

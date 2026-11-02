@@ -1,6 +1,7 @@
 import React from 'react';
 import {Text, TouchableOpacity, View} from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome5';
+import i18n from 'i18next';
 import {
 	CycleRun,
 	EventOrigin,
@@ -19,13 +20,13 @@ const SLATE = '#475569';
 const TEXT = '#444';
 const MUTED = '#777';
 
-const OUTCOMES: Record<RunOutcome, {label: string; color: string}> = {
-	RUNNING: {label: 'Running', color: BLUE},
-	WAITING_CONFIRMATION: {label: 'Waiting confirmation', color: ORANGE},
-	QUEUED: {label: 'Queued', color: PURPLE},
-	ENDED: {label: 'Ended', color: GREEN},
-	CANCELLED: {label: 'Cancelled', color: GREY},
-	REFUSED: {label: 'Refused', color: RED}
+const OUTCOMES: Record<RunOutcome, {color: string}> = {
+	RUNNING: {color: BLUE},
+	WAITING_CONFIRMATION: {color: ORANGE},
+	QUEUED: {color: PURPLE},
+	ENDED: {color: GREEN},
+	CANCELLED: {color: GREY},
+	REFUSED: {color: RED}
 };
 
 const ORIGIN_ICONS: [RegExp, string][] = [
@@ -50,13 +51,16 @@ const STOP_COLORS: [RegExp, string][] = [
 const match = (table: [RegExp, string][], key?: string) =>
 	key ? table.find(([re]) => re.test(key.toUpperCase()))?.[1] : undefined;
 
-// 'PREEMPTED_BY_GROUP' -> 'Preempted by group'
+// Valeur de la box traduite (cycle:enum.<VALUE>) si connue, sinon rendue
+// lisible : 'PREEMPTED_BY_GROUP' -> 'Preempted by group'.
 export const humanize = (value?: string) => {
 	if (!value) {
 		return '';
 	}
 	const text = value.replace(/_/g, ' ').toLowerCase();
-	return text.charAt(0).toUpperCase() + text.slice(1);
+	return i18n.t(`cycle:enum.${value}` as never, {
+		defaultValue: text.charAt(0).toUpperCase() + text.slice(1)
+	}) as string;
 };
 
 export const runColor = (run: CycleRun) =>
@@ -120,7 +124,7 @@ const originLabel = (origin?: EventOrigin) => {
 		return undefined;
 	}
 	const user = originUser(origin);
-	const base = humanize(originType(origin)) || (user ? 'Manual' : '');
+	const base = humanize(originType(origin)) || (user ? i18n.t('cycle:run.manual') : '');
 	const detail = [origin.name, user].filter(Boolean).join(' · ');
 	if (!base) {
 		return detail || undefined;
@@ -132,8 +136,8 @@ const stopLabel = (stop?: EventStop) => {
 	if (!stop) {
 		return undefined;
 	}
-	const base = humanize(stop.reason) || 'Stopped';
-	const by = stop.by ? ` by ${stop.by}` : '';
+	const base = humanize(stop.reason) || i18n.t('cycle:run.stopped');
+	const by = stop.by ? ` ${i18n.t('cycle:run.by', {user: stop.by})}` : '';
 	return stop.message ? `${base}${by} : ${stop.message}` : base + by;
 };
 
@@ -144,14 +148,16 @@ const confirmationLabel = (run: CycleRun) => {
 	}
 	if (!c.answer) {
 		return run.outcome === 'WAITING_CONFIRMATION'
-			? 'Waiting for an answer'
-			: 'Requested';
+			? i18n.t('cycle:run.waitingAnswer')
+			: i18n.t('cycle:run.requested');
 	}
 	const wait = formatDuration(c.waitMs);
 	return (
 		humanize(c.answer) +
-		(c.answeredBy ? ` by ${c.answeredBy}` : '') +
-		(wait ? ` after ${wait}` : '')
+		(c.answeredBy
+			? ` ${i18n.t('cycle:run.by', {user: c.answeredBy})}`
+			: '') +
+		(wait ? ` ${i18n.t('cycle:run.after', {duration: wait})}` : '')
 	);
 };
 
@@ -209,9 +215,9 @@ type Props = {
 
 export function RunCard({run, expanded, onToggle, nameOf}: Props) {
 	const color = runColor(run);
-	const outcome = OUTCOMES[run.outcome] || {
+	const outcome = {
 		label: humanize(run.outcome),
-		color: GREY
+		color: OUTCOMES[run.outcome]?.color || GREY
 	};
 	const origin = originLabel(run.origin);
 	const real = formatDuration(run.realDuration);
@@ -221,7 +227,7 @@ export function RunCard({run, expanded, onToggle, nameOf}: Props) {
 			? `${real} / ${planned}`
 			: real
 		: planned
-		? `planned ${planned}`
+		? i18n.t('cycle:run.planned', {duration: planned})
 		: undefined;
 	const names = (ids?: string[]) =>
 		ids?.length ? ids.map(nameOf).join(', ') : undefined;
@@ -303,11 +309,11 @@ export function RunCard({run, expanded, onToggle, nameOf}: Props) {
 								paddingTop: 6
 							}}>
 							<Detail
-								label="Requested"
+								label={i18n.t('cycle:run.requestedAt')}
 								value={formatDateTime(run.requestedAt)}
 							/>
 							<Detail
-								label="Started"
+								label={i18n.t('cycle:run.started')}
 								value={
 									run.startedAt
 										? formatDateTime(run.startedAt)
@@ -315,33 +321,33 @@ export function RunCard({run, expanded, onToggle, nameOf}: Props) {
 								}
 							/>
 							<Detail
-								label="Ended"
+								label={i18n.t('cycle:run.ended')}
 								value={
 									run.endedAt
 										? formatDateTime(run.endedAt)
 										: undefined
 								}
 							/>
-							<Detail label="Confirmation" value={confirmationLabel(run)} />
-							<Detail label="Stop" value={stopLabel(run.stop)} color={color} />
-							<Detail label="Sequences run" value={names(run.sequences?.run)} />
+							<Detail label={i18n.t('cycle:run.confirmation')} value={confirmationLabel(run)} />
+							<Detail label={i18n.t('cycle:run.stop')} value={stopLabel(run.stop)} color={color} />
+							<Detail label={i18n.t('cycle:run.sequencesRun')} value={names(run.sequences?.run)} />
 							<Detail
-								label="Skipped"
+								label={i18n.t('cycle:run.skipped')}
 								value={names(run.sequences?.skipped)}
 								color={GREY}
 							/>
 							<Detail
-								label="Forced"
+								label={i18n.t('cycle:run.forced')}
 								value={names(run.sequences?.forced)}
 								color={ORANGE}
 							/>
 							<Detail
-								label="Stopped cycles"
+								label={i18n.t('cycle:run.stoppedCycles')}
 								value={names(run.preempted)}
 								color={ORANGE}
 							/>
 							<Detail
-								label="Started by run"
+								label={i18n.t('cycle:run.startedByRun')}
 								value={run.parentRunId}
 							/>
 							{run.conditions?.length ? (
@@ -353,7 +359,7 @@ export function RunCard({run, expanded, onToggle, nameOf}: Props) {
 											fontWeight: 'bold',
 											marginTop: 4
 										}}>
-										Conditions not verified
+										{i18n.t('cycle:run.conditionsNotVerified')}
 									</Text>
 									{run.conditions.map((c, i) => (
 										<Text
@@ -374,7 +380,7 @@ export function RunCard({run, expanded, onToggle, nameOf}: Props) {
 											fontWeight: 'bold',
 											marginBottom: 2
 										}}>
-										Timeline
+										{i18n.t('cycle:run.timeline')}
 									</Text>
 									{run.timeline.map((entry, i) => {
 										const isSequence =

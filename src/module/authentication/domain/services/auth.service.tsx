@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {decode} from 'base-64';
 import {jwtDecode} from 'jwt-decode';
 import {EventEmitter} from 'events';
+import i18n from 'i18next';
 import {socketService} from '../../../../services/socket';
 import {
 	DEV_MODE,
@@ -328,7 +329,7 @@ class AuthenticationService {
 		const sendLogin = (): Promise<{res: boolean; error?: string}> => {
 			return new Promise((resolve, _reject) => {
 				if (!socketService.connected) {
-					resolve({res: false, error: 'No server connexion!'});
+					resolve({res: false, error: i18n.t('common:errors.noServer')});
 				}
 				socketService.emit(
 					'front/box/login',

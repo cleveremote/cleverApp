@@ -1,4 +1,5 @@
 import React, {useEffect} from 'react';
+import i18n from 'i18next';
 import {ScrollView, Text, View} from 'react-native';
 import {connect} from 'react-redux';
 import {faMinus} from '@fortawesome/free-solid-svg-icons';
@@ -32,13 +33,21 @@ const RPI_NUMERIC_FIELDS = ['rpiPin', 'debounceTimeout'];
 
 // Paramétrage d'une vanne CTRL affiché, dans l'ordre. Les autres champs de la
 // boucle de régulation gardent leurs valeurs par défaut (emptyCtrlConfig).
-const CTRL_REGULATION_FIELDS: {name: string; label: string}[] = [
-	{name: 'minOpening', label: 'Min opening (%)'},
-	{name: 'maxOpening', label: 'Max opening (%)'},
-	{name: 'openingPercent', label: 'Opening (%)'},
-	{name: 'fullStrokeMs', label: 'Full stroke (ms)'},
-	{name: 'minOutputValue', label: 'Min output value'},
-	{name: 'maxOutputValue', label: 'Max output value'}
+const CTRL_REGULATION_FIELDS: {
+	name:
+		| 'minOpening'
+		| 'maxOpening'
+		| 'openingPercent'
+		| 'fullStrokeMs'
+		| 'minOutputValue'
+		| 'maxOutputValue';
+}[] = [
+	{name: 'minOpening'},
+	{name: 'maxOpening'},
+	{name: 'openingPercent'},
+	{name: 'fullStrokeMs'},
+	{name: 'minOutputValue'},
+	{name: 'maxOutputValue'}
 ];
 
 const CTRL_NUMERIC_FIELDS = CTRL_REGULATION_FIELDS.map(f => f.name);
@@ -194,9 +203,9 @@ export function ActuatorConfigurationSettingsSection(props: any) {
 						control={control}
 						errors={errors}
 						name="type"
-						placeholder="Type*"
+						placeholder={i18n.t('sensor:config.type')}
 						disabled={!isNew}
-						rules={{required: 'Type is required'}}
+						rules={{required: i18n.t('sensor:config.typeRequired')}}
 						onValueChange={onTypeChange}
 					/>
 				)}
@@ -207,9 +216,9 @@ export function ActuatorConfigurationSettingsSection(props: any) {
 							control={control}
 							errors={errors}
 							name="config.rpiPin"
-							placeholder="RPI pin*"
+							placeholder={i18n.t('actuators:rpi.pin')}
 							keyboardType="numeric"
-							rules={{required: 'RPI pin is required'}}
+							rules={{required: i18n.t('actuators:rpi.pinRequired')}}
 							onChangeText={() => markDirty()}
 						/>
 						<SelectForm
@@ -217,8 +226,8 @@ export function ActuatorConfigurationSettingsSection(props: any) {
 							control={control}
 							errors={errors}
 							name="config.direction"
-							placeholder="Direction*"
-							rules={{required: 'Direction is required'}}
+							placeholder={i18n.t('actuators:rpi.direction')}
+							rules={{required: i18n.t('actuators:rpi.directionRequired')}}
 							onValueChange={() => markDirty()}
 						/>
 						<SelectForm
@@ -226,15 +235,15 @@ export function ActuatorConfigurationSettingsSection(props: any) {
 							control={control}
 							errors={errors}
 							name="config.edge"
-							placeholder="Edge*"
-							rules={{required: 'Edge is required'}}
+							placeholder={i18n.t('actuators:rpi.edge')}
+							rules={{required: i18n.t('actuators:rpi.edgeRequired')}}
 							onValueChange={() => markDirty()}
 						/>
 						<InputForm
 							control={control}
 							errors={errors}
 							name="config.debounceTimeout"
-							placeholder="Debounce timeout (ms)"
+							placeholder={i18n.t('actuators:rpi.debounce')}
 							keyboardType="numeric"
 							onChangeText={() => markDirty()}
 						/>
@@ -242,14 +251,14 @@ export function ActuatorConfigurationSettingsSection(props: any) {
 							control={control}
 							errors={errors}
 							name="config.activeLow"
-							placeholder="Active low"
+							placeholder={i18n.t('actuators:rpi.activeLow')}
 							onChangeText={() => markDirty()}
 						/>
 						<SwitchForm
 							control={control}
 							errors={errors}
 							name="config.reconfigureDirection"
-							placeholder="Reconfigure direction"
+							placeholder={i18n.t('actuators:rpi.reconfigureDirection')}
 							onChangeText={() => markDirty()}
 						/>
 					</>
@@ -257,7 +266,9 @@ export function ActuatorConfigurationSettingsSection(props: any) {
 
 				{comBased && (
 					<>
-						<Text style={styles.subSectionTitle}>Actions</Text>
+						<Text style={styles.subSectionTitle}>
+							{i18n.t('actuators:actions')}
+						</Text>
 						{actions.map((action: any) =>
 							elementStack(
 								{id: action.commandId},
@@ -268,7 +279,7 @@ export function ActuatorConfigurationSettingsSection(props: any) {
 									value: action.channel,
 									onChangeValue: (text: string) =>
 										setChannel(action.commandId, text),
-									placeholder: 'channel',
+									placeholder: i18n.t('actuators:channel'),
 									disabled: readOnly
 								}
 							)
@@ -279,7 +290,7 @@ export function ActuatorConfigurationSettingsSection(props: any) {
 								control={control}
 								errors={errors}
 								name="_addAction"
-								placeholder="Add action (device command) ..."
+								placeholder={i18n.t('actuators:addAction')}
 								onValueChange={value => addAction(value)}
 							/>
 						)}
@@ -288,14 +299,16 @@ export function ActuatorConfigurationSettingsSection(props: any) {
 
 				{isCtrl && (
 					<>
-						<Text style={styles.subSectionTitle}>Regulation</Text>
+						<Text style={styles.subSectionTitle}>
+							{i18n.t('cycle:controlLoop.regulation')}
+						</Text>
 						{CTRL_REGULATION_FIELDS.map(field => (
 							<InputForm
 								key={field.name}
 								control={control}
 								errors={errors}
 								name={`config.${field.name}`}
-								placeholder={field.label}
+								placeholder={i18n.t(`actuators:ctrl.${field.name}`)}
 								keyboardType="numeric"
 								onChangeText={() => markDirty()}
 							/>

@@ -8,6 +8,7 @@ import {
 	View
 } from 'react-native';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
+import i18n from 'i18next';
 import {connect} from 'react-redux';
 import {faCog, faMagnifyingGlass} from '@fortawesome/free-solid-svg-icons';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
@@ -51,8 +52,8 @@ export function DevicesScreen(props: any) {
 			discoverTimeout.current = null;
 			setDiscovering(false);
 			Alert.alert(
-				'Discovery timed out',
-				'The box did not answer. Check the connection and try again.'
+				i18n.t('devices:discovery.timeout'),
+				i18n.t('devices:connectivity.timeoutMessage')
 			);
 		}, DISCOVERY_TIMEOUT_MS);
 		props.discoverDevices(undefined, done);
@@ -86,7 +87,7 @@ export function DevicesScreen(props: any) {
 			<View style={styles.card}>
 				{masters.length > 0 && (
 					<CheckDevicesButton
-						label="Refresh status"
+						label={i18n.t('devices:refreshStatus')}
 						variant="text"
 						color={COLORS.primary}
 						style={styles.checkButton}
@@ -104,7 +105,7 @@ export function DevicesScreen(props: any) {
 								}
 							);
 						},
-						`${master.name ?? 'device'}`,
+						`${master.name ?? i18n.t('devices:device')}`,
 						{name: faCog, color: styles.icon.color},
 						undefined,
 						undefined,
@@ -136,7 +137,9 @@ export function DevicesScreen(props: any) {
 						/>
 					)}
 					<Text style={styles.discoverLabel}>
-						{discovering ? 'Discovering…' : 'Discover new devices'}
+						{discovering
+							? i18n.t('devices:discovery.running')
+							: i18n.t('devices:discovery.start')}
 					</Text>
 				</TouchableOpacity>
 			</View>

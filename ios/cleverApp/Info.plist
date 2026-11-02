@@ -4,6 +4,12 @@
 <dict>
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
+	<key>CFBundleLocalizations</key>
+	<array>
+		<string>en</string>
+		<string>fr</string>
+		<string>ar</string>
+	</array>
 	<key>CFBundleDisplayName</key>
 	<string>cleverapp</string>
 	<key>CFBundleExecutable</key>
@@ -44,7 +50,7 @@
 		</dict>
 	</dict>
 	<key>NSBluetoothAlwaysUsageDescription</key>
-	<string></string>
+	<string>$(PRODUCT_NAME) uses Bluetooth to pair with your box and configure it.</string>
 	<key>NSCameraUsageDescription</key>
 	<string>$(PRODUCT_NAME) uses the camera to scan the QR code on your box and pair with it.</string>
 	<key>NSLocalNetworkUsageDescription</key>

@@ -1,4 +1,5 @@
 import React from 'react';
+import {useTranslation} from 'react-i18next';
 import {
 	StackNavigationOptions,
 	createStackNavigator
@@ -8,6 +9,7 @@ import ComRequestGeneralSettingsSection from '../screens/devices/comrequest/ComR
 import ComRequestConfigurationSettingsSection from '../screens/devices/comrequest/ComRequestConfigurationSettingsSection';
 
 export function ComRequestSettingsStack() {
+	const {t} = useTranslation('navigation');
 	const options = (title: string) =>
 		({
 			headerTitleAlign: 'center',
@@ -21,17 +23,17 @@ export function ComRequestSettingsStack() {
 			<Stack.Screen
 				name="ComRequestSettingsMenu"
 				component={ComRequestSettingsScreen}
-				options={options('COM Request')}
+				options={options(t('comRequest'))}
 			/>
 			<Stack.Screen
 				name="ComRequestGeneralSection"
 				component={ComRequestGeneralSettingsSection}
-				options={options('General')}
+				options={options(t('general'))}
 			/>
 			<Stack.Screen
 				name="ComRequestConfigurationSection"
 				component={ComRequestConfigurationSettingsSection}
-				options={options('Configuration')}
+				options={options(t('configuration'))}
 			/>
 		</Stack.Navigator>
 	);

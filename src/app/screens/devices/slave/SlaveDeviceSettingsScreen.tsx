@@ -20,6 +20,7 @@ import SlaveModelSection from './SlaveModelSection';
 import SlaveActuatorsSection, {
 	hasActuatorsSection
 } from './SlaveActuatorsSection';
+import i18n from 'i18next';
 
 export function SlaveDeviceSettingsScreen(props: any) {
 	const {deviceRef, deleteItem, invalidSections, ready} = useDeviceEntity(
@@ -35,7 +36,7 @@ export function SlaveDeviceSettingsScreen(props: any) {
 			<MenuGroup style={styles.card}>
 				<MenuAccordion
 					key={1}
-					name={'General'}
+					name={i18n.t('common:sections.general')}
 					icon={faGear}
 					defaultExpanded={props.route.params?.section === 'connectivity'}
 					invalid={invalidSections.general}
@@ -53,7 +54,7 @@ export function SlaveDeviceSettingsScreen(props: any) {
 				{ready && hasActuatorsSection(props.models, deviceRef.current) && (
 					<MenuAccordion
 						key={2}
-						name={'Actuators'}
+						name={i18n.t('common:sections.actuators')}
 						icon={faPlug}
 						onPress={() => {}}>
 						<SlaveActuatorsSection
@@ -64,7 +65,7 @@ export function SlaveDeviceSettingsScreen(props: any) {
 				)}
 				<MenuAccordion
 					key={3}
-					name={'Model'}
+					name={i18n.t('devices:model.title')}
 					icon={faMicrochip}
 					onPress={() => {}}>
 					{ready && <SlaveModelSection device={deviceRef.current} />}

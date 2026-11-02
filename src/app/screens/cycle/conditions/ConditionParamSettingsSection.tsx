@@ -21,6 +21,7 @@ import {
 } from '../../../data/conditionTypes';
 import {AppSwitch} from '../../../components/common/AppSwitch';
 import {BoxFormStyle} from '../../../styles/components/common/boxForm';
+import i18n from 'i18next';
 
 export function ConditionParamSettingsSection(props: any) {
 	const embedded = !!props.embedded;
@@ -97,16 +98,16 @@ export function ConditionParamSettingsSection(props: any) {
 			},
 			_errors => {
 				Alert.alert(
-					'Discard changes?',
-					'Some fields contain invalid or incomplete information. Would you like to discard changes or continue editing?',
+					i18n.t('common:discard.title'),
+					i18n.t('common:discard.invalidMessage'),
 					[
 						{
-							text: 'Continue',
+							text: i18n.t('common:discard.continue'),
 							style: 'cancel',
 							onPress: onContinue
 						},
 						{
-							text: 'Discard',
+							text: i18n.t('common:discard.confirm'),
 							style: 'destructive',
 							onPress: onDiscard
 						}
@@ -186,7 +187,7 @@ export function ConditionParamSettingsSection(props: any) {
 							fontSize: 15,
 							fontWeight: 'bold'
 						}}>
-						Cycles
+						{i18n.t('common:sections.cycles')}
 					</Text>
 					<AppSwitch
 						style={{marginHorizontal: 8}}
@@ -214,7 +215,7 @@ export function ConditionParamSettingsSection(props: any) {
 							fontSize: 15,
 							fontWeight: 'bold'
 						}}>
-						Sensors
+						{i18n.t('navigation:sensors')}
 					</Text>
 				</View>
 				<SelectForm
@@ -222,8 +223,12 @@ export function ConditionParamSettingsSection(props: any) {
 					control={control}
 					errors={errors}
 					name="elementId"
-					placeholder={isSensor ? 'Sensors' : 'Cycles'}
-					rules={{required: 'Device is required'}}
+					placeholder={
+						isSensor
+							? i18n.t('navigation:sensors')
+							: i18n.t('common:sections.cycles')
+					}
+					rules={{required: i18n.t('cycle:conditions.deviceRequired')}}
 					onValueChange={() => {
 						setSaveUnchangedData(true);
 					}}
@@ -240,8 +245,8 @@ export function ConditionParamSettingsSection(props: any) {
 						control={control}
 						errors={errors}
 						name="operator"
-						placeholder="Operator*"
-						rules={{required: 'Operator is required'}}
+						placeholder={i18n.t('cycle:conditions.operator')}
+						rules={{required: i18n.t('cycle:conditions.operatorRequired')}}
 						onValueChange={() => {
 							setSaveUnchangedData(true);
 						}}
@@ -252,13 +257,13 @@ export function ConditionParamSettingsSection(props: any) {
 						control={control}
 						errors={errors}
 						name="value"
-						placeholder="Value*"
+						placeholder={i18n.t('cycle:conditions.value')}
 						keyboardType="decimal-pad"
 						rules={{
-							required: 'Value is required',
+							required: i18n.t('cycle:conditions.valueRequired'),
 							pattern: {
 								value: /^-?\d+(\.\d+)?$/,
-								message: 'Value must be numeric'
+								message: i18n.t('cycle:conditions.valueNumeric')
 							}
 						}}
 						onChangeText={() => {
@@ -274,8 +279,8 @@ export function ConditionParamSettingsSection(props: any) {
 						control={control}
 						errors={errors}
 						name="value"
-						placeholder="Value*"
-						rules={{required: 'Value is required'}}
+						placeholder={i18n.t('cycle:conditions.value')}
+						rules={{required: i18n.t('cycle:conditions.valueRequired')}}
 						onValueChange={() => {
 							setSaveUnchangedData(true);
 						}}
@@ -286,7 +291,7 @@ export function ConditionParamSettingsSection(props: any) {
 					control={control}
 					errors={errors}
 					name="symbolStart"
-					placeholder="Symbol Start"
+					placeholder={i18n.t('cycle:conditions.symbolStart')}
 					onValueChange={() => {
 						setSaveUnchangedData(true);
 					}}
@@ -296,7 +301,7 @@ export function ConditionParamSettingsSection(props: any) {
 					control={control}
 					errors={errors}
 					name="symbolEnd"
-					placeholder="Symbol End"
+					placeholder={i18n.t('cycle:conditions.symbolEnd')}
 					onValueChange={() => {
 						setSaveUnchangedData(true);
 					}}

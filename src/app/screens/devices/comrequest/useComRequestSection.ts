@@ -8,6 +8,7 @@ import {
 	useValidateOnOpen,
 	useEmbeddedSection
 } from '../../../components/common/useSectionSettingsHeader';
+import i18n from 'i18next';
 
 // Form plumbing for the COM request General / Configuration sections. A COM
 // request is a standalone modbusTask; edits are staged into the shared task slot
@@ -103,12 +104,12 @@ export function useComRequestSection(
 					},
 					() => {
 						Alert.alert(
-							'Discard changes?',
-							'Some fields contain invalid or incomplete information. Would you like to discard changes or continue editing?',
+							i18n.t('common:discard.title'),
+							i18n.t('common:discard.invalidMessage'),
 							[
-								{text: 'Continue', style: 'cancel'},
+								{text: i18n.t('common:discard.continue'), style: 'cancel'},
 								{
-									text: 'Discard',
+									text: i18n.t('common:discard.confirm'),
 									style: 'destructive',
 									onPress: leave
 								}

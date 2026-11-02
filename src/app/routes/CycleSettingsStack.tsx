@@ -1,4 +1,5 @@
 import React from 'react';
+import {useTranslation} from 'react-i18next';
 import {
 	StackNavigationOptions,
 	createStackNavigator
@@ -13,6 +14,7 @@ import {SequenceSettingStack} from './SequenceSettingsStack';
 import {navigationHeader} from '../components/common/navigationHeaders';
 
 export function CycleSettingStack() {
+	const {t} = useTranslation('navigation');
 	const options = (title: string) =>
 		({
 			headerTitleAlign: 'center',
@@ -28,22 +30,22 @@ export function CycleSettingStack() {
 			<Stack.Screen
 				name="CycleSettingsMenu"
 				component={CycleSettingsScreen}
-				options={options('Cycle Settings')}
+				options={options(t('cycleSettings'))}
 			/>
 			<Stack.Screen
 				name="CycleGeneralSection"
 				component={CycleGeneralSettingsSection}
-				options={options('General')}
+				options={options(t('general'))}
 			/>
 			<Stack.Screen
 				name="CycleSequenceSection"
 				component={SeqSettingsSection}
-				options={options('Sequences')}
+				options={options(t('sequences'))}
 			/>
 			<Stack.Screen
 				name="CycleChildrenSection"
 				component={CycleChildrenSettingsSection}
-				options={options('Cycles')}
+				options={options(t('cycles'))}
 			/>
 			<Stack.Screen
 				name="SequenceSettingsStack"

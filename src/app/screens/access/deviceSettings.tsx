@@ -27,6 +27,7 @@ import {
 	PendingCoordinates,
 	startLocalCoordinates
 } from '../../../services/geolocation/GeolocationService';
+import {useTranslation} from 'react-i18next';
 
 /**
  * Ce que la soumission accepte encore d'attendre pour la position, si elle
@@ -36,11 +37,14 @@ import {
 const COORDINATES_GRACE_MS = 2000;
 
 export function DeviceSettings(props: any) {
+	const {t} = useTranslation(['access', 'common']);
 	const [psk, setPsk] = React.useState('');
 	const [ssid, setSsid] = React.useState('1');
 	const [password, setPassword] = React.useState('');
 	const [isLoading, setIsLoading] = React.useState(false);
-	const [profile, setProfile] = React.useState('New profile');
+	const [profile, setProfile] = React.useState(() =>
+		t('deviceSettings.newProfile')
+	);
 	const [networks, setNetworks] = React.useState<{label: string; value: string}[]>([]);
 	const [dropdownOpen, setDropdownOpen] = React.useState(false);
 
@@ -72,7 +76,7 @@ export function DeviceSettings(props: any) {
 						JSON.parse(decode(result.value)).map((x: any) => ({
 							label: `${x.name} (${
 								x.isConfigured && x['in-use']
-									? 'configured'
+									? t('deviceSettings.configured')
 									: ''
 							}) `,
 							value: x.name
@@ -151,7 +155,7 @@ export function DeviceSettings(props: any) {
 			.catch(error => {
 				console.error('Error caught:', error);
 				setIsLoading(false);
-				Alert.alert('Permission denied: check your password.');
+				Alert.alert(t('deviceSettings.permissionDenied'));
 			})
 			.then(async () => {
 				await BLEService.disconnectDeviceById(deviceId);
@@ -205,7 +209,7 @@ export function DeviceSettings(props: any) {
 								styles.input,
 								{width: '100%'}
 							]}
-							placeholder="Profile"
+							placeholder={t('profile')}
 							placeholderTextColor={placeholderColor}
 							value={profile}
 							onChangeText={value => {
@@ -218,7 +222,7 @@ export function DeviceSettings(props: any) {
 									onPress={() => setDropdownOpen(!dropdownOpen)}>
 									<View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}>
 										<Text style={{fontSize: 20, color: ssid ? '#000' : placeholderColor}}>
-											{networks.find((n: any) => n.value === ssid)?.label || 'Select network'}
+											{networks.find((n: any) => n.value === ssid)?.label || t('deviceSettings.selectNetwork')}
 										</Text>
 										<Icon name={dropdownOpen ? 'chevron-up' : 'chevron-down'} size={14} color="#32404e" />
 									</View>
@@ -247,7 +251,7 @@ export function DeviceSettings(props: any) {
 							</View>
 						<TextInput
 							style={[styles.input, {width: '100%'}]}
-							placeholder="Psk"
+							placeholder={t('deviceSettings.psk')}
 							placeholderTextColor={placeholderColor}
 							secureTextEntry={true}
 							textContentType={'newPassword'}
@@ -258,7 +262,7 @@ export function DeviceSettings(props: any) {
 						/>
 						<TextInput
 							style={[styles.input, {width: '100%'}]}
-							placeholder="Password"
+							placeholder={t('common:password')}
 							placeholderTextColor={placeholderColor}
 							secureTextEntry={true}
 							textContentType={'newPassword'}
@@ -289,7 +293,7 @@ export function DeviceSettings(props: any) {
 							}}>
 							<Text style={{color: 'white', fontSize: 20}}>
 								{' '}
-								Configure{' '}
+								{t('boxConfig.configure')}{' '}
 							</Text>
 						</TouchableOpacity>
 					</View>

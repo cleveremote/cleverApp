@@ -12,6 +12,7 @@ import {
 	saveSchedules
 } from '../../../../module/process/infrasctructure/store/actions/schedule';
 import {saveCycle} from '../../../../module/process/infrasctructure/store/actions/cycle';
+import i18n from 'i18next';
 
 type Schedule = {
 	id?: string;
@@ -77,7 +78,7 @@ export function SchedulesScreen(props: any) {
 									}
 								);
 							},
-							`schedule ${element.name}`,
+							i18n.t('cycle:schedules.item', {name: element.name}),
 							{name: faCog, color: styles.icon.color}
 						)
 					)}
@@ -96,7 +97,7 @@ export function SchedulesScreen(props: any) {
 						}}>
 						<Icon name="times-circle" style={styles.icon} />
 					</TouchableOpacity>
-					<Text style={styles.addLabel}>Add new schedule ...</Text>
+					<Text style={styles.addLabel}>{i18n.t('cycle:schedules.add')}</Text>
 				</View>
 			</View>
 		</View>

@@ -35,6 +35,7 @@ import ConditionBuilderSection, {
 } from '../../conditions/ConditionBuilderSection';
 import CycleChildrenSettingsSection from './CycleChildrenSettingsSection';
 import CycleGeneralSettingsSection from './CycleGeneralSettingsSection';
+import i18n from 'i18next';
 
 type BeforeRemoveEvent = {
 	preventDefault: () => void;
@@ -135,18 +136,18 @@ export function CycleSett(props: any) {
 		}
 		e.preventDefault();
 		Alert.alert(
-			'Discard changes?',
-			'You have unsaved changes. Are you sure to discard them and leave the screen?',
+			i18n.t('common:discard.title'),
+			i18n.t('common:discard.leaveMessage'),
 			[
 				{
-					text: 'save',
+					text: i18n.t('common:save'),
 					style: 'cancel',
 					onPress: () => {
 						onSave();
 					}
 				},
 				{
-					text: 'Discard',
+					text: i18n.t('common:discard.confirm'),
 					style: 'destructive',
 					onPress: () => {
 						onDiscard();
@@ -357,12 +358,12 @@ export function CycleSett(props: any) {
 						return;
 					e.preventDefault();
 					Alert.alert(
-						'Discard changes?',
-						'You have unsaved changes. Would you like to continue editing or discard them?',
+						i18n.t('common:discard.title'),
+						i18n.t('common:discard.message'),
 						[
-							{text: 'Continue', style: 'cancel', onPress: () => {}},
+							{text: i18n.t('common:discard.continue'), style: 'cancel', onPress: () => {}},
 							{
-								text: 'Discard',
+								text: i18n.t('common:discard.confirm'),
 								style: 'destructive',
 								onPress: () => {
 									listenerUnsubscribe();
@@ -400,7 +401,7 @@ export function CycleSett(props: any) {
 			<MenuGroup style={styles.card}>
 				<MenuAccordion
 					key={21}
-					name={'General'}
+					name={i18n.t('common:sections.general')}
 					icon={faGear}
 					invalid={invalidSections.general}
 					onPress={() => {}}>
@@ -414,7 +415,7 @@ export function CycleSett(props: any) {
 				</MenuAccordion>
 				<MenuAccordion
 					key={31}
-					name={'Conditions'}
+					name={i18n.t('common:sections.conditions')}
 					icon={faCheckDouble}
 					invalid={invalidSections.conditions}
 					onPress={() => {}}>
@@ -435,7 +436,7 @@ export function CycleSett(props: any) {
 				{isGroup ? (
 					<MenuAccordion
 						key={51}
-						name={'Cycles'}
+						name={i18n.t('common:sections.cycles')}
 						icon={faLayerGroup}
 						onPress={() => {}}>
 						<CycleChildrenSettingsSection
@@ -447,7 +448,7 @@ export function CycleSett(props: any) {
 				) : (
 					<MenuAccordion
 						key={51}
-						name={'Sequences'}
+						name={i18n.t('common:sections.sequences')}
 						icon={faRotateRight}
 						onPress={() => {}}>
 						<SeqSettingsSection

@@ -1,4 +1,5 @@
 import React from 'react';
+import {useTranslation} from 'react-i18next';
 import {
 	StackNavigationOptions,
 	createStackNavigator
@@ -11,6 +12,7 @@ import {SensorSettingsStack} from './SensorSettingsStack';
 import {MasterDeviceSettingsStack} from './MasterDeviceSettingsStack';
 
 export function SensorStack() {
+	const {t} = useTranslation('navigation');
 	const options = (title: string) =>
 		({
 			headerTitleAlign: 'center',
@@ -25,12 +27,12 @@ export function SensorStack() {
 			<Stack.Screen
 				name="Sensors"
 				component={SensorsScreen}
-				options={options('Sensors')}
+				options={options(t('sensors'))}
 			/>
 			<Stack.Screen
 				name="SensorMenu"
 				component={SensorMenuScreen}
-				options={options('Sensors Settings')}
+				options={options(t('sensorsSettings'))}
 			/>
 			{/* Ouvert depuis l'icône « déconnecté » d'une carte : le retour
 			    ramène ici plutôt que dans l'onglet Settings. */}

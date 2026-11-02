@@ -17,6 +17,7 @@ import {
 } from '../../../../module/process/infrasctructure/store/actions/condition';
 import ConditionGeneralSettingsSection from './ConditionGeneralSettingsSection';
 import ConditionParamSettingsSection from './ConditionParamSettingsSection';
+import i18n from 'i18next';
 
 function ConditionSettingsScreen(props: any) {
 	// Pas d'`id` en params = création → le rond de droite affiche un « + » (Add).
@@ -175,16 +176,16 @@ function ConditionSettingsScreen(props: any) {
 						return;
 					e.preventDefault();
 					Alert.alert(
-						'Discard changes?',
-						'You have unsaved changes. Would you like to continue editing or discard them?',
+						i18n.t('common:discard.title'),
+						i18n.t('common:discard.message'),
 						[
 							{
-								text: 'Continue',
+								text: i18n.t('common:discard.continue'),
 								style: 'cancel',
 								onPress: () => {}
 							},
 							{
-								text: 'Discard',
+								text: i18n.t('common:discard.confirm'),
 								style: 'destructive',
 								onPress: () => {
 									unsubscribe();
@@ -210,7 +211,7 @@ function ConditionSettingsScreen(props: any) {
 			<MenuGroup style={styles.card}>
 				<MenuAccordion
 					key={21}
-					name={'General'}
+					name={i18n.t('common:sections.general')}
 					icon={faGear}
 					invalid={invalidSections.general}
 					onPress={() => {}}>
@@ -223,7 +224,7 @@ function ConditionSettingsScreen(props: any) {
 				</MenuAccordion>
 				<MenuAccordion
 					key={41}
-					name={'Execution'}
+					name={i18n.t('common:sections.execution')}
 					icon={faBolt}
 					invalid={invalidSections.execution}
 					onPress={() => {}}>
@@ -237,9 +238,9 @@ function ConditionSettingsScreen(props: any) {
 				{!isNew && (
 					<DeleteItemMenu
 						key={61}
-						name="Remove" 
-						confirmTitle="Remove condition"
-						confirmMessage="Are you sure you want to remove this condition from the list?"
+						name={i18n.t('common:remove')}
+						confirmTitle={i18n.t('cycle:conditions.removeTitle')}
+						confirmMessage={i18n.t('cycle:conditions.removeMessage')}
 						OnConfirm={_deleteItem}
 					/>
 				)}

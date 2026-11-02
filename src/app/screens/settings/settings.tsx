@@ -1,6 +1,7 @@
 import {Button, Platform, ScrollView, Text, TouchableOpacity, View} from 'react-native';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import Icon from 'react-native-vector-icons/FontAwesome5';
+import {useTranslation} from 'react-i18next';
 import {authenticationService} from '../../../module/authentication/domain/services/auth.service';
 import { pick, types, isErrorWithCode } from '@react-native-documents/picker'
 import RNFS from 'react-native-fs';
@@ -18,6 +19,7 @@ const hapticTriggerType: string = Platform.select({
 }) as string;
 
 export function SettingsScreen(props: any) {
+	const {t} = useTranslation('settings');
 	const uploadSvgAndParseText = async (): Promise<string | null> => {
 		try {
 			// 1️⃣ Sélection du fichier SVG
@@ -82,9 +84,9 @@ export function SettingsScreen(props: any) {
 						}}>
 						<Icon name="sign-out-alt" size={25} color="#32404e" />
 					</TouchableOpacity>
-					<Text style={{color: '#32404e', fontSize: 15}}>logout</Text>
+					<Text style={{color: '#32404e', fontSize: 15}}>{t('menu.logout')}</Text>
 				</View>
-				<Button title="Choisir un SVG" onPress={handleUpload} />
+				<Button title={t('chooseSvg')} onPress={handleUpload} />
 				{svgText ? (
 					<ScrollView style={{marginTop: 20}}>
 						<Text selectable>{svgText}</Text>

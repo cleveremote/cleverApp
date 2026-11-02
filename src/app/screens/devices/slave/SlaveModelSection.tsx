@@ -1,4 +1,5 @@
 import React from 'react';
+import i18n from 'i18next';
 import {Pressable, StyleSheet, Text, View} from 'react-native';
 import {connect} from 'react-redux';
 import Icon from 'react-native-vector-icons/FontAwesome5';
@@ -90,7 +91,9 @@ function CommandCard({
 	// `channel` / `value` posés sur la commande = valeurs par défaut envoyées.
 	const defaults = [
 		command.channel != null && params.channel
-			? `channel ${label(command.channel, params.channel)}`
+			? i18n.t('devices:model.channelValue', {
+					value: label(command.channel, params.channel)
+			  })
 			: undefined,
 		command.value != null ? enumLabel(valueSpec, command.value) : undefined
 	]
@@ -133,30 +136,30 @@ function CommandCard({
 					{params.channel ? (
 						<Row
 							icon="random"
-							label="Channel"
+							label={i18n.t('sensor:dataSource.channel')}
 							value={formatRange(params.channel)}
 						/>
 					) : null}
 					{params.range ? (
 						<Row
 							icon="arrows-alt-h"
-							label="Range"
+							label={i18n.t('devices:model.range')}
 							value={formatRange(params.range)}
 						/>
 					) : null}
 					{valueSpec ? (
 						<Row
 							icon="sliders-h"
-							label="Value"
+							label={i18n.t('sensor:dataSource.value')}
 							value={formatValueSpec(valueSpec)}
 						/>
 					) : null}
 					{defaults ? (
-						<Row icon="check" label="Default" value={defaults} />
+						<Row icon="check" label={i18n.t('devices:model.default')} value={defaults} />
 					) : null}
 					{fields.length ? (
 						<>
-							<Text style={styles.subTitle}>Measures</Text>
+							<Text style={styles.subTitle}>{i18n.t('devices:model.measures')}</Text>
 							{fields.map((f: any) => (
 								<Row
 									key={f.name}
@@ -166,7 +169,7 @@ function CommandCard({
 										.join(' · ')}
 									sub={
 										f.autoCreate
-											? 'auto-created sensor'
+											? i18n.t('devices:model.autoSensor')
 											: undefined
 									}
 								/>
@@ -198,7 +201,7 @@ export function SlaveModelSection(props: any) {
 		return (
 			<View style={styles.embeddedCard}>
 				<Text style={styles.empty}>
-					No model linked to this device.
+					{i18n.t('devices:model.none')}
 				</Text>
 			</View>
 		);
@@ -219,26 +222,26 @@ export function SlaveModelSection(props: any) {
 		<View style={styles.embeddedCard}>
 			<Row
 				icon="microchip"
-				label="Model"
+				label={i18n.t('devices:model.title')}
 				value={model.name}
 				sub={[modelKind(model), model.description]
 					.filter(Boolean)
 					.join(' · ')}
 			/>
 			{model.device?.name ? (
-				<Row icon="hdd" label="Device" value={model.device.name} />
+				<Row icon="hdd" label={i18n.t('sensor:dataSource.device')} value={model.device.name} />
 			) : null}
 			{portRange ? (
 				<Row
 					icon="plug"
-					label="Ports"
+					label={i18n.t('devices:model.ports')}
 					value={portRange}
-					sub={`${ports.portCount} ports`}
+					sub={i18n.t('devices:model.portCount', {count: ports.portCount})}
 				/>
 			) : null}
-			<Text style={styles.subTitle}>Commands</Text>
+			<Text style={styles.subTitle}>{i18n.t('devices:model.commands')}</Text>
 			{commands.length === 0 ? (
-				<Text style={styles.empty}>No command for this model.</Text>
+				<Text style={styles.empty}>{i18n.t('devices:model.noCommand')}</Text>
 			) : (
 				commands.map((c: any) => (
 					<CommandCard
@@ -263,11 +266,13 @@ const styles = StyleSheet.create({
 		paddingTop: 8,
 		paddingBottom: 16
 	},
+	// textAlign 'left' = côté de début (inversé par RN en RTL) : sans lui, une
+	// valeur latine resterait à gauche en arabe.
 	row: {flexDirection: 'row', paddingVertical: 6},
 	rowIcon: {width: 26, paddingTop: 2},
-	rowLabel: {width: 90, color: mutedColor, fontSize: 14},
-	rowValue: {color: textColor, fontSize: 15, fontWeight: '600'},
-	rowSub: {color: mutedColor, fontSize: 12, marginTop: 2},
+	rowLabel: {width: 90, textAlign: 'left', color: mutedColor, fontSize: 14},
+	rowValue: {textAlign: 'left', color: textColor, fontSize: 15, fontWeight: '600'},
+	rowSub: {textAlign: 'left', color: mutedColor, fontSize: 12, marginTop: 2},
 	subTitle: {
 		color: textColor,
 		fontWeight: 'bold',
@@ -289,7 +294,7 @@ const styles = StyleSheet.create({
 		alignItems: 'center',
 		padding: 10
 	},
-	commandName: {color: textColor, fontSize: 15, fontWeight: '600'},
+	commandName: {textAlign: 'left', color: textColor, fontSize: 15, fontWeight: '600'},
 	commandBody: {paddingHorizontal: 10, paddingBottom: 10},
 	chips: {flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginTop: 4},
 	chip: {
@@ -299,7 +304,7 @@ const styles = StyleSheet.create({
 		paddingVertical: 2
 	},
 	chipText: {color: textColor, fontSize: 11},
-	technical: {color: mutedColor, fontSize: 11, marginTop: 6},
+	technical: {textAlign: 'left', color: mutedColor, fontSize: 11, marginTop: 6},
 	empty: {color: mutedColor, paddingVertical: 8}
 });
 

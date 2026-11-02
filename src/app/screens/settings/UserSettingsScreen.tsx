@@ -1,5 +1,6 @@
 import {Button, ScrollView, Switch, Text, View} from 'react-native';
 import React, {useEffect, useState} from 'react';
+import {useTranslation} from 'react-i18next';
 import {pick, types, isErrorWithCode} from '@react-native-documents/picker';
 import RNFS from 'react-native-fs';
 import {navigationHeader} from '../../components/common/navigationHeaders';
@@ -8,6 +9,7 @@ import {navigationHeader} from '../../components/common/navigationHeaders';
 // placeholder + SVG debug picker. Logout moved to the bottom of the settings
 // sections (SettingsMenuScreen).
 export function UserSettingsScreen(props: any) {
+	const {t} = useTranslation('settings');
 	const uploadSvgAndParseText = async (): Promise<string | null> => {
 		try {
 			// 1️⃣ Sélection du fichier SVG
@@ -74,7 +76,7 @@ export function UserSettingsScreen(props: any) {
 				value={true}
 				onValueChange={() => {}}
 			/>
-			<Button title="Choisir un SVG" onPress={handleUpload} />
+			<Button title={t('chooseSvg')} onPress={handleUpload} />
 			{svgText ? (
 				<ScrollView style={{marginTop: 20}}>
 					<Text selectable>{svgText}</Text>

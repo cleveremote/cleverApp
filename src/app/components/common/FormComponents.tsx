@@ -1,4 +1,6 @@
 import React, {useState} from 'react';
+import i18n from 'i18next';
+import {valueLabel} from '../../../i18n';
 import {Control, Controller, FieldErrors} from 'react-hook-form';
 import {getColors} from '../../data/cycleTypes';
 import {InputStyle, placeholderColor} from '../../styles/components/common/Input';
@@ -215,7 +217,7 @@ export function DateTimePickerForm({
 		return `${hours}:${minutes}`;
 	};
 
-	const mediumTime = new Intl.DateTimeFormat('en', {
+	const mediumTime = new Intl.DateTimeFormat(i18n.language, {
 		weekday: 'long',
 		month: 'long',
 		day: 'numeric',
@@ -313,7 +315,7 @@ export function DateTimePickerForm({
 						style={InputStyle.iconInputError}
 					/>
 					<Text style={InputStyle.textInputError}>
-						{(getFieldError(errors, name)?.message as string) || 'unknown error'}
+						{(getFieldError(errors, name)?.message as string) || i18n.t('common:unknownError')}
 					</Text>
 				</View>
 			)}
@@ -377,7 +379,7 @@ export function SliderForm({
 						style={InputStyle.iconInputError}
 					/>
 					<Text style={InputStyle.textInputError}>
-						{(getFieldError(errors, name)?.message as string) || 'unknown error'}
+						{(getFieldError(errors, name)?.message as string) || i18n.t('common:unknownError')}
 					</Text>
 				</View>
 			)}
@@ -459,7 +461,7 @@ export function InputForm({
 						style={InputStyle.iconInputError}
 					/>
 					<Text style={InputStyle.textInputError}>
-						{(getFieldError(errors, name)?.message as string) || 'unknown error'}
+						{(getFieldError(errors, name)?.message as string) || i18n.t('common:unknownError')}
 					</Text>
 				</View>
 			)}
@@ -526,7 +528,7 @@ export function SwitchForm({
 						style={InputStyle.iconInputError}
 					/>
 					<Text style={InputStyle.textInputError}>
-						{(getFieldError(errors, name)?.message as string) || 'unknown error'}
+						{(getFieldError(errors, name)?.message as string) || i18n.t('common:unknownError')}
 					</Text>
 				</View>
 			)}
@@ -602,7 +604,7 @@ export function SelectColor({
 						style={InputStyle.iconInputError}
 					/>
 					<Text style={InputStyle.textInputError}>
-						{(getFieldError(errors, name)?.message as string) || 'unknown error'}
+						{(getFieldError(errors, name)?.message as string) || i18n.t('common:unknownError')}
 					</Text>
 				</View>
 			)}
@@ -706,7 +708,7 @@ export function TextAreaForm({
 						style={InputStyle.iconInputError}
 					/>
 					<Text style={InputStyle.textInputError}>
-						{(getFieldError(errors, name)?.message as string) || 'unknown error'}
+						{(getFieldError(errors, name)?.message as string) || i18n.t('common:unknownError')}
 					</Text>
 				</View>
 			)}
@@ -785,7 +787,7 @@ export function DragableForm({
 														margin: 8
 													}
 												]}>
-												{item.mode}
+												{valueLabel('common:modes', item.mode)}
 											</Text>
 											<Text
 												style={[
@@ -805,7 +807,7 @@ export function DragableForm({
 														margin: 8
 													}
 												]}>
-												higher
+												{i18n.t('common:priority.highest')}
 											</Text>
 											<Text
 												style={[
@@ -826,7 +828,7 @@ export function DragableForm({
 														margin: 8
 													}
 												]}>
-												lowest
+												{i18n.t('common:priority.lowest')}
 											</Text>
 										</View>
 									</View>
@@ -851,7 +853,7 @@ export function DragableForm({
 						style={InputStyle.iconInputError}
 					/>
 					<Text style={InputStyle.textInputError}>
-						{(getFieldError(errors, name)?.message as string) || 'unknown error'}
+						{(getFieldError(errors, name)?.message as string) || i18n.t('common:unknownError')}
 					</Text>
 				</View>
 			)}
@@ -915,7 +917,7 @@ export function SelectForm({
 						style={InputStyle.iconInputError}
 					/>
 					<Text style={InputStyle.textInputError}>
-						{(getFieldError(errors, name)?.message as string) || 'unknown error'}
+						{(getFieldError(errors, name)?.message as string) || i18n.t('common:unknownError')}
 					</Text>
 				</View>
 			)}

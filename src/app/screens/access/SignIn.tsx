@@ -24,8 +24,10 @@ import {
 	brandLogo,
 	navigationHeader
 } from '../../components/common/navigationHeaders';
+import {useTranslation} from 'react-i18next';
 
 export function SignIn(props: any) {
+	const {t} = useTranslation(['access', 'common']);
 	const [signinData, setSigninData] = React.useState({
 		login: '',
 		password: '',
@@ -52,7 +54,7 @@ export function SignIn(props: any) {
 					if (sd.login && sd.password && sd.profile) {
 						//await onLogin(sd);
 					} else {
-						Alert.alert('Required information missing!');
+						Alert.alert(t('signIn.missingInfo'));
 					}
 				}
 			} catch (error) {
@@ -127,7 +129,7 @@ export function SignIn(props: any) {
 										: undefined
 								}
 								style={styles.input}
-								placeholder="Profile"
+								placeholder={t('profile')}
 								placeholderTextColor={placeholderColor}
 								onChangeText={profile => {
 									setSigninData({
@@ -147,7 +149,7 @@ export function SignIn(props: any) {
 								}
 								textContentType={'username'}
 								style={styles.input}
-								placeholder="Box id"
+								placeholder={t('signIn.boxId')}
 								placeholderTextColor={placeholderColor}
 								onChangeText={login => {
 									setSigninData({
@@ -161,7 +163,7 @@ export function SignIn(props: any) {
 							/>
 							<TextInput
 								style={styles.input}
-								placeholder="Password"
+								placeholder={t('common:password')}
 								placeholderTextColor={placeholderColor}
 								secureTextEntry={true}
 								textContentType={'newPassword'}
@@ -208,7 +210,7 @@ export function SignIn(props: any) {
 										fontSize: 15
 									}}>
 									{' '}
-									Remember me
+									{t('signIn.rememberMe')}
 								</Text>
 							</View>
 							<View
@@ -265,7 +267,7 @@ export function SignIn(props: any) {
 								}}>
 								<Text style={{color: 'white', fontSize: 20}}>
 									{' '}
-									Sign in{' '}
+									{t('signIn.submit')}{' '}
 								</Text>
 							</TouchableOpacity>
 						</View>

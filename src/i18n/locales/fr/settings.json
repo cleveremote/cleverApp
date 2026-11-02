@@ -1,0 +1,36 @@
+{
+	"chooseSvg": "Choisir un SVG",
+	"menu": {
+		"logoutHint": "(Appui long pour se déconnecter)",
+		"logout": "déconnexion",
+		"devices": "Équipements"
+	},
+	"language": {
+		"title": "Langue",
+		"system": "Langue du téléphone",
+		"restartTitle": "Redémarrage nécessaire",
+		"restartMessage": "Le sens d'affichage change avec cette langue : l'application va redémarrer.",
+		"restart": "Redémarrer"
+	},
+	"global": {
+		"positionUnavailable": "Position indisponible",
+		"checkGps": "Vérifiez que le GPS est activé et réessayez.",
+		"localCoordinates": "Coordonnées locales",
+		"locationRefused": "Accès à la position refusé",
+		"fillFromGps": "Remplir depuis le GPS du téléphone",
+		"typeCoordinates": "Les coordonnées ne peuvent être que saisies. Touchez ici pour ouvrir les réglages du système.",
+		"longitude": "Longitude*",
+		"longitudeRequired": "La longitude est obligatoire",
+		"longitudeNumber": "La longitude doit être un nombre",
+		"longitudeRange": "La longitude doit être comprise entre -180 et 180",
+		"latitude": "Latitude*",
+		"latitudeRequired": "La latitude est obligatoire",
+		"latitudeNumber": "La latitude doit être un nombre",
+		"latitudeRange": "La latitude doit être comprise entre -90 et 90",
+		"modePriority": "Priorité des modes",
+		"modePriorityHint": "Appui long puis glisser un mode pour changer sa priorité.",
+		"modePriorityRequired": "La priorité des modes est obligatoire",
+		"box": "Box",
+		"version": "Version"
+	}
+}

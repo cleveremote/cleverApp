@@ -1,4 +1,5 @@
 import React from 'react';
+import {useTranslation} from 'react-i18next';
 import {Pressable, StyleSheet, Text, View} from 'react-native';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
@@ -13,10 +14,10 @@ import {hapticOptions} from '../../data/cycleTypes';
 
 export type FilterKey = 'CYCLE' | 'FERTIGATION' | 'MODULE';
 
-const SEGMENTS: {key: FilterKey; label: string; icon: IconDefinition}[] = [
-	{key: 'CYCLE', label: 'Cycles', icon: faSyncAlt},
-	{key: 'FERTIGATION', label: 'Groups', icon: faLayerGroup},
-	{key: 'MODULE', label: 'Modules', icon: faPowerOff}
+const SEGMENTS: {key: FilterKey; icon: IconDefinition}[] = [
+	{key: 'CYCLE', icon: faSyncAlt},
+	{key: 'FERTIGATION', icon: faLayerGroup},
+	{key: 'MODULE', icon: faPowerOff}
 ];
 
 export function CycleFilterBar({
@@ -28,9 +29,10 @@ export function CycleFilterBar({
 	onChange: (key: FilterKey) => void;
 	counts: {CYCLE: number; FERTIGATION: number; MODULE: number};
 }>) {
+	const {t} = useTranslation('cycle');
 	return (
 		<View style={styles.bar}>
-			{SEGMENTS.map(({key, label, icon}) => {
+			{SEGMENTS.map(({key, icon}) => {
 				const isActive = active === key;
 				const count = counts[key];
 				return (
@@ -59,7 +61,7 @@ export function CycleFilterBar({
 								styles.label,
 								isActive && styles.labelActive
 							]}>
-							{label}
+							{t(`filter.${key}`)}
 						</Text>
 						{count > 0 ? (
 							<View

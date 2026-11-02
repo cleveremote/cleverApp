@@ -18,13 +18,14 @@ import {KeyboardAwareScrollView} from '../../../../components/common/KeyboardAwa
 import {emptyTimingConfig} from '../../../../../module/process/infrasctructure/store/models/sequenceModule';
 import {loadControlLoops} from '../../../../../module/process/infrasctructure/store/actions/control-loop';
 import {enabledLoopOf, isFollowLoop, sensorUnit} from '../../../../data/controlLoopTypes';
+import i18n from 'i18next';
 
 // The four timing fields making up a `ModuleTimingConfig`, in display order.
-const TIMING_FIELDS: {name: keyof ReturnType<typeof emptyTimingConfig>; label: string}[] = [
-	{name: 'waitBeforeExec', label: 'Wait before exec (ms)'},
-	{name: 'waitAfterExec', label: 'Wait after exec (ms)'},
-	{name: 'waitBeforeExecOff', label: 'Wait before exec off (ms)'},
-	{name: 'waitAfterExecOff', label: 'Wait after exec off (ms)'}
+const TIMING_FIELDS: {name: keyof ReturnType<typeof emptyTimingConfig>}[] = [
+	{name: 'waitBeforeExec'},
+	{name: 'waitAfterExec'},
+	{name: 'waitBeforeExecOff'},
+	{name: 'waitAfterExecOff'}
 ];
 
 // Parse a form value into a number, defaulting to 0 for empty/invalid input.
@@ -54,12 +55,17 @@ export function SequenceActuatorConfigSection(props: any) {
 	const loopTarget = !loop
 		? ''
 		: isFollowLoop(loop)
-		? `Follows ${loopSensor?.name ?? 'the analog input'} (${
-				loop.follow?.inputMin ?? 0
-		  }–${loop.follow?.inputMax ?? 100}${unit}) while ON.`
-		: `Regulates to ${loop.setpoint ?? '?'}${unit}${
-				loopSensor?.name ? ` (${loopSensor.name})` : ''
-		  }.`;
+		? i18n.t('cycle:sequence.follows', {
+				sensor: loopSensor?.name ?? i18n.t('cycle:sequence.analogInput'),
+				min: loop.follow?.inputMin ?? 0,
+				max: loop.follow?.inputMax ?? 100,
+				unit
+		  })
+		: i18n.t('cycle:sequence.regulates', {
+				setpoint: loop.setpoint ?? '?',
+				unit,
+				sensor: loopSensor?.name ? ` (${loopSensor.name})` : ''
+		  });
 	const isModifiedRef = useRef(false);
 	const {
 		control,
@@ -138,7 +144,7 @@ export function SequenceActuatorConfigSection(props: any) {
 		<KeyboardAwareScrollView>
 			<View style={BoxFormStyle.boxForm}>
 				<CollapsibleSection
-					title="Timing Config"
+					title={i18n.t('cycle:sequence.timingConfig')}
 					icon={faClock}
 					initiallyExpanded={true}>
 					{TIMING_FIELDS.map(field => (
@@ -147,7 +153,7 @@ export function SequenceActuatorConfigSection(props: any) {
 							control={control}
 							errors={errors}
 							name={field.name}
-							placeholder={field.label}
+							placeholder={i18n.t(`cycle:sequence.timing.${field.name}`)}
 							rules={{required: false}}
 							onChangeText={() => {
 								isModifiedRef.current = true;
@@ -157,14 +163,14 @@ export function SequenceActuatorConfigSection(props: any) {
 				</CollapsibleSection>
 				{isCtrl && loop && (
 					<CollapsibleSection
-						title="Regulation"
+						title={i18n.t('cycle:controlLoop.regulation')}
 						icon={faSliders}
 						initiallyExpanded={true}>
 						<SwitchForm
 							control={control}
 							errors={errors}
 							name="runRegulation"
-							placeholder="Run regulation"
+							placeholder={i18n.t('cycle:sequence.runRegulation')}
 							onChangeText={() => {
 								isModifiedRef.current = true;
 							}}
@@ -176,16 +182,17 @@ export function SequenceActuatorConfigSection(props: any) {
 				)}
 				{isCtrl && !loop && (
 					<CollapsibleSection
-						title="Opening"
+						title={i18n.t('cycle:sequence.opening')}
 						icon={faSliders}
 						initiallyExpanded={true}>
 						<InputForm
 							control={control}
 							errors={errors}
 							name="customValue"
-							placeholder={`Opening (%) · ${
-								master?.config?.minOpening ?? 0
-							}–${master?.config?.maxOpening ?? 100}`}
+							placeholder={i18n.t('cycle:sequence.openingRange', {
+								min: master?.config?.minOpening ?? 0,
+								max: master?.config?.maxOpening ?? 100
+							})}
 							keyboardType="numeric"
 							rules={{required: false}}
 							onChangeText={() => {

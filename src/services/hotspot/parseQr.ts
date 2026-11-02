@@ -1,3 +1,4 @@
+import i18n from 'i18next';
 import {
 	CleverBoxQrPayload,
 	HotspotError,
@@ -16,7 +17,7 @@ const invalid = (message: string): never => {
 
 const asString = (value: unknown, field: string): string => {
 	if (typeof value !== 'string' || value.trim() === '') {
-		invalid(`Champ "${field}" manquant ou vide dans le QR code.`);
+		invalid(i18n.t('access:qr.missingField', {field}));
 	}
 	return (value as string).trim();
 };
@@ -35,34 +36,26 @@ export function normalizeHost(rawHost: unknown): string {
 		.replace(/\.$/, ''); // tolerate a fully-qualified trailing dot
 
 	if (IPV4.test(host)) {
-		invalid(
-			`La box doit annoncer un nom d'hôte, pas une adresse IP ("${host}"). ` +
-				'Son certificat est émis pour un nom en .local.'
-		);
+		invalid(i18n.t('access:qr.hostIsIp', {host}));
 	}
 	if (host.includes(':') || host.includes('/')) {
-		invalid(
-			`Nom d'hôte invalide ("${host}") : il ne doit contenir ni port ni schéma.`
-		);
+		invalid(i18n.t('access:qr.hostHasPort', {host}));
 	}
 
 	// Tolerate a bare name in the QR code, e.g. "CleverBox-4F8A".
 	const fqdn = host.includes('.') ? host : `${host}${LOCAL_SUFFIX}`;
 
 	if (!fqdn.endsWith(LOCAL_SUFFIX)) {
-		invalid(
-			`Nom d'hôte invalide ("${host}") : la box doit être joignable en .local ` +
-				'(seul le mDNS est disponible sur le réseau du hotspot).'
-		);
+		invalid(i18n.t('access:qr.hostNotLocal', {host}));
 	}
 	if (fqdn.length > 253) {
-		invalid("Nom d'hôte trop long.");
+		invalid(i18n.t('access:qr.hostTooLong'));
 	}
 
 	const labels = fqdn.split('.');
 	for (const label of labels) {
 		if (label.length === 0 || label.length > 63 || !LABEL.test(label)) {
-			invalid(`Nom d'hôte invalide ("${host}").`);
+			invalid(i18n.t('access:qr.hostInvalid', {host}));
 		}
 	}
 
@@ -77,7 +70,7 @@ function normalizePort(value: unknown): number {
 		port < 1 ||
 		port > 65535
 	) {
-		invalid(`Port invalide ("${String(value)}") : entier attendu entre 1 et 65535.`);
+		invalid(i18n.t('access:qr.portInvalid', {port: String(value)}));
 	}
 	return port as number;
 }
@@ -86,7 +79,10 @@ function normalizeSecurity(value: unknown): WifiSecurity {
 	const security = asString(value, 'security').toUpperCase();
 	if (!SECURITIES.includes(security as WifiSecurity)) {
 		invalid(
-			`Type de sécurité inconnu ("${security}"). Attendu : ${SECURITIES.join(', ')}.`
+			i18n.t('access:qr.securityUnknown', {
+				security,
+				expected: SECURITIES.join(', ')
+			})
 		);
 	}
 	return security as WifiSecurity;
@@ -103,19 +99,17 @@ export function parseCleverBoxQr(raw: string): CleverBoxQrPayload {
 	try {
 		decoded = JSON.parse(raw);
 	} catch {
-		invalid("Ce QR code n'est pas un code d'appairage CleverBox.");
+		invalid(i18n.t('access:qr.notCleverBox'));
 	}
 
 	if (typeof decoded !== 'object' || decoded === null || Array.isArray(decoded)) {
-		invalid("Ce QR code n'est pas un code d'appairage CleverBox.");
+		invalid(i18n.t('access:qr.notCleverBox'));
 	}
 
 	const data = decoded as Record<string, unknown>;
 
 	if (data.type !== 'cleverbox') {
-		invalid(
-			`Ce QR code n'est pas un code d'appairage CleverBox (type "${String(data.type)}").`
-		);
+		invalid(i18n.t('access:qr.wrongType', {type: String(data.type)}));
 	}
 
 	const security = normalizeSecurity(data.security);

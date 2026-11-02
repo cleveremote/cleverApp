@@ -1,0 +1,6 @@
+/* نصوص طلبات الأذونات، يعرضها iOS بلغة التطبيق. */
+"NSBluetoothAlwaysUsageDescription" = "يستخدم التطبيق البلوتوث للاقتران بالصندوق وتهيئته.";
+"NSCameraUsageDescription" = "يستخدم التطبيق الكاميرا لمسح رمز QR الموجود على الصندوق والاقتران به.";
+"NSLocalNetworkUsageDescription" = "يحتاج التطبيق إلى اكتشاف الأجهزة على شبكتك المحلية.";
+"NSFaceIDUsageDescription" = "يستخدم التطبيق Face ID أو Touch ID للتحقق من هويتك.";
+"NSLocationWhenInUseUsageDescription" = "يستخدم التطبيق موقعك لتسجيل مكان تركيب الصندوق أثناء تهيئته.";

@@ -1,0 +1,6 @@
+/* Permission prompts, shown by iOS in the app's language. */
+"NSBluetoothAlwaysUsageDescription" = "The app uses Bluetooth to pair with your box and configure it.";
+"NSCameraUsageDescription" = "The app uses the camera to scan the QR code on your box and pair with it.";
+"NSLocalNetworkUsageDescription" = "The app needs to discover devices on your local network.";
+"NSFaceIDUsageDescription" = "The app uses Face ID or Touch ID to authenticate you.";
+"NSLocationWhenInUseUsageDescription" = "The app uses your location to record where your box is installed during its configuration.";

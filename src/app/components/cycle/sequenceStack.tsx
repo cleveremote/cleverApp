@@ -1,6 +1,7 @@
 import * as React from 'react';
 import {Text, TouchableOpacity, View} from 'react-native';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
+import i18n from 'i18next';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {faCog, faForward} from '@fortawesome/free-solid-svg-icons';
 import {styles} from '../../styles/cycleStyles';
@@ -179,8 +180,12 @@ export function SequenceStack({
 								{alignSelf: 'center'}
 							]}>
 							{miliseconds > 0
-								? 'expected end in ' + getEndTime(miliseconds)
-								: 'duration ' + getEndTime(item.securityConfig.maxDuration)}
+								? i18n.t('cycle:sequence.expectedEnd', {
+										time: getEndTime(miliseconds)
+								  })
+								: i18n.t('cycle:sequence.duration', {
+										time: getEndTime(item.securityConfig.maxDuration)
+								  })}
 						</Text>
 					</View>
 				) : null}

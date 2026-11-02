@@ -16,6 +16,7 @@ import {
 } from '../../../components/common/useSectionSettingsHeader';
 import {updateCondition} from '../../../../module/process/infrasctructure/store/actions/condition';
 import {connect} from 'react-redux';
+import i18n from 'i18next';
 
 function ConditionGeneralSettingsSection(props: any) {
 	const embedded = !!props.embedded;
@@ -76,16 +77,16 @@ function ConditionGeneralSettingsSection(props: any) {
 			},
 			_errors => {
 				Alert.alert(
-					'Discard changes?',
-					'Some fields contain invalid or incomplete information. Would you like to discard changes or continue editing?',
+					i18n.t('common:discard.title'),
+					i18n.t('common:discard.invalidMessage'),
 					[
 						{
-							text: 'Continue',
+							text: i18n.t('common:discard.continue'),
 							style: 'cancel',
 							onPress: onContinue
 						},
 						{
-							text: 'Discard',
+							text: i18n.t('common:discard.confirm'),
 							style: 'destructive',
 							onPress: onDiscard
 						}
@@ -150,8 +151,8 @@ function ConditionGeneralSettingsSection(props: any) {
 					errors={errors}
 					name="name"
 					maxLength={25}
-					placeholder="Name*"
-					rules={{required: 'Name is required'}}
+					placeholder={i18n.t('common:form.name')}
+					rules={{required: i18n.t('common:form.nameRequired')}}
 					onChangeText={() => {
 						setSaveUnchangedData(true);
 					}}
@@ -160,7 +161,7 @@ function ConditionGeneralSettingsSection(props: any) {
 					control={control}
 					errors={errors}
 					name="description"
-					placeholder="Description"
+					placeholder={i18n.t('common:form.description')}
 					onChangeText={() => {
 						setSaveUnchangedData(true);
 					}}

@@ -1,4 +1,5 @@
 import React, { useEffect, useRef } from 'react';
+import {useTranslation} from 'react-i18next';
 import messaging from '@react-native-firebase/messaging';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
@@ -66,6 +67,7 @@ const tabBarIconCfg = (
 };
 
 export function AppStack(props: any) {
+	const {t} = useTranslation('navigation');
 	const appState = useRef(AppState.currentState);
 	useEffect(() => {
 		if (props.isServerConnected && props.isBoxConnected) {
@@ -178,25 +180,25 @@ export function AppStack(props: any) {
 					})}>
 					<Tab.Screen
 						name="CyclesStack"
-						options={{ headerShown: false, tabBarLabel: 'Tasks' }}
+						options={{ headerShown: false, tabBarLabel: t('tasks') }}
 						component={CycleStack}
 					/>
 
 					<Tab.Screen
 						name="SensorsStack"
-						options={{ headerShown: false, tabBarLabel: 'Sensors' }}
+						options={{ headerShown: false, tabBarLabel: t('sensors') }}
 						component={SensorStack}
 					/>
 
 					<Tab.Screen
 						name="SynoptiquesStack"
-						options={{ headerShown: false, tabBarLabel: 'Synoptiques' }}
+						options={{ headerShown: false, tabBarLabel: t('synoptics') }}
 						component={SynoptiquesStack}
 					/>
 
 					<Tab.Screen
 						name="SettingsStack"
-						options={{ headerShown: false, tabBarLabel: 'Settings' }}
+						options={{ headerShown: false, tabBarLabel: t('settings') }}
 						component={SettingsStack}
 					/>
 				</Tab.Navigator>

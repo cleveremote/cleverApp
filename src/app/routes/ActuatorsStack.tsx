@@ -1,4 +1,5 @@
 import React from 'react';
+import {useTranslation} from 'react-i18next';
 import {
 	StackNavigationOptions,
 	createStackNavigator
@@ -7,6 +8,7 @@ import ActuatorsScreen from '../screens/actuators/ActuatorsScreen';
 import {ActuatorSettingsStack} from './ActuatorSettingsStack';
 
 export function ActuatorsStack() {
+	const {t} = useTranslation('navigation');
 	const options = (title: string) =>
 		({
 			headerTitleAlign: 'center',
@@ -21,7 +23,7 @@ export function ActuatorsStack() {
 			<Stack.Screen
 				name="Actuators"
 				component={ActuatorsScreen}
-				options={options('My RPI')}
+				options={options(t('myRpi'))}
 			/>
 			<Stack.Screen
 				name="ActuatorSettingsStack"

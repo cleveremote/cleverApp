@@ -1,4 +1,5 @@
 import React, {useRef} from 'react';
+import i18n from 'i18next';
 import {Text, View} from 'react-native';
 import {connect} from 'react-redux';
 import {useForm} from 'react-hook-form';
@@ -125,7 +126,7 @@ export function ActuatorRegulationSettingsSection(props: any) {
 				control={control}
 				errors={errors}
 				name="isEnabled"
-				placeholder="Enable regulation"
+				placeholder={i18n.t('actuators:regulation.enable')}
 			/>
 			{isEnabled && isFollow ? (
 				<>
@@ -134,42 +135,42 @@ export function ActuatorRegulationSettingsSection(props: any) {
 						control={control}
 						errors={errors}
 						name="mode"
-						placeholder="Mode"
+						placeholder={i18n.t('actuators:regulation.mode')}
 					/>
 					<SelectForm
 						lstData={sensorOptions}
 						control={control}
 						errors={errors}
 						name="sensorId"
-						placeholder="Potentiometer / analog input*"
-						rules={{required: 'Analog input is required'}}
+						placeholder={i18n.t('actuators:regulation.analogInput')}
+						rules={{required: i18n.t('actuators:regulation.analogInputRequired')}}
 					/>
 					<InputForm
 						control={control}
 						errors={errors}
 						name="follow.inputMin"
-						placeholder={withUnit('Input min', unit)}
+						placeholder={withUnit(i18n.t('sensor:analog.inputMin'), unit)}
 						keyboardType="numeric"
 					/>
 					<InputForm
 						control={control}
 						errors={errors}
 						name="follow.inputMax"
-						placeholder={withUnit('Input max', unit)}
+						placeholder={withUnit(i18n.t('sensor:analog.inputMax'), unit)}
 						keyboardType="numeric"
 					/>
 					<InputForm
 						control={control}
 						errors={errors}
 						name="follow.deadband"
-						placeholder="Deadband (%)"
+						placeholder={i18n.t('actuators:regulation.deadband')}
 						keyboardType="numeric"
 					/>
 					<InputForm
 						control={control}
 						errors={errors}
 						name="params.iterationDelayMs"
-						placeholder="Read period (ms)"
+						placeholder={i18n.t('actuators:regulation.readPeriod')}
 						keyboardType="numeric"
 					/>
 				</>
@@ -180,36 +181,36 @@ export function ActuatorRegulationSettingsSection(props: any) {
 						control={control}
 						errors={errors}
 						name="mode"
-						placeholder="Mode"
+						placeholder={i18n.t('actuators:regulation.mode')}
 					/>
 					<SelectForm
 						lstData={sensorOptions}
 						control={control}
 						errors={errors}
 						name="sensorId"
-						placeholder="Feedback sensor*"
-						rules={{required: 'Feedback sensor is required'}}
+						placeholder={i18n.t('actuators:regulation.feedbackSensor')}
+						rules={{required: i18n.t('actuators:regulation.feedbackSensorRequired')}}
 					/>
 					<InputForm
 						control={control}
 						errors={errors}
 						name="setpoint"
-						placeholder={withUnit('Setpoint*', unit)}
+						placeholder={withUnit(i18n.t('actuators:regulation.setpoint'), unit)}
 						keyboardType="numeric"
-						rules={{required: 'Setpoint is required'}}
+						rules={{required: i18n.t('actuators:regulation.setpointRequired')}}
 					/>
 					<SelectForm
 						lstData={algorithmOptions}
 						control={control}
 						errors={errors}
 						name="algorithm"
-						placeholder="Algorithm"
+						placeholder={i18n.t('actuators:regulation.algorithm')}
 					/>
 					<InputForm
 						control={control}
 						errors={errors}
 						name="params.kP"
-						placeholder="kP (gain)"
+						placeholder={i18n.t('actuators:regulation.kP')}
 						keyboardType="numeric"
 					/>
 					{algorithm !== ControlAlgorithm.P && (
@@ -218,46 +219,45 @@ export function ActuatorRegulationSettingsSection(props: any) {
 								control={control}
 								errors={errors}
 								name="params.kI"
-								placeholder="kI (integral)"
+								placeholder={i18n.t('actuators:regulation.kI')}
 								keyboardType="numeric"
 							/>
 							<InputForm
 								control={control}
 								errors={errors}
 								name="params.kD"
-								placeholder="kD (derivative)"
+								placeholder={i18n.t('actuators:regulation.kD')}
 								keyboardType="numeric"
 							/>
 						</>
 					)}
-					<CollapsibleSection title="Advanced" icon={faGear}>
+					<CollapsibleSection title={i18n.t('actuators:regulation.advanced')} icon={faGear}>
 						<InputForm
 							control={control}
 							errors={errors}
 							name="params.tolerance"
-							placeholder={withUnit('Tolerance', unit)}
+							placeholder={withUnit(i18n.t('actuators:regulation.tolerance'), unit)}
 							keyboardType="numeric"
 						/>
 						<InputForm
 							control={control}
 							errors={errors}
 							name="params.maxIterations"
-							placeholder="Max iterations"
+							placeholder={i18n.t('actuators:regulation.maxIterations')}
 							keyboardType="numeric"
 						/>
 						<InputForm
 							control={control}
 							errors={errors}
 							name="params.iterationDelayMs"
-							placeholder="Iteration delay (ms)"
+							placeholder={i18n.t('actuators:regulation.iterationDelay')}
 							keyboardType="numeric"
 						/>
 					</CollapsibleSection>
 				</>
 			) : (
 				<Text style={styles.hint}>
-					Regulation off: in a sequence, the value sent to this valve is
-					its opening (%).
+					{i18n.t('actuators:regulation.offHint')}
 				</Text>
 			)}
 		</View>

@@ -16,6 +16,7 @@ import {
 import {updateTrigger} from '../../../../module/process/infrasctructure/store/actions/trigger';
 import {updateCycle} from '../../../../module/process/infrasctructure/store/actions/cycle';
 import {updateSequence} from '../../../../module/process/infrasctructure/store/actions/sequence';
+import i18n from 'i18next';
 
 const PRIMARY_COLOR = '#32404e';
 const CARD_BG_COLOR = 'white';
@@ -209,7 +210,7 @@ function ConditionsSection(props: any) {
 										}
 									);
 								},
-								`condition ${element.name}`,
+								i18n.t('cycle:conditions.item', {name: element.name}),
 								{name: faCog, color: PRIMARY_COLOR}
 						  )
 				)}
@@ -235,7 +236,7 @@ function ConditionsSection(props: any) {
 							color={PRIMARY_COLOR}
 						/>
 					</TouchableOpacity>
-					<Text style={styles.addLabel}>Add new condition ...</Text>
+					<Text style={styles.addLabel}>{i18n.t('cycle:conditions.add')}</Text>
 				</View>
 			</View>
 		</View>

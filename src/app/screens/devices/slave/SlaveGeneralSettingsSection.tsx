@@ -11,6 +11,7 @@ import {useDeviceSection} from '../useDeviceSection';
 import {toNumber} from '../deviceFieldUtils';
 import {DeviceConnectivityStatus} from '../../../components/device/DeviceConnectivity';
 import {isTempId} from '../../../../services/socket';
+import i18n from 'i18next';
 
 // Slave General: Name, Modbus unit id (`config.slaveId`, read-only) and
 // Description.
@@ -48,24 +49,24 @@ export function SlaveGeneralSettingsSection(props: any) {
 					errors={errors}
 					name="name"
 					maxLength={25}
-					placeholder="Name*"
-					rules={{required: 'Name is required'}}
+					placeholder={i18n.t('common:form.name')}
+					rules={{required: i18n.t('common:form.nameRequired')}}
 					onChangeText={() => markDirty()}
 				/>
 				<InputForm
 					control={control}
 					errors={errors}
 					name="config.slaveId"
-					placeholder="Slave ID*"
+					placeholder={i18n.t('devices:slaveId')}
 					keyboardType="numeric"
-					rules={{required: 'Slave ID is required'}}
+					rules={{required: i18n.t('devices:slaveIdRequired')}}
 					disabled
 				/>
 				<TextAreaForm
 					control={control}
 					errors={errors}
 					name="description"
-					placeholder="Description"
+					placeholder={i18n.t('common:form.description')}
 					onChangeText={() => markDirty()}
 				/>
 			</Body>

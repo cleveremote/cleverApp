@@ -17,6 +17,7 @@ import {
 	useEmbeddedSection
 } from '../../../../../components/common/useSectionSettingsHeader';
 import {updateTrigger} from '../../../../../../module/process/infrasctructure/store/actions/trigger';
+import i18n from 'i18next';
 
 interface TriggerGeneralFormData {
 	id?: string;
@@ -111,16 +112,16 @@ export function TriggerGeneralSettingsSection(props: any) {
 			},
 			_errors => {
 				Alert.alert(
-					'Discard changes?',
-					'Some fields contain invalid or incomplete information. Would you like to discard changes or continue editing?',
+					i18n.t('common:discard.title'),
+					i18n.t('common:discard.invalidMessage'),
 					[
 						{
-							text: 'Continue',
+							text: i18n.t('common:discard.continue'),
 							style: 'cancel',
 							onPress: onContinue
 						},
 						{
-							text: 'Discard',
+							text: i18n.t('common:discard.confirm'),
 							style: 'destructive',
 							onPress: onDiscard
 						}
@@ -185,8 +186,8 @@ export function TriggerGeneralSettingsSection(props: any) {
 					errors={errors}
 					name="name"
 					maxLength={25}
-					placeholder="Name*"
-					rules={{required: 'Name is required'}}
+					placeholder={i18n.t('common:form.name')}
+					rules={{required: i18n.t('common:form.nameRequired')}}
 					onChangeText={() => {
 						setSaveUnchangedData(true);
 					}}
@@ -195,7 +196,7 @@ export function TriggerGeneralSettingsSection(props: any) {
 					control={control}
 					errors={errors}
 					name="description"
-					placeholder="Description"
+					placeholder={i18n.t('common:form.description')}
 					onChangeText={() => {
 						setSaveUnchangedData(true);
 					}}
@@ -204,7 +205,7 @@ export function TriggerGeneralSettingsSection(props: any) {
 					control={control}
 					errors={errors}
 					name="isPaused"
-					placeholder="Set paused"
+					placeholder={i18n.t('cycle:schedules.setPaused')}
 					rules={{required: false}}
 					onChangeText={() => {
 						setSaveUnchangedData(true);
@@ -214,7 +215,7 @@ export function TriggerGeneralSettingsSection(props: any) {
 					control={control}
 					errors={errors}
 					name="shouldConfirmation"
-					placeholder="Need confirmation"
+					placeholder={i18n.t('cycle:schedules.needConfirmation')}
 					rules={{required: false}}
 					onChangeText={() => {
 						setSaveUnchangedData(true);

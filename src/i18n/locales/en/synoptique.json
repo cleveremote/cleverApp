@@ -1,0 +1,7 @@
+{
+	"filter": {
+		"FERTIGATION": "Fertigation",
+		"WELLHEAD": "Wellhead",
+		"FIELDVUE": "FieldVue"
+	}
+}

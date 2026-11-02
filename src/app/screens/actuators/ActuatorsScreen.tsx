@@ -18,6 +18,7 @@ import {
 import {loadActuators} from '../../../module/process/infrasctructure/store/actions/actuator';
 import {loadDevices} from '../../../module/process/infrasctructure/store/actions/device';
 import {IS_EXPERT} from '../../../../config/env';
+import i18n from 'i18next';
 
 // Settings → My RPI : section « Actuators » listant les actuators RPI (GPIO du
 // Raspberry), triés par libellé. Chaque ligne ouvre le menu de réglages
@@ -59,13 +60,13 @@ export function ActuatorsScreen(props: any) {
 			<MenuGroup style={styles.card}>
 				<MenuAccordion
 					key={1}
-					name={'Actuators'}
+					name={i18n.t('common:sections.actuators')}
 					icon={faPlug}
 					defaultExpanded
 					onPress={() => {}}>
 					<View style={styles.embeddedCard}>
 						{actuators.length === 0 && !IS_EXPERT ? (
-							<Text style={styles.empty}>No RPI actuator.</Text>
+							<Text style={styles.empty}>{i18n.t('actuators:empty')}</Text>
 						) : null}
 						{actuators.map((actuator: any) =>
 							elementStack(
@@ -96,7 +97,7 @@ export function ActuatorsScreen(props: any) {
 									<Icon name="times-circle" style={styles.icon} />
 								</TouchableOpacity>
 								<Text style={styles.addLabel}>
-									Add new RPI actuator ...
+									{i18n.t('actuators:add')}
 								</Text>
 							</View>
 						)}

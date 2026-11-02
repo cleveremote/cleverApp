@@ -1,0 +1,36 @@
+{
+	"chooseSvg": "Choose an SVG",
+	"menu": {
+		"logoutHint": "(Long press to log out)",
+		"logout": "logout",
+		"devices": "Devices"
+	},
+	"language": {
+		"title": "Language",
+		"system": "Phone language",
+		"restartTitle": "Restart required",
+		"restartMessage": "The layout direction changes with this language: the app will restart.",
+		"restart": "Restart"
+	},
+	"global": {
+		"positionUnavailable": "Position unavailable",
+		"checkGps": "Check that the GPS is on and try again.",
+		"localCoordinates": "Local coordinates",
+		"locationRefused": "Location access refused",
+		"fillFromGps": "Fill from the phone GPS",
+		"typeCoordinates": "The coordinates can only be typed in. Tap here to open the system settings.",
+		"longitude": "Longitude*",
+		"longitudeRequired": "Longitude is required",
+		"longitudeNumber": "Longitude must be a number",
+		"longitudeRange": "Longitude must be between -180 and 180",
+		"latitude": "Latitude*",
+		"latitudeRequired": "Latitude is required",
+		"latitudeNumber": "Latitude must be a number",
+		"latitudeRange": "Latitude must be between -90 and 90",
+		"modePriority": "Mode priority",
+		"modePriorityHint": "Long press and drag a mode to change its priority.",
+		"modePriorityRequired": "Mode priority is required",
+		"box": "Box",
+		"version": "Version"
+	}
+}

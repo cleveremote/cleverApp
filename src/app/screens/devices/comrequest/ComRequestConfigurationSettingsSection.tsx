@@ -1,4 +1,5 @@
 import React from 'react';
+import i18n from 'i18next';
 import {ScrollView, Text, View} from 'react-native';
 import {connect} from 'react-redux';
 import {
@@ -64,12 +65,12 @@ export function ComRequestConfigurationSettingsSection(props: any) {
 					control={control}
 					errors={errors}
 					name="config.address"
-					placeholder="Address* (decimal or hex 0x...)"
+					placeholder={i18n.t('devices:comRequest.address')}
 					rules={{
-						required: 'Address is required',
+						required: i18n.t('devices:comRequest.addressRequired'),
 						validate: (v: any) =>
 							isValidAddress(v) ||
-							'Enter a decimal number or a hex value (0x...)'
+							i18n.t('devices:comRequest.addressInvalid')
 					}}
 					onChangeText={() => markDirty()}
 				/>
@@ -78,7 +79,7 @@ export function ComRequestConfigurationSettingsSection(props: any) {
 					control={control}
 					errors={errors}
 					name="config.function"
-					placeholder="Function"
+					placeholder={i18n.t('devices:comRequest.function')}
 					onValueChange={() => markDirty()}
 				/>
 				<SelectForm
@@ -86,16 +87,18 @@ export function ComRequestConfigurationSettingsSection(props: any) {
 					control={control}
 					errors={errors}
 					name="config.type"
-					placeholder="Value type"
+					placeholder={i18n.t('devices:comRequest.valueType')}
 					onValueChange={() => markDirty()}
 				/>
 
-				<Text style={styles.subSectionTitle}>Parameters</Text>
+				<Text style={styles.subSectionTitle}>
+					{i18n.t('common:sections.parameters')}
+				</Text>
 				<InputForm
 					control={control}
 					errors={errors}
 					name="config.params.length"
-					placeholder="Length"
+					placeholder={i18n.t('devices:comRequest.length')}
 					keyboardType="numeric"
 					onChangeText={() => markDirty()}
 				/>
@@ -103,7 +106,7 @@ export function ComRequestConfigurationSettingsSection(props: any) {
 					control={control}
 					errors={errors}
 					name="config.params.scale"
-					placeholder="Scale"
+					placeholder={i18n.t('sensor:config.scale')}
 					keyboardType="numeric"
 					onChangeText={() => markDirty()}
 				/>
@@ -111,21 +114,21 @@ export function ComRequestConfigurationSettingsSection(props: any) {
 					control={control}
 					errors={errors}
 					name="config.params.unit"
-					placeholder="Unit"
+					placeholder={i18n.t('sensor:config.unit')}
 					onChangeText={() => markDirty()}
 				/>
 				<InputForm
 					control={control}
 					errors={errors}
 					name="config.params.formula"
-					placeholder="Formula"
+					placeholder={i18n.t('devices:comRequest.formula')}
 					onChangeText={() => markDirty()}
 				/>
 				<SwitchForm
 					control={control}
 					errors={errors}
 					name="config.params.persistence.persist"
-					placeholder="Persist"
+					placeholder={i18n.t('devices:comRequest.persist')}
 					onChangeText={() => markDirty()}
 				/>
 				{persist ? (
@@ -133,7 +136,7 @@ export function ComRequestConfigurationSettingsSection(props: any) {
 						control={control}
 						errors={errors}
 						name="config.params.persistence.address"
-						placeholder="Persistence address"
+						placeholder={i18n.t('devices:comRequest.persistAddress')}
 						keyboardType="numeric"
 						onChangeText={() => markDirty()}
 					/>
@@ -144,14 +147,14 @@ export function ComRequestConfigurationSettingsSection(props: any) {
 					control={control}
 					errors={errors}
 					name="config.disabled"
-					placeholder="Disabled"
+					placeholder={i18n.t('devices:comRequest.disabled')}
 					onChangeText={() => markDirty()}
 				/>
 				<SwitchForm
 					control={control}
 					errors={errors}
 					name="config.done"
-					placeholder="Done"
+					placeholder={i18n.t('devices:comRequest.done')}
 					onChangeText={() => markDirty()}
 				/>
 			</Body>

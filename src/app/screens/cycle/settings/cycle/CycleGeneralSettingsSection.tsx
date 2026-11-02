@@ -16,6 +16,7 @@ import {hapticOptions} from '../../../../data/cycleTypes';
 import {ExecutionMode} from '../../../../data/conditionTypes';
 import {updateCycle} from '../../../../../module/process/infrasctructure/store/actions/cycle';
 import {EventArg, NavigationAction} from '@react-navigation/native';
+import i18n from 'i18next';
 
 export function CycleGeneralSettingsSection(props: any) {
 	// Mode embarqué : rendu inline dans l'écran de réglages du cycle (comme les
@@ -128,16 +129,16 @@ export function CycleGeneralSettingsSection(props: any) {
 			},
 			_errors => {
 				Alert.alert(
-					'Discard changes?',
-					'Some fields contain invalid or incomplete information. Would you like to discard changes or continue editing?',
+					i18n.t('common:discard.title'),
+					i18n.t('common:discard.invalidMessage'),
 					[
 						{
-							text: 'Continue',
+							text: i18n.t('common:discard.continue'),
 							style: 'cancel',
 							onPress: onContinue
 						},
 						{
-							text: 'Discard',
+							text: i18n.t('common:discard.confirm'),
 							style: 'destructive',
 							onPress: onDiscard
 						}
@@ -206,14 +207,14 @@ export function CycleGeneralSettingsSection(props: any) {
 					marginTop: 5,
 					marginBottom: 5
 				}}>
-				Theme
+				{i18n.t('cycle:settings.theme')}
 			</Text>
 			<SelectColor
 				control={control}
 				errors={errors}
 				name="style"
-				placeholder="Cycle theme*"
-				rules={{required: 'Theme is required'}}
+				placeholder={i18n.t('cycle:settings.cycleTheme')}
+				rules={{required: i18n.t('cycle:settings.themeRequired')}}
 				colorProportion={colorProportion}
 				style={{...cycleData?.style}}
 				onChangeText={value => {
@@ -227,8 +228,8 @@ export function CycleGeneralSettingsSection(props: any) {
 					errors={errors}
 					name="name"
 					maxLength={25}
-					placeholder="Name*"
-					rules={{required: 'Name is required'}}
+					placeholder={i18n.t('common:form.name')}
+					rules={{required: i18n.t('common:form.nameRequired')}}
 					onChangeText={value => {
 						setSaveUnchangedData(true);
 					}}
@@ -237,7 +238,7 @@ export function CycleGeneralSettingsSection(props: any) {
 					control={control}
 					errors={errors}
 					name="description"
-					placeholder="Description"
+					placeholder={i18n.t('common:form.description')}
 					onChangeText={value => {
 						setSaveUnchangedData(true);
 					}}
@@ -256,7 +257,7 @@ export function CycleGeneralSettingsSection(props: any) {
 								fontSize: 15,
 								fontWeight: 'bold'
 							}}>
-							Execution (sequential/parallel)
+							{i18n.t('cycle:settings.executionMode')}
 						</Text>
 						<View
 							style={{

@@ -15,6 +15,8 @@
 //   slave -> config.masterDeviceId (master)
 // Un slave dont le master est injoignable est lui-même injoignable.
 
+import i18n from 'i18next';
+
 export interface DeviceConnectivity {
 	deviceId: string;
 	connected: boolean;
@@ -148,7 +150,9 @@ export const effectiveConnectivity = (
 		return {
 			state: 'DISCONNECTED',
 			changedAt: masterState.changedAt,
-			error: `master "${master.name ?? master.id}" unreachable`,
+			error: i18n.t('common:devicesUnreachable.master', {
+				name: master.name ?? master.id
+			}),
 			source: master
 		};
 	}

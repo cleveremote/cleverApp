@@ -13,6 +13,9 @@ import {
 	useSensorDeviceName,
 	useUnreachableDevices
 } from '../device/DeviceConnectivity';
+import i18n from 'i18next';
+import {directionalIcon} from '../../../i18n/rtl';
+import {MENU_ICON_STYLE} from '../cycle/cycleStack';
 
 export function SensorStack({
 	cycleData: sensorData,
@@ -128,7 +131,7 @@ export function SensorStack({
 					{isParent ? (
 						<Icon
 							size={20}
-							name={isExpanded ? 'angle-down' : 'angle-right'}
+							name={isExpanded ? 'angle-down' : directionalIcon('angle-right')}
 							color={fontColor}
 						/>
 					) : (
@@ -171,7 +174,7 @@ export function MenuSensor({
 	const menuItems = [
 		{
 			name: 'cog',
-			label: 'Settings',
+			label: i18n.t('cycle:menu.settings'),
 			action: () => {
 				ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
 				closeSibillings(false);
@@ -197,10 +200,10 @@ export function MenuSensor({
 						}
 						onToggle();
 					}}>
-					<Icon size={30} name="bars" color={iconColor} />
+					<Icon size={30} name="bars" color={iconColor} style={MENU_ICON_STYLE} />
 				</TouchableOpacity>
 			) : (
-				<Icon size={30} name="user-check" color={iconColor} />
+				<Icon size={30} name="user-check" color={iconColor} style={MENU_ICON_STYLE} />
 			)}
 			{isOpen && (
 				<View>

@@ -1,4 +1,5 @@
 import React, { useEffect, useState } from 'react';
+import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 import { ScrollView } from 'react-native-gesture-handler';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
@@ -20,9 +21,9 @@ import { saveSensor } from '../../../module/process/infrasctructure/store/action
 
 type FilterKey = 'cycles' | 'sensors';
 
-const SEGMENTS: { key: FilterKey; label: string; icon: IconDefinition }[] = [
-	{ key: 'cycles', label: 'Cycles', icon: faSyncAlt },
-	{ key: 'sensors', label: 'Sensors', icon: faCircleDot }
+const SEGMENTS: { key: FilterKey; icon: IconDefinition }[] = [
+	{ key: 'cycles', icon: faSyncAlt },
+	{ key: 'sensors', icon: faCircleDot }
 ];
 
 // Single "Manage display" screen for both cycles and sensors: a filter bar at
@@ -31,6 +32,7 @@ const SEGMENTS: { key: FilterKey; label: string; icon: IconDefinition }[] = [
 // the underlying redux slice and save action differ. Toggles for both families
 // are collected in one `displayMap` and each toggle is persisted immediately.
 function DisplayManagerScreen(props: any) {
+	const { t } = useTranslation('navigation');
 	const [activeFilter, setActiveFilter] = useState<FilterKey>(
 		props.route?.params?.kind || 'cycles'
 	);
@@ -170,7 +172,7 @@ function DisplayManagerScreen(props: any) {
 	return (
 		<View style={{ flex: 1 }}>
 			<View style={styles.bar}>
-				{SEGMENTS.map(({ key, label, icon }) => {
+				{SEGMENTS.map(({ key, icon }) => {
 					const isActive = activeFilter === key;
 					return (
 						<Pressable
@@ -200,7 +202,7 @@ function DisplayManagerScreen(props: any) {
 									isActive && styles.labelActive
 								]}
 							>
-								{label}
+								{t(key)}
 							</Text>
 						</Pressable>
 					);
@@ -243,6 +245,9 @@ function DisplayManagerScreen(props: any) {
 											fontSize: parent ? 14 : 15,
 											flex: 1,
 											marginRight: 8,
+											// 'left' = côté de début : RN l'inverse en RTL, alors que 'auto'
+											// suit le contenu et laisse un nom latin à gauche en arabe.
+											textAlign: 'left',
 											textAlignVertical: 'center'
 										}}
 										numberOfLines={1}

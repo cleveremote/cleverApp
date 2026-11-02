@@ -1,4 +1,5 @@
 import React, {useEffect} from 'react';
+import {useTranslation} from 'react-i18next';
 import {View} from 'react-native';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import {
@@ -11,6 +12,7 @@ import {MenuAccordion, MenuGroup} from '../../components/common/cycleMenu';
 import {hapticOptions} from '../../data/cycleTypes';
 
 export function CycleMenuScreen(props: any) {
+	const {t} = useTranslation('cycle');
 	useEffect(() => {
 		props.navigation.setOptions({
 			headerLeft: () =>
@@ -55,19 +57,19 @@ export function CycleMenuScreen(props: any) {
 				}}>
 				<MenuAccordion
 					key={21}
-					name={'Create cycle'}
+					name={t('create.cycle')}
 					icon={faSyncAlt}
 					onPress={() => openCreate({})}
 				/>
 				<MenuAccordion
 					key={31}
-					name={'Create fertigation'}
+					name={t('create.fertigation')}
 					icon={faFlask}
 					onPress={() => openCreate({isGroup: true})}
 				/>
 				<MenuAccordion
 					key={41}
-					name={'Create module'}
+					name={t('create.module')}
 					icon={faPowerOff}
 					onPress={() => openCreate({type: 'MODULE'})}
 				/>

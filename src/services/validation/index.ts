@@ -7,5 +7,6 @@ export {
 } from './boxConfigurationForm';
 export type {
 	BoxConfigurationForm,
-	BoxConfigurationErrors
+	BoxConfigurationErrors,
+	BoxConfigurationIssue
 } from './boxConfigurationForm';

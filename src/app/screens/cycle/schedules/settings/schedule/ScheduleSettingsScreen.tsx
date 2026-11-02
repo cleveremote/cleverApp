@@ -20,6 +20,7 @@ import {
 import {saveCycle} from '../../../../../../module/process/infrasctructure/store/actions/cycle';
 import ScheduleGeneralSettingsSection from './ScheduleGeneralSettingsSection';
 import NewSchedulingSection from './NewSchedulingSection';
+import i18n from 'i18next';
 
 const serializeSchedule = (schedule: any) => {
 	if (!schedule?.cron?.date || !(schedule.cron.date instanceof Date))
@@ -76,7 +77,7 @@ export function ScheduleSettingsScreen(props: any) {
 			<MenuGroup style={styles.card}>
 				<MenuAccordion
 					key={21}
-					name={'General'}
+					name={i18n.t('common:sections.general')}
 					icon={faGear}
 					invalid={invalidSections.general}
 					onPress={() => {}}>
@@ -89,7 +90,7 @@ export function ScheduleSettingsScreen(props: any) {
 				</MenuAccordion>
 				<MenuAccordion
 					key={41}
-					name={'New Scheduling'}
+					name={i18n.t('cycle:schedules.newScheduling')}
 					icon={faCalendarPlus}
 					invalid={invalidSections.execution}
 					onPress={() => {}}>

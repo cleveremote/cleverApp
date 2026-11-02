@@ -1,0 +1,149 @@
+{
+	"openWifiSettings": "فتح إعدادات Wi-Fi",
+	"openSettings": "فتح الإعدادات",
+	"profile": "الملف الشخصي",
+	"hotspotError": {
+		"INVALID_QR": "رمز QR هذا ليس رمز اقتران CleverBox.",
+		"PERMISSION_DENIED": "تم رفض الإذن. امنحه من الإعدادات للانضمام إلى الصندوق.",
+		"TIMEOUT": "لم يستجب الصندوق. تأكد من أنه قيد التشغيل وضمن النطاق، ثم أعد المحاولة.",
+		"USER_CANCELLED": "تم إلغاء الاتصال.",
+		"UNSUPPORTED": "لا يمكن لهذا الجهاز الانضمام إلى شبكة Wi-Fi من التطبيق.",
+		"LOCATION_DISABLED": "فعّل خدمة الموقع ليتمكن الهاتف من الانضمام إلى شبكة الصندوق.",
+		"NOT_IMPLEMENTED": "",
+		"UNKNOWN": "فشل الاتصال بنقطة الاتصال."
+	},
+	"scan": {
+		"testTimeout": "انتهت المهلة بعد {{seconds}} ث — لا توجد استجابة من {{url}}",
+		"cameraUnavailable": "الكاميرا غير متاحة",
+		"cameraModuleMissing": "وحدة الكاميرا الأصلية غير موجودة في هذا الإصدار من التطبيق. أعد بناء التطبيق (react-native run-android / run-ios): إعادة تحميل Metro لا تكفي.",
+		"networkTest": "اختبار الشبكة",
+		"testRunning": "الاختبار قيد التنفيذ ...",
+		"runTest": "بدء الاختبار",
+		"backToScan": "العودة إلى المسح",
+		"joinBoxNetwork": "انضم إلى شبكة الصندوق",
+		"joinManually": "الاتصال التلقائي غير متاح هنا بعد. انضم إلى هذه الشبكة من إعدادات Wi-Fi ثم عد.",
+		"network": "الشبكة",
+		"copyPassword": "نسخ كلمة المرور",
+		"joinedNetwork": "انضممت إلى الشبكة",
+		"pairingFailed": "تعذّر الاقتران",
+		"connecting": "جارٍ الاتصال بالصندوق ..."
+	},
+	"qr": {
+		"cameraRequired": "يلزم الوصول إلى الكاميرا",
+		"cameraRequiredBody": "يحتاج التطبيق إلى الكاميرا لقراءة رمز QR الملصق على الصندوق.",
+		"noCamera": "الكاميرا غير متاحة",
+		"noCameraBody": "لم يتم العثور على كاميرا خلفية في هذا الجهاز.",
+		"aim": "وجّه الكاميرا نحو رمز QR الملصق على الصندوق",
+		"missingField": "الحقل \"{{field}}\" مفقود أو فارغ في رمز QR.",
+		"hostIsIp": "يجب أن يعلن الصندوق عن اسم مضيف وليس عنوان IP (\"{{host}}\"). شهادته صادرة لاسم ينتهي بـ ‎.local.",
+		"hostHasPort": "اسم مضيف غير صالح (\"{{host}}\"): يجب ألا يحتوي على منفذ أو بروتوكول.",
+		"hostNotLocal": "اسم مضيف غير صالح (\"{{host}}\"): يجب أن يكون الصندوق متاحاً عبر ‎.local (يتوفر mDNS فقط على شبكة نقطة الاتصال).",
+		"hostTooLong": "اسم المضيف طويل جداً.",
+		"hostInvalid": "اسم مضيف غير صالح (\"{{host}}\").",
+		"portInvalid": "منفذ غير صالح (\"{{port}}\"): يُتوقع عدد صحيح بين 1 و65535.",
+		"securityUnknown": "نوع أمان غير معروف (\"{{security}}\"). المتوقع: {{expected}}.",
+		"notCleverBox": "رمز QR هذا ليس رمز اقتران CleverBox.",
+		"wrongType": "رمز QR هذا ليس رمز اقتران CleverBox (النوع \"{{type}}\")."
+	},
+	"validation": {
+		"emailRequired": "البريد الإلكتروني مطلوب.",
+		"emailInvalid": "بريد إلكتروني غير صالح.",
+		"passwordRequired": "كلمة المرور مطلوبة.",
+		"passwordTooShort": "كلمة المرور قصيرة جداً ({{min}} أحرف على الأقل).",
+		"passwordWeak": "يجب أن تحتوي كلمة المرور على حرف ورقم على الأقل.",
+		"deviceNameRequired": "اسم الصندوق مطلوب.",
+		"ssidRequired": "اختر شبكة Wi-Fi.",
+		"pskRequired": "مفتاح شبكة Wi-Fi مطلوب.",
+		"confirmRequired": "التأكيد مطلوب.",
+		"passwordMismatch": "كلمتا المرور غير متطابقتين."
+	},
+	"boxConfig": {
+		"searchingNetworks": "جارٍ البحث عن الشبكات ...",
+		"noResponse": "لم يستجب الصندوق. تأكد من أن الهاتف متصل بشبكته.",
+		"networksUnavailable": "قائمة الشبكات غير متاحة — {{error}}",
+		"configuring": "جارٍ تهيئة الصندوق ...",
+		"refusedHttp": "تم رفض التهيئة — HTTP {{status}} {{body}}",
+		"refused": "رفض الصندوق التهيئة — {{body}}",
+		"wifiNetwork": "شبكة Wi-Fi",
+		"deviceName": "اسم الصندوق",
+		"noNetwork": "لا توجد شبكة — أعد البحث",
+		"psk": "مفتاح Wi-Fi (psk)",
+		"login": "اسم الدخول (البريد الإلكتروني)",
+		"confirmPassword": "تأكيد كلمة المرور",
+		"configure": "تهيئة",
+		"configuredTag": "(مُهيّأ)"
+	},
+	"handover": {
+		"yourNetwork": "شبكة Wi-Fi الخاصة بك",
+		"signIn": "تسجيل الدخول",
+		"rescan": "أعد مسح الصندوق للتصحيح",
+		"retryCheck": "أعد التحقق",
+		"continueAnyway": "المتابعة على أي حال",
+		"continueNow": "المتابعة دون انتظار",
+		"phoneJoins": "الهاتف ينضم إلى {{network}}",
+		"boxJoins": "الصندوق ينضم إلى {{network}}",
+		"pending": "قيد الانتظار",
+		"title": {
+			"waiting": "جارٍ التبديل",
+			"confirmed": "تمت تهيئة الصندوق",
+			"rejected": "تم رفض مفتاح Wi-Fi",
+			"offNetwork": "الهاتف ليس على الشبكة الصحيحة",
+			"unconfirmed": "لم يتم العثور على الصندوق بعد"
+		},
+		"box": {
+			"searching": "جارٍ البحث عن الصندوق… {{seconds}} ث",
+			"connected": "متصل — {{state}}",
+			"mode": "الوضع {{mode}} — {{state}}",
+			"noResponse": "لا استجابة على الشبكة"
+		},
+		"phone": {
+			"currentlyOn": "حالياً على «{{ssid}}»",
+			"reconnecting": "جارٍ إعادة الاتصال بـ Wi-Fi…",
+			"stayedOn": "بقي على «{{ssid}}»",
+			"unknownNetwork": "شبكة غير معروفة",
+			"connectedTo": "متصل بـ {{ssid}}",
+			"unverifiable": "لا يمكن التحقق من الشبكة على هذه المنصة"
+		},
+		"body": {
+			"confirmedNamed": "يفيد الصندوق «{{name}}» بأنه متصل بـ {{network}} ويستجيب على شبكتك.",
+			"confirmed": "يفيد الصندوق بأنه متصل بـ {{network}} ويستجيب على شبكتك.",
+			"rejected": "استلم الصندوق التهيئة، لكن {{network}} رفضت المفتاح المُدخل. أعاد الصندوق فتح نقطة الاتصال: أعد مسح رمز QR للانضمام إليها وتصحيح المفتاح — بقية بياناتك محفوظة.",
+			"offNetwork": "بقي الهاتف على شبكة غير {{network}}. ما دام هناك، يبقى الصندوق بعيد المنال: أعد توصيله ثم أعد التحقق.",
+			"apReleased": "تم تحرير نقطة اتصال الصندوق. أعد توصيل الهاتف بـ {{network}} إن لم يكن قد فعل ذلك.",
+			"applying": "يطبّق الصندوق تهيئته وينضم إلى {{network}}. جارٍ البحث عنه على هذه الشبكة.",
+			"noAnswer": "تم إرسال التهيئة، لكن الصندوق لا يستجيب بعد على {{network}}. تأكد من أن الهاتف متصل بها — ومن صحة مفتاح Wi-Fi المُدخل.",
+			"otherNetwork": "يستجيب الصندوق، لكنه متصل بـ «{{reported}}» وليس بـ {{network}}.",
+			"notJoined": "يستجيب الصندوق، لكنه لم ينضم بعد إلى {{network}} (الحالة: {{state}})."
+		}
+	},
+	"deviceSettings": {
+		"newProfile": "ملف شخصي جديد",
+		"configured": "مُهيّأ",
+		"permissionDenied": "تم رفض الإذن: تحقق من كلمة المرور.",
+		"selectNetwork": "اختر شبكة",
+		"psk": "مفتاح Wi-Fi"
+	},
+	"device": {
+		"select": "اختر الجهاز المراد تهيئته:",
+		"label": "الجهاز: {{name}}",
+		"scanning": "جارٍ البحث ...",
+		"scanNetwork": "بحث"
+	},
+	"profiles": {
+		"add": "إضافة ملف شخصي ...",
+		"deleteHint": "(اضغط مطولاً على ملف شخصي لحذفه)",
+		"scanBox": "مسح صندوق",
+		"connectivity": "إعدادات الاتصال"
+	},
+	"noConnection": {
+		"title": "لم يتم إنشاء اتصال!",
+		"tryLater": "يرجى المحاولة لاحقاً...",
+		"retrying": "محاولة الاتصال التلقائي بالخادم ..."
+	},
+	"signIn": {
+		"missingInfo": "معلومات مطلوبة مفقودة!",
+		"boxId": "معرّف الصندوق",
+		"rememberMe": "تذكرني",
+		"submit": "تسجيل الدخول"
+	}
+}

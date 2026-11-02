@@ -1,4 +1,5 @@
 import React, {useEffect} from 'react';
+import i18n from 'i18next';
 import {ScrollView, View} from 'react-native';
 import {navigationHeader} from '../../../components/common/navigationHeaders';
 import {useForm} from 'react-hook-form';
@@ -183,7 +184,7 @@ export function SensorConfigurationSettingsSection(props: any) {
 	const validateCronExpression = (value: string) =>
 		!value ||
 		isValidCron(value, {seconds: true}) ||
-		'Invalid cron expression';
+		i18n.t('sensor:config.invalidCron');
 
 	const Body: any = embedded ? View : ScrollView;
 	const bodyProps: any = embedded
@@ -198,8 +199,8 @@ export function SensorConfigurationSettingsSection(props: any) {
 					control={control}
 					errors={errors}
 					name="type"
-					placeholder="Type*"
-					rules={{required: 'Type is required'}}
+					placeholder={i18n.t('sensor:config.type')}
+					rules={{required: i18n.t('sensor:config.typeRequired')}}
 					onValueChange={value => {
 						// FORCAST n'a pas de parent : on réinitialise le toggle
 						// enfant et le parentId associé.
@@ -217,7 +218,7 @@ export function SensorConfigurationSettingsSection(props: any) {
 								control={control}
 								errors={errors}
 								name="isChild"
-								placeholder="Is child"
+								placeholder={i18n.t('sensor:config.isChild')}
 								disabled={isLockedChild}
 								onChangeText={value => {
 									if (!value) {
@@ -233,8 +234,8 @@ export function SensorConfigurationSettingsSection(props: any) {
 								control={control}
 								errors={errors}
 								name="parentId"
-								placeholder="Parent sensor*"
-								rules={{required: 'Parent sensor is required'}}
+								placeholder={i18n.t('sensor:config.parent')}
+								rules={{required: i18n.t('sensor:config.parentRequired')}}
 								onValueChange={value => {
 									setSaveUnchangedData(true);
 								}}
@@ -246,9 +247,9 @@ export function SensorConfigurationSettingsSection(props: any) {
 									control={control}
 									errors={errors}
 									name="config.cronPattern"
-									placeholder="Cron pattern*"
+									placeholder={`${i18n.t('sensor:config.cron')}*`}
 									rules={{
-										required: 'Cron pattern is required',
+										required: i18n.t('sensor:config.cronRequired'),
 										validate: validateCronExpression
 									}}
 									onChangeText={value => {
@@ -260,8 +261,8 @@ export function SensorConfigurationSettingsSection(props: any) {
 									control={control}
 									errors={errors}
 									name="config.forcastDataName"
-									placeholder="Forecast data*"
-									rules={{required: 'Forecast data is required'}}
+									placeholder={i18n.t('sensor:config.forecast')}
+									rules={{required: i18n.t('sensor:config.forecastRequired')}}
 									onValueChange={value => {
 										setSaveUnchangedData(true);
 									}}
@@ -276,7 +277,7 @@ export function SensorConfigurationSettingsSection(props: any) {
 											control={control}
 											errors={errors}
 											name="deviceId"
-											placeholder="Device"
+											placeholder={i18n.t('sensor:dataSource.device')}
 											rules={{required: false}}
 											onValueChange={value => {
 												setSelectedDeviceId(value);
@@ -294,7 +295,7 @@ export function SensorConfigurationSettingsSection(props: any) {
 											control={control}
 											errors={errors}
 											name="config.comRequestId"
-											placeholder="Request"
+											placeholder={i18n.t('sensor:config.request')}
 											rules={{required: false}}
 											onValueChange={value => {
 												setSaveUnchangedData(true);
@@ -308,13 +309,13 @@ export function SensorConfigurationSettingsSection(props: any) {
 									name="config.cronPattern"
 									placeholder={
 										cronRequired
-											? 'Cron pattern*'
-											: 'Cron pattern'
+											? `${i18n.t('sensor:config.cron')}*`
+											: i18n.t('sensor:config.cron')
 									}
 									disabled={watchedIsChild}
 									rules={{
 										required: cronRequired
-											? 'Cron pattern is required'
+											? i18n.t('sensor:config.cronRequired')
 											: false,
 										validate: validateCronExpression
 									}}
@@ -327,7 +328,7 @@ export function SensorConfigurationSettingsSection(props: any) {
 										control={control}
 										errors={errors}
 										name="config.code"
-										placeholder="Code"
+										placeholder={i18n.t('sensor:config.code')}
 										keyboardType="numeric"
 										onChangeText={value => {
 											setSaveUnchangedData(true);
@@ -338,7 +339,7 @@ export function SensorConfigurationSettingsSection(props: any) {
 									control={control}
 									errors={errors}
 									name="config.scale"
-									placeholder="Scale"
+									placeholder={i18n.t('sensor:config.scale')}
 									keyboardType="numeric"
 									onChangeText={value => {
 										setSaveUnchangedData(true);
@@ -348,7 +349,7 @@ export function SensorConfigurationSettingsSection(props: any) {
 									control={control}
 									errors={errors}
 									name="config.unit"
-									placeholder="Unit"
+									placeholder={i18n.t('sensor:config.unit')}
 									onChangeText={value => {
 										setSaveUnchangedData(true);
 									}}
@@ -359,7 +360,7 @@ export function SensorConfigurationSettingsSection(props: any) {
 							control={control}
 							errors={errors}
 							name="enabled"
-							placeholder="Enabled"
+							placeholder={i18n.t('sensor:config.enabled')}
 							onChangeText={value => {
 								setSaveUnchangedData(true);
 							}}

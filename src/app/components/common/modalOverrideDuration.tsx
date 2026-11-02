@@ -1,7 +1,10 @@
-import React, {useState} from 'react';
+import React, {useRef, useState} from 'react';
+import {useTranslation} from 'react-i18next';
 import {placeholderColor} from '../../styles/components/common/Input';
 import {
+	Keyboard,
 	Modal,
+	Platform,
 	Text,
 	TextInput,
 	TouchableOpacity,
@@ -17,13 +20,48 @@ export function ModalOverrideDuration({
 	onClose: () => void;
 	onConfirm: (ms: number) => void;
 }) {
+	const {t} = useTranslation();
 	const [text, setText] = useState('');
+	// Durée validée, exécutée seulement une fois la modale réellement fermée :
+	// dispatcher pendant l'animation de fermeture (clavier ouvert + re-render
+	// du statut) laisse sur iOS une fenêtre modale invisible qui bloque tous
+	// les touchers.
+	const pendingMs = useRef<number | null>(null);
+
+	const flushPending = () => {
+		const ms = pendingMs.current;
+		pendingMs.current = null;
+		setText('');
+		if (ms !== null) {
+			onConfirm(ms);
+		}
+	};
+
+	const confirm = () => {
+		Keyboard.dismiss();
+		pendingMs.current = Number(text);
+		onClose();
+		// onDismiss n'est fiable que sur iOS ; le Dialog Android n'a pas le
+		// problème, on exécute directement.
+		if (Platform.OS !== 'ios') {
+			flushPending();
+		}
+	};
+
+	const cancel = () => {
+		Keyboard.dismiss();
+		pendingMs.current = null;
+		setText('');
+		onClose();
+	};
+
 	return (
 		<Modal
 			visible={isOpen}
 			transparent
 			animationType="fade"
-			onRequestClose={onClose}>
+			onRequestClose={cancel}
+			onDismiss={flushPending}>
 			<View
 				style={{
 					flex: 1,
@@ -44,14 +82,13 @@ export function ModalOverrideDuration({
 							fontWeight: 'bold',
 							marginBottom: 12
 						}}>
-						Override duration
+						{t('overrideDuration.title')}
 					</Text>
 					<Text style={{marginBottom: 8}}>
-						please enter duration in (ms) to override default
-						sequences duration
+						{t('overrideDuration.message')}
 					</Text>
 					<TextInput
-						defaultValue={text}
+						value={text}
 						placeholderTextColor={placeholderColor}
 						onChangeText={newText => setText(newText)}
 						style={{
@@ -70,12 +107,12 @@ export function ModalOverrideDuration({
 							gap: 8
 						}}>
 						<TouchableOpacity
-							onPress={onClose}
+							onPress={cancel}
 							style={{paddingVertical: 8, paddingHorizontal: 16}}>
-							<Text style={{color: '#718096'}}>Cancel</Text>
+							<Text style={{color: '#718096'}}>{t('cancel')}</Text>
 						</TouchableOpacity>
 						<TouchableOpacity
-							onPress={() => onConfirm(Number(text))}
+							onPress={confirm}
 							style={{
 								paddingVertical: 8,
 								paddingHorizontal: 16,
@@ -83,7 +120,7 @@ export function ModalOverrideDuration({
 								borderRadius: 6
 							}}>
 							<Text style={{color: 'white', fontWeight: 'bold'}}>
-								execute
+								{t('execute')}
 							</Text>
 						</TouchableOpacity>
 					</View>

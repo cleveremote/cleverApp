@@ -1,5 +1,6 @@
 import {useEffect, useRef, useState} from 'react';
 import {Alert} from 'react-native';
+import i18n from 'i18next';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import {navigationHeader} from './navigationHeaders';
 import {hapticOptions} from '../../data/cycleTypes';
@@ -149,12 +150,12 @@ export function useSectionSettingsHeader({
 					return;
 				e.preventDefault();
 				Alert.alert(
-					'Discard changes?',
-					'You have unsaved changes. Would you like to continue editing or discard them?',
+					i18n.t('common:discard.title'),
+					i18n.t('common:discard.message'),
 					[
-						{text: 'Continue', style: 'cancel', onPress: () => {}},
+						{text: i18n.t('common:discard.continue'), style: 'cancel', onPress: () => {}},
 						{
-							text: 'Discard',
+							text: i18n.t('common:discard.confirm'),
 							style: 'destructive',
 							onPress: () => {
 								discard?.();

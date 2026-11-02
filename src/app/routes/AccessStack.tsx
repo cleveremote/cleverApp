@@ -1,4 +1,5 @@
 import React, {useEffect} from 'react';
+import {useTranslation} from 'react-i18next';
 import {createStackNavigator} from '@react-navigation/stack';
 import {ProfilesScreen} from '../screens/access/loading';
 import {DeviceSettings} from '../screens/access/deviceSettings';
@@ -9,6 +10,7 @@ import {ScanBoxScreen} from '../screens/access/scanBox';
 import {BoxConfiguration} from '../screens/access/boxConfiguration';
 import {BoxHandover} from '../screens/access/boxHandover';
 export function AccessStack() {
+	const {t} = useTranslation('navigation');
 	useEffect(() => {
 		const devices = async () => {
 			//// FCM google
@@ -31,29 +33,29 @@ export function AccessStack() {
 				/>
 				<Stack.Screen
 					name="ScanBox"
-					options={{headerShown: true, title: 'Scanner la box'}}
+					options={{headerShown: true, title: t('scanBox')}}
 					component={ScanBoxScreen}
 				/>
 				<Stack.Screen
 					name="Device"
-					options={{headerShown: true, title: 'Device(s) found'}}
+					options={{headerShown: true, title: t('devicesFound')}}
 					component={DeviceScreen}
 				/>
 				<Stack.Screen
 					name="deviceSettings"
-					options={{headerShown: true, title: 'Configure connexion'}}
+					options={{headerShown: true, title: t('configureConnection')}}
 					component={DeviceSettings}
 				/>
 				<Stack.Screen
 					name="BoxConfiguration"
-					options={{headerShown: true, title: 'Configurer la box'}}
+					options={{headerShown: true, title: t('configureBox')}}
 					component={BoxConfiguration}
 				/>
 				<Stack.Screen
 					name="BoxHandover"
 					options={{
 						headerShown: true,
-						title: 'Connexion de la box',
+						title: t('boxConnection'),
 						// Le geste de retour ramènerait au formulaire, qui n'a
 						// plus de réseau : la sortie passe par l'en-tête.
 						gestureEnabled: false
@@ -62,7 +64,7 @@ export function AccessStack() {
 				/>
 				<Stack.Screen
 					name="Signin"
-					options={{headerShown: true, title: 'Sign in',headerStyle: {backgroundColor: 'white'}}}
+					options={{headerShown: true, title: t('signIn'),headerStyle: {backgroundColor: 'white'}}}
 					component={SignIn}
 				/>
 			</Stack.Navigator>

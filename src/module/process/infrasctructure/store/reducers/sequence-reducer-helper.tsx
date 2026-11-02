@@ -1,4 +1,5 @@
 import {newTempId} from '../../../../../services/socket';
+import i18n from 'i18next';
 
 export const loadSequences = (cycle: any) => {
 	return cycle?.sequences || [];
@@ -10,8 +11,8 @@ export const loadSequence = (sequences: any, sequenceId: string) => {
 	} else {
 		return {
 			id: newTempId(),
-			name: 'new sequence',
-			description: 'new sequence',
+			name: i18n.t('common:defaults.newSequence'),
+			description: i18n.t('common:defaults.newSequence'),
 			securityConfig: {
 				maxDuration: 50000
 			},

@@ -9,6 +9,7 @@ import {
 import {useFocusEffect} from '@react-navigation/native';
 import Logo from '../../../../hydrophyto.svg';
 import {authenticationService} from '../../../module/authentication/domain/services/auth.service';
+import {useTranslation} from 'react-i18next';
 
 const hapticOptions = {
 	enableVibrateFallback: false,
@@ -21,6 +22,7 @@ const hapticTriggerType: string = Platform.select({
 }) as string;
 
 export function NoConnectionScreen(props: any) {
+	const {t} = useTranslation('access');
 	const [profiles, setProfiles] = React.useState<string[]>([]);
 
 	useFocusEffect(
@@ -66,10 +68,10 @@ export function NoConnectionScreen(props: any) {
 										fontSize: 20,
 										fontWeight: 'bold'
 									}}>
-									No connexion established ! {props.type}
+									{t('noConnection.title')} {props.type}
 								</Text>
 								<Text style={{color: '#32404e', fontSize: 15}}>
-									please try later...
+									{t('noConnection.tryLater')}
 								</Text>
 								<View
 									style={{
@@ -95,7 +97,7 @@ export function NoConnectionScreen(props: any) {
 							</>
 						) : (
 							<Text style={{color: '#32404e', fontSize: 20}}>
-								Auto attempt connect to server ...
+								{t('noConnection.retrying')}
 							</Text>
 						)}
 					</View>

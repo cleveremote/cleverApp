@@ -52,10 +52,12 @@ export function elementStack(
 			<View style={{flexDirection: 'row', alignItems: 'center'}}>
 				{badge ? <View style={{marginLeft: 10}}>{badge}</View> : null}
 				<View style={{flex: 1, marginVertical: 8, marginLeft: 8}}>
-					<Text style={styles.textSequence}>{label}</Text>
+					{/* 'left' = côté de début : RN l'inverse en RTL, alors que 'auto'
+					    suit le contenu et laisse un libellé latin à gauche en arabe. */}
+					<Text style={[styles.textSequence, {textAlign: 'left'}]}>{label}</Text>
 					{warning ? (
 						<Text
-							style={{color: '#6b7280', fontSize: 11}}
+							style={{color: '#6b7280', fontSize: 11, textAlign: 'left'}}
 							numberOfLines={2}>
 							{warning}
 						</Text>

@@ -1,0 +1,6 @@
+{
+	"temperature": "température : {{value}}",
+	"humidity": "humidité : {{value}}",
+	"wind": "vent : {{value}}",
+	"precipitation": "précipitations : {{value}}"
+}

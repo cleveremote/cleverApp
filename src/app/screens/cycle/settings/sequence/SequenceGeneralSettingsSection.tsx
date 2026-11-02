@@ -15,6 +15,7 @@ import {
 	useEmbeddedSection
 } from '../../../../components/common/useSectionSettingsHeader';
 import {updateSequence} from '../../../../../module/process/infrasctructure/store/actions/sequence';
+import i18n from 'i18next';
 
 export function SequenceGeneralSettingsSection(props: any) {
 	const embedded = !!props.embedded;
@@ -107,8 +108,8 @@ export function SequenceGeneralSettingsSection(props: any) {
 					errors={errors}
 					name="name"
 					maxLength={25}
-					placeholder="Name*"
-					rules={{required: 'Name is required'}}
+					placeholder={i18n.t('common:form.name')}
+					rules={{required: i18n.t('common:form.nameRequired')}}
 					onChangeText={value => {
 						setSaveUnchangedData(true);
 					}}
@@ -117,7 +118,7 @@ export function SequenceGeneralSettingsSection(props: any) {
 					control={control}
 					errors={errors}
 					name="description"
-					placeholder="Description"
+					placeholder={i18n.t('common:form.description')}
 					onChangeText={value => {
 						setSaveUnchangedData(true);
 					}}

@@ -1,5 +1,6 @@
 import {Pattern} from 'react-native-svg';
 import {newTempId} from '../../../../../services/socket';
+import i18n from 'i18next';
 
 export const loadSensors = (sensors: any) => {
 	return sensors || [];
@@ -11,8 +12,8 @@ export const loadSensor = (sensors: any, sensorId: string) => {
 	} else {
 		return {
 			id: newTempId(),
-			name: 'new scheduled sensor',
-			description: 'new scheduled sensor',
+			name: i18n.t('common:defaults.newScheduledSensor'),
+			description: i18n.t('common:defaults.newScheduledSensor'),
 			taskId: '',
 			Pattern: '',
 			style: {
@@ -22,6 +23,7 @@ export const loadSensor = (sensors: any, sensorId: string) => {
 			},
 			type: 'SCHEDULED',
 			unit: 'V',
+			display: true,
 			isModified: true
 		};
 	}

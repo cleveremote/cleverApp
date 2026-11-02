@@ -1,4 +1,5 @@
 import React from 'react';
+import {useTranslation} from 'react-i18next';
 import {
 	StackNavigationOptions,
 	createStackNavigator
@@ -6,6 +7,7 @@ import {
 import SynoptiquesScreen from '../screens/synoptique/SynoptiquesScreen';
 
 export function SynoptiquesStack() {
+	const {t} = useTranslation('navigation');
 	const options = (title: string) =>
 		({
 			headerTitleAlign: 'center',
@@ -20,7 +22,7 @@ export function SynoptiquesStack() {
 			<Stack.Screen
 				name="Synoptiques"
 				component={SynoptiquesScreen}
-				options={options('Synoptiques')}
+				options={options(t('synoptics'))}
 			/>
 		</Stack.Navigator>
 	);

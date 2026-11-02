@@ -1,0 +1,82 @@
+{
+	"yes": "Oui",
+	"no": "Non",
+	"cancel": "Annuler",
+	"execute": "Exécuter",
+	"remove": "Supprimer",
+	"notValid": "invalide",
+	"longPressToRemove": "(appui long pour supprimer)",
+	"unknownError": "erreur inconnue",
+	"confirm": {
+		"title": "Confirmation requise !",
+		"irreversible": "Cette action est irréversible. Les données supprimées ne pourront pas être récupérées."
+	},
+	"overrideDuration": {
+		"title": "Forcer la durée",
+		"message": "Saisissez une durée (en ms) pour remplacer la durée par défaut des séquences"
+	},
+	"discard": {
+		"title": "Abandonner les modifications ?",
+		"message": "Vous avez des modifications non enregistrées. Voulez-vous continuer l'édition ou les abandonner ?",
+		"continue": "Continuer",
+		"confirm": "Abandonner",
+		"leaveMessage": "Vous avez des modifications non enregistrées. Voulez-vous vraiment les abandonner et quitter l'écran ?",
+		"invalidMessage": "Certains champs sont invalides ou incomplets. Voulez-vous abandonner les modifications ou continuer l'édition ?"
+	},
+	"priority": {
+		"highest": "plus haute",
+		"lowest": "plus basse"
+	},
+	"back": "Retour",
+	"retry": "Réessayer",
+	"password": "Mot de passe",
+	"error": "Erreur",
+	"errors": {
+		"noServer": "Pas de connexion au serveur !",
+		"unexpected": "Une erreur inattendue est survenue."
+	},
+	"ble": {
+		"notConnected": "L'équipement n'est pas connecté",
+		"disconnected": "Équipement déconnecté",
+		"bluetoothOff": "Le Bluetooth est désactivé",
+		"locationDisabled": "Les services de localisation sont désactivés",
+		"permissionDenied": "Les autorisations n'ont pas été accordées"
+	},
+	"devicesUnreachable": {
+		"title": "Équipements injoignables",
+		"message": "« {{name}} » ne peut pas démarrer :\n{{devices}}",
+		"master": "maître « {{name}} » injoignable"
+	},
+	"defaults": {
+		"newGroup": "nouveau groupe",
+		"newModule": "nouveau module",
+		"newCycle": "nouveau cycle",
+		"newScheduledSensor": "nouveau capteur planifié",
+		"newSchedule": "nouvelle planification",
+		"newSequence": "nouvelle séquence",
+		"newTrigger": "nouveau déclencheur",
+		"newCondition": "nouvelle condition"
+	},
+	"modes": {
+		"MANUAL": "Manuel",
+		"SCHEDULED": "Planifié",
+		"TRIGGER": "Déclencheur"
+	},
+	"save": "Enregistrer",
+	"form": {
+		"name": "Nom*",
+		"nameRequired": "Le nom est obligatoire",
+		"description": "Description"
+	},
+	"sections": {
+		"general": "Général",
+		"conditions": "Conditions",
+		"security": "Sécurité",
+		"actuators": "Actionneurs",
+		"configuration": "Configuration",
+		"parameters": "Paramètres",
+		"execution": "Exécution",
+		"cycles": "Cycles",
+		"sequences": "Séquences"
+	}
+}

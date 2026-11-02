@@ -1,4 +1,5 @@
 import React from 'react';
+import {useTranslation} from 'react-i18next';
 import {
 	StackNavigationOptions,
 	createStackNavigator
@@ -10,6 +11,7 @@ import {ComRequestSettingsStack} from './ComRequestSettingsStack';
 import {ActuatorSettingsStack} from './ActuatorSettingsStack';
 
 export function SlaveDeviceSettingsStack() {
+	const {t} = useTranslation('navigation');
 	const options = (title: string) =>
 		({
 			headerTitleAlign: 'center',
@@ -23,17 +25,17 @@ export function SlaveDeviceSettingsStack() {
 			<Stack.Screen
 				name="SlaveDeviceSettingsMenu"
 				component={SlaveDeviceSettingsScreen}
-				options={options('Slave Device')}
+				options={options(t('slaveDevice'))}
 			/>
 			<Stack.Screen
 				name="SlaveGeneralSection"
 				component={SlaveGeneralSettingsSection}
-				options={options('General')}
+				options={options(t('general'))}
 			/>
 			<Stack.Screen
 				name="ComRequestsSection"
 				component={ComRequestsSection}
-				options={options('COM Requests')}
+				options={options(t('comRequests'))}
 			/>
 			<Stack.Screen
 				name="ComRequestSettingsStack"

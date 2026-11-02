@@ -12,6 +12,7 @@ import {useForm} from 'react-hook-form';
 import {BoxFormStyle} from '../../../styles/components/common/boxForm';
 import {navigationHeader} from '../../../components/common/navigationHeaders';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
+import {useTranslation} from 'react-i18next';
 import {
 	formatDateTime,
 	RunCard
@@ -37,6 +38,7 @@ const hapticTriggerType: string = Platform.select({
 }) as string;
 
 function EventsScreen(props: any) {
+	const {t} = useTranslation('cycle');
 	const getTimeString = (dateValue: number) => {
 		const date = new Date();
 		date.setHours(0, 0, 0, 0);
@@ -100,34 +102,34 @@ function EventsScreen(props: any) {
 
 			// Extra fields shown only when the row is expanded.
 			const details = [
-				{label: 'Type', value: additionalData.type},
-				{label: 'Status', value: additionalData.status},
+				{label: t('events.type'), value: additionalData.type},
+				{label: t('events.status'), value: additionalData.status},
 				{
-					label: 'Started at',
+					label: t('events.startedAt'),
 					value: additionalData.startedAt
 						? formatDateTime(additionalData.startedAt)
 						: undefined
 				},
 				{
-					label: 'Duration',
+					label: t('events.duration'),
 					value:
 						additionalData.duration !== undefined
 							? String(additionalData.duration)
 							: undefined
 				},
-				{label: 'Element', value: item.elementType},
+				{label: t('events.element'), value: item.elementType},
 				{
-					label: 'Confirmation',
+					label: t('run.confirmation'),
 					value: additionalData.confirmation?.isRequested
-						? 'requested'
+						? t('events.requested')
 						: undefined
 				},
 				...(additionalData.confirmation?.conflicts || []).map(
 					(c: any) => ({
-						label: 'Conflict',
+						label: t('events.conflict'),
 						value:
 							`${c.name} (${c.mode}) : ` +
-							(c.isWinning ? 'will be stopped' : 'lost')
+							(c.isWinning ? t('events.willBeStopped') : t('events.lost'))
 					})
 				)
 			].filter(d => d.value !== undefined && d.value !== null);
@@ -236,7 +238,7 @@ function EventsScreen(props: any) {
 											marginTop: 4,
 											marginBottom: 2
 										}}>
-										Causes
+										{t('events.causes')}
 									</Text>
 								) : null}
 								{causes.map((c, index) => (
@@ -256,7 +258,7 @@ function EventsScreen(props: any) {
 				</View>
 			);
 		},
-		[expandedId]
+		[expandedId, t]
 	);
 
 	const history: CycleHistory = props.events;
@@ -319,7 +321,7 @@ function EventsScreen(props: any) {
 						marginBottom: 2,
 						marginHorizontal: 8
 					}}>
-					Older events
+					{t('events.older')}
 				</Text>
 			);
 		}
@@ -334,8 +336,8 @@ function EventsScreen(props: any) {
 					control={control}
 					errors={errors}
 					name="startDate"
-					placeholder="Get logs from :"
-					rules={{required: 'start date is required'}}
+					placeholder={t('events.from')}
+					rules={{required: t('events.startRequired')}}
 					maximumDate={maximumDate}
 					onChangeText={(value: any) => {
 						const now = new Date();
@@ -351,8 +353,8 @@ function EventsScreen(props: any) {
 					control={control}
 					errors={errors}
 					name="endDate"
-					placeholder="to :"
-					rules={{required: 'end date is required'}}
+					placeholder={t('events.to')}
+					rules={{required: t('events.endRequired')}}
 					minimumDate={minimumDate}
 					maximumDate={maximumDate}
 					onChangeText={(value: any) => {
@@ -383,7 +385,7 @@ function EventsScreen(props: any) {
 								textAlign: 'center',
 								marginTop: 24
 							}}>
-							No run in this period
+							{t('events.noRun')}
 						</Text>
 					)
 				}

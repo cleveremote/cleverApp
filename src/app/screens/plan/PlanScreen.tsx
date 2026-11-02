@@ -1,5 +1,6 @@
 import { FlatList, Platform, Text, View } from 'react-native';
 import React, { useEffect, useRef, useState } from 'react';
+import i18n from 'i18next';
 import { SvgXml } from 'react-native-svg';
 import { connect } from 'react-redux';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
@@ -151,7 +152,7 @@ export function PlanScreen(props: any) {
 							marginTop: 15,
 							fontWeight: 'bold'
 						}}>
-						temperature : 27°
+						{i18n.t('plan:temperature', { value: '27°' })}
 					</Text>
 					<Text
 						style={{
@@ -159,7 +160,7 @@ export function PlanScreen(props: any) {
 							marginTop: 15,
 							fontWeight: 'bold'
 						}}>
-						Humidity : 60%
+						{i18n.t('plan:humidity', { value: '60%' })}
 					</Text>
 					<Text
 						style={{
@@ -167,7 +168,7 @@ export function PlanScreen(props: any) {
 							marginTop: 15,
 							fontWeight: 'bold'
 						}}>
-						Wind : 6 km/h
+						{i18n.t('plan:wind', { value: '6 km/h' })}
 					</Text>
 					<Text
 						style={{
@@ -175,7 +176,7 @@ export function PlanScreen(props: any) {
 							marginTop: 15,
 							fontWeight: 'bold'
 						}}>
-						precipitation : 0%
+						{i18n.t('plan:precipitation', { value: '0%' })}
 					</Text>
 				</View>
 			</View>

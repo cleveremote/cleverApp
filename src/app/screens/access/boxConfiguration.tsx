@@ -12,6 +12,8 @@ import {
 } from 'react-native';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import Spinner from 'react-native-loading-spinner-overlay';
+import i18n from 'i18next';
+import {useTranslation} from 'react-i18next';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import {useNavigation} from '@react-navigation/native';
 import {placeholderColor} from '../../styles/components/common/Input';
@@ -30,6 +32,7 @@ import {
 import {
 	BoxConfigurationForm,
 	isBoxConfigurationValid,
+	PASSWORD_MIN_LENGTH,
 	validateBoxConfiguration
 } from '../../../services/validation';
 import {
@@ -108,6 +111,7 @@ export function BoxConfiguration(props: any) {
 		setTouched(previous => ({...previous, [field]: true}));
 	};
 
+	const {t} = useTranslation(['access', 'common']);
 	const nav = useNavigation();
 
 	useEffect(() => {
@@ -125,7 +129,7 @@ export function BoxConfiguration(props: any) {
 	/** Réseaux Wi-Fi vus par la box, à rejoindre une fois configurée. */
 	const loadNetworks = useCallback(async () => {
 		setIsLoading(true);
-		setBusyMessage('Recherche des réseaux ...');
+		setBusyMessage(t('boxConfig.searchingNetworks'));
 		setError('');
 		try {
 			const url = await boxUrl(NETWORKS_PATH);
@@ -139,13 +143,13 @@ export function BoxConfiguration(props: any) {
 			const err = e instanceof Error ? e : new Error(String(e));
 			setError(
 				err.name === 'AbortError'
-					? "La box n'a pas répondu. Vérifiez que le téléphone est bien connecté à son réseau."
-					: `Liste des réseaux indisponible — ${err.message}`
+					? t('boxConfig.noResponse')
+					: t('boxConfig.networksUnavailable', {error: err.message})
 			);
 		} finally {
 			setIsLoading(false);
 		}
-	}, []);
+	}, [t]);
 
 	useEffect(() => {
 		loadNetworks();
@@ -171,8 +175,12 @@ export function BoxConfiguration(props: any) {
 	const isFormValid = isBoxConfigurationValid(errors);
 
 	/** Message à afficher sous un champ : rien tant qu'il n'a pas été touché. */
-	const errorFor = (field: keyof BoxConfigurationForm) =>
-		touched[field] ? errors[field] : undefined;
+	const errorFor = (field: keyof BoxConfigurationForm) => {
+		const issue = touched[field] ? errors[field] : undefined;
+		return issue
+			? t(`validation.${issue}`, {min: PASSWORD_MIN_LENGTH})
+			: undefined;
+	};
 
 	/**
 	 * Refus de la box : on reste sur le formulaire, la saisie intacte et le
@@ -204,7 +212,7 @@ export function BoxConfiguration(props: any) {
 		}
 
 		setIsLoading(true);
-		setBusyMessage('Configuration de la box ...');
+		setBusyMessage(t('boxConfig.configuring'));
 		setError('');
 		setConfigureFailed(false);
 
@@ -245,11 +253,11 @@ export function BoxConfiguration(props: any) {
 			);
 
 			if (status < 200 || status >= 300) {
-				return fail(`Configuration refusée — HTTP ${status} ${body}`.trim());
+				return fail(t('boxConfig.refusedHttp', {status, body}).trim());
 			}
 			// Une box qui répond « non » avec un 200 reste une box qui refuse.
 			if (!isConfirmation(body)) {
-				return fail(`Configuration refusée par la box — ${body}`.trim());
+				return fail(t('boxConfig.refused', {body}).trim());
 			}
 		} catch (e) {
 			console.warn('[BoxConfiguration] configure (bascule ?):', e);
@@ -291,7 +299,7 @@ export function BoxConfiguration(props: any) {
 	};
 
 	const selectedLabel =
-		networks.find(n => n.value === form.ssid)?.label || 'Réseau Wi-Fi';
+		networks.find(n => n.value === form.ssid)?.label || t('boxConfig.wifiNetwork');
 
 	return (
 		<KeyboardAvoidingView
@@ -323,7 +331,7 @@ export function BoxConfiguration(props: any) {
 									? styles.fieldInvalid
 									: null
 							]}
-							placeholder="Nom de la box"
+							placeholder={t('boxConfig.deviceName')}
 							placeholderTextColor={placeholderColor}
 							autoCapitalize="none"
 							autoCorrect={false}
@@ -378,8 +386,7 @@ export function BoxConfiguration(props: any) {
 													fontSize: 18,
 													color: placeholderColor
 												}}>
-												Aucun réseau — relancer la
-												recherche
+												{t('boxConfig.noNetwork')}
 											</Text>
 										</TouchableOpacity>
 									) : (
@@ -423,7 +430,7 @@ export function BoxConfiguration(props: any) {
 								styles.field,
 								errorFor('psk') ? styles.fieldInvalid : null
 							]}
-							placeholder="Clé Wi-Fi (psk)"
+							placeholder={t('boxConfig.psk')}
 							placeholderTextColor={placeholderColor}
 							secureTextEntry={true}
 							textContentType={'password'}
@@ -438,7 +445,7 @@ export function BoxConfiguration(props: any) {
 								styles.field,
 								errorFor('login') ? styles.fieldInvalid : null
 							]}
-							placeholder="Login (adresse email)"
+							placeholder={t('boxConfig.login')}
 							placeholderTextColor={placeholderColor}
 							keyboardType="email-address"
 							textContentType={'emailAddress'}
@@ -454,7 +461,7 @@ export function BoxConfiguration(props: any) {
 								styles.field,
 								errorFor('password') ? styles.fieldInvalid : null
 							]}
-							placeholder="Mot de passe"
+							placeholder={t('common:password')}
 							placeholderTextColor={placeholderColor}
 							secureTextEntry={true}
 							textContentType={'newPassword'}
@@ -471,7 +478,7 @@ export function BoxConfiguration(props: any) {
 									? styles.fieldInvalid
 									: null
 							]}
-							placeholder="Confirmer le mot de passe"
+							placeholder={t('boxConfig.confirmPassword')}
 							placeholderTextColor={placeholderColor}
 							secureTextEntry={true}
 							textContentType={'newPassword'}
@@ -494,7 +501,7 @@ export function BoxConfiguration(props: any) {
 							onPress={configure}>
 							<Text style={{color: 'white', fontSize: 20}}>
 								{' '}
-								{configureFailed ? 'Réessayer' : 'Configurer'}{' '}
+								{configureFailed ? t('common:retry') : t('boxConfig.configure')}{' '}
 							</Text>
 						</TouchableOpacity>
 					</View>
@@ -561,7 +568,9 @@ function parseNetworks(body: string): NetworkOption[] {
 			if (typeof value !== 'string' || value === '') return null;
 
 			const tag =
-				entry?.isConfigured && entry?.['in-use'] ? ' (configuré)' : '';
+				entry?.isConfigured && entry?.['in-use']
+					? ` ${i18n.t('access:boxConfig.configuredTag')}`
+					: '';
 			return {label: `${value}${tag}`, value};
 		})
 		.filter((option: NetworkOption | null): option is NetworkOption =>

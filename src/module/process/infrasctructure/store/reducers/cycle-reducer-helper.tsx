@@ -1,4 +1,5 @@
 import { newTempId } from '../../../../../services/socket';
+import i18n from 'i18next';
 
 export const getKeys = (svg: string) => {
 	const matches = svg.match(/sel_./g);
@@ -31,7 +32,10 @@ export const loadCycle = (
 		// CYCLE par défaut pour un cycle classique (les GROUP/fertigations
 		// passent par newGroup()).
 		const type = newType ?? 'CYCLE';
-		const label = type === 'MODULE' ? 'new module' : 'new cycle';
+		const label =
+			type === 'MODULE'
+				? i18n.t('common:defaults.newModule')
+				: i18n.t('common:defaults.newCycle');
 		return {
 			id: newTempId(),
 			type,

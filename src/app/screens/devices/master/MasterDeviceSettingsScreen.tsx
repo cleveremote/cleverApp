@@ -18,6 +18,7 @@ import {useDeviceEntity} from '../useDeviceEntity';
 import {isEmpty} from '../../../components/common/useSectionSettingsHeader';
 import MasterGeneralSettingsSection from './MasterGeneralSettingsSection';
 import SlaveDevicesSection from './SlaveDevicesSection';
+import i18n from 'i18next';
 
 export function MasterDeviceSettingsScreen(props: any) {
 	const {deviceRef, deleteItem, invalidSections, ready} = useDeviceEntity(
@@ -33,7 +34,7 @@ export function MasterDeviceSettingsScreen(props: any) {
 			<MenuGroup style={styles.card}>
 				<MenuAccordion
 					key={1}
-					name={'General'}
+					name={i18n.t('common:sections.general')}
 					icon={faGear}
 					defaultExpanded
 					invalid={invalidSections.general}
@@ -50,7 +51,7 @@ export function MasterDeviceSettingsScreen(props: any) {
 				</MenuAccordion>
 				<MenuAccordion
 					key={3}
-					name={'Slave Devices'}
+					name={i18n.t('navigation:slaveDevices')}
 					icon={faSitemap}
 					defaultExpanded
 					onPress={() => {}}>

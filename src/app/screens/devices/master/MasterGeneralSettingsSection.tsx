@@ -10,6 +10,7 @@ import {updateDevice} from '../../../../module/process/infrasctructure/store/act
 import {useDeviceSection} from '../useDeviceSection';
 import {DeviceConnectivityStatus} from '../../../components/device/DeviceConnectivity';
 import {isTempId} from '../../../../services/socket';
+import i18n from 'i18next';
 
 // Master General: Name, IP address + port (`config.ipAddress` / `config.port`,
 // read-only) and Description. `type` = 'MASTER' is a hidden field — seeded via
@@ -38,8 +39,8 @@ export function MasterGeneralSettingsSection(props: any) {
 					errors={errors}
 					name="name"
 					maxLength={25}
-					placeholder="Name*"
-					rules={{required: 'Name is required'}}
+					placeholder={i18n.t('common:form.name')}
+					rules={{required: i18n.t('common:form.nameRequired')}}
 					onChangeText={() => markDirty()}
 				/>
 				<View style={{flexDirection: 'row', gap: 10}}>
@@ -48,7 +49,7 @@ export function MasterGeneralSettingsSection(props: any) {
 							control={control}
 							errors={errors}
 							name="config.ipAddress"
-							placeholder="IP address"
+							placeholder={i18n.t('devices:ipAddress')}
 							disabled
 						/>
 					</View>
@@ -57,7 +58,7 @@ export function MasterGeneralSettingsSection(props: any) {
 							control={control}
 							errors={errors}
 							name="config.port"
-							placeholder="Port"
+							placeholder={i18n.t('devices:port')}
 							keyboardType="numeric"
 							disabled
 						/>
@@ -67,7 +68,7 @@ export function MasterGeneralSettingsSection(props: any) {
 					control={control}
 					errors={errors}
 					name="description"
-					placeholder="Description"
+					placeholder={i18n.t('common:form.description')}
 					onChangeText={() => markDirty()}
 				/>
 			</Body>

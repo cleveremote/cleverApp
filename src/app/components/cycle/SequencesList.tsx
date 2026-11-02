@@ -3,6 +3,7 @@ import {View} from 'react-native';
 import {connect} from 'react-redux';
 import SequenceStack from './sequenceStack';
 import CycleNotification from './CycleNotification';
+import i18n from 'i18next';
 
 const IN_PROCESS = 'IN_PROCCESS';
 
@@ -48,10 +49,12 @@ export function SeqeuncesList(props: any) {
 						<CycleNotification
 							item={sequence}
 							onForce={() => props.onForceSequence(sequence.id)}
-							forceLabel="Force and queue"
+							forceLabel={i18n.t('cycle:notification.forceAndQueue')}
 							forceHint={
 								running
-									? `Will start after "${running.name}" finishes`
+									? i18n.t('cycle:notification.willStartAfter', {
+											name: running.name
+									  })
 									: undefined
 							}
 						/>

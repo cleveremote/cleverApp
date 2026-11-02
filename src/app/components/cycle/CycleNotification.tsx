@@ -3,6 +3,7 @@ import { Text, TouchableOpacity, View } from 'react-native';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import { connect } from 'react-redux';
+import i18n from 'i18next';
 import { hapticOptions } from '../../data/cycleTypes';
 import { dismissCycleNotification } from '../../../module/process/infrasctructure/store/actions/cycle';
 
@@ -46,15 +47,19 @@ export const useBelowCard = () => {
 // Le box attend une confirmation pour démarrer l'exécutable.
 const CONFLICT = 'WAITTING_CONFIRMATION';
 
-const MESSAGES: Record<string, string> = {
-	CONDITIONS_NOT_VERIFIED: 'Not started: conditions not verified',
-	[CONFLICT]: 'waiting for confirmation to start'
+// Clés i18n (namespace cycle) des messages du bandeau.
+const MESSAGES: Record<string, 'notification.conditionsNotVerified' | 'notification.waitingConfirmation'> = {
+	CONDITIONS_NOT_VERIFIED: 'notification.conditionsNotVerified',
+	[CONFLICT]: 'notification.waitingConfirmation'
 };
 
 const CONFIRMATION_MESSAGES = {
-	CONFLICT: 'Conflict: waiting for confirmation to start',
-	SCHEDULED: 'Scheduled start: waiting for confirmation'
-};
+	CONFLICT: 'notification.conflict',
+	SCHEDULED: 'notification.scheduled'
+} as const;
+
+const message = (key?: string) =>
+	key ? i18n.t(key as never, { ns: 'cycle' }) as string : undefined;
 
 const IN_PROCESS = 'IN_PROCCESS';
 const EXECUTABLE_TYPES = ['CYCLE', 'SEQUENCE'];
@@ -136,11 +141,11 @@ export const notificationMessage = (
 		if (!kind) {
 			return undefined;
 		}
-		return entry.confirmation
-			? CONFIRMATION_MESSAGES[kind]
-			: MESSAGES[CONFLICT];
+		return message(
+			entry.confirmation ? CONFIRMATION_MESSAGES[kind] : MESSAGES[CONFLICT]
+		);
 	}
-	return MESSAGES[entry?.notification];
+	return message(MESSAGES[entry?.notification]);
 };
 
 const quoted = (conflicts: ConfirmationConflict[]) =>
@@ -170,7 +175,7 @@ const describeCause = (
 		]);
 		const other = all.find((x: any) => x?.id === cause.id);
 		return other
-			? `In conflict with "${other.name}"`
+			? i18n.t('cycle:notification.inConflictWith', { name: other.name })
 			: cause.cause || cause.id;
 	}
 	const current = /\(current\s*:\s*([^)]*)\)/.exec(cause.cause || '')?.[1];
@@ -187,7 +192,9 @@ const describeCause = (
 	const operator = condition.operator === '==' ? '=' : condition.operator;
 	return (
 		`${label} ${operator} ${condition.value}` +
-		(current !== undefined ? ` (current: ${current.trim()})` : '')
+		(current !== undefined
+			? ` ${i18n.t('cycle:notification.current', { value: current.trim() })}`
+			: '')
 	);
 };
 
@@ -236,8 +243,10 @@ export function CycleNotification(
 		? kind === 'CONFLICT'
 			? conflicts.map(
 					c =>
-						`"${c.name}" is running` +
-						(c.isWinning ? '' : ' (equal or higher priority)')
+						i18n.t('cycle:notification.isRunning', { name: c.name }) +
+						(c.isWinning
+							? ''
+							: ` ${i18n.t('cycle:notification.higherPriority')}`)
 			  )
 			: []
 		: (entry.causes || []).map((cause: any) =>
@@ -250,17 +259,17 @@ export function CycleNotification(
 		  );
 	const hint =
 		kind === 'CONFLICT' && conflicts.length
-			? `Force will stop ${quoted(conflicts)}`
+			? i18n.t('cycle:notification.forceWillStop', { names: quoted(conflicts) })
 			: kind === 'SCHEDULED' && toStop.length
-			? `Confirming will stop ${quoted(toStop)}`
+			? i18n.t('cycle:notification.confirmWillStop', { names: quoted(toStop) })
 			: props.forceHint;
 
 	const actions: Action[] =
 		kind === 'SCHEDULED'
 			? [
-					{ label: 'Ignore', icon: 'times', onPress: props.onIgnore! },
+					{ label: i18n.t('cycle:notification.ignore'), icon: 'times', onPress: props.onIgnore! },
 					{
-						label: 'Confirm start',
+						label: i18n.t('cycle:notification.confirmStart'),
 						icon: 'play',
 						onPress: props.onForce,
 						primary: true
@@ -268,10 +277,10 @@ export function CycleNotification(
 			  ]
 			: isConflict
 			? [
-					{ label: 'Ignore', icon: 'times', onPress: props.onIgnore! },
-					{ label: 'Queue', icon: 'stream', onPress: props.onQueue! },
+					{ label: i18n.t('cycle:notification.ignore'), icon: 'times', onPress: props.onIgnore! },
+					{ label: i18n.t('cycle:notification.queue'), icon: 'stream', onPress: props.onQueue! },
 					{
-						label: 'Force',
+						label: i18n.t('cycle:notification.force'),
 						icon: 'play',
 						onPress: props.onForce,
 						primary: true
@@ -279,9 +288,9 @@ export function CycleNotification(
 			  ]
 			: [
 				// Conditions non vérifiées : Ignore masque simplement le bandeau.
-				{ label: 'Ignore', icon: 'times', onPress: () => {} },
+				{ label: i18n.t('cycle:notification.ignore'), icon: 'times', onPress: () => {} },
 				{
-					label: props.forceLabel || 'Force start',
+					label: props.forceLabel || i18n.t('cycle:notification.forceStart'),
 					icon: 'play',
 					onPress: props.onForce,
 					primary: true

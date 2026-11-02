@@ -16,6 +16,7 @@ import {
 	useEmbeddedSection
 } from '../../../../components/common/useSectionSettingsHeader';
 import { updateSequence } from '../../../../../module/process/infrasctructure/store/actions/sequence';
+import i18n from 'i18next';
 
 export function SequenceSecuritySettingsSection(props: any) {
 	const embedded = !!props.embedded;
@@ -138,8 +139,8 @@ export function SequenceSecuritySettingsSection(props: any) {
 					control={control}
 					errors={errors}
 					name="securityConfig.maxDuration"
-					placeholder="security*"
-					rules={{ required: 'Security is required' }}
+					placeholder={i18n.t('cycle:sequence.security')}
+					rules={{ required: i18n.t('cycle:sequence.securityRequired') }}
 					onChangeText={() => {
 						setSaveUnchangedData(true);
 					}}
@@ -161,8 +162,8 @@ export function SequenceSecuritySettingsSection(props: any) {
 					control={control}
 					errors={errors}
 					name="vfd"
-					placeholder={`VFD speed* → ${vfd} %`}
-					rules={{ required: 'VFD speed is required' }}
+					placeholder={i18n.t('cycle:sequence.vfdSpeed', { value: vfd })}
+					rules={{ required: i18n.t('cycle:sequence.vfdRequired') }}
 					onChangeText={value => {
 						setSaveUnchangedData(true);
 						setVfd(value);

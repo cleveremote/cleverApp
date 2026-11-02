@@ -12,6 +12,7 @@ import {InputStyle} from '../../../styles/components/common/Input';
 import {updateModbusTask} from '../../../../module/process/infrasctructure/store/actions/modbus-task';
 import {comRequestTypeOptions} from '../../../data/modbusTypes';
 import {useComRequestSection} from './useComRequestSection';
+import i18n from 'i18next';
 
 // Access mode deduced from the Modbus function(s) (`config.function`, a single
 // value or a list): any "write*" one gives READ & WRITE, only "read*" ones give
@@ -22,7 +23,11 @@ export function comRequestAccessLabel(fn: unknown): string {
 	);
 	const read = fns.some(f => f.includes('read'));
 	const write = fns.some(f => f.includes('write'));
-	return write ? 'READ & WRITE' : read ? 'READ ONLY' : '-';
+	return write
+		? i18n.t('devices:comRequest.readWrite')
+		: read
+		? i18n.t('devices:comRequest.readOnly')
+		: '-';
 }
 
 // COM request General: Name (read-only label) + Description + the list of functions (`type`),
@@ -80,13 +85,17 @@ export function ComRequestGeneralSettingsSection(props: any) {
 	return (
 		<View style={BoxFormStyle.boxForm}>
 			<Body {...bodyProps}>
-				<Text style={InputStyle.textInput}>Name</Text>
+				<Text style={InputStyle.textInput}>{i18n.t('devices:comRequest.name')}</Text>
 				<Text style={styles.readOnlyValue}>{watch('name') || '-'}</Text>
-				<Text style={InputStyle.textInput}>Access mode</Text>
+				<Text style={InputStyle.textInput}>
+					{i18n.t('devices:comRequest.accessMode')}
+				</Text>
 				<Text style={styles.readOnlyValue}>{accessLabel}</Text>
 				{unit ? (
 					<View style={styles.infoRow}>
-						<Text style={InputStyle.textInput}>Unit</Text>
+						<Text style={InputStyle.textInput}>
+							{i18n.t('sensor:config.unit')}
+						</Text>
 						<Text style={styles.readOnlyValue}>{unit}</Text>
 					</View>
 				) : null}
@@ -94,7 +103,7 @@ export function ComRequestGeneralSettingsSection(props: any) {
 					control={control}
 					errors={errors}
 					name="description"
-					placeholder="Description"
+					placeholder={i18n.t('common:form.description')}
 					onChangeText={() => markDirty()}
 				/>
 

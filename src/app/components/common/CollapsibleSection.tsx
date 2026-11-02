@@ -12,6 +12,7 @@ import Icon from 'react-native-vector-icons/FontAwesome5';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {IconDefinition} from '@fortawesome/fontawesome-svg-core';
 import {hapticOptions} from '../../data/cycleTypes';
+import {directionalIcon} from '../../../i18n/rtl';
 
 if (
 	Platform.OS === 'android' &&
@@ -139,7 +140,7 @@ export function CollapsibleSection({
 								marginRight: 20
 							}}>
 							<Icon
-								name={isExpanded ? 'angle-down' : 'angle-right'}
+								name={isExpanded ? 'angle-down' : directionalIcon('angle-right')}
 								size={20}
 								color={'grey'}
 							/>

@@ -1,5 +1,5 @@
 import React, {useEffect} from 'react';
-import {StyleSheet, View} from 'react-native';
+import {I18nManager, StyleSheet, View} from 'react-native';
 import Animated, {
 	Easing,
 	useAnimatedStyle,
@@ -12,7 +12,7 @@ import Animated, {
 // "HYDRO-PHYTO" révélé en 3 temps (HYDRO, -, PHYTO), puis le slogan,
 // calé pour se terminer avant la fin du splash.
 const STEP_DELAYS_MS = [1600, 2000, 2400];
-const SLOGAN_DELAY_MS = 2800;
+export const SLOGAN_DELAY_MS = 2800;
 const STEP_DURATION_MS = 400;
 const OFFSET_X = 24;
 const SLOGAN_OFFSET_Y = 12;
@@ -76,7 +76,8 @@ export function AnimatedTitle() {
 
 const styles = StyleSheet.create({
 	row: {
-		flexDirection: 'row',
+		// Toujours HYDRO-PHYTO de gauche à droite, même en RTL (Yoga inverse 'row').
+		flexDirection: I18nManager.isRTL ? 'row-reverse' : 'row',
 		alignSelf: 'center',
 		justifyContent: 'center',
 		marginTop: 4

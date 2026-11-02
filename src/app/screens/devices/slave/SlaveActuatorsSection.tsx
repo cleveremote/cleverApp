@@ -1,4 +1,5 @@
 import React, {useEffect} from 'react';
+import i18n from 'i18next';
 import {StyleSheet, Text, View} from 'react-native';
 import {connect} from 'react-redux';
 import {faCog} from '@fortawesome/free-solid-svg-icons';
@@ -49,7 +50,7 @@ export function SlaveActuatorsSection(props: any) {
 		<View style={styles.embeddedCard}>
 			{actuators.length === 0 ? (
 				<Text style={styles.empty}>
-					No actuator linked to this device.
+					{i18n.t('devices:noActuator')}
 				</Text>
 			) : (
 				actuators.map((actuator: any) =>
@@ -60,7 +61,7 @@ export function SlaveActuatorsSection(props: any) {
 								screen: 'ActuatorSettingsMenu',
 								params: {actuatorId: item.id}
 							}),
-						`${actuator.name ?? 'actuator'}`,
+						`${actuator.name ?? i18n.t('devices:actuatorFallback')}`,
 						{name: faCog, color: styles.icon.color},
 						undefined,
 						undefined,

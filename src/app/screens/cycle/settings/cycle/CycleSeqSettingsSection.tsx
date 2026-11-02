@@ -12,6 +12,7 @@ import {
 	loadSequences,
 	saveSequences
 } from '../../../../../module/process/infrasctructure/store/actions/sequence';
+import i18n from 'i18next';
 
 export function SeqSettingsSec(props: any) {
 	// Le cycle vient soit d'une prop directe (mode embarqué inline dans
@@ -188,7 +189,7 @@ export function SeqSettingsSec(props: any) {
 								color={colors.dark}
 							/>
 						</TouchableOpacity>
-						<Text style={styles.addLabel}>Add new sequence ...</Text>
+						<Text style={styles.addLabel}>{i18n.t('cycle:settings.addSequence')}</Text>
 					</View>
 				)}
 			</View>

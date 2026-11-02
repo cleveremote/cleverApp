@@ -33,6 +33,7 @@ import {CollapsibleSection} from '../../../../components/common/CollapsibleSecti
 import {updateSequence} from '../../../../../module/process/infrasctructure/store/actions/sequence';
 import {emptyTimingConfig} from '../../../../../module/process/infrasctructure/store/models/sequenceModule';
 import {updateSequenceModuleConfig as mergeModuleConfig} from '../../../../../module/process/infrasctructure/store/reducers/module-reducer-helper';
+import i18n from 'i18next';
 
 // The three actuator sections rendered as accordions, in order. Adding a new
 // actuator type is a single-line change here.
@@ -290,7 +291,9 @@ export function SequenceActuatorsSettingsSection(props: any) {
 									control={control}
 									errors={errors}
 									name={`actuator_${section.type}`}
-									placeholder={`Select ${section.title} actuator`}
+									placeholder={i18n.t('cycle:sequence.selectActuator', {
+										type: section.title
+									})}
 									rules={{required: false}}
 									onValueChange={value => {
 										const actuator = (

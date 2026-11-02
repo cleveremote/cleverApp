@@ -1,4 +1,5 @@
 import {newTempId} from '../../../../../services/socket';
+import i18n from 'i18next';
 
 export const loadSchedules = (cycle: any) => {
 	return cycle?.schedules || [];
@@ -15,8 +16,8 @@ export const loadSchedule = (
 		return {
 			id: newTempId(),
 			cycleId: cycleId,
-			name: 'new schedule',
-			description: 'new schedule',
+			name: i18n.t('common:defaults.newSchedule'),
+			description: i18n.t('common:defaults.newSchedule'),
 			cron: {
 				pattern: '*/30 * * * * *',
 				date: Date.now()

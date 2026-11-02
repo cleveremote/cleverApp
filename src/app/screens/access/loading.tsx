@@ -8,6 +8,7 @@ import {
 } from '../../components/common/RememberMeManager';
 import {useFocusEffect} from '@react-navigation/native';
 import Logo from '../../../../hydrophyto.svg';
+import {useTranslation} from 'react-i18next';
 
 const hapticOptions = {
 	enableVibrateFallback: false,
@@ -20,6 +21,7 @@ const hapticTriggerType: string = Platform.select({
 }) as string;
 
 export function ProfilesScreen(props: any) {
+	const {t} = useTranslation('access');
 	const [profiles, setProfiles] = React.useState<string[]>([]);
 
 	useFocusEffect(
@@ -125,11 +127,11 @@ export function ProfilesScreen(props: any) {
 								/>
 							</TouchableOpacity>
 							<Text style={{color: '#32404e', fontSize: 15}}>
-								Add new profil ...
+								{t('profiles.add')}
 							</Text>
 						</View>
 						<Text style={{color: '#32404e', fontSize: 15}}>
-							(To delete long press on profile)
+							{t('profiles.deleteHint')}
 						</Text>
 					</View>
 				</ScrollView>
@@ -157,7 +159,7 @@ export function ProfilesScreen(props: any) {
 						<Icon name="qrcode" size={25} color="#32404e" />
 					</TouchableOpacity>
 					<Text style={{color: '#32404e', fontSize: 15}}>
-						Scan a box
+						{t('profiles.scanBox')}
 					</Text>
 				</View>
 
@@ -173,7 +175,7 @@ export function ProfilesScreen(props: any) {
 						<Icon name="wifi" size={25} color="#32404e" />
 					</TouchableOpacity>
 					<Text style={{color: '#32404e', fontSize: 15}}>
-						Connectivity settings
+						{t('profiles.connectivity')}
 					</Text>
 				</View>
 			</View>

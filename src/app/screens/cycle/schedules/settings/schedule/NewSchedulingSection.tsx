@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import {connect} from 'react-redux';
+import i18n from 'i18next';
 import {AppSwitch} from '../../../../../components/common/AppSwitch';
 import {updateSchedule} from '../../../../../../module/process/infrasctructure/store/actions/schedule';
 
@@ -60,37 +61,61 @@ const FIELDCFG: Record<
 		base?: number;
 	}
 > = {
-	sec: {label: 'Secondes', lo: 0, hi: 59, type: 'num'},
-	min: {label: 'Minutes', lo: 0, hi: 59, type: 'num'},
-	hour: {label: 'Heures', lo: 0, hi: 23, type: 'num'},
-	dom: {label: 'Jour du mois', lo: 1, hi: 31, type: 'num'},
+	// Libellés en getters : lus dans la langue courante à chaque rendu.
+	sec: {
+		get label() {
+			return i18n.t('cycle:cron.field.sec');
+		},
+		lo: 0,
+		hi: 59,
+		type: 'num'
+	},
+	min: {
+		get label() {
+			return i18n.t('cycle:cron.field.min');
+		},
+		lo: 0,
+		hi: 59,
+		type: 'num'
+	},
+	hour: {
+		get label() {
+			return i18n.t('cycle:cron.field.hour');
+		},
+		lo: 0,
+		hi: 23,
+		type: 'num'
+	},
+	dom: {
+		get label() {
+			return i18n.t('cycle:cron.field.dom');
+		},
+		lo: 1,
+		hi: 31,
+		type: 'num'
+	},
 	month: {
-		label: 'Mois',
+		get label() {
+			return i18n.t('cycle:cron.field.month');
+		},
 		lo: 1,
 		hi: 12,
 		type: 'name',
-		names: [
-			'Jan',
-			'Fev',
-			'Mar',
-			'Avr',
-			'Mai',
-			'Jun',
-			'Jul',
-			'Aou',
-			'Sep',
-			'Oct',
-			'Nov',
-			'Dec'
-		],
+		get names() {
+			return i18n.t('cycle:cron.months', {returnObjects: true}) as unknown as string[];
+		},
 		base: 1
 	},
 	dow: {
-		label: 'Jour de semaine',
+		get label() {
+			return i18n.t('cycle:cron.field.dow');
+		},
 		lo: 0,
 		hi: 6,
 		type: 'name',
-		names: ['Dim', 'Lun', 'Mar', 'Mer', 'Jeu', 'Ven', 'Sam'],
+		get names() {
+			return i18n.t('cycle:cron.weekdays', {returnObjects: true}) as unknown as string[];
+		},
 		base: 0
 	}
 };
@@ -98,12 +123,24 @@ const FIELDCFG: Record<
 const ORDER: FieldKey[] = ['sec', 'min', 'hour', 'dom', 'month', 'dow'];
 const DAYORDER: FieldKey[] = ['dom', 'month', 'dow'];
 const TABLABEL: Record<FieldKey, string> = {
-	sec: 'Sec',
-	min: 'Min',
-	hour: 'Heure',
-	dom: 'Jour',
-	month: 'Mois',
-	dow: 'Semaine'
+	get sec() {
+		return i18n.t('cycle:cron.tab.sec');
+	},
+	get min() {
+		return i18n.t('cycle:cron.tab.min');
+	},
+	get hour() {
+		return i18n.t('cycle:cron.tab.hour');
+	},
+	get dom() {
+		return i18n.t('cycle:cron.tab.dom');
+	},
+	get month() {
+		return i18n.t('cycle:cron.tab.month');
+	},
+	get dow() {
+		return i18n.t('cycle:cron.tab.dow');
+	}
 };
 const DEFAULT_LAT = 48.85;
 const DEFAULT_LON = 2.35;
@@ -219,7 +256,7 @@ function oneTimeCronStr(ts: number): string {
 
 // Libellé lisible d'une date ponctuelle.
 function formatOneTime(ts: number): string {
-	return new Date(ts).toLocaleString('fr-FR', {
+	return new Date(ts).toLocaleString(i18n.language, {
 		weekday: 'long',
 		day: '2-digit',
 		month: 'long',
@@ -407,19 +444,27 @@ function describeField(s: CronState, key: FieldKey): string | null {
 				.join(',')
 		);
 	if (f.mode === 'range')
-		return TABLABEL[key] + ' ' + nameOf(key, f.from) + ' a ' + nameOf(key, f.to);
-	if (f.mode === 'step') return TABLABEL[key] + ' pas de ' + f.step;
+		return (
+			TABLABEL[key] +
+			' ' +
+			i18n.t('cycle:cron.rangeText', {
+				from: nameOf(key, f.from),
+				to: nameOf(key, f.to)
+			})
+		);
+	if (f.mode === 'step')
+		return TABLABEL[key] + ' ' + i18n.t('cycle:cron.stepText', {step: f.step});
 	return null;
 }
 
 function summaryText(s: CronState): string {
 	const parts = ORDER.map(k => describeField(s, k)).filter(Boolean);
-	return parts.length ? parts.join(' - ') : 'Chaque unite (toutes les minutes)';
+	return parts.length ? parts.join(' - ') : i18n.t('cycle:cron.everyUnit');
 }
 
 function daySummaryText(s: CronState): string {
 	const parts = DAYORDER.map(k => describeField(s, k)).filter(Boolean);
-	return parts.length ? parts.join(' - ') : 'tous les jours';
+	return parts.length ? parts.join(' - ') : i18n.t('cycle:cron.everyDay');
 }
 
 // --- Calcul des prochaines exécutions cron ---------------------------------
@@ -582,8 +627,10 @@ function nextCombinedRuns(s: CronState, n: number): Date[] {
 function solarDescription(s: CronState): string | null {
 	const sol = s.solar;
 	if (!sol.enabled) return null;
-	const evLabel = sol.event === 'SUNRISE' ? 'lever du soleil' : 'coucher du soleil';
-	const dirLabel = sol.dir === 'BEFORE' ? 'avant' : 'apres';
+	const evLabel =
+		sol.event === 'SUNRISE' ? i18n.t('cycle:cron.solar.sunriseLower') : i18n.t('cycle:cron.solar.sunsetLower');
+	const dirLabel =
+		sol.dir === 'BEFORE' ? i18n.t('cycle:cron.solar.beforeLower') : i18n.t('cycle:cron.solar.afterLower');
 	const offParts: string[] = [];
 	if (sol.offsetH > 0) offParts.push(sol.offsetH + 'h');
 	if (sol.offsetM > 0) offParts.push(sol.offsetM + 'min');
@@ -592,12 +639,7 @@ function solarDescription(s: CronState): string | null {
 	return evLabel + offText;
 }
 
-const MODES: [FieldMode, string][] = [
-	['every', 'Chaque'],
-	['list', 'Liste'],
-	['range', 'Intervalle'],
-	['step', 'Pas']
-];
+const MODES: Exclude<FieldMode, 'free'>[] = ['every', 'list', 'range', 'step'];
 
 // --- Petits composants d'UI ------------------------------------------------
 function Chip({
@@ -696,7 +738,7 @@ function ListNumInput({
 		<>
 			<TextInput
 				keyboardType="numbers-and-punctuation"
-				placeholder="ex: 0,15,30,45"
+				placeholder={i18n.t('cycle:cron.listExample')}
 				placeholderTextColor={C.muted}
 				value={txt}
 				onFocus={() => (focused.current = true)}
@@ -713,11 +755,11 @@ function ListNumInput({
 			/>
 			{invalid ? (
 				<Text style={styles.errorTxt}>
-					Valeurs entre {lo} et {hi}, separees par des virgules.
+					{i18n.t('cycle:cron.listInvalid', {lo, hi})}
 				</Text>
 			) : (
 				<Text style={styles.hint}>
-					Valeurs separees par des virgules, entre {lo} et {hi}.
+					{i18n.t('cycle:cron.listHint', {lo, hi})}
 				</Text>
 			)}
 		</>
@@ -800,7 +842,7 @@ export function NewSchedulingSection(props: any) {
 			const ts = state.oneTime.date;
 			return {
 				displayStr: oneTimeCronStr(ts),
-				summary: 'Date ponctuelle : ' + formatOneTime(ts),
+				summary: i18n.t('cycle:cron.oneTimeSummary', {date: formatOneTime(ts)}),
 				solarStr: null,
 				runs: ts > Date.now() ? [new Date(ts)] : []
 			};
@@ -843,12 +885,14 @@ export function NewSchedulingSection(props: any) {
 	const toInvalid = !inBounds(f.to);
 	const orderInvalid = !fromInvalid && !toInvalid && f.from > f.to;
 	const rangeError = fromInvalid || toInvalid
-		? `Valeurs entre ${cfg.lo} et ${cfg.hi}.`
+		? i18n.t('cycle:cron.between', {lo: cfg.lo, hi: cfg.hi})
 		: orderInvalid
-		? 'Le debut doit etre inferieur ou egal a la fin.'
+		? i18n.t('cycle:cron.orderInvalid')
 		: null;
 	const stepInvalid = f.step < 1 || f.step > cfg.hi;
-	const stepError = stepInvalid ? `Le pas doit etre entre 1 et ${cfg.hi}.` : null;
+	const stepError = stepInvalid
+		? i18n.t('cycle:cron.stepInvalid', {hi: cfg.hi})
+		: null;
 
 	// Bornes du décalage solaire.
 	const offHInvalid = state.solar.offsetH < 0 || state.solar.offsetH > 23;
@@ -859,7 +903,7 @@ export function NewSchedulingSection(props: any) {
 			{/* Date ponctuelle : planifie une seule exécution via le datetime picker. */}
 			{!props.cronOnly && (
 				<View style={styles.switchRow}>
-					<Text style={styles.switchLabel}>Date ponctuelle</Text>
+					<Text style={styles.switchLabel}>{i18n.t('cycle:cron.oneTime')}</Text>
 					<AppSwitch
 						value={oneTimeEnabled}
 						onValueChange={v => patch(n => (n.oneTime.enabled = v))}
@@ -869,7 +913,7 @@ export function NewSchedulingSection(props: any) {
 
 			{oneTimeEnabled && (
 				<View style={styles.editorCard}>
-					<Text style={styles.fieldLabel}>Date et heure</Text>
+					<Text style={styles.fieldLabel}>{i18n.t('cycle:cron.dateTime')}</Text>
 					<TouchableOpacity
 						onPress={() => setPickerVisible(true)}
 						style={styles.dateField}>
@@ -878,7 +922,7 @@ export function NewSchedulingSection(props: any) {
 						</Text>
 					</TouchableOpacity>
 					<Text style={styles.hint}>
-						Une seule execution a la date choisie.
+						{i18n.t('cycle:cron.oneTimeHint')}
 					</Text>
 				</View>
 			)}
@@ -912,10 +956,10 @@ export function NewSchedulingSection(props: any) {
 								<View key={r} style={styles.modeRow}>
 									{row.map(m => (
 										<Chip
-											key={m[0]}
-											label={m[1]}
-											active={f.mode === m[0]}
-											onPress={() => patch(n => (n.fields[activeTab].mode = m[0]))}
+											key={m}
+											label={i18n.t(`cycle:cron.mode.${m}`)}
+											active={f.mode === m}
+											onPress={() => patch(n => (n.fields[activeTab].mode = m))}
 											style={styles.modeChip}
 										/>
 									))}
@@ -927,7 +971,7 @@ export function NewSchedulingSection(props: any) {
 						</View>
 
 						{f.mode === 'every' && (
-							<Text style={styles.hint}>Toute valeur (*)</Text>
+							<Text style={styles.hint}>{i18n.t('cycle:cron.anyValue')}</Text>
 						)}
 
 						{f.mode === 'list' &&
@@ -975,7 +1019,7 @@ export function NewSchedulingSection(props: any) {
 												value={f.from}
 												onChange={v => patch(n => (n.fields[activeTab].from = v))}
 											/>
-											<Text style={styles.rangeSep}>a</Text>
+											<Text style={styles.rangeSep}>{i18n.t('cycle:cron.to')}</Text>
 											<RangePicker
 												cfg={cfg}
 												value={f.to}
@@ -990,7 +1034,7 @@ export function NewSchedulingSection(props: any) {
 												onChange={v => patch(n => (n.fields[activeTab].from = v))}
 												width={80}
 											/>
-											<Text style={styles.rangeSep}>a</Text>
+											<Text style={styles.rangeSep}>{i18n.t('cycle:cron.to')}</Text>
 											<NumInput
 												value={f.to}
 												invalid={toInvalid || orderInvalid}
@@ -1005,7 +1049,7 @@ export function NewSchedulingSection(props: any) {
 										<Text style={styles.errorTxt}>{rangeError}</Text>
 									) : (
 										<Text style={styles.hint}>
-											Valeurs entre {cfg.lo} et {cfg.hi}.
+											{i18n.t('cycle:cron.between', {lo: cfg.lo, hi: cfg.hi})}
 										</Text>
 									))}
 							</>
@@ -1027,7 +1071,7 @@ export function NewSchedulingSection(props: any) {
 												styles.segTxt,
 												f.stepBase === 'every' && styles.segTxtActive
 											]}>
-											A partir de
+											{i18n.t('cycle:cron.from')}
 										</Text>
 									</TouchableOpacity>
 									<TouchableOpacity
@@ -1043,7 +1087,7 @@ export function NewSchedulingSection(props: any) {
 												styles.segTxt,
 												f.stepBase === 'range' && styles.segTxtActive
 											]}>
-											Dans un intervalle
+											{i18n.t('cycle:cron.inRange')}
 										</Text>
 									</TouchableOpacity>
 								</View>
@@ -1056,7 +1100,7 @@ export function NewSchedulingSection(props: any) {
 												onChange={v => patch(n => (n.fields[activeTab].from = v))}
 												width={80}
 											/>
-											<Text style={styles.rangeSep}>a</Text>
+											<Text style={styles.rangeSep}>{i18n.t('cycle:cron.to')}</Text>
 											<NumInput
 												value={f.to}
 												invalid={toInvalid || orderInvalid}
@@ -1070,18 +1114,20 @@ export function NewSchedulingSection(props: any) {
 									</>
 								)}
 								<View style={styles.inlineRow}>
-									<Text style={styles.inlineTxt}>Toutes les</Text>
+									<Text style={styles.inlineTxt}>{i18n.t('cycle:cron.every')}</Text>
 									<NumInput
 										value={f.step}
 										invalid={stepInvalid}
 										onChange={v => patch(n => (n.fields[activeTab].step = v || 1))}
 									/>
-									<Text style={styles.inlineTxt}>unites</Text>
+									<Text style={styles.inlineTxt}>{i18n.t('cycle:cron.units')}</Text>
 								</View>
 								{stepError ? (
 									<Text style={styles.errorTxt}>{stepError}</Text>
 								) : (
-									<Text style={styles.hint}>Pas entre 1 et {cfg.hi}.</Text>
+									<Text style={styles.hint}>
+										{i18n.t('cycle:cron.stepHint', {hi: cfg.hi})}
+									</Text>
 								)}
 							</>
 						)}
@@ -1089,7 +1135,7 @@ export function NewSchedulingSection(props: any) {
 						{f.mode === 'free' && (
 							<>
 								<TextInput
-									placeholder="ex: 1-5,10/2,L"
+									placeholder={i18n.t('cycle:cron.freeExample')}
 									placeholderTextColor={C.muted}
 									defaultValue={f.free}
 									autoCapitalize="none"
@@ -1097,8 +1143,7 @@ export function NewSchedulingSection(props: any) {
 									style={styles.textInput}
 								/>
 								<Text style={styles.hint}>
-									Syntaxe cron brute pour ce champ, y compris caracteres speciaux non
-									geres ailleurs.
+									{i18n.t('cycle:cron.freeHint')}
 								</Text>
 							</>
 						)}
@@ -1109,7 +1154,9 @@ export function NewSchedulingSection(props: any) {
 			{/* Déclencheur solaire (masqué en mode date ponctuelle) */}
 			{!oneTimeEnabled && !props.cronOnly && (
 				<View style={styles.switchRow}>
-					<Text style={styles.switchLabel}>Ajouter un declencheur solaire</Text>
+					<Text style={styles.switchLabel}>
+						{i18n.t('cycle:cron.solar.add')}
+					</Text>
 					<AppSwitch
 						value={state.solar.enabled}
 						onValueChange={v => patch(n => (n.solar.enabled = v))}
@@ -1121,17 +1168,17 @@ export function NewSchedulingSection(props: any) {
 				<View style={styles.editorCard}>
 					<Text style={styles.hint}>
 						{state.solar.mode === 'replace'
-							? 'Le cron est ignore, seul le declencheur solaire est actif chaque jour.'
-							: 'Les jours sont definis par le cron ci-dessus (jour du mois, mois, jour de semaine). Heure, minute et seconde sont remplacees par le declencheur solaire.'}
+							? i18n.t('cycle:cron.solar.replaceHint')
+							: i18n.t('cycle:cron.solar.combineHint')}
 					</Text>
 					<View style={styles.segRow}>
 						<SegBtn
-							label="Combiner avec le cron"
+							label={i18n.t('cycle:cron.solar.combine')}
 							active={state.solar.mode === 'combine'}
 							onPress={() => patch(n => (n.solar.mode = 'combine'))}
 						/>
 						<SegBtn
-							label="Remplacer le cron"
+							label={i18n.t('cycle:cron.solar.replace')}
 							active={state.solar.mode === 'replace'}
 							onPress={() => patch(n => (n.solar.mode = 'replace'))}
 						/>
@@ -1139,48 +1186,48 @@ export function NewSchedulingSection(props: any) {
 					{/* timeDirection (avant/après) — placé avant le choix lever/coucher. */}
 					<View style={styles.segRow}>
 						<SegBtn
-							label="Avant"
+							label={i18n.t('cycle:cron.solar.before')}
 							active={state.solar.dir === 'BEFORE'}
 							onPress={() => patch(n => (n.solar.dir = 'BEFORE'))}
 						/>
 						<SegBtn
-							label="Apres"
+							label={i18n.t('cycle:cron.solar.after')}
 							active={state.solar.dir === 'AFTER'}
 							onPress={() => patch(n => (n.solar.dir = 'AFTER'))}
 						/>
 					</View>
 					<View style={styles.segRow}>
 						<SegBtn
-							label="Lever du soleil"
+							label={i18n.t('cycle:cron.solar.sunrise')}
 							active={state.solar.event === 'SUNRISE'}
 							onPress={() => patch(n => (n.solar.event = 'SUNRISE'))}
 						/>
 						<SegBtn
-							label="Coucher du soleil"
+							label={i18n.t('cycle:cron.solar.sunset')}
 							active={state.solar.event === 'SUNSET'}
 							onPress={() => patch(n => (n.solar.event = 'SUNSET'))}
 						/>
 					</View>
 					<View style={styles.inlineRow}>
-						<Text style={styles.inlineTxt}>Decalage</Text>
+						<Text style={styles.inlineTxt}>{i18n.t('cycle:cron.solar.offset')}</Text>
 						<NumInput
 							value={state.solar.offsetH}
 							invalid={offHInvalid}
 							onChange={v => patch(n => (n.solar.offsetH = v))}
 							width={54}
 						/>
-						<Text style={styles.inlineMuted}>h</Text>
+						<Text style={styles.inlineMuted}>{i18n.t('cycle:cron.solar.hourUnit')}</Text>
 						<NumInput
 							value={state.solar.offsetM}
 							invalid={offMInvalid}
 							onChange={v => patch(n => (n.solar.offsetM = v))}
 							width={54}
 						/>
-						<Text style={styles.inlineMuted}>min</Text>
+						<Text style={styles.inlineMuted}>{i18n.t('cycle:cron.solar.minuteUnit')}</Text>
 					</View>
 					{(offHInvalid || offMInvalid) && (
 						<Text style={styles.errorTxt}>
-							Decalage : heures 0 a 23, minutes 0 a 59.
+							{i18n.t('cycle:cron.solar.offsetInvalid')}
 						</Text>
 					)}
 				</View>
@@ -1192,7 +1239,7 @@ export function NewSchedulingSection(props: any) {
 					<View style={styles.outCard}>
 						{oneTimeEnabled ? (
 							<>
-								<Text style={styles.sectionLabel}>Expression</Text>
+								<Text style={styles.sectionLabel}>{i18n.t('cycle:cron.expression')}</Text>
 								<Text selectable style={styles.expression}>
 									{displayStr}
 								</Text>
@@ -1202,7 +1249,7 @@ export function NewSchedulingSection(props: any) {
 							/* En mode « remplacer » le cron est ignoré : pas d'expression cron. */
 							!replaceMode && (
 								<>
-									<Text style={styles.sectionLabel}>Expression</Text>
+									<Text style={styles.sectionLabel}>{i18n.t('cycle:cron.expression')}</Text>
 									<TextInput
 										value={exprText}
 										onChangeText={onExprChange}
@@ -1219,8 +1266,8 @@ export function NewSchedulingSection(props: any) {
 									/>
 									<Text style={styles.hint}>
 										{combineMode
-											? 'Editez le cron jour/mois/semaine (3 champs) pour mettre a jour les champs ci-dessus.'
-											: "Editez l'expression cron pour mettre a jour les champs ci-dessus (5 ou 6 champs)."}
+											? i18n.t('cycle:cron.editCombineHint')
+											: i18n.t('cycle:cron.editHint')}
 									</Text>
 									<Text style={styles.summary}>{summary}</Text>
 								</>
@@ -1230,14 +1277,14 @@ export function NewSchedulingSection(props: any) {
 						{/* Expression du déclencheur solaire (séparée, n'altère pas le cron). */}
 						{solarStr && (
 							<View style={replaceMode ? undefined : styles.solarExprBox}>
-								<Text style={styles.sectionLabel}>Declencheur solaire</Text>
+								<Text style={styles.sectionLabel}>{i18n.t('cycle:cron.solar.title')}</Text>
 								<Text selectable style={styles.solarExpr}>
 									{solarStr}
 								</Text>
 								<Text style={styles.summary}>
 									{state.solar.mode === 'replace'
-										? 'Remplace le cron : declenche au ' + solarStr + ' chaque jour.'
-										: 'Combine au cron : aux jours du cron, a ' + solarStr + '.'}
+										? i18n.t('cycle:cron.solar.replaceSummary', {solar: solarStr})
+										: i18n.t('cycle:cron.solar.combineSummary', {solar: solarStr})}
 								</Text>
 							</View>
 						)}
@@ -1246,21 +1293,21 @@ export function NewSchedulingSection(props: any) {
 					{/* Prochaines exécutions */}
 					{!props.hideRuns && (
 					<View style={styles.outCard}>
-						<Text style={styles.sectionLabel}>Prochaines executions</Text>
+						<Text style={styles.sectionLabel}>{i18n.t('cycle:cron.nextRuns')}</Text>
 						{runs.length === 0 ? (
 							<Text style={styles.hint}>
-								Aucune correspondance trouvee dans la fenetre calculee.
+								{i18n.t('cycle:cron.noRuns')}
 							</Text>
 						) : (
 							runs.map((d, i) => (
 								<Text key={i} style={styles.runRow}>
-									{d.toLocaleDateString('fr-FR', {
+									{d.toLocaleDateString(i18n.language, {
 										weekday: 'short',
 										day: '2-digit',
 										month: 'short'
 									})}
 									{', '}
-									{d.toLocaleTimeString('fr-FR', {hour: '2-digit', minute: '2-digit'})}
+									{d.toLocaleTimeString(i18n.language, {hour: '2-digit', minute: '2-digit'})}
 								</Text>
 							))
 						)}

@@ -19,6 +19,7 @@ import {connect} from 'react-redux';
 import {isTempId, newTempId} from '../../../../services/socket';
 import {DropdownSelect} from '../../../components/common/FormComponents';
 import {placeholderColor} from '../../../styles/components/common/Input';
+import i18n from 'i18next';
 
 /**
  * ConditionBuilderSection — constructeur de conditions imbriquées.
@@ -360,12 +361,11 @@ export function ConditionBuilderSection(props: any) {
 				<TouchableOpacity style={styles.addButton} onPress={wrapInGroup}>
 					<Icon name="times-circle" size={30} color={C.accent} />
 				</TouchableOpacity>
-				<Text style={styles.addLabel}>Add new group ...</Text>
+				<Text style={styles.addLabel}>{i18n.t('cycle:conditions.addGroup')}</Text>
 			</View>
 
 			<Text style={styles.hint}>
-				Astuce : touchez ET / OU pour inverser le connecteur. Un groupe =
-				une parenthèse.
+				{i18n.t('cycle:conditions.builderHint')}
 			</Text>
 		</View>
 	);
@@ -421,7 +421,7 @@ function GroupView({
 									}
 								]}>
 								<Text style={styles.connectorTxt}>
-									{child.connector}
+									{i18n.t(`cycle:conditions.connector.${child.connector}`)}
 								</Text>
 							</TouchableOpacity>
 						</View>
@@ -458,7 +458,7 @@ function GroupView({
 					onPress={() => onAddCondition(group)}
 					style={[styles.btn, {flex: 1}]}>
 					<FontAwesomeIcon icon={faPlus} size={12} color={C.text} />
-					<Text style={styles.btnTxt}>Condition</Text>
+					<Text style={styles.btnTxt}>{i18n.t('cycle:conditions.condition')}</Text>
 				</TouchableOpacity>
 				<TouchableOpacity
 					onPress={() => onAddSubGroup(group)}
@@ -468,7 +468,7 @@ function GroupView({
 						size={12}
 						color={C.text}
 					/>
-					<Text style={styles.btnTxt}>Sous-groupe</Text>
+					<Text style={styles.btnTxt}>{i18n.t('cycle:conditions.subGroup')}</Text>
 				</TouchableOpacity>
 				{canDelete ? (
 					<TouchableOpacity
@@ -534,7 +534,9 @@ function ConditionRow({
 			<View style={styles.condTopRow}>
 				<TouchableOpacity onPress={toggleType} style={styles.typeBtn}>
 					<Text style={styles.typeBtnTxt}>
-						{isSensor ? 'Sensor' : 'Cycle'}
+						{isSensor
+							? i18n.t('cycle:conditions.sensor')
+							: i18n.t('cycle:conditions.cycle')}
 					</Text>
 				</TouchableOpacity>
 				<View style={{flex: 1}}>

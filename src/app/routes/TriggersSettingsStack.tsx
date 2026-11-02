@@ -1,4 +1,5 @@
 import React from 'react';
+import {useTranslation} from 'react-i18next';
 import {
 	StackNavigationOptions,
 	createStackNavigator
@@ -8,6 +9,7 @@ import TriggerExecutionSettingsSection from '../screens/cycle/triggers/settings/
 import TriggerGeneralSettingsSection from '../screens/cycle/triggers/settings/trigger/TriggerGeneralSettingsSection';
 
 export function TriggerSettingsStack() {
+	const {t} = useTranslation('navigation');
 	const options = (title: string) =>
 		({
 			headerTitleAlign: 'center',
@@ -21,17 +23,17 @@ export function TriggerSettingsStack() {
 			<Stack.Screen
 				name="TriggerSettingsMenu"
 				component={TriggerSettingsScreen}
-				options={options('Trigger Settings')}
+				options={options(t('triggerSettings'))}
 			/>
 			<Stack.Screen
 				name="TriggerGeneralSettingsSection"
 				component={TriggerGeneralSettingsSection}
-				options={options('General')}
+				options={options(t('general'))}
 			/>
 			<Stack.Screen
 				name="TriggerExecutionSettingsSection"
 				component={TriggerExecutionSettingsSection}
-				options={options('Execution')}
+				options={options(t('execution'))}
 			/>
 		</Stack.Navigator>
 	);

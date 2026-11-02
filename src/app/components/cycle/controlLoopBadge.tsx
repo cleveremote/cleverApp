@@ -1,4 +1,5 @@
 import React from 'react';
+import i18n from 'i18next';
 import {Text, View} from 'react-native';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {faGaugeHigh, faSliders} from '@fortawesome/free-solid-svg-icons';
@@ -17,7 +18,9 @@ export function controlLoopBadge(loop?: ControlLoop, color = '#32404e') {
 				color={color}
 			/>
 			<Text style={{color, fontSize: 11, marginLeft: 4}}>
-				{follow ? 'Follow' : 'Regulation'}
+				{follow
+					? i18n.t('cycle:controlLoop.follow')
+					: i18n.t('cycle:controlLoop.regulation')}
 			</Text>
 		</View>
 	);

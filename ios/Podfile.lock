@@ -2214,6 +2214,8 @@ PODS:
     - Yoga
   - react-native-orientation-locker (1.7.0):
     - React-Core
+  - react-native-restart (0.0.27):
+    - React-Core
   - react-native-safe-area-context (5.8.0):
     - boost
     - DoubleConversion
@@ -3071,6 +3073,34 @@ PODS:
     - Yoga
   - RNKeychain (8.2.0):
     - React-Core
+  - RNLocalize (3.7.2):
+    - boost
+    - DoubleConversion
+    - fast_float
+    - fmt
+    - glog
+    - hermes-engine
+    - RCT-Folly
+    - RCT-Folly/Fabric
+    - RCTRequired
+    - RCTTypeSafety
+    - React-Core
+    - React-debug
+    - React-Fabric
+    - React-featureflags
+    - React-graphics
+    - React-ImageManager
+    - React-jsi
+    - React-NativeModulesApple
+    - React-RCTFabric
+    - React-renderercss
+    - React-rendererdebug
+    - React-utils
+    - ReactCodegen
+    - ReactCommon/turbomodule/bridging
+    - ReactCommon/turbomodule/core
+    - SocketRocket
+    - Yoga
   - RNReactNativeHapticFeedback (1.14.0):
     - React-Core
   - RNReanimated (4.5.0):
@@ -3466,6 +3496,7 @@ DEPENDENCIES:
   - "react-native-keep-awake (from `../node_modules/@sayem314/react-native-keep-awake`)"
   - "react-native-netinfo (from `../node_modules/@react-native-community/netinfo`)"
   - react-native-orientation-locker (from `../node_modules/react-native-orientation-locker`)
+  - react-native-restart (from `../node_modules/react-native-restart`)
   - react-native-safe-area-context (from `../node_modules/react-native-safe-area-context`)
   - "react-native-slider (from `../node_modules/@react-native-community/slider`)"
   - react-native-zeroconf (from `../node_modules/react-native-zeroconf`)
@@ -3512,6 +3543,7 @@ DEPENDENCIES:
   - RNFS (from `../node_modules/react-native-fs`)
   - RNGestureHandler (from `../node_modules/react-native-gesture-handler`)
   - RNKeychain (from `../node_modules/react-native-keychain`)
+  - RNLocalize (from `../node_modules/react-native-localize`)
   - RNReactNativeHapticFeedback (from `../node_modules/react-native-haptic-feedback`)
   - RNReanimated (from `../node_modules/react-native-reanimated`)
   - RNScreens (from `../node_modules/react-native-screens`)
@@ -3642,6 +3674,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/@react-native-community/netinfo"
   react-native-orientation-locker:
     :path: "../node_modules/react-native-orientation-locker"
+  react-native-restart:
+    :path: "../node_modules/react-native-restart"
   react-native-safe-area-context:
     :path: "../node_modules/react-native-safe-area-context"
   react-native-slider:
@@ -3734,6 +3768,8 @@ EXTERNAL SOURCES:
     :path: "../node_modules/react-native-gesture-handler"
   RNKeychain:
     :path: "../node_modules/react-native-keychain"
+  RNLocalize:
+    :path: "../node_modules/react-native-localize"
   RNReactNativeHapticFeedback:
     :path: "../node_modules/react-native-haptic-feedback"
   RNReanimated:
@@ -3814,6 +3850,7 @@ SPEC CHECKSUMS:
   react-native-keep-awake: c3ccf9c2b610fba7b32898f04b251eb24a099e62
   react-native-netinfo: 5e036f49ab00a53569bcc0cbc2954b608b6532c3
   react-native-orientation-locker: 5819fd23ca89cbac0d736fb4314745f62716d517
+  react-native-restart: 7595693413fe3ca15893702f2c8306c62a708162
   react-native-safe-area-context: 7ee594b2c2aa287757c1ba78ac70278305bc7807
   react-native-slider: 8125113f9d7fcacb98787580bef633fde6063f29
   react-native-zeroconf: 14d6e0ee473f6abeb61573d9d0f5f6940a1fec4a
@@ -3860,6 +3897,7 @@ SPEC CHECKSUMS:
   RNFS: 4ac0f0ea233904cb798630b3c077808c06931688
   RNGestureHandler: 336ce8e4fb4f4eb3e0b7c18e092684caa0ace5b5
   RNKeychain: bfe3d12bf4620fe488771c414530bf16e88f3678
+  RNLocalize: a9f2d8b069bc68baec7041d0f4b66b801501d318
   RNReactNativeHapticFeedback: 1e3efeca9628ff9876ee7cdd9edec1b336913f8c
   RNReanimated: 63165afd816c933ac76b3e3535910bfab6ca89f1
   RNScreens: fc76f47e82d3616284684203ebab6e952dd7f28a

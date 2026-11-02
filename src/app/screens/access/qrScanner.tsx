@@ -7,6 +7,7 @@ import {
 	useCodeScanner
 } from 'react-native-vision-camera';
 import Icon from 'react-native-vector-icons/FontAwesome5';
+import {useTranslation} from 'react-i18next';
 
 /**
  * The camera half of the QR pairing screen, kept in its own module on purpose.
@@ -39,6 +40,7 @@ export function QrScanner({isActive, onScanned}: QrScannerProps) {
 	// onCodeScanned fires on every frame that holds a code; this keeps one QR
 	// from starting several pairing attempts.
 	const handledRef = useRef(false);
+	const {t} = useTranslation('access');
 
 	useEffect(() => {
 		if (!hasPermission) requestPermission();
@@ -65,14 +67,12 @@ export function QrScanner({isActive, onScanned}: QrScannerProps) {
 		return (
 			<View style={styles.centered}>
 				<Icon name="camera" size={40} color={COLORS.primary} />
-				<Text style={styles.title}>Accès à la caméra nécessaire</Text>
-				<Text style={styles.body}>
-					{"L'application a besoin de la caméra pour lire le QR code collé sur votre box."}
-				</Text>
+				<Text style={styles.title}>{t('qr.cameraRequired')}</Text>
+				<Text style={styles.body}>{t('qr.cameraRequiredBody')}</Text>
 				<TouchableOpacity
 					style={styles.button}
 					onPress={() => Linking.openSettings()}>
-					<Text style={styles.buttonText}>Ouvrir les réglages</Text>
+					<Text style={styles.buttonText}>{t('openSettings')}</Text>
 				</TouchableOpacity>
 			</View>
 		);
@@ -82,10 +82,8 @@ export function QrScanner({isActive, onScanned}: QrScannerProps) {
 		return (
 			<View style={styles.centered}>
 				<Icon name="video-slash" size={40} color={COLORS.primary} />
-				<Text style={styles.title}>Caméra indisponible</Text>
-				<Text style={styles.body}>
-					{"Aucune caméra arrière n'a été trouvée sur cet appareil."}
-				</Text>
+				<Text style={styles.title}>{t('qr.noCamera')}</Text>
+				<Text style={styles.body}>{t('qr.noCameraBody')}</Text>
 			</View>
 		);
 	}
@@ -101,7 +99,7 @@ export function QrScanner({isActive, onScanned}: QrScannerProps) {
 			<View style={styles.overlay} pointerEvents="none">
 				<View style={styles.reticle} />
 				<Text style={styles.overlayText}>
-					Visez le QR code collé sur la box
+					{t('qr.aim')}
 				</Text>
 			</View>
 		</View>

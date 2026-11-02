@@ -1,4 +1,5 @@
 import React from 'react';
+import {useTranslation} from 'react-i18next';
 import {
 	StackNavigationOptions,
 	createStackNavigator
@@ -14,6 +15,7 @@ import {SchedulesStack} from './SchedulesStack';
 import PlanScreen from '../screens/plan/PlanScreen';
 
 export function PlanStack() {
+	const {t} = useTranslation('navigation');
 	const options = (title: string) =>
 		({
 			headerTitleAlign: 'center',
@@ -29,7 +31,7 @@ export function PlanStack() {
 			<Stack.Screen
 				name="Plan"
 				component={PlanScreen}
-				options={options('Plan')}
+				options={options(t('plan'))}
 			/>
 		</Stack.Navigator>
 	);

@@ -1,4 +1,5 @@
 import React, {useEffect, useRef, useState} from 'react';
+import i18n from 'i18next';
 import {
 	View,
 	Text,
@@ -376,7 +377,7 @@ export function FertigationScreen(props: any) {
 					<Circle cx={243} cy={91} r={4} fill={mainActive ? '#42a5f5' : '#888780'} stroke="#5f5e5a" strokeWidth={1} />
 				</G>
 
-				<SvgText x={-8496.0654} y={-24283.902} fontSize={9} fill="#444441" fontWeight="600" textAnchor="middle">VAL_1</SvgText>
+				<SvgText x={-8496.0654} y={-24283.902} fontSize={9} fill="#444441" fontWeight="600" textAnchor="middle">{'VAL_1' /* repère technique, non traduit */}</SvgText>
 
 				{/* ===== Check valves (clapets anti-retour) ===== */}
 				<G transform="translate(-8975.6854,-24604.447)">
@@ -396,8 +397,8 @@ export function FertigationScreen(props: any) {
 					<Line x1={189} y1={113} x2={175} y2={113} stroke="#8a6e20" strokeWidth={1.5} strokeLinecap="round" />
 					<Polygon points="180,116 175,113 180,110" fill="#8a6e20" />
 				</G>
-				<SvgText x={-8556.7852} y={-24339.807} fontSize={9} fill="#444441" fontWeight="600">VAL_1</SvgText>
-				<SvgText x={-8655.5244} y={-24339.807} fontSize={9} fill="#444441" fontWeight="600">VAL_1</SvgText>
+				<SvgText x={-8556.7852} y={-24339.807} fontSize={9} fill="#444441" fontWeight="600">{'VAL_1' /* repère technique, non traduit */}</SvgText>
+				<SvgText x={-8655.5244} y={-24339.807} fontSize={9} fill="#444441" fontWeight="600">{'VAL_1' /* repère technique, non traduit */}</SvgText>
 
 				{/* ===== Manometer ===== */}
 				<G transform="matrix(-0.68399727,0,0,0.68119073,-8245.6769,-24344.611)">
@@ -641,7 +642,7 @@ export function FertigationScreen(props: any) {
 				{/* Label box (the tappable square) */}
 				<Rect x={-8849.7832} y={-24377.717} width={132.03777} height={25.29459} rx={1.5} fill="#ebe6e4" stroke="#111111" strokeWidth={2.5} />
 				<SvgText x={-8783.764} y={-24360.5} fontSize={11} fill="#7B1FA2" fontWeight="700" textAnchor="middle">
-					Fertigation system
+					{i18n.t('fertigation:system')}
 				</SvgText>
 				{/* Two purple injection dashes: left flows up, right flows down */}
 				{fertigationRunning && (
@@ -669,7 +670,7 @@ export function FertigationScreen(props: any) {
 			</GestureDetector>
 
 			<Text style={styles.zoomHint}>
-				Pincez pour zoomer · glissez pour déplacer · double-tap pour réinitialiser
+				{i18n.t('fertigation:zoomHint')}
 			</Text>
 
 			{/* ===== Controls ===== */}
@@ -679,7 +680,7 @@ export function FertigationScreen(props: any) {
 				activeOpacity={0.8}>
 				<Icon name={running ? 'pause' : 'play'} size={18} color="#fff" style={styles.btnIcon} />
 				<Text style={styles.buttonText}>
-					{running ? 'Arrêter le circuit' : 'Démarrer le circuit'}
+					{running ? i18n.t('fertigation:stopCircuit') : i18n.t('fertigation:startCircuit')}
 				</Text>
 			</TouchableOpacity>
 
@@ -689,7 +690,9 @@ export function FertigationScreen(props: any) {
 				activeOpacity={0.8}>
 				<Icon name="flask" size={18} color="#fff" style={styles.btnIcon} />
 				<Text style={styles.buttonText}>
-					{fertigationRunning ? 'Arrêter la fertigation' : 'Démarrer la fertigation'}
+					{fertigationRunning
+						? i18n.t('fertigation:stopFertigation')
+						: i18n.t('fertigation:startFertigation')}
 				</Text>
 			</TouchableOpacity>
 

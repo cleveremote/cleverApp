@@ -28,6 +28,7 @@ import ConditionBuilderSection, {
 	isConditionIncomplete
 } from '../../conditions/ConditionBuilderSection';
 import SequenceActuatorsSettingsSection from './SequenceActuatorsSettingsSection';
+import i18n from 'i18next';
 
 function SequenceSettingsScreen(props: any) {
 	// Pas d'`id` en params = création → le rond de droite affiche un « + » (Add).
@@ -187,16 +188,16 @@ function SequenceSettingsScreen(props: any) {
 						return;
 					e.preventDefault();
 					Alert.alert(
-						'Discard changes?',
-						'You have unsaved changes. Would you like to continue editing or discard them?',
+						i18n.t('common:discard.title'),
+						i18n.t('common:discard.message'),
 						[
 							{
-								text: 'Continue',
+								text: i18n.t('common:discard.continue'),
 								style: 'cancel',
 								onPress: () => {}
 							},
 							{
-								text: 'Discard',
+								text: i18n.t('common:discard.confirm'),
 								style: 'destructive',
 								onPress: () => {
 									listenerUnsubscribe();
@@ -235,7 +236,7 @@ function SequenceSettingsScreen(props: any) {
 					<MenuGroup>
 						<MenuAccordion
 							key={21}
-							name={'General'}
+							name={i18n.t('common:sections.general')}
 							icon={faGear}
 							invalid={invalidSections.general}
 							onPress={() => {}}>
@@ -248,7 +249,7 @@ function SequenceSettingsScreen(props: any) {
 						</MenuAccordion>
 						<MenuAccordion
 							key={41}
-							name={'Security'}
+							name={i18n.t('common:sections.security')}
 							icon={faShieldHalved}
 							invalid={invalidSections.security}
 							onPress={() => {}}>
@@ -262,7 +263,7 @@ function SequenceSettingsScreen(props: any) {
 
 						<MenuAccordion
 							key={55}
-							name={'Conditions'}
+							name={i18n.t('common:sections.conditions')}
 							icon={faCheckDouble}
 							invalid={invalidSections.conditions}
 							onPress={() => {}}>
@@ -283,7 +284,7 @@ function SequenceSettingsScreen(props: any) {
 
 						<MenuAccordion
 							key={51}
-							name={'Actuators'}
+							name={i18n.t('common:sections.actuators')}
 							icon={faEthernet}
 							onPress={() => {}}>
 							<SequenceActuatorsSettingsSection
@@ -297,9 +298,9 @@ function SequenceSettingsScreen(props: any) {
 						{!isNew && !isModule && (
 							<DeleteItemMenu
 								key={61}
-								name="Remove"
-								confirmTitle="Remove sequence"
-								confirmMessage="Are you sure you want to remove this sequence from the list?"
+								name={i18n.t('common:remove')}
+								confirmTitle={i18n.t('cycle:sequence.removeTitle')}
+								confirmMessage={i18n.t('cycle:sequence.removeMessage')}
 								OnConfirm={() => {
 									_deleteItem();
 								}}

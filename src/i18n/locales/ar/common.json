@@ -1,0 +1,82 @@
+{
+	"yes": "نعم",
+	"no": "لا",
+	"cancel": "إلغاء",
+	"execute": "تنفيذ",
+	"remove": "حذف",
+	"notValid": "غير صالح",
+	"longPressToRemove": "(اضغط مطولاً للحذف)",
+	"unknownError": "خطأ غير معروف",
+	"confirm": {
+		"title": "التأكيد مطلوب!",
+		"irreversible": "لا يمكن التراجع عن هذا الإجراء. لا يمكن استعادة البيانات المحذوفة."
+	},
+	"overrideDuration": {
+		"title": "فرض المدة",
+		"message": "أدخل مدة (بالمللي ثانية) لاستبدال المدة الافتراضية للتسلسلات"
+	},
+	"discard": {
+		"title": "تجاهل التغييرات؟",
+		"message": "لديك تغييرات غير محفوظة. هل تريد متابعة التعديل أم تجاهلها؟",
+		"continue": "متابعة",
+		"confirm": "تجاهل",
+		"leaveMessage": "لديك تغييرات غير محفوظة. هل تريد بالتأكيد تجاهلها ومغادرة الشاشة؟",
+		"invalidMessage": "بعض الحقول غير صالحة أو غير مكتملة. هل تريد تجاهل التغييرات أم متابعة التعديل؟"
+	},
+	"priority": {
+		"highest": "الأعلى",
+		"lowest": "الأدنى"
+	},
+	"back": "رجوع",
+	"retry": "إعادة المحاولة",
+	"password": "كلمة المرور",
+	"error": "خطأ",
+	"errors": {
+		"noServer": "لا يوجد اتصال بالخادم!",
+		"unexpected": "حدث خطأ غير متوقع."
+	},
+	"ble": {
+		"notConnected": "الجهاز غير متصل",
+		"disconnected": "تم قطع اتصال الجهاز",
+		"bluetoothOff": "البلوتوث متوقف",
+		"locationDisabled": "خدمات الموقع معطّلة",
+		"permissionDenied": "لم يتم منح الأذونات"
+	},
+	"devicesUnreachable": {
+		"title": "أجهزة يتعذّر الوصول إليها",
+		"message": "لا يمكن بدء «{{name}}»:\n{{devices}}",
+		"master": "يتعذّر الوصول إلى الجهاز الرئيسي «{{name}}»"
+	},
+	"defaults": {
+		"newGroup": "مجموعة جديدة",
+		"newModule": "وحدة جديدة",
+		"newCycle": "دورة جديدة",
+		"newScheduledSensor": "مستشعر مجدول جديد",
+		"newSchedule": "جدول زمني جديد",
+		"newSequence": "تسلسل جديد",
+		"newTrigger": "مشغِّل آلي جديد",
+		"newCondition": "شرط جديد"
+	},
+	"modes": {
+		"MANUAL": "يدوي",
+		"SCHEDULED": "مجدول",
+		"TRIGGER": "مشغِّل آلي"
+	},
+	"save": "حفظ",
+	"form": {
+		"name": "الاسم*",
+		"nameRequired": "الاسم مطلوب",
+		"description": "الوصف"
+	},
+	"sections": {
+		"general": "عام",
+		"conditions": "الشروط",
+		"security": "الأمان",
+		"actuators": "المشغلات",
+		"configuration": "التهيئة",
+		"parameters": "المعلمات",
+		"execution": "التنفيذ",
+		"cycles": "الدورات",
+		"sequences": "التسلسلات"
+	}
+}

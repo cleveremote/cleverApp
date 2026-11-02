@@ -1,4 +1,5 @@
 import {newTempId, isTempId} from '../../../../../services/socket';
+import i18n from 'i18next';
 
 export const loadTriggers = (cycle: any) => {
 	return cycle?.triggers || [];
@@ -15,8 +16,8 @@ export const loadTrigger = (
 		return {
 			id: newTempId(),
 			cycleId: cycleId,
-			name: 'new trigger',
-			description: 'new trigger',
+			name: i18n.t('common:defaults.newTrigger'),
+			description: i18n.t('common:defaults.newTrigger'),
 			action: 'ON',
 			delay: 5000,
 			trigger: {timeAfter: 5000},

@@ -8,6 +8,7 @@ import {
 import {BoxFormStyle} from '../../styles/components/common/boxForm';
 import {updateActuator} from '../../../module/process/infrasctructure/store/actions/actuator';
 import {useActuatorSection} from './useActuatorSection';
+import i18n from 'i18next';
 
 // Actuator General: Name + Description. Le type est porté par la section
 // Configuration, dont il détermine les champs.
@@ -31,15 +32,15 @@ export function ActuatorGeneralSettingsSection(props: any) {
 					errors={errors}
 					name="name"
 					maxLength={25}
-					placeholder="Name*"
-					rules={{required: 'Name is required'}}
+					placeholder={i18n.t('common:form.name')}
+					rules={{required: i18n.t('common:form.nameRequired')}}
 					onChangeText={() => markDirty()}
 				/>
 				<TextAreaForm
 					control={control}
 					errors={errors}
 					name="description"
-					placeholder="Description"
+					placeholder={i18n.t('common:form.description')}
 					onChangeText={() => markDirty()}
 				/>
 			</Body>

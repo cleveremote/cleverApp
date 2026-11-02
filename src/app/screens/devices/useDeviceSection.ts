@@ -8,6 +8,7 @@ import {
 	useValidateOnOpen,
 	useEmbeddedSection
 } from '../../components/common/useSectionSettingsHeader';
+import i18n from 'i18next';
 
 // Form + persistence plumbing shared by the master/slave General & Configuration
 // sections. Reads the entity from `route.params.deviceData`, and on back-nav
@@ -108,12 +109,12 @@ export function useDeviceSection(
 					},
 					() => {
 						Alert.alert(
-							'Discard changes?',
-							'Some fields contain invalid or incomplete information. Would you like to discard changes or continue editing?',
+							i18n.t('common:discard.title'),
+							i18n.t('common:discard.invalidMessage'),
 							[
-								{text: 'Continue', style: 'cancel'},
+								{text: i18n.t('common:discard.continue'), style: 'cancel'},
 								{
-									text: 'Discard',
+									text: i18n.t('common:discard.confirm'),
 									style: 'destructive',
 									onPress: leave
 								}

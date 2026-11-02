@@ -6,6 +6,7 @@ import {
 	View
 } from 'react-native';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
+import i18n from 'i18next';
 import {connect} from 'react-redux';
 import {faCog, faMagnifyingGlass} from '@fortawesome/free-solid-svg-icons';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
@@ -54,8 +55,8 @@ export function SlaveDevicesSection(props: any) {
 			discoverTimeout.current = null;
 			setDiscovering(false);
 			Alert.alert(
-				'Discovery timed out',
-				'The box did not answer. Check the connection and try again.'
+				i18n.t('devices:discovery.timeout'),
+				i18n.t('devices:connectivity.timeoutMessage')
 			);
 		}, DISCOVERY_TIMEOUT_MS);
 		props.discoverDevices(masterRef.current.id, done);
@@ -84,8 +85,8 @@ export function SlaveDevicesSection(props: any) {
 	const requireSavedMaster = (): boolean => {
 		if (isTempId(masterRef.current?.id)) {
 			Alert.alert(
-				'Save the master first',
-				'Go back once to save this master device before adding or discovering slaves.'
+				i18n.t('devices:saveMasterFirst'),
+				i18n.t('devices:saveMasterFirstMessage')
 			);
 			return false;
 		}
@@ -119,7 +120,7 @@ export function SlaveDevicesSection(props: any) {
 								}
 							);
 						},
-						`${slave.name ?? 'slave'}`,
+						`${slave.name ?? i18n.t('devices:slaveFallback')}`,
 						{name: faCog, color: styles.icon.color},
 						undefined,
 						undefined,
@@ -152,7 +153,9 @@ export function SlaveDevicesSection(props: any) {
 						/>
 					)}
 					<Text style={styles.discoverLabel}>
-						{discovering ? 'Discovering…' : 'Discover new devices'}
+						{discovering
+							? i18n.t('devices:discovery.running')
+							: i18n.t('devices:discovery.start')}
 					</Text>
 				</TouchableOpacity>
 			</View>

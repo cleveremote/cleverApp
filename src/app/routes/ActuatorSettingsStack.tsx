@@ -1,4 +1,5 @@
 import React from 'react';
+import {useTranslation} from 'react-i18next';
 import {
 	StackNavigationOptions,
 	createStackNavigator
@@ -8,6 +9,7 @@ import ActuatorGeneralSettingsSection from '../screens/actuators/ActuatorGeneral
 import ActuatorConfigurationSettingsSection from '../screens/actuators/ActuatorConfigurationSettingsSection';
 
 export function ActuatorSettingsStack() {
+	const {t} = useTranslation('navigation');
 	const options = (title: string) =>
 		({
 			headerTitleAlign: 'center',
@@ -21,17 +23,17 @@ export function ActuatorSettingsStack() {
 			<Stack.Screen
 				name="ActuatorSettingsMenu"
 				component={ActuatorSettingsScreen}
-				options={options('Actuator')}
+				options={options(t('actuator'))}
 			/>
 			<Stack.Screen
 				name="ActuatorGeneralSection"
 				component={ActuatorGeneralSettingsSection}
-				options={options('General')}
+				options={options(t('general'))}
 			/>
 			<Stack.Screen
 				name="ActuatorConfigurationSection"
 				component={ActuatorConfigurationSettingsSection}
-				options={options('Configuration')}
+				options={options(t('configuration'))}
 			/>
 		</Stack.Navigator>
 	);

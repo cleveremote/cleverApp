@@ -1,4 +1,5 @@
 import React from 'react';
+import {useTranslation} from 'react-i18next';
 import {
 	StackNavigationOptions,
 	createStackNavigator
@@ -8,6 +9,7 @@ import ConditionGeneralSettingsSection from '../screens/cycle/conditions/Conditi
 import ConditionSettingsScreen from '../screens/cycle/conditions/ConditionSettingsScreen';
 
 export function ConditionSettingsStack() {
+	const {t} = useTranslation('navigation');
 	const options = (title: string) =>
 		({
 			headerTitleAlign: 'center',
@@ -21,17 +23,17 @@ export function ConditionSettingsStack() {
 			<Stack.Screen
 				name="ConditionSettingsScreen"
 				component={ConditionSettingsScreen}
-				options={options('Condition settings')}
+				options={options(t('conditionSettings'))}
 			/>
 			<Stack.Screen
 				name="ConditionGeneralSettingsSection"
 				component={ConditionGeneralSettingsSection}
-				options={options('General')}
+				options={options(t('general'))}
 			/>
 			<Stack.Screen
 				name="ConditionParamSettingsSection"
 				component={ConditionParamSettingsSection}
-				options={options('Parameters')}
+				options={options(t('parameters'))}
 			/>
 		</Stack.Navigator>
 	);

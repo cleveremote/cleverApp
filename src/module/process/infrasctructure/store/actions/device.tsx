@@ -17,6 +17,7 @@ import {
 } from '../../../../../services/socket';
 import {loadConfiguration} from './common';
 import {parseConnectivity} from '../models/deviceConnectivity';
+import {currentLanguage} from '../../../../../i18n/language';
 
 export const updateDevice =
 	(device: any): ThunkAction<void, RootState, unknown, AnyAction> =>
@@ -206,7 +207,7 @@ export const executeDeviceCommand =
 	async () => {
 		socketService.emitSilent(
 			'front/box/execute/device-command',
-			denormalizeIds(payload),
+			{...denormalizeIds(payload), lang: currentLanguage()},
 			(response: any) => {
 				let parsed = response;
 				if (typeof response === 'string') {

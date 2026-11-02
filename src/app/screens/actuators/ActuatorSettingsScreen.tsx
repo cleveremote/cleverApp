@@ -31,6 +31,7 @@ import {
 import ActuatorGeneralSettingsSection from './ActuatorGeneralSettingsSection';
 import ActuatorConfigurationSettingsSection from './ActuatorConfigurationSettingsSection';
 import ActuatorRegulationSettingsSection from './ActuatorRegulationSettingsSection';
+import i18n from 'i18next';
 
 // La section Configuration est « not valid » tant que les champs requis du type
 // courant ne sont pas renseignés — mêmes règles que le sous-formulaire.
@@ -178,7 +179,7 @@ export function ActuatorSettingsScreen(props: any) {
 			<MenuGroup style={styles.card}>
 				<MenuAccordion
 					key={1}
-					name={'General'}
+					name={i18n.t('common:sections.general')}
 					icon={faGear}
 					invalid={invalidSections.general}
 					onPress={() => {}}>
@@ -194,7 +195,7 @@ export function ActuatorSettingsScreen(props: any) {
 				</MenuAccordion>
 				<MenuAccordion
 					key={2}
-					name={'Configuration'}
+					name={i18n.t('common:sections.configuration')}
 					icon={faSliders}
 					invalid={invalidSections.configuration}
 					onPress={() => {}}>
@@ -214,7 +215,7 @@ export function ActuatorSettingsScreen(props: any) {
 				{isCtrl && (
 					<MenuAccordion
 						key={3}
-						name={'Regulation'}
+						name={i18n.t('cycle:controlLoop.regulation')}
 						icon={faGaugeHigh}
 						invalid={invalidSections.regulation}
 						onPress={() => {}}>

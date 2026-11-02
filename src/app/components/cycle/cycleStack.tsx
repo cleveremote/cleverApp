@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { Alert, Pressable, TouchableOpacity, View } from 'react-native';
 import { Text } from 'react-native';
+import i18n from 'i18next';
 import Animated, { FadeInDown } from 'react-native-reanimated';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import Icon from 'react-native-vector-icons/FontAwesome5';
@@ -162,6 +163,10 @@ export function CycleStack({
 	);
 }
 
+// Le glyphe ne doit pas s’étirer sur toute la zone du menu : il y serait
+// calé à gauche même en RTL et passerait sous le titre de la carte.
+export const MENU_ICON_STYLE = {alignSelf: 'flex-start'} as const;
+
 export function MenuCycle({
 	navigation,
 	cycleData,
@@ -193,13 +198,13 @@ export function MenuCycle({
 
 	const onPress = () => {
 		ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
-		setIsOpened(!isOpened);
+		setIsOpened(prev => !prev);
 	};
 
 	const menuItems = [
 		{
 			name: 'cog',
-			label: 'Settings',
+			label: i18n.t('cycle:menu.settings'),
 			action: () => {
 				ReactNativeHapticFeedback.trigger(
 					'impactMedium',
@@ -217,7 +222,7 @@ export function MenuCycle({
 			: [
 				{
 					name: 'stopwatch',
-					label: 'Override',
+					label: i18n.t('cycle:menu.override'),
 					action: () => {
 						onToggle();
 						onPress();
@@ -227,7 +232,7 @@ export function MenuCycle({
 			]),
 		{
 			name: 'history',
-			label: 'Schedules',
+			label: i18n.t('cycle:menu.schedules'),
 			action: () => {
 				ReactNativeHapticFeedback.trigger(
 					'impactMedium',
@@ -245,7 +250,7 @@ export function MenuCycle({
 
 		{
 			name: 'bullseye',
-			label: 'Triggers',
+			label: i18n.t('cycle:menu.triggers'),
 			action: () => {
 				ReactNativeHapticFeedback.trigger(
 					'impactMedium',
@@ -260,7 +265,7 @@ export function MenuCycle({
 		},
 		{
 			name: 'tasks',
-			label: 'Events',
+			label: i18n.t('cycle:menu.events'),
 			action: () => {
 				ReactNativeHapticFeedback.trigger(
 					'impactMedium',
@@ -288,14 +293,14 @@ export function MenuCycle({
 							onToggle();
 						} else {
 							Alert.alert(
-								'Cycle in process!\nTo access settings please stop the process'
+								i18n.t('cycle:menu.inProcess')
 							);
 						}
 					}}>
-					<Icon size={30} name="bars" color={iconColor} />
+					<Icon size={30} name="bars" color={iconColor} style={MENU_ICON_STYLE} />
 				</TouchableOpacity>
 			) : (
-				<Icon size={30} name="user-check" color={iconColor} />
+				<Icon size={30} name="user-check" color={iconColor} style={MENU_ICON_STYLE} />
 			)}
 			{isOpen && (
 				<View>
@@ -343,11 +348,8 @@ export function MenuCycle({
 
 			<ModalOverrideDuration
 				isOpen={isOpened}
-				onClose={onPress}
-				onConfirm={(ms: number) => {
-					onExecute(cycleData.id, ms);
-					onPress();
-				}}
+				onClose={() => setIsOpened(false)}
+				onConfirm={(ms: number) => onExecute(cycleData.id, ms)}
 			/>
 		</View>
 	);

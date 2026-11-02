@@ -1,4 +1,5 @@
 import React, {useEffect} from 'react';
+import i18n from 'i18next';
 import {View} from 'react-native';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import {faPlus} from '@fortawesome/free-solid-svg-icons';
@@ -41,7 +42,7 @@ export function SensorMenuScreen(props: any) {
 				}}>
 				<MenuAccordion
 					key={21}
-					name={'Create sensor'}
+					name={i18n.t('sensor:create')}
 					icon={faPlus}
 					onPress={() => {
 						props.navigation.navigate('Settings', {

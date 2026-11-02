@@ -23,6 +23,7 @@ import ConditionBuilderSection, {
 } from '../../../conditions/ConditionBuilderSection';
 import TriggerGeneralSettingsSection from './TriggerGeneralSettingsSection';
 import TriggerExecutionSettingsSection from './TriggerExecutionSettingsSection';
+import i18n from 'i18next';
 
 export function TriggerSettingsScreen(props: any) {
 	const isNew = !props.route.params.trigger?.id;
@@ -78,7 +79,7 @@ export function TriggerSettingsScreen(props: any) {
 			<MenuGroup style={styles.card}>
 				<MenuAccordion
 					key={21}
-					name={'General'}
+					name={i18n.t('common:sections.general')}
 					icon={faGear}
 					invalid={invalidSections.general}
 					onPress={() => {}}>
@@ -91,7 +92,7 @@ export function TriggerSettingsScreen(props: any) {
 				</MenuAccordion>
 				<MenuAccordion
 					key={41}
-					name={'Execution'}
+					name={i18n.t('common:sections.execution')}
 					icon={faBolt}
 					invalid={invalidSections.execution}
 					onPress={() => {}}>
@@ -104,7 +105,7 @@ export function TriggerSettingsScreen(props: any) {
 				</MenuAccordion>
 				<MenuAccordion
 					key={51}
-					name={'Conditions'}
+					name={i18n.t('common:sections.conditions')}
 					icon={faCheckDouble}
 					invalid={invalidSections.conditions}
 					onPress={() => {}}>

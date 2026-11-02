@@ -3,6 +3,8 @@
 // which config shape the `config` object carries — RPI (GPIO of the Raspberry),
 // COM (modbus commands) and CTRL (a COM actuator with a regulation loop).
 
+import {valueLabel} from '../../i18n';
+
 export enum ActuatorType {
 	RPI = 'RPI',
 	COM = 'COM',
@@ -31,8 +33,14 @@ export enum ValveType {
 	ON_OFF = 'ON_OFF'
 }
 
+// Codes de la box : libellé traduit s'il existe (actuators:enum), sinon le code.
 const toOptions = (e: Record<string, string>) =>
-	Object.values(e).map(value => ({label: value, value}));
+	Object.values(e).map(value => ({
+		get label() {
+			return valueLabel('actuators:enum', value);
+		},
+		value
+	}));
 
 export const actuatorTypeOptions = toOptions(ActuatorType);
 export const gpioDirectionOptions = toOptions(GPIODirection);

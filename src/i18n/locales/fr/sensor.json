@@ -1,0 +1,87 @@
+{
+	"create": "Créer un capteur",
+	"theme": "Thème du capteur*",
+	"every": {
+		"second_one": "Chaque seconde",
+		"second_other": "Toutes les {{count}} secondes",
+		"minute_one": "Chaque minute",
+		"minute_other": "Toutes les {{count}} minutes",
+		"hour_one": "Chaque heure",
+		"hour_other": "Toutes les {{count}} heures"
+	},
+	"age": {
+		"justNow": "à l'instant",
+		"minutes_one": "il y a {{count}} min",
+		"minutes_other": "il y a {{count}} min",
+		"hours_one": "il y a {{count}} h",
+		"hours_other": "il y a {{count}} h"
+	},
+	"dataSource": {
+		"saveFirst": "Enregistrez d'abord",
+		"saveFirstMessage": "Enregistrez ce capteur avant de créer ses mesures.",
+		"createMeasure": "Créer la mesure",
+		"createMeasureMessage": "Créer le capteur « {{name}} » ?",
+		"create": "Créer",
+		"noCommand": "Aucune commande d'équipement liée à ce capteur. Choisissez un équipement et une requête dans Configuration.",
+		"value": "Valeur",
+		"updated": "Mis à jour {{age}}",
+		"from": "Depuis",
+		"unknownParent": "Parent inconnu",
+		"readInherited": "Lecture {{frequency}} (héritée)",
+		"device": "Équipement",
+		"reading": "Lecture",
+		"frequency": "Fréquence",
+		"notSet": "Non défini",
+		"channel": "Canal",
+		"valueRead": "Valeur lue",
+		"measuresProduced": "Mesures produites ({{linked}} / {{total}})",
+		"noMeasure": "Cette lecture ne produit encore aucune mesure. Créez celles que vous voulez suivre.",
+		"technicalFields_one": "Champs techniques ({{count}})",
+		"technicalFields_other": "Champs techniques ({{count}})",
+		"measureProduced": "Mesure produite"
+	},
+	"analog": {
+		"scaling": "Mise à l'échelle",
+		"signal": {
+			"VOLTAGE": "Tension (V)",
+			"CURRENT": "Courant (mA)",
+			"RAW": "Valeur brute"
+		},
+		"outOfRange": {
+			"CLAMP": "Borner à la plage de sortie",
+			"EXTRAPOLATE": "Extrapoler",
+			"ERROR": "Erreur"
+		},
+		"fieldRequired": "{{field}} est obligatoire",
+		"mustBeNumber": "Doit être un nombre",
+		"signalType": "Type de signal*",
+		"signalTypeRequired": "Le type de signal est obligatoire",
+		"inputMin": "Entrée min",
+		"inputMax": "Entrée max",
+		"inputMaxDiffers": "L'entrée max doit être différente de l'entrée min",
+		"unit": "Unité*",
+		"unitRequired": "L'unité est obligatoire",
+		"outputMin": "Sortie min",
+		"outputMax": "Sortie max",
+		"outOfRangeLabel": "Hors plage*",
+		"outOfRangeRequired": "Le comportement hors plage est obligatoire",
+		"invertedHint": "Les plages inversées sont autorisées (ex. 4-20 mA → 10-0 bar)."
+	},
+	"config": {
+		"invalidCron": "Expression cron invalide",
+		"type": "Type*",
+		"typeRequired": "Le type est obligatoire",
+		"isChild": "Capteur enfant",
+		"parent": "Capteur parent*",
+		"parentRequired": "Le capteur parent est obligatoire",
+		"cron": "Expression cron",
+		"cronRequired": "L'expression cron est obligatoire",
+		"forecast": "Données de prévision*",
+		"forecastRequired": "Les données de prévision sont obligatoires",
+		"request": "Requête",
+		"code": "Code",
+		"scale": "Échelle",
+		"unit": "Unité",
+		"enabled": "Activé"
+	}
+}

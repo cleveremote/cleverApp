@@ -1,4 +1,5 @@
 import React from 'react';
+import {useTranslation} from 'react-i18next';
 import {
 	StackNavigationOptions,
 	createStackNavigator
@@ -9,6 +10,7 @@ import SlaveDevicesSection from '../screens/devices/master/SlaveDevicesSection';
 import {SlaveDeviceSettingsStack} from './SlaveDeviceSettingsStack';
 
 export function MasterDeviceSettingsStack() {
+	const {t} = useTranslation('navigation');
 	const options = (title: string) =>
 		({
 			headerTitleAlign: 'center',
@@ -22,17 +24,17 @@ export function MasterDeviceSettingsStack() {
 			<Stack.Screen
 				name="MasterDeviceSettingsMenu"
 				component={MasterDeviceSettingsScreen}
-				options={options('Master Device')}
+				options={options(t('masterDevice'))}
 			/>
 			<Stack.Screen
 				name="MasterGeneralSection"
 				component={MasterGeneralSettingsSection}
-				options={options('General')}
+				options={options(t('general'))}
 			/>
 			<Stack.Screen
 				name="SlaveDevicesSection"
 				component={SlaveDevicesSection}
-				options={options('Slave Devices')}
+				options={options(t('slaveDevices'))}
 			/>
 			<Stack.Screen
 				name="SlaveDeviceSettingsStack"

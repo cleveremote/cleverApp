@@ -8,6 +8,8 @@ import {
 	View
 } from 'react-native';
 import Spinner from 'react-native-loading-spinner-overlay';
+import i18n from 'i18next';
+import {useTranslation} from 'react-i18next';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import {useIsFocused, useNavigation} from '@react-navigation/native';
@@ -55,24 +57,13 @@ type Phase =
 	| 'error';
 
 /** Every failure the flow can surface, phrased for the person holding the phone. */
-const ERROR_HINTS: Record<HotspotErrorCode, string> = {
-	INVALID_QR: "Ce QR code n'est pas un code d'appairage CleverBox.",
-	PERMISSION_DENIED:
-		'Autorisation refusée. Accordez-la dans les réglages pour rejoindre la box.',
-	TIMEOUT:
-		"La box n'a pas répondu. Vérifiez qu'elle est allumée et à portée, puis réessayez.",
-	USER_CANCELLED: 'Connexion annulée.',
-	UNSUPPORTED:
-		"Cet appareil ne peut pas rejoindre un réseau Wi-Fi depuis l'application.",
-	LOCATION_DISABLED:
-		'Activez la localisation pour que le téléphone puisse rejoindre le réseau de la box.',
-	NOT_IMPLEMENTED: '',
-	UNKNOWN: 'Échec de la connexion au hotspot.'
-};
+const errorHint = (code: HotspotErrorCode) =>
+	i18n.t(`access:hotspotError.${code}`);
 
 type ScannerComponent = React.ComponentType<QrScannerProps>;
 
 export function ScanBoxScreen(props: any) {
+	const {t} = useTranslation(['access', 'common']);
 	const nav = useNavigation();
 	const isFocused = useIsFocused();
 
@@ -158,13 +149,13 @@ export function ScanBoxScreen(props: any) {
 			const err = e instanceof Error ? e : new Error(String(e));
 			setTestResult(
 				err.name === 'AbortError'
-					? `Timeout après ${TEST_TIMEOUT_MS / 1000} s — aucune réponse de ${TEST_URL}`
+					? t('scan.testTimeout', {seconds: TEST_TIMEOUT_MS / 1000, url: TEST_URL})
 					: `${err.name}: ${err.message}`
 			);
 		} finally {
 			setTestRunning(false);
 		}
-	}, []);
+	}, [t]);
 
 	const pair = useCallback(
 		async (raw: string) => {
@@ -182,7 +173,7 @@ export function ScanBoxScreen(props: any) {
 					e instanceof HotspotError
 						? e
 						: new HotspotError('INVALID_QR', String(e));
-				setError(parseError.message || ERROR_HINTS.INVALID_QR);
+				setError(parseError.message || errorHint('INVALID_QR'));
 				setPhase('error');
 				return;
 			}
@@ -207,7 +198,7 @@ export function ScanBoxScreen(props: any) {
 					return;
 				}
 
-				setError(ERROR_HINTS[hotspotError.code] || hotspotError.message);
+				setError(errorHint(hotspotError.code) || hotspotError.message);
 				setPhase('error');
 			}
 		},
@@ -220,18 +211,14 @@ export function ScanBoxScreen(props: any) {
 		return (
 			<Centered>
 				<Icon name="camera" size={40} color={COLORS.danger} />
-				<Text style={styles.title}>Caméra non disponible</Text>
-				<Text style={styles.body}>
-					{
-						"Le module natif de la caméra n'est pas présent dans cette version de l'application. Reconstruisez l'app (react-native run-android / run-ios) : un rechargement de Metro ne suffit pas."
-					}
-				</Text>
+				<Text style={styles.title}>{t('scan.cameraUnavailable')}</Text>
+				<Text style={styles.body}>{t('scan.cameraModuleMissing')}</Text>
 				<PrimaryButton
-					label="Retour"
+					label={t('common:back')}
 					onPress={() => props.navigation.goBack()}
 				/>
 				<TouchableOpacity onPress={() => setPhase('test')}>
-					<Text style={styles.link}>Test réseau</Text>
+					<Text style={styles.link}>{t('scan.networkTest')}</Text>
 				</TouchableOpacity>
 			</Centered>
 		);
@@ -242,13 +229,13 @@ export function ScanBoxScreen(props: any) {
 			<ScrollView
 				style={styles.testScroll}
 				contentContainerStyle={styles.testContent}>
-				<Text style={styles.title}>Test réseau</Text>
+				<Text style={styles.title}>{t('scan.networkTest')}</Text>
 				<Text style={styles.body} selectable>
 					{TEST_URL}
 				</Text>
 
 				<PrimaryButton
-					label={testRunning ? 'Test en cours ...' : 'Lancer le test'}
+					label={testRunning ? t('scan.testRunning') : t('scan.runTest')}
 					onPress={runNetworksListTest}
 					disabled={testRunning}
 				/>
@@ -269,7 +256,7 @@ export function ScanBoxScreen(props: any) {
 				) : null}
 
 				<TouchableOpacity onPress={restart}>
-					<Text style={styles.link}>Retour au scan</Text>
+					<Text style={styles.link}>{t('scan.backToScan')}</Text>
 				</TouchableOpacity>
 			</ScrollView>
 		);
@@ -279,17 +266,15 @@ export function ScanBoxScreen(props: any) {
 		return (
 			<Centered>
 				<Icon name="wifi" size={40} color={COLORS.primary} />
-				<Text style={styles.title}>Rejoignez le réseau de la box</Text>
-				<Text style={styles.body}>
-					{"La connexion automatique n'est pas encore disponible ici. Rejoignez ce réseau depuis les réglages Wi-Fi, puis revenez."}
-				</Text>
+				<Text style={styles.title}>{t('scan.joinBoxNetwork')}</Text>
+				<Text style={styles.body}>{t('scan.joinManually')}</Text>
 
 				<View style={styles.card}>
-					<Text style={styles.cardLabel}>Réseau</Text>
+					<Text style={styles.cardLabel}>{t('scan.network')}</Text>
 					<Text style={styles.cardValue} selectable>
 						{payload.ssid}
 					</Text>
-					<Text style={styles.cardLabel}>Mot de passe</Text>
+					<Text style={styles.cardLabel}>{t('common:password')}</Text>
 					<Text style={styles.cardValue} selectable>
 						{payload.password}
 					</Text>
@@ -303,16 +288,16 @@ export function ScanBoxScreen(props: any) {
 						);
 						copyToClipboard(payload.password);
 					}}>
-					<Text style={styles.link}>Copier le mot de passe</Text>
+					<Text style={styles.link}>{t('scan.copyPassword')}</Text>
 				</TouchableOpacity>
 
 				<LinkButton
-					label="Ouvrir les réglages Wi-Fi"
+					label={t('openWifiSettings')}
 					onPress={openWifiSettings}
 				/>
 
 				<PrimaryButton
-					label="J'ai rejoint le réseau"
+					label={t('scan.joinedNetwork')}
 					onPress={() => {
 						ReactNativeHapticFeedback.trigger(
 							'impactMedium',
@@ -333,15 +318,15 @@ export function ScanBoxScreen(props: any) {
 					size={40}
 					color={COLORS.danger}
 				/>
-				<Text style={styles.title}>Appairage impossible</Text>
+				<Text style={styles.title}>{t('scan.pairingFailed')}</Text>
 				<Text style={styles.body}>{error}</Text>
-				<PrimaryButton label="Réessayer" onPress={restart} />
+				<PrimaryButton label={t('common:retry')} onPress={restart} />
 				<LinkButton
-					label="Ouvrir les réglages Wi-Fi"
+					label={t('openWifiSettings')}
 					onPress={openWifiSettings}
 				/>
 				<TouchableOpacity onPress={() => setPhase('test')}>
-					<Text style={styles.link}>Test réseau</Text>
+					<Text style={styles.link}>{t('scan.networkTest')}</Text>
 				</TouchableOpacity>
 			</Centered>
 		);
@@ -352,7 +337,7 @@ export function ScanBoxScreen(props: any) {
 			<Spinner
 				visible={phase === 'connecting'}
 				color={COLORS.primary}
-				textContent={'Connexion à la box ...'}
+				textContent={t('scan.connecting')}
 				textStyle={styles.spinnerText}
 			/>
 			{Scanner ? (
@@ -366,7 +351,7 @@ export function ScanBoxScreen(props: any) {
 			<TouchableOpacity
 				style={styles.testLink}
 				onPress={() => setPhase('test')}>
-				<Text style={styles.testLinkText}>Test réseau</Text>
+				<Text style={styles.testLinkText}>{t('scan.networkTest')}</Text>
 			</TouchableOpacity>
 		</View>
 	);

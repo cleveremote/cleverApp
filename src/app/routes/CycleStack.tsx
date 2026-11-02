@@ -1,4 +1,5 @@
 import React from 'react';
+import {useTranslation} from 'react-i18next';
 import {
 	StackNavigationOptions,
 	createStackNavigator
@@ -16,6 +17,7 @@ import {SchedulesStack} from './SchedulesStack';
 import {MasterDeviceSettingsStack} from './MasterDeviceSettingsStack';
 
 export function CycleStack({typeFilter}: {typeFilter?: string} = {}) {
+	const {t} = useTranslation('navigation');
 	const options = (title: string) =>
 		({
 			headerTitleAlign: 'center',
@@ -30,13 +32,13 @@ export function CycleStack({typeFilter}: {typeFilter?: string} = {}) {
 			<Stack.Screen
 				name="Cycles"
 				component={CycleScreen}
-				options={options(typeFilter==="MODULE" ? 'Modules' : (typeFilter==='FERTIGATION' ? 'Fertigation' : 'Tasks'))}
+				options={options(typeFilter==="MODULE" ? t('modules') : (typeFilter==='FERTIGATION' ? t('fertigation') : t('tasks')))}
 				initialParams={{typeFilter}}
 			/>
 			<Stack.Screen
 				name="CycleMenu"
 				component={CycleMenuScreen}
-				options={options('Cycles Settings')}
+				options={options(t('cyclesSettings'))}
 			/>
 			{/* Ouvert depuis l'icône « déconnecté » d'une carte : le retour
 			    ramène ici plutôt que dans l'onglet Settings. */}
@@ -63,12 +65,12 @@ export function CycleStack({typeFilter}: {typeFilter?: string} = {}) {
 			<Stack.Screen
 				name="EventsScreen"
 				component={EventsScreen}
-				options={options('Event log')}
+				options={options(t('eventLog'))}
 			/>
 			<Stack.Screen
 				name="SettingsScreen"
 				component={SettingsScreen}
-				options={options('Settings')}
+				options={options(t('settings'))}
 			/>
 		</Stack.Navigator>
 	);

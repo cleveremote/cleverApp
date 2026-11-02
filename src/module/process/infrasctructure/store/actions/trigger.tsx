@@ -7,6 +7,7 @@ import {
 } from './types';
 
 import {Alert} from 'react-native';
+import i18n from 'i18next';
 import {ThunkAction} from 'redux-thunk';
 import {AnyAction} from 'redux';
 import {RootState} from '../store';
@@ -23,8 +24,8 @@ const isErrorResponse = (response: any) => !response || response.res === false;
 
 // Affiche une modal avec le message d'erreur et notifie l'appelant via onError.
 const notifyError = (message: string, onError?: (error: string) => void) => {
-	const finalMessage = message || 'An unexpected error occurred.';
-	Alert.alert('Error', finalMessage);
+	const finalMessage = message || i18n.t('common:errors.unexpected');
+	Alert.alert(i18n.t('common:error'), finalMessage);
 	onError?.(finalMessage);
 };
 

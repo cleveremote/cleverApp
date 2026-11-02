@@ -30,6 +30,7 @@ import SensorDataSourceSettingsSection, {
 	isDeviceCommandType
 } from './SensorDataSourceSettingsSection';
 import SensorAnalogScalingSection from './SensorAnalogScalingSection';
+import i18n from 'i18next';
 
 function SensorSettingsScreen(props: any) {
 	const isNew = !props.route.params?.id;
@@ -107,7 +108,7 @@ function SensorSettingsScreen(props: any) {
 				}}>
 				<MenuAccordion
 					key={41}
-					name={'General'}
+					name={i18n.t('common:sections.general')}
 					icon={faTrafficLight}
 					invalid={invalidSections.general}
 					onPress={() => {}}>
@@ -120,7 +121,7 @@ function SensorSettingsScreen(props: any) {
 				</MenuAccordion>
 				<MenuAccordion
 					key={51}
-					name={'Configuration'}
+					name={i18n.t('common:sections.configuration')}
 					icon={faSliders}
 					invalid={invalidSections.configuration}
 					onPress={() => {}}>
@@ -142,7 +143,7 @@ function SensorSettingsScreen(props: any) {
 				{s?.type === 'ANALOG' ? (
 					<MenuAccordion
 						key={55}
-						name={'Scaling'}
+						name={i18n.t('sensor:analog.scaling')}
 						icon={faRulerHorizontal}
 						invalid={invalidSections.scaling}
 						onPress={() => {}}>

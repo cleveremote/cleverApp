@@ -1,4 +1,5 @@
 import React, {useEffect} from 'react';
+import {useTranslation} from 'react-i18next';
 import {
 	StyleSheet,
 	Text,
@@ -31,6 +32,7 @@ const HALF_TITLE_WIDTH = 50;
 const LOGOUT_CIRCLE_AND_MARGINS = 35 + 10 + 6 + 8;
 
 export function SettingsMenuScreen(props: any) {
+	const {t} = useTranslation(['settings', 'navigation']);
 	const {width} = useWindowDimensions();
 	const hintMaxWidth = width / 2 - HALF_TITLE_WIDTH - LOGOUT_CIRCLE_AND_MARGINS;
 
@@ -51,7 +53,7 @@ export function SettingsMenuScreen(props: any) {
 						numberOfLines={1}
 						adjustsFontSizeToFit
 						minimumFontScale={0.5}>
-						(Long press to logout)
+						{t('menu.logoutHint')}
 					</Text>
 					<View style={styles.logoutCircle}>
 						<FontAwesomeIcon
@@ -63,20 +65,20 @@ export function SettingsMenuScreen(props: any) {
 				</TouchableOpacity>
 			)
 		});
-	}, [props.navigation, hintMaxWidth]);
+	}, [props.navigation, hintMaxWidth, t]);
 
 	return (
 		<View style={styles.container}>
 			<MenuGroup style={styles.card}>
 				<MenuAccordion
 					key={1}
-					name={'User Settings'}
+					name={t('navigation:userSettings')}
 					icon={faUser}
 					onPress={() => props.navigation.navigate('UserSettings')}
 				/>
 				<MenuAccordion
 					key={2}
-					name={'Display manager'}
+					name={t('navigation:displayManager')}
 					icon={faEye}
 					onPress={() =>
 						props.navigation.navigate('DisplayManager')
@@ -84,7 +86,7 @@ export function SettingsMenuScreen(props: any) {
 				/>
 				<MenuAccordion
 					key={3}
-					name={'Devices'}
+					name={t('menu.devices')}
 					icon={faNetworkWired}
 					onPress={() =>
 						props.navigation.navigate('DevicesStack', {
@@ -94,7 +96,7 @@ export function SettingsMenuScreen(props: any) {
 				/>
 				<MenuAccordion
 					key={4}
-					name={'My RPI'}
+					name={t('navigation:myRpi')}
 					icon={faMicrochip}
 					onPress={() =>
 						props.navigation.navigate('ActuatorsStack', {
@@ -104,7 +106,7 @@ export function SettingsMenuScreen(props: any) {
 				/>
 				<MenuAccordion
 					key={5}
-					name={'Global settings'}
+					name={t('navigation:globalSettings')}
 					icon={faGlobe}
 					onPress={() =>
 						props.navigation.navigate('GlobalSettings')

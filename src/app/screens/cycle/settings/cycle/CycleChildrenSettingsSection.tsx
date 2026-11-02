@@ -14,6 +14,7 @@ import Icon from 'react-native-vector-icons/FontAwesome5';
 import {connect} from 'react-redux';
 import {loadGroups} from '../../../../../module/process/infrasctructure/store/actions/cycle';
 import {isTempId} from '../../../../../services/socket';
+import i18n from 'i18next';
 
 // Same normalization used by GroupStack: `iconColor` may be a plain color string
 // or the `{base, icon}` object the rows expect.
@@ -160,7 +161,7 @@ export function CycleChildrenSettingsSection(props: any) {
 					<TouchableOpacity style={styles.addButton} onPress={addChild}>
 						<Icon name="times-circle" size={30} color={colors.dark} />
 					</TouchableOpacity>
-					<Text style={styles.addLabel}>Add new cycle ...</Text>
+					<Text style={styles.addLabel}>{i18n.t('cycle:settings.addCycle')}</Text>
 				</View>
 			</View>
 		</View>

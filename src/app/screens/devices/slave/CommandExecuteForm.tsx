@@ -14,6 +14,7 @@ import Icon from 'react-native-vector-icons/FontAwesome5';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import {hapticOptions} from '../../../data/cycleTypes';
 import {executeDeviceCommand} from '../../../../module/process/infrasctructure/store/actions/device';
+import i18n from 'i18next';
 
 // Formulaire d'exécution d'une device command, construit depuis ses `params` :
 //  - `{type: 'enum', entries}`         → choix parmi les libellés ;
@@ -149,7 +150,7 @@ const parseReport = (response: any) => {
 
 const errorMessage = (report: any) => {
 	const err = report?.error ?? report?.message;
-	return `${err?.message ?? err ?? 'Command failed'}`;
+	return `${err?.message ?? err ?? i18n.t('devices:command.failed')}`;
 };
 
 // Requête Modbus jouée, ex. « readHoldingRegisters @5 ×1 ».
@@ -246,32 +247,34 @@ const validate = (
 	length?: number
 ) => {
 	if ((kind === 'enum' || kind === 'enumArray') && !entries?.length) {
-		return `Unknown list${spec?.enum ? ` "${spec.enum}"` : ''}`;
+		return spec?.enum
+			? i18n.t('devices:command.unknownListNamed', {name: spec.enum})
+			: i18n.t('devices:command.unknownList');
 	}
 	if (kind === 'enumArray') {
 		const chosen = (value ?? []).filter((v: any) => v !== undefined).length;
-		if (!length) return 'Unknown length';
+		if (!length) return i18n.t('devices:command.unknownLength');
 		if (chosen < length) {
-			return `Choose a value for each port (${chosen}/${length})`;
+			return i18n.t('devices:command.choosePorts', {chosen, length});
 		}
 	}
 	if (kind === 'index' && !inRange(value, spec)) {
-		return `Between ${labelOf(spec.min, spec)} and ${labelOf(
-			spec.max,
-			spec
-		)}`;
+		return i18n.t('devices:command.between', {
+			min: labelOf(spec.min, spec),
+			max: labelOf(spec.max, spec)
+		});
 	}
 	if (kind === 'range') {
 		if (!inRange(value?.min, spec) || !inRange(value?.max, spec)) {
-			return `Between ${labelOf(spec.min, spec)} and ${labelOf(
-				spec.max,
-				spec
-			)}`;
+			return i18n.t('devices:command.between', {
+				min: labelOf(spec.min, spec),
+				max: labelOf(spec.max, spec)
+			});
 		}
-		if (value.min > value.max) return '"From" must be before "To"';
+		if (value.min > value.max) return i18n.t('devices:command.fromBeforeTo');
 	}
 	if (kind === 'number' && (value === undefined || isNaN(value))) {
-		return 'A number is required';
+		return i18n.t('devices:command.numberRequired');
 	}
 	return undefined;
 };
@@ -356,7 +359,7 @@ export function CommandExecuteForm(props: any) {
 		timeout.current = setTimeout(() => {
 			timeout.current = null;
 			setRunning(false);
-			setResult({error: 'The box did not answer.'});
+			setResult({error: i18n.t('devices:command.noAnswer')});
 		}, EXECUTE_TIMEOUT_MS);
 		props.executeDeviceCommand(payload, (response: any) => {
 			// Réponse arrivée après le garde-fou : déjà signalée.
@@ -380,7 +383,10 @@ export function CommandExecuteForm(props: any) {
 	const onExecute = () => {
 		ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
 		if (!deviceId) {
-			Alert.alert('Unknown device', 'This device has no id yet.');
+			Alert.alert(
+				i18n.t('devices:command.unknownDevice'),
+				i18n.t('devices:command.noId')
+			);
 			return;
 		}
 		// Payload figé au clic : la confirmation envoie exactement ce qui était
@@ -391,10 +397,13 @@ export function CommandExecuteForm(props: any) {
 			params: buildParams()
 		};
 		if (params.isConfirmRequired) {
-			Alert.alert('Execute command', `Execute "${commandName}"?`, [
-				{text: 'Cancel', style: 'cancel'},
+			Alert.alert(
+				i18n.t('devices:command.executeTitle'),
+				i18n.t('devices:command.executeMessage', {name: commandName}),
+				[
+				{text: i18n.t('common:cancel'), style: 'cancel'},
 				{
-					text: 'Execute',
+					text: i18n.t('common:execute'),
 					// La box n'exécute une commande à confirmer que si elle
 					// reçoit la confirmation de l'utilisateur.
 					onPress: () =>
@@ -438,7 +447,7 @@ export function CommandExecuteForm(props: any) {
 											styles.portLabelMissing
 									]}
 								>
-									Port {portStart + i}
+									{i18n.t('devices:command.port', {number: portStart + i})}
 								</Text>
 								<View style={{flex: 1}}>
 									<Chips
@@ -471,13 +480,13 @@ export function CommandExecuteForm(props: any) {
 			case 'range':
 				return (
 					<View>
-						<Text style={styles.subLabel}>From</Text>
+						<Text style={styles.subLabel}>{i18n.t('devices:command.from')}</Text>
 						<IndexInput
 							spec={spec}
 							value={value?.min}
 							onChange={v => setValue(key, {...value, min: v})}
 						/>
-						<Text style={styles.subLabel}>To</Text>
+						<Text style={styles.subLabel}>{i18n.t('devices:command.to')}</Text>
 						<IndexInput
 							spec={spec}
 							value={value?.max}
@@ -561,7 +570,7 @@ export function CommandExecuteForm(props: any) {
 			return (
 				<Text style={[styles.result, styles.resultOk]}>
 					{report === undefined || report === null || report === true
-						? 'Command sent'
+						? i18n.t('devices:command.sent')
 						: formatResultValue(report)}
 				</Text>
 			);
@@ -583,7 +592,7 @@ export function CommandExecuteForm(props: any) {
 						{[
 							request,
 							report.raw !== undefined &&
-								`raw ${JSON.stringify(report.raw)}`
+								i18n.t('devices:command.raw', {value: JSON.stringify(report.raw)})
 						]
 							.filter(Boolean)
 							.join(' · ')}
@@ -595,7 +604,7 @@ export function CommandExecuteForm(props: any) {
 
 	return (
 		<View style={styles.form}>
-			<Text style={styles.title}>Test</Text>
+			<Text style={styles.title}>{i18n.t('devices:command.test')}</Text>
 			{inputs.map(input => (
 				<View key={input.key} style={styles.field}>
 					<Text style={styles.label}>{input.key}</Text>
@@ -618,7 +627,7 @@ export function CommandExecuteForm(props: any) {
 				) : (
 					<>
 						<Icon name="play" size={12} color={COLORS.onPrimary} />
-						<Text style={styles.buttonText}>Execute</Text>
+						<Text style={styles.buttonText}>{i18n.t('common:execute')}</Text>
 					</>
 				)}
 			</Pressable>

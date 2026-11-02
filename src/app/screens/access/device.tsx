@@ -10,8 +10,10 @@ import {
 import {BLEService} from '../../../module/ble/BLEService';
 import {hapticOptions} from '../../data/cycleTypes';
 import {Device} from 'react-native-ble-plx';
+import {useTranslation} from 'react-i18next';
 
 export function DeviceScreen(props: any) {
+	const {t} = useTranslation('access');
 	const [devices, setDevices] = React.useState<Device[]>([]);
 
 	const nav = useNavigation();
@@ -50,7 +52,7 @@ export function DeviceScreen(props: any) {
 						fontSize: 15,
 						fontWeight: 'bold'
 					}}>
-					Select the device to configure :
+					{t('device.select')}
 				</Text>
 			</View>
 
@@ -110,7 +112,7 @@ export function DeviceScreen(props: any) {
 										margin: 5,
 										fontWeight: 'bold'
 									}}>
-									device: {device.localName}
+									{t('device.label', {name: device.localName})}
 								</Text>
 							</View>
 						))
@@ -121,7 +123,7 @@ export function DeviceScreen(props: any) {
 								fontSize: 15,
 								marginLeft: 5
 							}}>
-							Scan in progress ...
+							{t('device.scanning')}
 						</Text>
 					)}
 				</ScrollView>
@@ -148,7 +150,7 @@ export function DeviceScreen(props: any) {
 					<Icon name="search" size={30} color="#32404e" />
 				</TouchableOpacity>
 				<Text style={{color: '#32404e', fontSize: 15}}>
-					Scan network
+					{t('device.scanNetwork')}
 				</Text>
 			</View>
 		</View>

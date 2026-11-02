@@ -21,8 +21,24 @@ export type BoxConfigurationForm = {
 	confirmPassword: string;
 };
 
+/**
+ * Motif d'un refus, sous forme de code : le texte affiché est traduit par
+ * l'écran (`access:validation.<code>`, avec `{min: PASSWORD_MIN_LENGTH}`).
+ */
+export type BoxConfigurationIssue =
+	| 'emailRequired'
+	| 'emailInvalid'
+	| 'passwordRequired'
+	| 'passwordTooShort'
+	| 'passwordWeak'
+	| 'deviceNameRequired'
+	| 'ssidRequired'
+	| 'pskRequired'
+	| 'confirmRequired'
+	| 'passwordMismatch';
+
 export type BoxConfigurationErrors = Partial<
-	Record<keyof BoxConfigurationForm, string>
+	Record<keyof BoxConfigurationForm, BoxConfigurationIssue>
 >;
 
 /** Longueur minimale du mot de passe de la box. */
@@ -36,10 +52,10 @@ export const PASSWORD_MIN_LENGTH = 8;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[a-z]{2,}$/i;
 
 /** '' quand l'adresse est acceptable, sinon le motif du refus. */
-export function emailIssue(value: string): string {
+export function emailIssue(value: string): BoxConfigurationIssue | '' {
 	const email = value.trim();
-	if (!email) return 'Adresse email obligatoire.';
-	if (!EMAIL_PATTERN.test(email)) return 'Adresse email invalide.';
+	if (!email) return 'emailRequired';
+	if (!EMAIL_PATTERN.test(email)) return 'emailInvalid';
 	return '';
 }
 
@@ -50,12 +66,12 @@ export function emailIssue(value: string): string {
  * que la règle habituelle, et mélangé, sans imposer de caractère spécial —
  * ce dernier fait surtout produire des mots de passe notés sur un papier.
  */
-export function passwordIssue(value: string): string {
-	if (!value) return 'Mot de passe obligatoire.';
+export function passwordIssue(value: string): BoxConfigurationIssue | '' {
+	if (!value) return 'passwordRequired';
 	if (value.length < PASSWORD_MIN_LENGTH)
-		return `Mot de passe trop court (${PASSWORD_MIN_LENGTH} caractères minimum).`;
+		return 'passwordTooShort';
 	if (!/[a-zA-Z]/.test(value) || !/[0-9]/.test(value))
-		return 'Le mot de passe doit contenir au moins une lettre et un chiffre.';
+		return 'passwordWeak';
 	return '';
 }
 
@@ -70,9 +86,9 @@ export function validateBoxConfiguration(
 ): BoxConfigurationErrors {
 	const errors: BoxConfigurationErrors = {};
 
-	if (!form.deviceName.trim()) errors.deviceName = 'Nom de la box obligatoire.';
-	if (!form.ssid) errors.ssid = 'Sélectionnez un réseau Wi-Fi.';
-	if (!form.psk) errors.psk = 'Clé du réseau Wi-Fi obligatoire.';
+	if (!form.deviceName.trim()) errors.deviceName = 'deviceNameRequired';
+	if (!form.ssid) errors.ssid = 'ssidRequired';
+	if (!form.psk) errors.psk = 'pskRequired';
 
 	const login = emailIssue(form.login);
 	if (login) errors.login = login;
@@ -85,9 +101,9 @@ export function validateBoxConfiguration(
 	// Le champ de confirmation ne reproche rien tant que le mot de passe
 	// lui-même est refusé : une seule erreur à corriger à la fois.
 	if (!form.confirmPassword) {
-		errors.confirmPassword = 'Confirmation obligatoire.';
+		errors.confirmPassword = 'confirmRequired';
 	} else if (!password && form.confirmPassword !== form.password) {
-		errors.confirmPassword = 'Les deux mots de passe ne correspondent pas.';
+		errors.confirmPassword = 'passwordMismatch';
 	}
 
 	return errors;

@@ -17,6 +17,7 @@ import {
 } from '../../../../../components/common/useSectionSettingsHeader';
 import {updateTrigger} from '../../../../../../module/process/infrasctructure/store/actions/trigger';
 import {connect} from 'react-redux';
+import i18n from 'i18next';
 
 const SWITCH_TRACK_COLOR = {true: '#32404e', false: '#d1d1d6'};
 
@@ -124,16 +125,16 @@ export function TriggerExecutionSettingsSection(props: any) {
 			},
 			_errors => {
 				Alert.alert(
-					'Discard changes?',
-					'Some fields contain invalid or incomplete information. Would you like to discard changes or continue editing?',
+					i18n.t('common:discard.title'),
+					i18n.t('common:discard.invalidMessage'),
 					[
 						{
-							text: 'Continue',
+							text: i18n.t('common:discard.continue'),
 							style: 'cancel',
 							onPress: onContinue
 						},
 						{
-							text: 'Discard',
+							text: i18n.t('common:discard.confirm'),
 							style: 'destructive',
 							onPress: onDiscard
 						}
@@ -202,8 +203,8 @@ export function TriggerExecutionSettingsSection(props: any) {
 					control={control}
 					errors={errors}
 					name="action"
-					placeholder="Action*"
-					rules={{required: 'Action is required'}}
+					placeholder={i18n.t('cycle:triggers.action')}
+					rules={{required: i18n.t('cycle:triggers.actionRequired')}}
 					onValueChange={() => {
 						saveUnchangedData.current = true;
 					}}
@@ -213,15 +214,15 @@ export function TriggerExecutionSettingsSection(props: any) {
 					control={control}
 					errors={errors}
 					name="delay"
-					placeholder="Disable trigger for moment"
-					rules={{required: 'Delay is required'}}
+					placeholder={i18n.t('cycle:triggers.disableFor')}
+					rules={{required: i18n.t('cycle:triggers.delayRequired')}}
 					onChangeText={() => {
 						saveUnchangedData.current = true;
 					}}
 				/>
 				<View style={styles.switchRow}>
 					<Text style={styles.switchLabel}>
-						Trigger (delay/sun-state)
+						{i18n.t('cycle:triggers.mode')}
 					</Text>
 					<AppSwitch
 						value={sunState}
@@ -256,14 +257,14 @@ export function TriggerExecutionSettingsSection(props: any) {
 					<>
 						<SelectForm
 							lstData={[
-								{label: 'SUNSET', value: 'SUNSET'},
-								{label: 'SUNRISE', value: 'SUNRISE'}
+								{label: i18n.t('cycle:triggers.sunset'), value: 'SUNSET'},
+								{label: i18n.t('cycle:triggers.sunrise'), value: 'SUNRISE'}
 							]}
 							control={control}
 							errors={errors}
 							name="sunState"
-							placeholder="Sun state*"
-							rules={{required: 'Sun state is required'}}
+							placeholder={i18n.t('cycle:triggers.sunState')}
+							rules={{required: i18n.t('cycle:triggers.sunStateRequired')}}
 							onValueChange={() => {
 								saveUnchangedData.current = true;
 							}}
@@ -275,10 +276,10 @@ export function TriggerExecutionSettingsSection(props: any) {
 							name="time"
 							placeholder={
 								watch('sunState') === 'SUNSET'
-									? 'After sunset*'
-									: 'Before sunrise*'
+									? i18n.t('cycle:triggers.afterSunset')
+									: i18n.t('cycle:triggers.beforeSunrise')
 							}
-							rules={{required: 'Time is required'}}
+							rules={{required: i18n.t('cycle:triggers.timeRequired')}}
 							onChangeText={() => {
 								saveUnchangedData.current = true;
 							}}
@@ -290,8 +291,8 @@ export function TriggerExecutionSettingsSection(props: any) {
 						control={control}
 						errors={errors}
 						name="timeAfter"
-						placeholder="Trigger after*"
-						rules={{required: 'Time after is required'}}
+						placeholder={i18n.t('cycle:triggers.after')}
+						rules={{required: i18n.t('cycle:triggers.afterRequired')}}
 						onChangeText={() => {
 							saveUnchangedData.current = true;
 						}}

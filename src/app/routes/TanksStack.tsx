@@ -1,4 +1,5 @@
 import React from 'react';
+import {useTranslation} from 'react-i18next';
 import {
 	StackNavigationOptions,
 	createStackNavigator
@@ -6,6 +7,7 @@ import {
 import TanksScreen from '../screens/tanks/TanksScreen';
 
 export function TanksStack() {
+	const {t} = useTranslation('navigation');
 	const options = (title: string) =>
 		({
 			headerTitleAlign: 'center',
@@ -20,7 +22,7 @@ export function TanksStack() {
 			<Stack.Screen
 				name="Tanks"
 				component={TanksScreen}
-				options={options('Bacs 200L')}
+				options={options(t('tanks'))}
 			/>
 		</Stack.Navigator>
 	);

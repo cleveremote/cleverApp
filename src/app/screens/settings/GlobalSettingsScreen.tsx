@@ -10,6 +10,7 @@ import {
 } from 'react-native';
 import {connect} from 'react-redux';
 import {useForm} from 'react-hook-form';
+import {useTranslation} from 'react-i18next';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {
@@ -38,6 +39,7 @@ import {
 	readLocalCoordinates,
 	LocationPermissionStatus
 } from '../../../services/geolocation/GeolocationService';
+import {LanguageSection} from '../../components/settings/LanguageSection';
 
 // Rang par défaut des modes (0 = plus prioritaire), aligné sur
 // `DEFAULT_MODE_RANKS` côté box : utilisé tant que la box n'envoie pas de
@@ -84,6 +86,7 @@ const toFormValues = (settings: any) => ({
 // coordinate fields with the phone GPS position — nothing is sent to the box
 // until Save.
 export function GlobalSettingsScreen(props: any) {
+	const {t} = useTranslation(['settings', 'common']);
 	const settings = props.settings;
 	// Champs vides tant que le fetch n'a pas répondu : le reset ci-dessous les
 	// remplit dès que les settings arrivent.
@@ -140,8 +143,8 @@ export function GlobalSettingsScreen(props: any) {
 			// Refus définitif : le bouton disparaît, inutile d'alerter en plus.
 			if (result?.status !== 'denied') {
 				Alert.alert(
-					'Position unavailable',
-					'Check that the GPS is on and try again.'
+					t('global.positionUnavailable'),
+					t('global.checkGps')
 				);
 			}
 			return;
@@ -183,6 +186,18 @@ export function GlobalSettingsScreen(props: any) {
 		);
 	};
 
+	// La langue s'applique sans passer par Save : elle part tout de suite vers
+	// la box, avec les settings connus de la box (pas les champs en cours
+	// d'édition). Résolu à l'acquittement, ou au bout de 3 s si la box ne
+	// répond pas, pour ne pas bloquer un redémarrage RTL.
+	const onLanguageChange = (language: string) =>
+		new Promise<void>(resolve => {
+			const rest: any = {...settings};
+			delete rest.version;
+			props.saveSettings({...rest, language}, () => resolve());
+			setTimeout(resolve, 3000);
+		});
+
 	const onCancel = () => {
 		ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
 		leaveIntentRef.current = 'cancel';
@@ -220,12 +235,12 @@ export function GlobalSettingsScreen(props: any) {
 				if (intent || !isDirty) return;
 				e.preventDefault();
 				Alert.alert(
-					'Discard changes?',
-					'You have unsaved changes. Would you like to continue editing or discard them?',
+					t('common:discard.title'),
+					t('common:discard.message'),
 					[
-						{text: 'Continue', style: 'cancel', onPress: () => {}},
+						{text: t('common:discard.continue'), style: 'cancel', onPress: () => {}},
 						{
-							text: 'Discard',
+							text: t('common:discard.confirm'),
 							style: 'destructive',
 							onPress: () => props.navigation.dispatch(e.data.action)
 						}
@@ -244,7 +259,7 @@ export function GlobalSettingsScreen(props: any) {
 			<MenuGroup style={styles.card}>
 				<MenuAccordion
 					key="location"
-					name={'Local coordinates'}
+					name={t('global.localCoordinates')}
 					icon={faLocationDot}
 					invalid={locationInvalid}
 					defaultExpanded
@@ -253,8 +268,8 @@ export function GlobalSettingsScreen(props: any) {
 						<View style={styles.row}>
 							<Text style={styles.hintInline}>
 								{permissionStatus === 'denied'
-									? 'Location access refused'
-									: 'Fill from the phone GPS'}
+									? t('global.locationRefused')
+									: t('global.fillFromGps')}
 							</Text>
 							{permissionStatus === 'denied' ? null : (
 								<Pressable
@@ -283,25 +298,24 @@ export function GlobalSettingsScreen(props: any) {
 							<Text
 								style={styles.hint}
 								onPress={() => Linking.openSettings()}>
-								The coordinates can only be typed in. Tap here to
-								open the system settings.
+								{t('global.typeCoordinates')}
 							</Text>
 						) : null}
 						<InputForm
 							control={control}
 							errors={errors}
 							name="longitude"
-							placeholder="Longitude*"
+							placeholder={t('global.longitude')}
 							keyboardType="numbers-and-punctuation"
 							rules={{
-								required: 'Longitude is required',
+								required: t('global.longitudeRequired'),
 								validate: (value: any) => {
 									const parsed = Number(value);
 									if (value === '' || Number.isNaN(parsed))
-										return 'Longitude must be a number';
+										return t('global.longitudeNumber');
 									return (
 										(parsed >= -180 && parsed <= 180) ||
-										'Longitude must be between -180 and 180'
+										t('global.longitudeRange')
 									);
 								}
 							}}
@@ -310,17 +324,17 @@ export function GlobalSettingsScreen(props: any) {
 							control={control}
 							errors={errors}
 							name="latitude"
-							placeholder="Latitude*"
+							placeholder={t('global.latitude')}
 							keyboardType="numbers-and-punctuation"
 							rules={{
-								required: 'Latitude is required',
+								required: t('global.latitudeRequired'),
 								validate: (value: any) => {
 									const parsed = Number(value);
 									if (value === '' || Number.isNaN(parsed))
-										return 'Latitude must be a number';
+										return t('global.latitudeNumber');
 									return (
 										(parsed >= -90 && parsed <= 90) ||
-										'Latitude must be between -90 and 90'
+										t('global.latitudeRange')
 									);
 								}
 							}}
@@ -329,36 +343,37 @@ export function GlobalSettingsScreen(props: any) {
 				</MenuAccordion>
 				<MenuAccordion
 					key="priority"
-					name={'Mode priority'}
+					name={t('global.modePriority')}
 					icon={faTrafficLight}
 					invalid={!!errors.modeRanks}
 					defaultExpanded
 					onPress={() => {}}>
 					<View style={styles.section}>
 						<Text style={styles.hint}>
-							Long press and drag a mode to change its priority.
+							{t('global.modePriorityHint')}
 						</Text>
 						<DragableForm
 							control={control}
 							errors={errors}
 							scrollEnabled={false}
 							name="modeRanks"
-							rules={{required: 'Mode priority is required'}}
+							rules={{required: t('global.modePriorityRequired')}}
 						/>
 					</View>
 				</MenuAccordion>
 				{settings?.version ? (
 					<MenuAccordion
 						key="box"
-						name={'Box'}
+						name={t('global.box')}
 						icon={faCircleInfo}
 						onPress={() => {}}>
 						<View style={[styles.section, styles.row]}>
-							<Text style={styles.label}>Version</Text>
+							<Text style={styles.label}>{t('global.version')}</Text>
 							<Text style={styles.value}>{settings.version}</Text>
 						</View>
 					</MenuAccordion>
 				) : null}
+				<LanguageSection onChange={onLanguageChange} />
 			</MenuGroup>
 		</SettingsScrollView>
 	);

@@ -29,6 +29,7 @@
 		0EF32D262F81F65400B4772B /* SRCASecurityPolicy.m in Sources */ = {isa = PBXBuildFile; fileRef = 0EF32D272F81F65400B4772B /* SRCASecurityPolicy.m */; };
 		13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 13B07FB51A68108700A75B9A /* Images.xcassets */; };
 		1645A2C1E5FA89524E8361CD /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 24D161361EB293EC1F4C2FA8 /* PrivacyInfo.xcprivacy */; };
+		1A18E0000000000000000001 /* InfoPlist.strings in Resources */ = {isa = PBXBuildFile; fileRef = 1A18E0000000000000000000 /* InfoPlist.strings */; };
 		761780ED2CA45674006654EE /* AppDelegate.swift in Sources */ = {isa = PBXBuildFile; fileRef = 761780EC2CA45674006654EE /* AppDelegate.swift */; };
 		81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */ = {isa = PBXBuildFile; fileRef = 81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */; };
 		AA9A8EE29AAA3E432D0343DF /* libPods-cleverApp.a in Frameworks */ = {isa = PBXBuildFile; fileRef = 4876EB7A9912806550D3D4DE /* libPods-cleverApp.a */; };
@@ -62,6 +63,9 @@
 		13B07F961A680F5B00A75B9A /* cleverApp.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = cleverApp.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		13B07FB51A68108700A75B9A /* Images.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; name = Images.xcassets; path = cleverApp/Images.xcassets; sourceTree = "<group>"; };
 		13B07FB61A68108700A75B9A /* Info.plist */ = {isa = PBXFileReference; fileEncoding = 4; lastKnownFileType = text.plist.xml; name = Info.plist; path = cleverApp/Info.plist; sourceTree = "<group>"; };
+		1A18E0000000000000000002 /* en */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = en; path = cleverApp/en.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		1A18E0000000000000000003 /* fr */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = fr; path = cleverApp/fr.lproj/InfoPlist.strings; sourceTree = "<group>"; };
+		1A18E0000000000000000004 /* ar */ = {isa = PBXFileReference; lastKnownFileType = text.plist.strings; name = ar; path = cleverApp/ar.lproj/InfoPlist.strings; sourceTree = "<group>"; };
 		24D161361EB293EC1F4C2FA8 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xml; name = PrivacyInfo.xcprivacy; path = cleverApp/PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		4876EB7A9912806550D3D4DE /* libPods-cleverApp.a */ = {isa = PBXFileReference; explicitFileType = archive.ar; includeInIndex = 0; path = "libPods-cleverApp.a"; sourceTree = BUILT_PRODUCTS_DIR; };
 		612881F6BDC9740E9FEA67FD /* Pods-cleverApp.debug.xcconfig */ = {isa = PBXFileReference; includeInIndex = 1; lastKnownFileType = text.xcconfig; name = "Pods-cleverApp.debug.xcconfig"; path = "Target Support Files/Pods-cleverApp/Pods-cleverApp.debug.xcconfig"; sourceTree = "<group>"; };
@@ -96,6 +100,7 @@
 				761780EC2CA45674006654EE /* AppDelegate.swift */,
 				13B07FB51A68108700A75B9A /* Images.xcassets */,
 				13B07FB61A68108700A75B9A /* Info.plist */,
+				1A18E0000000000000000000 /* InfoPlist.strings */,
 				81AB9BB72411601600AC10FF /* LaunchScreen.storyboard */,
 				24D161361EB293EC1F4C2FA8 /* PrivacyInfo.xcprivacy */,
 			);
@@ -211,6 +216,8 @@
 			knownRegions = (
 				en,
 				Base,
+				fr,
+				ar,
 			);
 			mainGroup = 83CBB9F61A601CBA00E9B192;
 			productRefGroup = 83CBBA001A601CBA00E9B192 /* Products */;
@@ -245,6 +252,7 @@
 				0E7F007D2BBAD4FF00FB9BE6 /* Foundation.ttf in Resources */,
 				0E7F007E2BBAD4FF00FB9BE6 /* Octicons.ttf in Resources */,
 				81AB9BB82411601600AC10FF /* LaunchScreen.storyboard in Resources */,
+				1A18E0000000000000000001 /* InfoPlist.strings in Resources */,
 				13B07FBF1A68108700A75B9A /* Images.xcassets in Resources */,
 				0E0308562F7695CF005F95FA /* PrivacyInfo.xcprivacy in Resources */,
 				1645A2C1E5FA89524E8361CD /* PrivacyInfo.xcprivacy in Resources */,
@@ -353,6 +361,19 @@
 			runOnlyForDeploymentPostprocessing = 0;
 		};
 /* End PBXSourcesBuildPhase section */
+
+/* Begin PBXVariantGroup section */
+		1A18E0000000000000000000 /* InfoPlist.strings */ = {
+			isa = PBXVariantGroup;
+			children = (
+				1A18E0000000000000000002 /* en */,
+				1A18E0000000000000000003 /* fr */,
+				1A18E0000000000000000004 /* ar */,
+			);
+			name = InfoPlist.strings;
+			sourceTree = "<group>";
+		};
+/* End PBXVariantGroup section */
 
 /* Begin XCBuildConfiguration section */
 		13B07F941A680F5B00A75B9A /* Debug */ = {

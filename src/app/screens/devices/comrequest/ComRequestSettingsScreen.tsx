@@ -19,6 +19,7 @@ import {updateDevice} from '../../../../module/process/infrasctructure/store/act
 import {isTempId, newTempId} from '../../../../services/socket';
 import ComRequestGeneralSettingsSection from './ComRequestGeneralSettingsSection';
 import ComRequestConfigurationSettingsSection from './ComRequestConfigurationSettingsSection';
+import i18n from 'i18next';
 
 // A COM request belongs to its slave device. This menu edits it in a transient
 // scratch slot (root_modbus_task.modbusTask) via its General / Configuration
@@ -122,7 +123,7 @@ export function ComRequestSettingsScreen(props: any) {
 			<MenuGroup style={styles.card}>
 				<MenuAccordion
 					key={1}
-					name={'General'}
+					name={i18n.t('common:sections.general')}
 					icon={faGear}
 					alwaysExpanded
 					invalid={invalidSections.general}
@@ -139,7 +140,7 @@ export function ComRequestSettingsScreen(props: any) {
 				</MenuAccordion>
 				{/* <MenuAccordion
 					key={2}
-					name={'Configuration'}
+					name={i18n.t('common:sections.configuration')}
 					icon={faSliders}
 					isLast
 					invalid={invalidSections.configuration}

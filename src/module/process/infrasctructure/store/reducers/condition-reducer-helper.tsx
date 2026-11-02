@@ -1,4 +1,5 @@
 import {newTempId, isTempId} from '../../../../../services/socket';
+import i18n from 'i18next';
 
 export const loadConditions = (parent: any) => {
 	return (parent?.conditions || []).map((c: any) => ({
@@ -20,8 +21,8 @@ export const loadCondition = (
 			id: newTempId(),
 			parentId: parentId,
 			parentType: parentType,
-			name: 'new condition',
-			description: 'new condition',
+			name: i18n.t('common:defaults.newCondition'),
+			description: i18n.t('common:defaults.newCondition'),
 			elementId: '',
 			elementType: 'CYCLE',
 			// Défauts vides : `value` (et l'opérateur en sensor) doivent être

@@ -12,6 +12,7 @@ import {
 	saveTriggers
 } from '../../../../module/process/infrasctructure/store/actions/trigger';
 import {saveCycle} from '../../../../module/process/infrasctructure/store/actions/cycle';
+import i18n from 'i18next';
 
 type Trigger = {
 	id?: string;
@@ -85,7 +86,7 @@ export function TriggersScreen(props: any) {
 									}
 								);
 							},
-							`trigger ${element.description}`,
+							i18n.t('cycle:triggers.item', {name: element.description}),
 							{name: faCog, color: styles.icon.color}
 						)
 					)}
@@ -106,7 +107,7 @@ export function TriggersScreen(props: any) {
 						}}>
 						<Icon name="times-circle" style={styles.icon} />
 					</TouchableOpacity>
-					<Text style={styles.addLabel}>Add new trigger ...</Text>
+					<Text style={styles.addLabel}>{i18n.t('cycle:triggers.add')}</Text>
 				</View>
 			</View>
 		</View>

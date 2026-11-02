@@ -2,11 +2,14 @@ import React, {useEffect} from 'react';
 import Animated, {
 	Easing,
 	SharedValue,
+	cancelAnimation,
 	useAnimatedProps,
 	useReducedMotion,
 	useSharedValue,
+	withRepeat,
 	withTiming
 } from 'react-native-reanimated';
+import {SLOGAN_DELAY_MS} from './AnimatedTitle';
 import Svg, {Circle, ClipPath, Defs, G, Path, Rect} from 'react-native-svg';
 
 // Reproduction de logo-anime.svg : react-native-svg ne joue pas les
@@ -22,10 +25,32 @@ const INK = '#32404e';
 const WATER = '#54acff';
 const SAP = '#62cf1b';
 
-// Départ de chaque vague d'eau (durée 1s chacune)
-const RIPPLE_STARTS = [2.05, 2.45];
-// Fin de la dernière animation (dernière vague : 2.45s + 1s)
-const END = 3.45;
+// Départ de chaque onde (1 s chacune), calé sur l'apparition du slogan
+// « Control Smarter, Grow Better. » (même horloge : montés ensemble au splash)
+const RIPPLE_FIRST = SLOGAN_DELAY_MS / 1000;
+const RIPPLE_STARTS = [RIPPLE_FIRST, RIPPLE_FIRST + 0.4];
+const RIPPLE_DURATION = 1;
+// Pousse de la plante : une graine apparaît sous la goutte quand elle
+// atterrit, puis les tiges (mains) partent de ce point de part et d'autre
+// vers le haut et les feuilles éclosent à leur extrémité.
+const SEED_DELAY = 0.85;
+const STEM_DELAY = 0.95;
+const STEM_DURATION = 0.7;
+const LEAF_DELAY = 1.55;
+const LEAF_DURATION = 0.7;
+const SAP_DELAY = 1.6;
+const SAP_DURATION = 0.8;
+// Décalage des doigts par rapport au SVG d'origine (après les tiges)
+const FINGERS_SHIFT = 0.6;
+
+// Remplissage lent de la goutte jusqu'à la pointe
+const WAVE_FILL_DELAY = 0.5;
+const WAVE_FILL_DURATION = 2.8;
+// Toutes les couleurs (eau + sève) s'effacent ensemble, après la dernière onde
+const COLOR_FADE_DELAY = RIPPLE_STARTS[RIPPLE_STARTS.length - 1] + RIPPLE_DURATION;
+const COLOR_FADE_DURATION = 0.6;
+// Fin de la dernière animation (fondu des couleurs)
+const END = COLOR_FADE_DELAY + COLOR_FADE_DURATION;
 export const LOGO_ANIMATION_MS = END * 1000;
 
 const EASE_DRAW = Easing.bezierFn(0.65, 0, 0.35, 1);
@@ -63,16 +88,42 @@ const CHIP_LINES = [
 	{d: 'm -449.0056,479.45592 8.66308,0.0143', delay: 1}
 ];
 
-const FINGERS = [
+const FINGERS_SVG = [
 	{d: 'm -560.36939,452.41073 10.58333,-10.96131', length: 15.2367, delay: 1.35, duration: 0.5, width: 0.965},
 	{d: 'm -558.85806,450.78117 0.13364,-3.94224', length: 3.9445, delay: 1.5, duration: 0.3, width: 0.565},
 	{d: 'm -556.05173,448.04164 h 3.27406', length: 3.2741, delay: 1.6, duration: 0.3, width: 0.565},
 	{d: 'm -554.51493,446.03713 0.0668,-3.27406', length: 3.2747, delay: 1.7, duration: 0.3, width: 0.565},
 	{d: 'm -551.57496,443.2308 h 2.27179', length: 2.2718, delay: 1.8, duration: 0.3, width: 0.565}
 ];
+const FINGERS = FINGERS_SVG.map(finger => ({...finger, delay: finger.delay + FINGERS_SHIFT}));
+
+// Vagues qui remplissent la goutte (unités du repère de la goutte)
+const WAVE_LENGTH = 6;
+const WAVE_AMPLITUDE = 0.7;
+const WAVE_COUNT = 7;
+const WAVE_X0 = -492;
+// Niveau de l'eau : sous la goutte -> au-dessus de la pointe (457.95), creux compris
+const WAVE_EMPTY_Y = 478 + WAVE_AMPLITUDE;
+const WAVE_FULL_Y = 457.95 - WAVE_AMPLITUDE - 0.5;
+// Durée d'un défilement d'une longueur d'onde (boucle continue)
+const WAVE_PERIOD_MS = 1600;
+
+// Surface ondulée (q puis t répétés = sinusoïde) fermée vers le bas
+function buildWavePath() {
+	const half = WAVE_LENGTH / 2;
+	let d = `M ${WAVE_X0} 0 q ${half / 2} ${-WAVE_AMPLITUDE} ${half} 0`;
+	for (let i = 1; i < WAVE_COUNT * 2; i++) {
+		d += ` t ${half} 0`;
+	}
+	return `${d} V 25 H ${WAVE_X0} Z`;
+}
+const WAVE_D = buildWavePath();
 
 // Centres de transform-origin (fill-box)
 const CHIP_CENTER = {x: -472.46198, y: 468.66572};
+// Point de jonction des deux mains, sous le milieu bas de la goutte
+const SEED_CENTER = {x: -521.62245, y: 495.55598};
+const SEED_RADIUS = 1.5;
 const LOGO_CENTER = {x: 20.3, y: 18.68};
 const RIPPLE_CENTER = {x: 21.06, y: 23.8};
 
@@ -112,24 +163,49 @@ const chipProps = (t: number) => {
 	return {matrix: transformAbout(CHIP_CENTER.x, CHIP_CENTER.y, p, -45 * (1 - p))};
 };
 
-// Remplissage (eau / sève) qui monte puis disparaît
-const fillProps = (
-	t: number,
-	baseOpacity: number,
-	fillDelay: number,
-	fillDuration: number,
-	fadeDelay: number
-) => {
+// Fondu commun à toutes les couleurs du logo
+const colorFade = (t: number) => {
+	'worklet';
+	return 1 - EASE(phase(t, COLOR_FADE_DELAY, COLOR_FADE_DURATION));
+};
+
+// Remplissage de sève qui monte puis disparaît avec les autres couleurs
+const fillProps = (t: number, baseOpacity: number, fillDelay: number, fillDuration: number) => {
 	'worklet';
 	return {
 		matrix: translateY(19 * (1 - EASE_IN_OUT(phase(t, fillDelay, fillDuration)))),
-		opacity: baseOpacity * (1 - EASE(phase(t, fadeDelay, 0.6)))
+		opacity: baseOpacity * colorFade(t)
+	};
+};
+
+// Vague : le niveau monte avec la timeline, la surface défile en boucle (w ∈ [0, 1[)
+const waveProps = (t: number, w: number, direction: 1 | -1, offset: number, lift: number) => {
+	'worklet';
+	const level = EASE_IN_OUT(phase(t, WAVE_FILL_DELAY, WAVE_FILL_DURATION));
+	const y = WAVE_EMPTY_Y + (WAVE_FULL_Y - WAVE_EMPTY_Y) * level - lift;
+	const shift = (w + offset) % 1;
+	const x = direction === 1 ? -WAVE_LENGTH * shift : -WAVE_LENGTH * (1 - shift);
+	return {matrix: [1, 0, 0, 1, x, y] as Matrix};
+};
+
+// L'eau s'efface avec les autres couleurs
+const waterFadeProps = (t: number) => {
+	'worklet';
+	return {opacity: colorFade(t)};
+};
+
+const seedProps = (t: number) => {
+	'worklet';
+	const p = phase(t, SEED_DELAY, 0.25);
+	return {
+		matrix: transformAbout(SEED_CENTER.x, SEED_CENTER.y, EASE_POP(p)),
+		opacity: Math.min(p / 0.3, 1)
 	};
 };
 
 const pulseProps = (t: number) => {
 	'worklet';
-	const p = phase(t, 2.05, 0.6);
+	const p = phase(t, RIPPLE_FIRST, 0.6);
 	const s =
 		p < 0.5
 			? 1 + 0.05 * EASE_IN_OUT(p / 0.5)
@@ -142,7 +218,7 @@ const rippleProps = (t: number, start: number) => {
 	if (t < start) {
 		return {matrix: transformAbout(RIPPLE_CENTER.x, RIPPLE_CENTER.y, 0.4), opacity: 0};
 	}
-	const p = EASE_OUT(phase(t, start, 1));
+	const p = EASE_OUT(phase(t, start, RIPPLE_DURATION));
 	return {
 		matrix: transformAbout(RIPPLE_CENTER.x, RIPPLE_CENTER.y, 0.4 + 2.2 * p),
 		opacity: 0.7 * (1 - p)
@@ -206,25 +282,37 @@ export function AnimatedLogo({width, height}: AnimatedLogoProps) {
 	const reduceMotion = useReducedMotion();
 	const start = reduceMotion ? END : 0;
 	const t = useSharedValue(start);
+	const w = useSharedValue(0);
 
 	useEffect(() => {
 		if (!reduceMotion) {
 			t.value = withTiming(END, {duration: LOGO_ANIMATION_MS, easing: Easing.linear});
+			w.value = withRepeat(
+				withTiming(1, {duration: WAVE_PERIOD_MS, easing: Easing.linear}),
+				-1,
+				false
+			);
 		}
-	}, [reduceMotion, t]);
+		return () => cancelAnimation(w);
+	}, [reduceMotion, t, w]);
 
 	const fall = useAnimatedProps(() => fallProps(t.value) as object);
 	const chip = useAnimatedProps(() => chipProps(t.value) as object);
-	const water = useAnimatedProps(() => fillProps(t.value, 0.35, 0.5, 1.1, 1.9) as object);
-	const sap = useAnimatedProps(() => fillProps(t.value, 0.4, 1, 1, 2) as object);
+	const waveBack = useAnimatedProps(() => waveProps(t.value, w.value, -1, 0.5, 0.5) as object);
+	const waveFront = useAnimatedProps(() => waveProps(t.value, w.value, 1, 0, 0) as object);
+	const seed = useAnimatedProps(() => seedProps(t.value) as object);
+	const waterFade = useAnimatedProps(() => waterFadeProps(t.value) as object);
+	const sap = useAnimatedProps(() => fillProps(t.value, 0.4, SAP_DELAY, SAP_DURATION) as object);
 	const pulse = useAnimatedProps(() => pulseProps(t.value) as object);
 	const ripple1 = useAnimatedProps(() => rippleProps(t.value, RIPPLE_STARTS[0]) as object);
 	const ripple2 = useAnimatedProps(() => rippleProps(t.value, RIPPLE_STARTS[1]) as object);
 
 	// État initial pour le premier rendu, avant la première frame animée
 	const fallStart = fallProps(start);
-	const waterStart = fillProps(start, 0.35, 0.5, 1.1, 1.9);
-	const sapStart = fillProps(start, 0.4, 1, 1, 2);
+	const waveBackStart = waveProps(start, 0, -1, 0.5, 0.5);
+	const waveFrontStart = waveProps(start, 0, 1, 0, 0);
+	const seedStart = seedProps(start);
+	const sapStart = fillProps(start, 0.4, SAP_DELAY, SAP_DURATION);
 	const ripples = [ripple1, ripple2].map((animatedProps, index) => {
 		const rippleStart = rippleProps(start, RIPPLE_STARTS[index]);
 		return (
@@ -294,16 +382,24 @@ export function AnimatedLogo({width, height}: AnimatedLogoProps) {
 							transform={fallStart.matrix}
 							animatedProps={fall}>
 							<G clipPath="url(#dropClip)">
-								<AnimatedRect
-									x={-482}
-									y={457}
-									width={20}
-									height={20}
-									fill={WATER}
-									opacity={waterStart.opacity}
-									transform={waterStart.matrix}
-									animatedProps={water}
-								/>
+								<AnimatedG
+									opacity={waterFadeProps(start).opacity}
+									animatedProps={waterFade}>
+									<AnimatedPath
+										d={WAVE_D}
+										fill={WATER}
+										opacity={0.25}
+										transform={waveBackStart.matrix}
+										animatedProps={waveBack}
+									/>
+									<AnimatedPath
+										d={WAVE_D}
+										fill={WATER}
+										opacity={0.45}
+										transform={waveFrontStart.matrix}
+										animatedProps={waveFront}
+									/>
+								</AnimatedG>
 							</G>
 							<DrawPath
 								t={t}
@@ -331,6 +427,16 @@ export function AnimatedLogo({width, height}: AnimatedLogoProps) {
 
 					{/* Feuilles + mains */}
 					<G transform="translate(0,-0.13363476)">
+						{/* graine d'où partent les deux tiges */}
+						<AnimatedCircle
+							cx={SEED_CENTER.x}
+							cy={SEED_CENTER.y}
+							r={SEED_RADIUS}
+							fill={INK}
+							opacity={seedStart.opacity}
+							transform={seedStart.matrix}
+							animatedProps={seed}
+						/>
 						{/* gauche */}
 						<G clipPath="url(#leafLeftClip)">
 							<AnimatedRect
@@ -344,9 +450,9 @@ export function AnimatedLogo({width, height}: AnimatedLogoProps) {
 								animatedProps={sap}
 							/>
 						</G>
-						<DrawPath t={t} d={LEAF_LEFT_A} length={LEN_LEAF} delay={0.9} reverse strokeWidth={2.7} strokeLinejoin="bevel" />
-						<DrawPath t={t} d={LEAF_LEFT_B} length={LEN_LEAF} delay={0.9} strokeWidth={2.7} strokeLinejoin="bevel" />
-						<DrawPath t={t} d={HAND_LEFT} length={LEN_HAND} delay={0.35} duration={0.8} strokeWidth={2.86615} strokeLinejoin="bevel" />
+						<DrawPath t={t} d={LEAF_LEFT_A} length={LEN_LEAF} delay={LEAF_DELAY} duration={LEAF_DURATION} reverse strokeWidth={2.7} strokeLinejoin="bevel" />
+						<DrawPath t={t} d={LEAF_LEFT_B} length={LEN_LEAF} delay={LEAF_DELAY} duration={LEAF_DURATION} strokeWidth={2.7} strokeLinejoin="bevel" />
+						<DrawPath t={t} d={HAND_LEFT} length={LEN_HAND} delay={STEM_DELAY} duration={STEM_DURATION} reverse strokeWidth={2.86615} strokeLinejoin="bevel" />
 						<G transform="translate(23.174028,22.36892)">{fingers}</G>
 
 						{/* droite */}
@@ -363,9 +469,9 @@ export function AnimatedLogo({width, height}: AnimatedLogoProps) {
 									animatedProps={sap}
 								/>
 							</G>
-							<DrawPath t={t} d={LEAF_RIGHT_A} length={LEN_LEAF} delay={0.9} reverse strokeWidth={2.7} strokeLinejoin="bevel" />
-							<DrawPath t={t} d={LEAF_RIGHT_B} length={LEN_LEAF} delay={0.9} strokeWidth={2.7} strokeLinejoin="bevel" />
-							<DrawPath t={t} d={HAND_RIGHT} length={LEN_HAND} delay={0.35} duration={0.8} strokeWidth={2.86615} strokeLinejoin="bevel" />
+							<DrawPath t={t} d={LEAF_RIGHT_A} length={LEN_LEAF} delay={LEAF_DELAY} duration={LEAF_DURATION} reverse strokeWidth={2.7} strokeLinejoin="bevel" />
+							<DrawPath t={t} d={LEAF_RIGHT_B} length={LEN_LEAF} delay={LEAF_DELAY} duration={LEAF_DURATION} strokeWidth={2.7} strokeLinejoin="bevel" />
+							<DrawPath t={t} d={HAND_RIGHT} length={LEN_HAND} delay={STEM_DELAY} duration={STEM_DURATION} reverse strokeWidth={2.86615} strokeLinejoin="bevel" />
 							<G transform="matrix(-1,0,0,1,-1073.6395,11.753858)">{fingers}</G>
 						</G>
 					</G>

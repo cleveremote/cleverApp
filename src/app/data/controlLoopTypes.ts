@@ -8,6 +8,7 @@
 // l'entrée analogique (potentiomètre, `follow.inputMin..inputMax`) en ouverture %.
 
 import {newTempId} from '../../services/socket';
+import i18n from 'i18next';
 
 // Événements socket (relayés vers `box/synchronize/valve` et
 // `box/synchronize/control-loop`) et clé de la configuration box.
@@ -26,9 +27,20 @@ export enum ControlLoopMode {
 	FOLLOW = 'FOLLOW'
 }
 
+// Libellés en getters : lus dans la langue courante à chaque rendu.
 export const modeOptions = [
-	{label: 'Regulation (setpoint)', value: ControlLoopMode.REGULATION},
-	{label: 'Potentiometer follow', value: ControlLoopMode.FOLLOW}
+	{
+		get label() {
+			return i18n.t('actuators:controlLoop.mode.REGULATION');
+		},
+		value: ControlLoopMode.REGULATION
+	},
+	{
+		get label() {
+			return i18n.t('actuators:controlLoop.mode.FOLLOW');
+		},
+		value: ControlLoopMode.FOLLOW
+	}
 ];
 
 export interface ControlLoopParams {
