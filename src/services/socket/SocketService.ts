@@ -1,6 +1,8 @@
 import { io, Socket } from 'socket.io-client';
 import { initSSL } from './SSLConfig';
 import { pendingRequests } from './pendingRequests';
+import { withErrorAlert } from './responseErrors';
+import { serializeDatesDeep } from '../time/serializeDates';
 
 export type SocketEventCallback = (...args: unknown[]) => void;
 
@@ -53,15 +55,18 @@ class SocketService {
 	/**
 	 * Emit an event to the server.
 	 * A trailing ack callback marks a request awaiting the box's response: it is
-	 * tracked by `pendingRequests` so the global loader shows until it answers.
+	 * tracked by `pendingRequests` so the global loader shows until it answers,
+	 * and a `{ res: false }` answer shows its error in a popup.
 	 */
-	emit(event: string, ...args: unknown[]): void {
+	emit(event: string, ...rawArgs: unknown[]): void {
 		if (!this.socket) return;
+		// Every Date leaves as ISO 8601 UTC, whatever the caller passed.
+		const args = rawArgs.map(serializeDatesDeep);
 		const last = args[args.length - 1];
 		if (typeof last === 'function') {
 			args[args.length - 1] = pendingRequests.track(
 				event,
-				last as (...a: unknown[]) => unknown
+				withErrorAlert(event, last as (...a: unknown[]) => unknown)
 			);
 		}
 		this.socket.emit(event, ...args);
@@ -72,7 +77,15 @@ class SocketService {
 	 * data already on screen, or requests whose screen shows its own loader
 	 * (e.g. a busy button).
 	 */
-	emitSilent(event: string, ...args: unknown[]): void {
+	emitSilent(event: string, ...rawArgs: unknown[]): void {
+		const args = rawArgs.map(serializeDatesDeep);
+		const last = args[args.length - 1];
+		if (typeof last === 'function') {
+			args[args.length - 1] = withErrorAlert(
+				event,
+				last as (...a: unknown[]) => unknown
+			);
+		}
 		this.socket?.emit(event, ...args);
 	}
 

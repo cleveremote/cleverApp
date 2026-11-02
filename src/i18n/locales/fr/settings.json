@@ -27,6 +27,8 @@
 		"latitudeRequired": "La latitude est obligatoire",
 		"latitudeNumber": "La latitude doit être un nombre",
 		"latitudeRange": "La latitude doit être comprise entre -90 et 90",
+		"timeZone": "Fuseau horaire",
+		"timeZoneHint": "Déduit des coordonnées par la box. Les horaires des programmations sont exprimés dans ce fuseau.",
 		"modePriority": "Priorité des modes",
 		"modePriorityHint": "Appui long puis glisser un mode pour changer sa priorité.",
 		"modePriorityRequired": "La priorité des modes est obligatoire",

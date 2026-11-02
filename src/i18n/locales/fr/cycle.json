@@ -231,6 +231,7 @@
 		"oneTime": "Date ponctuelle",
 		"dateTime": "Date et heure",
 		"oneTimeHint": "Une seule exécution à la date choisie.",
+		"boxTimeZone": "Heures exprimées en heure de la box ({{timeZone}}).",
 		"anyValue": "Toute valeur (*)",
 		"from": "À partir de",
 		"inRange": "Dans un intervalle",

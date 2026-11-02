@@ -22,15 +22,6 @@ import ScheduleGeneralSettingsSection from './ScheduleGeneralSettingsSection';
 import NewSchedulingSection from './NewSchedulingSection';
 import i18n from 'i18next';
 
-const serializeSchedule = (schedule: any) => {
-	if (!schedule?.cron?.date || !(schedule.cron.date instanceof Date))
-		return schedule;
-	return {
-		...schedule,
-		cron: {...schedule.cron, date: schedule.cron.date.getTime()}
-	};
-};
-
 export function ScheduleSettingsScreen(props: any) {
 	const isNew = !props.route.params.schedule?.id;
 	const scheduleRef = useRef(props.schedule);
@@ -83,7 +74,7 @@ export function ScheduleSettingsScreen(props: any) {
 					onPress={() => {}}>
 					<ScheduleGeneralSettingsSection
 						embedded
-						scheduleData={serializeSchedule(props.schedule)}
+						scheduleData={props.schedule}
 						showErrors={invalidSections.general}
 						navigation={props.navigation}
 					/>
@@ -96,7 +87,7 @@ export function ScheduleSettingsScreen(props: any) {
 					onPress={() => {}}>
 					<NewSchedulingSection
 						embedded
-						scheduleData={serializeSchedule(props.schedule)}
+						scheduleData={props.schedule}
 						showErrors={invalidSections.execution}
 						navigation={props.navigation}
 					/>

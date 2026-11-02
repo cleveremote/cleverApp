@@ -23,9 +23,16 @@ import {
 const isErrorResponse = (response: any) => !response || response.res === false;
 
 // Affiche une modal avec le message d'erreur et notifie l'appelant via onError.
-const notifyError = (message: string, onError?: (error: string) => void) => {
+// Pour un `res: false`, la modal est déjà affichée par `socketService`.
+const notifyError = (
+	message: string,
+	onError?: (error: string) => void,
+	response?: any
+) => {
 	const finalMessage = message || i18n.t('common:errors.unexpected');
-	Alert.alert(i18n.t('common:error'), finalMessage);
+	if (response?.res !== false) {
+		Alert.alert(i18n.t('common:error'), finalMessage);
+	}
 	onError?.(finalMessage);
 };
 
@@ -83,7 +90,7 @@ export const saveTrigger =
 				denormalizeIds(data),
 				(response: any) => {
 					if (isErrorResponse(response)) {
-						notifyError(response?.error, onError);
+						notifyError(response?.error, onError, response);
 						return;
 					}
 					try {
@@ -115,7 +122,7 @@ export const saveTriggers =
 			denormalizeIds(cycle),
 			async (response: any) => {
 				if (isErrorResponse(response)) {
-					notifyError(response?.error, onError);
+					notifyError(response?.error, onError, response);
 					return;
 				}
 				try {

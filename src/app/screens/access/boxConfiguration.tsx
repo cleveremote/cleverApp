@@ -247,6 +247,7 @@ export function BoxConfiguration(props: any) {
 					psk: form.psk,
 					login,
 					password: form.password,
+					// La box en déduit elle-même son fuseau horaire.
 					...(localCoordinates ? {localCoordinates} : {})
 				},
 				CONFIGURE_TIMEOUT_MS

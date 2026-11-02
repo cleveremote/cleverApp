@@ -17,6 +17,10 @@ import {
 } from '../../../../components/common/useSectionSettingsHeader';
 import { updateSequence } from '../../../../../module/process/infrasctructure/store/actions/sequence';
 import i18n from 'i18next';
+import {
+	durationToPickerDate,
+	pickerDateToDuration
+} from '../../../../../services/time';
 
 export function SequenceSecuritySettingsSection(props: any) {
 	const embedded = !!props.embedded;
@@ -29,19 +33,11 @@ export function SequenceSecuritySettingsSection(props: any) {
 	const [saveUnchangedData, setSaveUnchangedData] = React.useState(false);
 	const isSavingRef = React.useRef(false);
 
-	const getTimeString = (dateValue: number) => {
-		const date = new Date();
-		date.setHours(0, 0, 0, 0);
-		return new Date(date.getTime() + (dateValue || 0));
-	};
-	const convertToMs = (t: Date) =>
-		t.getHours() * 60 * 60 * 1000 + t.getMinutes() * 60 * 1000;
-
 	const defaultValues = {
 		...source,
 		securityConfig: {
 			...source?.securityConfig,
-			maxDuration: getTimeString(source?.securityConfig?.maxDuration)
+			maxDuration: durationToPickerDate(source?.securityConfig?.maxDuration)
 		}
 	};
 	const [vfd, setVfd] = React.useState(defaultValues.vfd);
@@ -66,7 +62,7 @@ export function SequenceSecuritySettingsSection(props: any) {
 			props.updateSequence({
 				...parentRef.current,
 				securityConfig: {
-					maxDuration: convertToMs(data.securityConfig?.maxDuration)
+					maxDuration: pickerDateToDuration(data.securityConfig?.maxDuration)
 				},
 				isModified: true
 			})
@@ -77,7 +73,7 @@ export function SequenceSecuritySettingsSection(props: any) {
 			props.updateSequence({
 				...data,
 				securityConfig: {
-					maxDuration: convertToMs(data.securityConfig.maxDuration)
+					maxDuration: pickerDateToDuration(data.securityConfig.maxDuration)
 				},
 				isModified: saveUnchangedData
 			});

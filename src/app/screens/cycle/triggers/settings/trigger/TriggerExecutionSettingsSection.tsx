@@ -18,6 +18,10 @@ import {
 import {updateTrigger} from '../../../../../../module/process/infrasctructure/store/actions/trigger';
 import {connect} from 'react-redux';
 import i18n from 'i18next';
+import {
+	durationToPickerDate,
+	pickerDateToDuration
+} from '../../../../../../services/time';
 
 const SWITCH_TRACK_COLOR = {true: '#32404e', false: '#d1d1d6'};
 
@@ -28,17 +32,12 @@ export function TriggerExecutionSettingsSection(props: any) {
 	const defValues = {
 		...(embedded ? props.triggerData : props.route.params?.triggerData)
 	};
-	const getTimeString = (dateValue: number) => {
-		const date = new Date();
-		date.setHours(0, 0, 0, 0);
-		return new Date(date.getTime() + dateValue);
-	};
 	const defaultValues = {
 		action: defValues.action,
-		delay: getTimeString(defValues.delay),
-		timeAfter: getTimeString(defValues.trigger?.timeAfter),
+		delay: durationToPickerDate(defValues.delay),
+		timeAfter: durationToPickerDate(defValues.trigger?.timeAfter),
 		sunState: defValues.trigger?.sunBehavior?.sunState,
-		time: getTimeString(defValues.trigger?.sunBehavior?.time)
+		time: durationToPickerDate(defValues.trigger?.sunBehavior?.time)
 	};
 
 	const [sunState, setSunState] = useState(
@@ -88,29 +87,26 @@ export function TriggerExecutionSettingsSection(props: any) {
 
 	const mappingtoDto = (data: any) => {
 		const result = {...defValues};
-		result.delay = convertToMs(data.delay);
+		result.delay = pickerDateToDuration(data.delay);
 		result.action = data.action;
 		if (sunStateRef.current) {
 			result.trigger = {
 				...result.trigger,
 				sunBehavior: {
 					sunState: data.sunState,
-					time: convertToMs(data.time)
+					time: pickerDateToDuration(data.time)
 				},
 				timeAfter: undefined
 			};
 		} else {
 			result.trigger = {
 				...result.trigger,
-				timeAfter: convertToMs(data.timeAfter),
+				timeAfter: pickerDateToDuration(data.timeAfter),
 				sunBehavior: undefined
 			};
 		}
 		return result;
 	};
-
-	const convertToMs = (t: Date) =>
-		t.getHours() * 60 * 60 * 1000 + t.getMinutes() * 60 * 1000;
 
 	const buildBeforeRemoveListener = (
 		e: EventArg<'beforeRemove', true, {action: NavigationAction}>,

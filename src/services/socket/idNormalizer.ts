@@ -18,6 +18,8 @@
  * payload with no `_id` and inserts a fresh one.
  */
 
+import {serializeDatesDeep} from '../time/serializeDates';
+
 /** Marks a client-only id that has never been persisted. */
 export const TEMP_ID_PREFIX = 'temp:';
 
@@ -58,6 +60,10 @@ const renameKeyDeep = (value: any, from: string, to: string): any => {
  * Deep `id` -> `_id`, except a temp `id` is dropped entirely (never sent).
  */
 const denormalizeKeyDeep = (value: any): any => {
+	// Instants: always sent as ISO 8601 UTC (see services/time).
+	if (value instanceof Date) {
+		return serializeDatesDeep(value);
+	}
 
 	if (Array.isArray(value)) {
 		return value.map(item => denormalizeKeyDeep(item));

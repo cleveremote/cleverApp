@@ -9,10 +9,21 @@ import {
 	View
 } from 'react-native';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
-import {connect} from 'react-redux';
+import {connect, useSelector} from 'react-redux';
 import i18n from 'i18next';
 import {AppSwitch} from '../../../../../components/common/AppSwitch';
 import {updateSchedule} from '../../../../../../module/process/infrasctructure/store/actions/schedule';
+import {
+	selectBoxCoordinates,
+	selectBoxTimeZone
+} from '../../../../../../module/process/infrasctructure/store/models/boxSettings';
+import {
+	deviceTimeZone,
+	toEpoch,
+	toUtcIso,
+	wallClockIn,
+	zonedToEpoch
+} from '../../../../../../services/time';
 
 /**
  * NewSchedulingSection — interface unique de planification d'un schedule.
@@ -30,6 +41,10 @@ import {updateSchedule} from '../../../../../../module/process/infrasctructure/s
  * `cronOnly` masque la date ponctuelle et le déclencheur solaire, `hideRuns`
  * masque les prochaines exécutions, `hidePreview`
  * masque l'expression et les prochaines exécutions.
+ *
+ * Fuseau : la box interprète les crons dans son propre fuseau
+ * (`settings.timeZone`). Toutes les heures affichées ou saisies ici sont donc
+ * en heure de la box, pas du téléphone ; la date ponctuelle part en ISO UTC.
  */
 
 // --- Palette alignée sur le design system de l'app (Chakra-like) -----------
@@ -142,6 +157,7 @@ const TABLABEL: Record<FieldKey, string> = {
 		return i18n.t('cycle:cron.tab.dow');
 	}
 };
+// Aperçu solaire tant que la box n'a pas de coordonnées.
 const DEFAULT_LAT = 48.85;
 const DEFAULT_LON = 2.35;
 
@@ -241,22 +257,17 @@ function buildDayCronStr(s: CronState): string {
 	return DAYORDER.map(k => fieldString(s, k)).join(' ');
 }
 
-// Date ponctuelle -> expression cron (sec min heure jour mois *) correspondante.
-function oneTimeCronStr(ts: number): string {
-	const d = new Date(ts);
-	return [
-		d.getSeconds(),
-		d.getMinutes(),
-		d.getHours(),
-		d.getDate(),
-		d.getMonth() + 1,
-		'*'
-	].join(' ');
+// Date ponctuelle -> expression cron (sec min heure jour mois *) correspondante,
+// en heure de la box.
+function oneTimeCronStr(ts: number, tz: string): string {
+	const w = wallClockIn(tz, ts);
+	return [w.second, w.minute, w.hour, w.day, w.month, '*'].join(' ');
 }
 
-// Libellé lisible d'une date ponctuelle.
-function formatOneTime(ts: number): string {
+// Libellé lisible d'une date ponctuelle, en heure de la box.
+function formatOneTime(ts: number, tz: string): string {
 	return new Date(ts).toLocaleString(i18n.language, {
+		timeZone: tz,
 		weekday: 'long',
 		day: '2-digit',
 		month: 'long',
@@ -357,7 +368,8 @@ interface SunBehaviorDto {
 }
 interface CronDto {
 	pattern: string | null;
-	date: number | null;
+	// Instant ISO 8601 UTC ; les anciennes données portent un epoch ms.
+	date: string | number | null;
 	sunBehavior?: SunBehaviorDto;
 	after?: number;
 }
@@ -366,7 +378,7 @@ interface CronDto {
 function mapToDto(s: CronState): CronDto {
 	if (s.oneTime.enabled) {
 		return {
-			date: s.oneTime.date,
+			date: toUtcIso(s.oneTime.date),
 			pattern: null,
 			sunBehavior: undefined,
 			after: undefined
@@ -398,6 +410,8 @@ function mapToDto(s: CronState): CronDto {
 // DTO cron -> état de l'interface (initialisation depuis les données).
 function dtoToState(cron: CronDto | undefined | null): CronState {
 	const s: CronState = JSON.parse(JSON.stringify(initialState));
+	// Pas figé au chargement du module.
+	s.oneTime.date = Date.now();
 	if (!cron) return s;
 	if (cron.pattern) {
 		applyCronString(s, cron.pattern);
@@ -424,7 +438,7 @@ function dtoToState(cron: CronDto | undefined | null): CronState {
 		s.solar.offsetM = totalMin % 60;
 	} else if (cron.date != null && !cron.pattern) {
 		s.oneTime.enabled = true;
-		s.oneTime.date = cron.date;
+		s.oneTime.date = toEpoch(cron.date) ?? Date.now();
 	}
 	return s;
 }
@@ -497,7 +511,28 @@ function makeMatcher(str: string, lo: number, hi: number): (n: number) => boolea
 	return (n: number) => preds.some(p => p(n));
 }
 
-function nextRuns(s: CronState, n: number): Date[] {
+// Les calculs avancent en « heure murale de la box » : une Date dont les
+// champs UTC (getUTCHours…) portent l'heure locale de la box. Seuls les
+// résultats sont convertis en instants, via `zonedToEpoch` : quelques appels
+// Intl au lieu d'un par minute parcourue.
+function boxWallNow(tz: string): Date {
+	const w = wallClockIn(tz, Date.now());
+	return new Date(Date.UTC(w.year, w.month - 1, w.day, w.hour, w.minute));
+}
+
+function wallToInstant(tz: string, wall: Date): Date {
+	return new Date(
+		zonedToEpoch(tz, {
+			year: wall.getUTCFullYear(),
+			month: wall.getUTCMonth() + 1,
+			day: wall.getUTCDate(),
+			hour: wall.getUTCHours(),
+			minute: wall.getUTCMinutes()
+		})
+	);
+}
+
+function nextRuns(s: CronState, n: number, tz: string): Date[] {
 	const domStr = fieldString(s, 'dom');
 	const dowStr = fieldString(s, 'dow');
 	const monStr = fieldString(s, 'month');
@@ -510,32 +545,34 @@ function nextRuns(s: CronState, n: number): Date[] {
 	const monM = makeMatcher(monStr, 1, 12);
 	const hrM = makeMatcher(hrStr, 0, 23);
 	const minM = makeMatcher(minStr, 0, 59);
-	const d = new Date();
-	d.setSeconds(0, 0);
-	d.setMinutes(d.getMinutes() + 1);
+	const d = boxWallNow(tz);
+	d.setUTCMinutes(d.getUTCMinutes() + 1);
 	const results: Date[] = [];
 	let iter = 0;
 	while (results.length < n && iter < 300000) {
 		iter++;
-		const month = d.getMonth() + 1;
-		const dom = d.getDate();
-		const dow = d.getDay();
-		const hour = d.getHours();
-		const minute = d.getMinutes();
+		const month = d.getUTCMonth() + 1;
+		const dom = d.getUTCDate();
+		const dow = d.getUTCDay();
+		const hour = d.getUTCHours();
+		const minute = d.getUTCMinutes();
 		let dayOk;
 		if (domEvery && dowEvery) dayOk = true;
 		else if (domEvery) dayOk = dowM(dow);
 		else if (dowEvery) dayOk = domM(dom);
 		else dayOk = domM(dom) || dowM(dow);
 		if (monM(month) && dayOk && hrM(hour) && minM(minute)) {
-			results.push(new Date(d));
+			const t = wallToInstant(tz, d);
+			// Heure de recul : deux heures murales tombent sur le même instant.
+			if (!results.some(r => r.getTime() === t.getTime())) results.push(t);
 		}
-		d.setMinutes(d.getMinutes() + 1);
+		d.setUTCMinutes(d.getUTCMinutes() + 1);
 	}
 	return results;
 }
 
 // --- Calcul solaire (algorithme du mockup) ---------------------------------
+// `date` : jour en heure murale de la box (champs UTC).
 function sunTimeUT(
 	date: Date,
 	lat: number,
@@ -543,8 +580,8 @@ function sunTimeUT(
 	isSunrise: boolean
 ): number | null {
 	const rad = Math.PI / 180;
-	const start = new Date(date.getFullYear(), 0, 0);
-	const n = Math.floor((date.getTime() - start.getTime()) / 86400000);
+	const start = Date.UTC(date.getUTCFullYear(), 0, 0);
+	const n = Math.floor((date.getTime() - start) / 86400000);
 	const lngHour = lon / 15;
 	const t = isSunrise ? n + (6 - lngHour) / 24 : n + (18 - lngHour) / 24;
 	const M = 0.9856 * t - 3.289;
@@ -568,6 +605,7 @@ function sunTimeUT(
 }
 
 function solarEventTime(s: CronState, date: Date): Date | null {
+	// L'heure UT du soleil donne directement un instant : pas de fuseau ici.
 	const sol = s.solar;
 	const UT = sunTimeUT(date, sol.lat, sol.lon, sol.event === 'SUNRISE');
 	if (UT === null) return null;
@@ -578,24 +616,30 @@ function solarEventTime(s: CronState, date: Date): Date | null {
 		hours = (hours + 1) % 24;
 	}
 	const d = new Date(
-		Date.UTC(date.getFullYear(), date.getMonth(), date.getDate(), hours, minutes)
+		Date.UTC(date.getUTCFullYear(), date.getUTCMonth(), date.getUTCDate(), hours, minutes)
 	);
 	const offsetMin = (sol.offsetH * 60 + sol.offsetM) * (sol.dir === 'BEFORE' ? -1 : 1);
 	return new Date(d.getTime() + offsetMin * 60000);
 }
 
-function nextSolarRuns(s: CronState, n: number): Date[] {
+// Jour n° `i` à partir d'aujourd'hui, en heure murale de la box.
+function boxDay(tz: string, i: number): Date {
+	const w = wallClockIn(tz, Date.now());
+	return new Date(Date.UTC(w.year, w.month - 1, w.day + i));
+}
+
+function nextSolarRuns(s: CronState, n: number, tz: string): Date[] {
 	const results: Date[] = [];
 	const now = new Date();
 	for (let i = 0; i < 400 && results.length < n; i++) {
-		const day = new Date(now.getFullYear(), now.getMonth(), now.getDate() + i);
+		const day = boxDay(tz, i);
 		const t = solarEventTime(s, day);
 		if (t && t.getTime() > now.getTime()) results.push(t);
 	}
 	return results;
 }
 
-function nextCombinedRuns(s: CronState, n: number): Date[] {
+function nextCombinedRuns(s: CronState, n: number, tz: string): Date[] {
 	const domStr = fieldString(s, 'dom');
 	const dowStr = fieldString(s, 'dow');
 	const monStr = fieldString(s, 'month');
@@ -607,10 +651,10 @@ function nextCombinedRuns(s: CronState, n: number): Date[] {
 	const results: Date[] = [];
 	const now = new Date();
 	for (let i = 0; i < 400 && results.length < n; i++) {
-		const day = new Date(now.getFullYear(), now.getMonth(), now.getDate() + i);
-		const month = day.getMonth() + 1;
-		const dom = day.getDate();
-		const dow = day.getDay();
+		const day = boxDay(tz, i);
+		const month = day.getUTCMonth() + 1;
+		const dom = day.getUTCDate();
+		const dow = day.getUTCDay();
 		let dayOk;
 		if (domEvery && dowEvery) dayOk = true;
 		else if (domEvery) dayOk = dowM(dow);
@@ -768,6 +812,12 @@ function ListNumInput({
 
 // --- Composant principal ---------------------------------------------------
 export function NewSchedulingSection(props: any) {
+	// Fuseau et position de la box : les crons s'exécutent en heure de la box.
+	const tz: string = useSelector(selectBoxTimeZone);
+	const coordinates = useSelector(selectBoxCoordinates);
+	const lat = coordinates?.latitude ?? DEFAULT_LAT;
+	const lon = coordinates?.longitude ?? DEFAULT_LON;
+
 	// Initialisation depuis le modèle `schedule.cron` (une seule fois).
 	const initial = React.useMemo(
 		() => dtoToState(props.cron ?? props.scheduleData?.cron),
@@ -841,13 +891,17 @@ export function NewSchedulingSection(props: any) {
 		if (state.oneTime.enabled) {
 			const ts = state.oneTime.date;
 			return {
-				displayStr: oneTimeCronStr(ts),
-				summary: i18n.t('cycle:cron.oneTimeSummary', {date: formatOneTime(ts)}),
+				displayStr: oneTimeCronStr(ts, tz),
+				summary: i18n.t('cycle:cron.oneTimeSummary', {
+					date: formatOneTime(ts, tz)
+				}),
 				solarStr: null,
 				runs: ts > Date.now() ? [new Date(ts)] : []
 			};
 		}
-		const sol = state.solar;
+		// Position solaire : celle de la box (hors DTO, n'affecte pas le staging).
+		const calc: CronState = {...state, solar: {...state.solar, lat, lon}};
+		const sol = calc.solar;
 		const combine = sol.enabled && sol.mode === 'combine';
 		// En mode « combiner », l'expression ne porte que jour/mois/semaine ;
 		// sinon c'est l'expression cron complète.
@@ -855,11 +909,27 @@ export function NewSchedulingSection(props: any) {
 		const sum = combine ? daySummaryText(state) : summaryText(state);
 		const solStr = sol.enabled ? solarDescription(state) : null;
 		let r: Date[];
-		if (sol.enabled && sol.mode === 'replace') r = nextSolarRuns(state, 5);
-		else if (combine) r = nextCombinedRuns(state, 5);
-		else r = nextRuns(state, 5);
+		if (sol.enabled && sol.mode === 'replace') r = nextSolarRuns(calc, 5, tz);
+		else if (combine) r = nextCombinedRuns(calc, 5, tz);
+		else r = nextRuns(calc, 5, tz);
 		return {displayStr: dStr, summary: sum, solarStr: solStr, runs: r};
-	}, [state]);
+	}, [state, tz, lat, lon]);
+
+	// Le picker affiche et rend une heure du téléphone : on lui présente
+	// l'heure murale de la box, et on réinterprète son résultat dans ce fuseau.
+	const toPickerDate = (ts: number) => {
+		const w = wallClockIn(tz, ts);
+		return new Date(w.year, w.month - 1, w.day, w.hour, w.minute);
+	};
+	const fromPickerDate = (d: Date) =>
+		zonedToEpoch(tz, {
+			year: d.getFullYear(),
+			month: d.getMonth() + 1,
+			day: d.getDate(),
+			hour: d.getHours(),
+			minute: d.getMinutes()
+		});
+	const otherTimeZone = tz !== deviceTimeZone();
 
 	// Champ Expression éditable (mode cron pur). Texte local synchronisé sur
 	// l'expression générée quand l'utilisateur ne l'édite pas ; éditer le texte
@@ -900,6 +970,11 @@ export function NewSchedulingSection(props: any) {
 
 	return (
 		<View style={styles.wrap}>
+			{otherTimeZone && (
+				<Text style={styles.hint}>
+					{i18n.t('cycle:cron.boxTimeZone', {timeZone: tz})}
+				</Text>
+			)}
 			{/* Date ponctuelle : planifie une seule exécution via le datetime picker. */}
 			{!props.cronOnly && (
 				<View style={styles.switchRow}>
@@ -918,7 +993,7 @@ export function NewSchedulingSection(props: any) {
 						onPress={() => setPickerVisible(true)}
 						style={styles.dateField}>
 						<Text style={styles.dateFieldTxt}>
-							{formatOneTime(state.oneTime.date)}
+							{formatOneTime(state.oneTime.date, tz)}
 						</Text>
 					</TouchableOpacity>
 					<Text style={styles.hint}>
@@ -1302,12 +1377,17 @@ export function NewSchedulingSection(props: any) {
 							runs.map((d, i) => (
 								<Text key={i} style={styles.runRow}>
 									{d.toLocaleDateString(i18n.language, {
+										timeZone: tz,
 										weekday: 'short',
 										day: '2-digit',
 										month: 'short'
 									})}
 									{', '}
-									{d.toLocaleTimeString(i18n.language, {hour: '2-digit', minute: '2-digit'})}
+									{d.toLocaleTimeString(i18n.language, {
+										timeZone: tz,
+										hour: '2-digit',
+										minute: '2-digit'
+									})}
 								</Text>
 							))
 						)}
@@ -1323,11 +1403,12 @@ export function NewSchedulingSection(props: any) {
 				display="inline"
 				themeVariant="light"
 				isDarkModeEnabled={false}
-				date={new Date(state.oneTime.date)}
-				minimumDate={new Date()}
+				date={toPickerDate(state.oneTime.date)}
+				minimumDate={toPickerDate(Date.now())}
 				onConfirm={d => {
 					setPickerVisible(false);
-					patch(n => (n.oneTime.date = d.getTime()));
+					const ts = fromPickerDate(d);
+					patch(n => (n.oneTime.date = ts));
 				}}
 				onCancel={() => setPickerVisible(false)}
 			/>

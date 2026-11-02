@@ -27,6 +27,8 @@
 		"latitudeRequired": "Latitude is required",
 		"latitudeNumber": "Latitude must be a number",
 		"latitudeRange": "Latitude must be between -90 and 90",
+		"timeZone": "Time zone",
+		"timeZoneHint": "Derived by the box from its coordinates. Schedule times are expressed in this time zone.",
 		"modePriority": "Mode priority",
 		"modePriorityHint": "Long press and drag a mode to change its priority.",
 		"modePriorityRequired": "Mode priority is required",

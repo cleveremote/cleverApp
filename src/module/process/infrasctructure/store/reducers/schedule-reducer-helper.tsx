@@ -20,7 +20,8 @@ export const loadSchedule = (
 			description: i18n.t('common:defaults.newSchedule'),
 			cron: {
 				pattern: '*/30 * * * * *',
-				date: Date.now()
+				// Instant ISO UTC, comme ce que la section de planification émet.
+				date: new Date().toISOString()
 			},
 			shouldConfirmation: true,
 			isPaused: true,

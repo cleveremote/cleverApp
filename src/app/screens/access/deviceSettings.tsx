@@ -116,6 +116,7 @@ export function DeviceSettings(props: any) {
 			ssid: ssid,
 			psk: psk,
 			password: password,
+			// The box derives its own time zone from them.
 			...(localCoordinates ? {localCoordinates} : {})
 		};
 		const dataStr = JSON.stringify(data);

@@ -33,25 +33,9 @@ export function SequenceStack({
 		duration: number,
 		status: string
 	) => {
-		const now = new Date();
-		const startDate = new Date(startedAt);
-		const date1utc = Date.UTC(
-			now.getFullYear(),
-			now.getMonth(),
-			now.getDate(),
-			now.getHours(),
-			now.getMinutes(),
-			now.getSeconds()
-		);
-		const date2utc = Date.UTC(
-			startDate.getFullYear(),
-			startDate.getMonth(),
-			startDate.getDate(),
-			startDate.getHours(),
-			startDate.getMinutes(),
-			startDate.getSeconds()
-		);
-		const diff = Math.max(date1utc - date2utc, 0);
+		// Écart entre deux instants : indépendant du fuseau (et du changement
+		// d'heure, que le passage par les heures murales faussait).
+		const diff = Math.max(Date.now() - new Date(startedAt).getTime(), 0) || 0;
 		const millisenconds = duration - diff;
 		const startIndex = status === 'STOPPED' ? 0 : (diff * 100) / duration;
 		const step = (100 - startIndex) / ((duration - diff) / 1000);

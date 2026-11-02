@@ -59,7 +59,7 @@
 	},
 	"modes": {
 		"MANUAL": "Manual",
-		"SCHEDULED": "Scheduled",
+		"SCHEDULE": "Schedule",
 		"TRIGGER": "Trigger"
 	},
 	"save": "Save",

@@ -40,13 +40,14 @@ import {
 	LocationPermissionStatus
 } from '../../../services/geolocation/GeolocationService';
 import {LanguageSection} from '../../components/settings/LanguageSection';
+import {deviceTimeZone} from '../../../services/time';
 
 // Rang par défaut des modes (0 = plus prioritaire), aligné sur
 // `DEFAULT_MODE_RANKS` côté box : utilisé tant que la box n'envoie pas de
 // `modeRanks`.
 const DEFAULT_MODE_RANKS: Record<string, number> = {
 	MANUAL: 0,
-	SCHEDULED: 1,
+	SCHEDULE: 1,
 	TRIGGER: 2
 };
 
@@ -160,15 +161,21 @@ export function GlobalSettingsScreen(props: any) {
 		});
 	};
 
+	// Fuseau de la box : elle le déduit elle-même de ses coordonnées et le
+	// renvoie dans ses settings.
+	const timeZone: string = settings?.timeZone ?? deviceTimeZone();
+
 	const onSave = (data: any) => {
 		// Double appui sur Save : une seule requête part vers la box.
 		if (isSaving) return;
 		ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
 		setIsSaving(true);
-		// `version` est une info descendante (version du backend) : on ne la
-		// renvoie pas. Les autres settings éventuels sont conservés tels quels.
+		// `version` (version du backend) et `timeZone` (déduit par la box de
+		// ses coordonnées) sont des infos descendantes : on ne les renvoie pas.
+		// Les autres settings éventuels sont conservés tels quels.
 		const rest: any = {...settings};
 		delete rest.version;
+		delete rest.timeZone;
 		props.saveSettings(
 			{
 				...rest,
@@ -194,6 +201,7 @@ export function GlobalSettingsScreen(props: any) {
 		new Promise<void>(resolve => {
 			const rest: any = {...settings};
 			delete rest.version;
+			delete rest.timeZone;
 			props.saveSettings({...rest, language}, () => resolve());
 			setTimeout(resolve, 3000);
 		});
@@ -339,6 +347,11 @@ export function GlobalSettingsScreen(props: any) {
 								}
 							}}
 						/>
+						<View style={styles.row}>
+							<Text style={styles.label}>{t('global.timeZone')}</Text>
+							<Text style={styles.value}>{timeZone}</Text>
+						</View>
+						<Text style={styles.hint}>{t('global.timeZoneHint')}</Text>
 					</View>
 				</MenuAccordion>
 				<MenuAccordion

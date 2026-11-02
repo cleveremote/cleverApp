@@ -7,7 +7,7 @@
 		"CANCELLED": "Cancelled",
 		"REFUSED": "Refused",
 		"MANUAL": "Manual",
-		"SCHEDULED": "Scheduled",
+		"SCHEDULE": "Schedule",
 		"TRIGGER": "Trigger"
 	},
 	"run": {
@@ -231,6 +231,7 @@
 		"oneTime": "One-time date",
 		"dateTime": "Date and time",
 		"oneTimeHint": "A single run at the chosen date.",
+		"boxTimeZone": "Times are in the box's time zone ({{timeZone}}).",
 		"anyValue": "Any value (*)",
 		"from": "Starting from",
 		"inRange": "Within a range",
