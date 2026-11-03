@@ -144,12 +144,12 @@ export function SlaveDevicesSection(props: any) {
 						startDiscovery();
 					}}>
 					{discovering ? (
-						<ActivityIndicator size="small" color={COLORS.onPrimary} />
+						<ActivityIndicator size="small" color={COLORS.primary} />
 					) : (
 						<FontAwesomeIcon
 							icon={faMagnifyingGlass}
 							size={16}
-							color={COLORS.onPrimary}
+							color={COLORS.primary}
 						/>
 					)}
 					<Text style={styles.discoverLabel}>
@@ -168,8 +168,7 @@ const DISCOVERY_TIMEOUT_MS = 10000;
 const COLORS = {
 	primary: '#32404e',
 	shadow: '#000',
-	cardBackground: 'white',
-	onPrimary: 'white'
+	cardBackground: 'white'
 };
 
 const styles = StyleSheet.create({
@@ -207,20 +206,21 @@ const styles = StyleSheet.create({
 	},
 	discoverButton: {
 		marginTop: 20,
-		marginHorizontal: 8,
-		paddingVertical: 12,
-		borderRadius: 12,
-		backgroundColor: COLORS.primary,
+		alignSelf: 'center',
 		flexDirection: 'row',
-		justifyContent: 'center',
 		alignItems: 'center',
-		gap: 8
+		gap: 10,
+		paddingVertical: 8,
+		paddingHorizontal: 14,
+		borderRadius: 12,
+		borderWidth: 2,
+		borderColor: COLORS.primary
 	},
 	discoverButtonBusy: {
 		opacity: 0.7
 	},
 	discoverLabel: {
-		color: COLORS.onPrimary,
+		color: COLORS.primary,
 		fontSize: 15,
 		fontWeight: 'bold'
 	}

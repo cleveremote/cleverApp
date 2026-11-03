@@ -9,17 +9,22 @@ import {
 	View
 } from 'react-native';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
+import {pickerLocaleProps} from '../../../../../components/common/pickerLocale';
 import {connect, useSelector} from 'react-redux';
 import i18n from 'i18next';
 import {AppSwitch} from '../../../../../components/common/AppSwitch';
+import {TimeZoneNotice} from '../../../../../components/common/TimeZoneNotice';
+import {WarningBox} from '../../../../../components/common/WarningBox';
+import {SolarTriggerFields} from '../../../../../components/common/SolarTriggerFields';
 import {updateSchedule} from '../../../../../../module/process/infrasctructure/store/actions/schedule';
 import {
 	selectBoxCoordinates,
 	selectBoxTimeZone
 } from '../../../../../../module/process/infrasctructure/store/models/boxSettings';
 import {
-	deviceTimeZone,
+	fromPickerDate,
 	toEpoch,
+	toPickerDate,
 	toUtcIso,
 	wallClockIn,
 	zonedToEpoch
@@ -117,7 +122,7 @@ const FIELDCFG: Record<
 		hi: 12,
 		type: 'name',
 		get names() {
-			return i18n.t('cycle:cron.months', {returnObjects: true}) as unknown as string[];
+			return toNameList(i18n.t('cycle:cron.months', {returnObjects: true}));
 		},
 		base: 1
 	},
@@ -129,11 +134,22 @@ const FIELDCFG: Record<
 		hi: 6,
 		type: 'name',
 		get names() {
-			return i18n.t('cycle:cron.weekdays', {returnObjects: true}) as unknown as string[];
+			return toNameList(i18n.t('cycle:cron.weekdays', {returnObjects: true}));
 		},
 		base: 0
 	}
 };
+
+// Locale files store name lists as {"0": ..., "1": ...}; normalize to an array.
+function toNameList(v: unknown): string[] {
+	if (Array.isArray(v)) return v as string[];
+	if (v && typeof v === 'object') {
+		return Object.keys(v)
+			.sort((a, b) => Number(a) - Number(b))
+			.map(k => String((v as Record<string, unknown>)[k]));
+	}
+	return [];
+}
 
 const ORDER: FieldKey[] = ['sec', 'min', 'hour', 'dom', 'month', 'dow'];
 const DAYORDER: FieldKey[] = ['dom', 'month', 'dow'];
@@ -865,6 +881,9 @@ export function NewSchedulingSection(props: any) {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [state]);
 
+	const stageFlag = (key: 'isPaused' | 'shouldConfirmation', v: boolean) =>
+		props.updateSchedule?.({...parentRef.current, [key]: v, isModified: true});
+
 	const oneTimeEnabled = state.oneTime.enabled;
 	const [pickerVisible, setPickerVisible] = React.useState(false);
 	const combineMode =
@@ -915,21 +934,6 @@ export function NewSchedulingSection(props: any) {
 		return {displayStr: dStr, summary: sum, solarStr: solStr, runs: r};
 	}, [state, tz, lat, lon]);
 
-	// Le picker affiche et rend une heure du téléphone : on lui présente
-	// l'heure murale de la box, et on réinterprète son résultat dans ce fuseau.
-	const toPickerDate = (ts: number) => {
-		const w = wallClockIn(tz, ts);
-		return new Date(w.year, w.month - 1, w.day, w.hour, w.minute);
-	};
-	const fromPickerDate = (d: Date) =>
-		zonedToEpoch(tz, {
-			year: d.getFullYear(),
-			month: d.getMonth() + 1,
-			day: d.getDate(),
-			hour: d.getHours(),
-			minute: d.getMinutes()
-		});
-	const otherTimeZone = tz !== deviceTimeZone();
 
 	// Champ Expression éditable (mode cron pur). Texte local synchronisé sur
 	// l'expression générée quand l'utilisateur ne l'édite pas ; éditer le texte
@@ -964,17 +968,9 @@ export function NewSchedulingSection(props: any) {
 		? i18n.t('cycle:cron.stepInvalid', {hi: cfg.hi})
 		: null;
 
-	// Bornes du décalage solaire.
-	const offHInvalid = state.solar.offsetH < 0 || state.solar.offsetH > 23;
-	const offMInvalid = state.solar.offsetM < 0 || state.solar.offsetM > 59;
-
 	return (
 		<View style={styles.wrap}>
-			{otherTimeZone && (
-				<Text style={styles.hint}>
-					{i18n.t('cycle:cron.boxTimeZone', {timeZone: tz})}
-				</Text>
-			)}
+			<TimeZoneNotice kind="box" />
 			{/* Date ponctuelle : planifie une seule exécution via le datetime picker. */}
 			{!props.cronOnly && (
 				<View style={styles.switchRow}>
@@ -1258,53 +1254,24 @@ export function NewSchedulingSection(props: any) {
 							onPress={() => patch(n => (n.solar.mode = 'replace'))}
 						/>
 					</View>
-					{/* timeDirection (avant/après) — placé avant le choix lever/coucher. */}
-					<View style={styles.segRow}>
-						<SegBtn
-							label={i18n.t('cycle:cron.solar.before')}
-							active={state.solar.dir === 'BEFORE'}
-							onPress={() => patch(n => (n.solar.dir = 'BEFORE'))}
-						/>
-						<SegBtn
-							label={i18n.t('cycle:cron.solar.after')}
-							active={state.solar.dir === 'AFTER'}
-							onPress={() => patch(n => (n.solar.dir = 'AFTER'))}
-						/>
-					</View>
-					<View style={styles.segRow}>
-						<SegBtn
-							label={i18n.t('cycle:cron.solar.sunrise')}
-							active={state.solar.event === 'SUNRISE'}
-							onPress={() => patch(n => (n.solar.event = 'SUNRISE'))}
-						/>
-						<SegBtn
-							label={i18n.t('cycle:cron.solar.sunset')}
-							active={state.solar.event === 'SUNSET'}
-							onPress={() => patch(n => (n.solar.event = 'SUNSET'))}
-						/>
-					</View>
-					<View style={styles.inlineRow}>
-						<Text style={styles.inlineTxt}>{i18n.t('cycle:cron.solar.offset')}</Text>
-						<NumInput
-							value={state.solar.offsetH}
-							invalid={offHInvalid}
-							onChange={v => patch(n => (n.solar.offsetH = v))}
-							width={54}
-						/>
-						<Text style={styles.inlineMuted}>{i18n.t('cycle:cron.solar.hourUnit')}</Text>
-						<NumInput
-							value={state.solar.offsetM}
-							invalid={offMInvalid}
-							onChange={v => patch(n => (n.solar.offsetM = v))}
-							width={54}
-						/>
-						<Text style={styles.inlineMuted}>{i18n.t('cycle:cron.solar.minuteUnit')}</Text>
-					</View>
-					{(offHInvalid || offMInvalid) && (
-						<Text style={styles.errorTxt}>
-							{i18n.t('cycle:cron.solar.offsetInvalid')}
-						</Text>
-					)}
+					<SolarTriggerFields
+						value={{
+							sunState: state.solar.event,
+							timeDirection: state.solar.dir,
+							time: (state.solar.offsetH * 60 + state.solar.offsetM) * 60000
+						}}
+						onChange={p =>
+							patch(n => {
+								if (p.sunState) n.solar.event = p.sunState;
+								if (p.timeDirection) n.solar.dir = p.timeDirection;
+								if (p.time !== undefined) {
+									const min = Math.round(p.time / 60000);
+									n.solar.offsetH = Math.floor(min / 60);
+									n.solar.offsetM = min % 60;
+								}
+							})
+						}
+					/>
 				</View>
 			)}
 
@@ -1396,6 +1363,31 @@ export function NewSchedulingSection(props: any) {
 				</>
 			)}
 
+			{/* Pause / confirmation : propres au schedule (absents en réutilisation
+			    hors schedule, ex. sensor). */}
+			{!props.onChange && (
+				<WarningBox hideIcon style={styles.flagsBox}>
+					<View style={styles.flagRow}>
+						<Text style={styles.switchLabel}>
+							{i18n.t('cycle:schedules.setPaused')}
+						</Text>
+						<AppSwitch
+							value={!!props.scheduleData?.isPaused}
+							onValueChange={v => stageFlag('isPaused', v)}
+						/>
+					</View>
+					<View style={styles.flagRow}>
+						<Text style={styles.switchLabel}>
+							{i18n.t('cycle:schedules.needConfirmation')}
+						</Text>
+						<AppSwitch
+							value={!!props.scheduleData?.shouldConfirmation}
+							onValueChange={v => stageFlag('shouldConfirmation', v)}
+						/>
+					</View>
+				</WarningBox>
+			)}
+
 			{/* Sélecteur de date ponctuelle (même picker que la section Execution). */}
 			<DateTimePickerModal
 				isVisible={pickerVisible}
@@ -1403,14 +1395,17 @@ export function NewSchedulingSection(props: any) {
 				display="inline"
 				themeVariant="light"
 				isDarkModeEnabled={false}
-				date={toPickerDate(state.oneTime.date)}
-				minimumDate={toPickerDate(Date.now())}
+				accentColor="#32404e"
+				buttonTextColorIOS="#32404e"
+				date={toPickerDate(tz, state.oneTime.date)}
+				minimumDate={toPickerDate(tz, Date.now())}
 				onConfirm={d => {
 					setPickerVisible(false);
-					const ts = fromPickerDate(d);
+					const ts = fromPickerDate(tz, d);
 					patch(n => (n.oneTime.date = ts));
 				}}
 				onCancel={() => setPickerVisible(false)}
+				{...pickerLocaleProps('datetime')}
 			/>
 		</View>
 	);
@@ -1487,6 +1482,15 @@ const styles = StyleSheet.create({
 		justifyContent: 'space-between',
 		marginTop: 14,
 		marginBottom: 6
+	},
+	flagsBox: {
+		marginTop: 14
+	},
+	flagRow: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		justifyContent: 'space-between',
+		marginVertical: 4
 	},
 	switchLabel: {
 		flexShrink: 1,

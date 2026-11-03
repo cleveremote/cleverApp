@@ -4,7 +4,6 @@ import type {EventArg, NavigationAction} from '@react-navigation/core';
 import {navigationHeader} from '../../../../../components/common/navigationHeaders';
 import {
 	InputForm,
-	SwitchForm,
 	TextAreaForm
 } from '../../../../../components/common/FormComponents';
 import {BoxFormStyle} from '../../../../../styles/components/common/boxForm';
@@ -87,8 +86,6 @@ export function TriggerGeneralSettingsSection(props: any) {
 				...parentRef.current,
 				name: data.name,
 				description: data.description,
-				isPaused: data.isPaused,
-				shouldConfirmation: data.shouldConfirmation,
 				isModified: true
 			})
 	});
@@ -197,26 +194,6 @@ export function TriggerGeneralSettingsSection(props: any) {
 					errors={errors}
 					name="description"
 					placeholder={i18n.t('common:form.description')}
-					onChangeText={() => {
-						setSaveUnchangedData(true);
-					}}
-				/>
-				<SwitchForm
-					control={control}
-					errors={errors}
-					name="isPaused"
-					placeholder={i18n.t('cycle:schedules.setPaused')}
-					rules={{required: false}}
-					onChangeText={() => {
-						setSaveUnchangedData(true);
-					}}
-				/>
-				<SwitchForm
-					control={control}
-					errors={errors}
-					name="shouldConfirmation"
-					placeholder={i18n.t('cycle:schedules.needConfirmation')}
-					rules={{required: false}}
 					onChangeText={() => {
 						setSaveUnchangedData(true);
 					}}

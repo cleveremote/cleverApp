@@ -1,7 +1,12 @@
 import React from 'react';
 import {StyleSheet, View} from 'react-native';
 import {connect} from 'react-redux';
-import {faGear, faMicrochip, faPlug} from '@fortawesome/free-solid-svg-icons';
+import {
+	faGauge,
+	faGear,
+	faMicrochip,
+	faPlug
+} from '@fortawesome/free-solid-svg-icons';
 import {
 	DeleteItemMenu,
 	MenuAccordion,
@@ -20,6 +25,7 @@ import SlaveModelSection from './SlaveModelSection';
 import SlaveActuatorsSection, {
 	hasActuatorsSection
 } from './SlaveActuatorsSection';
+import SlaveSensorsSection, {hasSensorsSection} from './SlaveSensorsSection';
 import i18n from 'i18next';
 
 export function SlaveDeviceSettingsScreen(props: any) {
@@ -51,9 +57,16 @@ export function SlaveDeviceSettingsScreen(props: any) {
 						/>
 					)}
 				</MenuAccordion>
+				<MenuAccordion
+					key={2}
+					name={i18n.t('devices:model.title')}
+					icon={faMicrochip}
+					onPress={() => {}}>
+					{ready && <SlaveModelSection device={deviceRef.current} />}
+				</MenuAccordion>
 				{ready && hasActuatorsSection(props.models, deviceRef.current) && (
 					<MenuAccordion
-						key={2}
+						key={3}
 						name={i18n.t('common:sections.actuators')}
 						icon={faPlug}
 						onPress={() => {}}>
@@ -63,14 +76,19 @@ export function SlaveDeviceSettingsScreen(props: any) {
 						/>
 					</MenuAccordion>
 				)}
-				<MenuAccordion
-					key={3}
-					name={i18n.t('devices:model.title')}
-					icon={faMicrochip}
-					onPress={() => {}}>
-					{ready && <SlaveModelSection device={deviceRef.current} />}
-				</MenuAccordion>
-				<DeleteItemMenu key={4} OnConfirm={deleteItem} />
+				{ready && hasSensorsSection(props.models, deviceRef.current) && (
+					<MenuAccordion
+						key={4}
+						name={i18n.t('common:sections.sensors')}
+						icon={faGauge}
+						onPress={() => {}}>
+						<SlaveSensorsSection
+							device={deviceRef.current}
+							navigation={props.navigation}
+						/>
+					</MenuAccordion>
+				)}
+				<DeleteItemMenu key={5} OnConfirm={deleteItem} />
 			</MenuGroup>
 		</SettingsScrollView>
 	);

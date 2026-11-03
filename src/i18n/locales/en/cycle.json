@@ -16,7 +16,6 @@
 		"by": "by {{user}}",
 		"after": "after {{duration}}",
 		"waitingAnswer": "Waiting for an answer",
-		"requested": "Requested",
 		"planned": "planned {{duration}}",
 		"requestedAt": "Requested",
 		"started": "Started",
@@ -34,7 +33,6 @@
 	"notification": {
 		"conditionsNotVerified": "Not started: conditions not verified",
 		"waitingConfirmation": "waiting for confirmation to start",
-		"conflict": "Conflict: waiting for confirmation to start",
 		"scheduled": "Scheduled start: waiting for confirmation",
 		"inConflictWith": "In conflict with \"{{name}}\"",
 		"current": "(current: {{value}})",
@@ -60,8 +58,8 @@
 	},
 	"filter": {
 		"CYCLE": "Cycles",
-		"FERTIGATION": "Groups",
-		"MODULE": "Modules"
+		"MODULE": "Modules",
+		"EVENTS": "Events"
 	},
 	"controlLoop": {
 		"follow": "Follow",
@@ -69,7 +67,6 @@
 	},
 	"sequence": {
 		"expectedEnd": "expected end in {{time}}",
-		"duration": "duration {{time}}",
 		"removeTitle": "Remove sequence",
 		"removeMessage": "Are you sure you want to remove this sequence from the list?",
 		"selectActuator": "Select {{type}} actuator",
@@ -94,20 +91,18 @@
 	"create": {
 		"cycle": "Create cycle",
 		"fertigation": "Create fertigation",
-		"module": "Create module"
+		"module": "Create module",
+		"chooseTitle": "Cycle type",
+		"classic": "Classic",
+		"group": "Group"
 	},
 	"events": {
-		"type": "Type",
-		"status": "Status",
-		"startedAt": "Started at",
+		"device": "Cycle",
+		"period": "Period",
+		"allDevices": "All cycles",
 		"duration": "Duration",
-		"element": "Element",
 		"requested": "requested",
 		"conflict": "Conflict",
-		"willBeStopped": "will be stopped",
-		"lost": "lost",
-		"causes": "Causes",
-		"older": "Older events",
 		"from": "Get logs from:",
 		"to": "to:",
 		"startRequired": "start date is required",
@@ -120,7 +115,8 @@
 		"themeRequired": "Theme is required",
 		"executionMode": "Execution (sequential/parallel)",
 		"addCycle": "Add new cycle ...",
-		"addSequence": "Add new sequence ..."
+		"addSequence": "Add new sequence ...",
+		"sequenceOrderHint": "Long press and drag to change the execution order."
 	},
 	"conditions": {
 		"removeTitle": "Remove condition",
@@ -167,7 +163,7 @@
 	"schedules": {
 		"item": "schedule {{name}}",
 		"add": "Add new schedule ...",
-		"newScheduling": "New schedule",
+		"newScheduling": "Schedule",
 		"setPaused": "Set paused",
 		"needConfirmation": "Need confirmation"
 	},
@@ -231,7 +227,6 @@
 		"oneTime": "One-time date",
 		"dateTime": "Date and time",
 		"oneTimeHint": "A single run at the chosen date.",
-		"boxTimeZone": "Times are in the box's time zone ({{timeZone}}).",
 		"anyValue": "Any value (*)",
 		"from": "Starting from",
 		"inRange": "Within a range",

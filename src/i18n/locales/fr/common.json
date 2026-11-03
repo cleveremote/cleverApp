@@ -1,6 +1,8 @@
 {
 	"yes": "Oui",
 	"no": "Non",
+	"confirmChoice": "Confirmer",
+	"dateRange": "Du {{from}} au {{to}}",
 	"cancel": "Annuler",
 	"execute": "Exécuter",
 	"remove": "Supprimer",
@@ -13,7 +15,9 @@
 	},
 	"overrideDuration": {
 		"title": "Forcer la durée",
-		"message": "Saisissez une durée (en ms) pour remplacer la durée par défaut des séquences"
+		"message": "Choisissez une durée pour remplacer la durée par défaut des séquences",
+		"hours": "Heures",
+		"minutes": "Minutes"
 	},
 	"discard": {
 		"title": "Abandonner les modifications ?",
@@ -59,7 +63,7 @@
 	},
 	"modes": {
 		"MANUAL": "Manuel",
-		"SCHEDULED": "Planifié",
+		"SCHEDULE": "Planifié",
 		"TRIGGER": "Déclencheur"
 	},
 	"save": "Enregistrer",
@@ -73,10 +77,18 @@
 		"conditions": "Conditions",
 		"security": "Sécurité",
 		"actuators": "Actionneurs",
+		"sensors": "Capteurs",
 		"configuration": "Configuration",
 		"parameters": "Paramètres",
 		"execution": "Exécution",
 		"cycles": "Cycles",
 		"sequences": "Séquences"
+	},
+	"timeZoneNotice": {
+		"box": "Heure de la box ({{timeZone}})",
+		"local": "Heure locale du téléphone ({{timeZone}})",
+		"boxDiffers": "Attention : la box est en {{timeZone}}.",
+		"localDiffers": "Attention : votre téléphone est en {{timeZone}}.",
+		"localShort": "heure locale"
 	}
 }

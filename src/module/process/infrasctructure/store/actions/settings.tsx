@@ -29,6 +29,18 @@ const parseSettings = (response: any): any | undefined => {
 	}
 };
 
+/**
+ * Settings embarqués dans `front/box/fetch/configuration` (clé
+ * `globalsettings`, nom de la collection côté box). Selon la forme renvoyée :
+ * objet nu, enveloppé (`{settings: {...}}`) ou collection d'un seul document.
+ * `config` est déjà passé par normalizeIds. undefined si absent.
+ */
+export const settingsFromConfiguration = (config: any): any | undefined => {
+	const raw = config?.globalsettings ?? config?.globalSettings;
+	const settings = Array.isArray(raw) ? raw[0] : raw?.settings ?? raw;
+	return settings && typeof settings === 'object' ? settings : undefined;
+};
+
 export const updateSettings =
 	(settings: any): ThunkAction<void, RootState, unknown, AnyAction> =>
 	dispatch => {

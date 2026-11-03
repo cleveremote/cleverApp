@@ -19,6 +19,7 @@ import {DragableSequences} from './draggableStack';
 import {styles} from '../../styles/cycleStyles';
 import {SequenceStack} from '../cycle/sequenceStack';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
+import {pickerLocaleProps} from './pickerLocale';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {
 	faBan,
@@ -27,6 +28,7 @@ import {
 	faTriangleExclamation
 } from '@fortawesome/free-solid-svg-icons';
 import Slider from '@react-native-community/slider';
+import {fromPickerDate, toPickerDate} from '../../../services/time';
 
 // Resolve a field error by name, supporting dotted paths (e.g.
 // `config.ipAddress`, `params.persistence.address`). react-hook-form nests its
@@ -178,7 +180,8 @@ export function DateTimePickerForm({
 	mode,
 	onChangeText = () => {},
 	maximumDate,
-	minimumDate
+	minimumDate,
+	timeZone
 }: Readonly<{
 	control: Control<any, any>;
 	placeholder: string;
@@ -190,6 +193,12 @@ export function DateTimePickerForm({
 	onChangeText?: (value: any) => void;
 	maximumDate?: Date;
 	minimumDate?: Date;
+	/**
+	 * Mode datetime : fuseau IANA dans lequel la date est affichée et saisie
+	 * (ex. celui de la box). La valeur du champ reste un instant. Absent :
+	 * heure du téléphone.
+	 */
+	timeZone?: string;
 }>) {
 	const [isDatePickerVisible, setDatePickerVisibility] =
 		React.useState(false);
@@ -223,8 +232,16 @@ export function DateTimePickerForm({
 		day: 'numeric',
 		hour: 'numeric',
 		minute: 'numeric',
-		hourCycle: 'h23'
+		hourCycle: 'h23',
+		timeZone
 	});
+
+	// Le picker natif travaille en heure du téléphone : conversion vers et
+	// depuis l'heure murale de `timeZone`.
+	const toPicker = (d?: Date) =>
+		d && timeZone && mode === 'datetime' ? toPickerDate(timeZone, d) : d;
+	const fromPicker = (d: Date) =>
+		timeZone && mode === 'datetime' ? new Date(fromPickerDate(timeZone, d)) : d;
 
 	const setCurrentTime = (value: any, mode: string) => {
 		if (value instanceof Date && !isNaN(value.getTime())) {
@@ -289,20 +306,29 @@ export function DateTimePickerForm({
 						</Pressable>
 
 						<DateTimePickerModal
-							maximumDate={maximumDate}
-							minimumDate={minimumDate}
+							maximumDate={toPicker(maximumDate)}
+							minimumDate={toPicker(minimumDate)}
 							isDarkModeEnabled={false}
 							themeVariant="light"
+							accentColor="#32404e"
+							buttonTextColorIOS="#32404e"
 							display={mode === 'datetime' ? 'inline' : 'spinner'}
+							// La roue iOS garde sa largeur naturelle et la lib
+							// la cale à gauche : on la centre dans la popup.
+							pickerStyleIOS={
+								mode === 'datetime' ? undefined : {alignItems: 'center'}
+							}
 							isVisible={isDatePickerVisible}
 							mode={mode === 'datetime' ? 'datetime' : 'time'}
-							date={setCurrentTime(value, mode)}
-							onConfirm={date => {
+							date={toPicker(setCurrentTime(value, mode))}
+							onConfirm={picked => {
+								const date = fromPicker(picked);
 								onChangeText(date);
 								onChange(date);
 								hideDatePicker();
 							}}
 							onCancel={hideDatePicker}
+							{...pickerLocaleProps(mode === 'datetime' ? 'datetime' : 'time')}
 						/>
 					</View>
 				)}

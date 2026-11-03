@@ -50,13 +50,14 @@ const BACKGROUNDS: Record<ConnectivityState, string> = {
 
 const pad = (n: number) => `${n}`.padStart(2, '0');
 
-// "29/10 08:12" : Intl n'est pas fiable sous Hermes/Android.
+// "29/10 08:12 (heure locale)" : Intl n'est pas fiable sous Hermes/Android.
+// Heure du téléphone, précisée car elle peut différer de celle de la box.
 export const formatChangedAt = (iso?: string) => {
 	const d = iso ? new Date(iso) : undefined;
 	if (!d || Number.isNaN(d.getTime())) return undefined;
 	return `${pad(d.getDate())}/${pad(d.getMonth() + 1)} ${pad(
 		d.getHours()
-	)}:${pad(d.getMinutes())}`;
+	)}:${pad(d.getMinutes())} (${i18n.t('common:timeZoneNotice.localShort')})`;
 };
 
 const useDevicesState = () => {

@@ -37,6 +37,7 @@
 	"slaveId": "ID esclave*",
 	"slaveIdRequired": "L'ID esclave est obligatoire",
 	"noActuator": "Aucun actionneur lié à cet équipement.",
+	"noSensor": "Aucun capteur lié à cet équipement.",
 	"comRequest": {
 		"readWrite": "LECTURE & ÉCRITURE",
 		"readOnly": "LECTURE SEULE",

@@ -156,7 +156,11 @@ export function SeqSettingsSec(props: any) {
 
 	return (
 		<View style={styles.container}>
-			<View style={styles.card}>
+				{!isModule && (
+					<Text style={styles.hint}>
+						{i18n.t('cycle:settings.sequenceOrderHint')}
+					</Text>
+				)}
 				<DragableForm
 					isList={true}
 					scrollEnabled={!embedded}
@@ -192,13 +196,13 @@ export function SeqSettingsSec(props: any) {
 						<Text style={styles.addLabel}>{i18n.t('cycle:settings.addSequence')}</Text>
 					</View>
 				)}
-			</View>
 		</View>
 	);
 }
 
 const colors = {
 	dark: '#32404e',
+	hint: '#8a94a0',
 	shadow: '#000',
 	white: 'white'
 };
@@ -208,7 +212,6 @@ const styles = StyleSheet.create({
 		gap: 8,
 		marginVertical: 4,
 		alignSelf: 'stretch',
-		margin: 20
 	},
 	card: {
 		alignSelf: 'stretch',
@@ -220,6 +223,11 @@ const styles = StyleSheet.create({
 		shadowOffset: {width: 0, height: 1},
 		shadowOpacity: 0.22,
 		shadowRadius: 2.22
+	},
+	hint: {
+		color: colors.hint,
+		fontSize: 12,
+		textAlign: 'center'
 	},
 	addButtonWrapper: {
 		justifyContent: 'center',

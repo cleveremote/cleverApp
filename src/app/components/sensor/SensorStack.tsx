@@ -24,7 +24,8 @@ export function SensorStack({
 	current,
 	isParent = false,
 	isExpanded = true,
-	onToggleExpand
+	onToggleExpand,
+	settingsRoute = 'Settings'
 }: Readonly<{
 	cycleData: any;
 	navigation: navigationCycleType;
@@ -33,6 +34,8 @@ export function SensorStack({
 	isParent?: boolean;
 	isExpanded?: boolean;
 	onToggleExpand?: () => void;
+	// Route du SensorSettingsStack dans le navigateur courant.
+	settingsRoute?: string;
 }>) {
 	const fontColor = sensorData.style.fontColor;
 	const bgColor = sensorData.style.bgColor;
@@ -146,6 +149,7 @@ export function SensorStack({
 					cycleData={sensorData}
 					closeSibillings={closeSibillings}
 					current={current}
+					settingsRoute={settingsRoute}
 				/>
 			</View>
 		</View>
@@ -156,12 +160,14 @@ export function MenuSensor({
 	navigation,
 	cycleData,
 	closeSibillings,
-	current
+	current,
+	settingsRoute = 'Settings'
 }: Readonly<{
 	navigation: any;
 	cycleData: any;
 	closeSibillings: Function;
 	current: string | undefined;
+	settingsRoute?: string;
 }>) {
 	const [isOpen, setIsOpen] = useState(false);
 	const onToggle = () => setIsOpen(prev => !prev);
@@ -178,7 +184,7 @@ export function MenuSensor({
 			action: () => {
 				ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
 				closeSibillings(false);
-				navigation.navigate('Settings', {
+				navigation.navigate(settingsRoute, {
 					screen: 'SensorSettingsMenu',
 					params: cycleData
 				});

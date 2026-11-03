@@ -116,7 +116,6 @@ export function DevicesScreen(props: any) {
 				<TouchableOpacity
 					style={[
 						styles.discoverButton,
-						masters.length > 0 && {marginTop: 8},
 						discovering && styles.discoverButtonBusy
 					]}
 					disabled={discovering}
@@ -128,15 +127,15 @@ export function DevicesScreen(props: any) {
 						startDiscovery();
 					}}>
 					{discovering ? (
-						<ActivityIndicator size="small" color={COLORS.onPrimary} />
+						<ActivityIndicator size="small" color={COLORS.primary} />
 					) : (
 						<FontAwesomeIcon
 							icon={faMagnifyingGlass}
 							size={16}
-							color={COLORS.onPrimary}
+							color={COLORS.primary}
 						/>
 					)}
-					<Text style={styles.discoverLabel}>
+					<Text style={styles.addLabel}>
 						{discovering
 							? i18n.t('devices:discovery.running')
 							: i18n.t('devices:discovery.start')}
@@ -152,8 +151,7 @@ const DISCOVERY_TIMEOUT_MS = 60000;
 const COLORS = {
 	primary: '#32404e',
 	shadow: '#000',
-	cardBackground: 'white',
-	onPrimary: 'white'
+	cardBackground: 'white'
 };
 
 const styles = StyleSheet.create({
@@ -168,6 +166,7 @@ const styles = StyleSheet.create({
 		backgroundColor: COLORS.cardBackground,
 		borderRadius: 12,
 		padding: 8,
+		paddingBottom: 16,
 		elevation: 3,
 		shadowColor: COLORS.shadow,
 		shadowOffset: {width: 0, height: 1},
@@ -176,14 +175,15 @@ const styles = StyleSheet.create({
 	},
 	discoverButton: {
 		marginTop: 20,
-		marginHorizontal: 8,
-		paddingVertical: 12,
-		borderRadius: 12,
-		backgroundColor: COLORS.primary,
+		alignSelf: 'center',
 		flexDirection: 'row',
-		justifyContent: 'center',
 		alignItems: 'center',
-		gap: 8
+		gap: 10,
+		paddingVertical: 8,
+		paddingHorizontal: 14,
+		borderRadius: 12,
+		borderWidth: 2,
+		borderColor: COLORS.primary
 	},
 	checkButton: {
 		alignSelf: 'flex-end',
@@ -192,8 +192,8 @@ const styles = StyleSheet.create({
 	discoverButtonBusy: {
 		opacity: 0.7
 	},
-	discoverLabel: {
-		color: COLORS.onPrimary,
+	addLabel: {
+		color: COLORS.primary,
 		fontSize: 15,
 		fontWeight: 'bold'
 	},

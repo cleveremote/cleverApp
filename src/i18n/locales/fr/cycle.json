@@ -7,7 +7,7 @@
 		"CANCELLED": "Annulé",
 		"REFUSED": "Refusé",
 		"MANUAL": "Manuel",
-		"SCHEDULED": "Planifié",
+		"SCHEDULE": "Planifié",
 		"TRIGGER": "Déclencheur"
 	},
 	"run": {
@@ -16,7 +16,6 @@
 		"by": "par {{user}}",
 		"after": "après {{duration}}",
 		"waitingAnswer": "En attente d'une réponse",
-		"requested": "Demandé",
 		"planned": "prévu {{duration}}",
 		"requestedAt": "Demandé",
 		"started": "Démarré",
@@ -34,7 +33,6 @@
 	"notification": {
 		"conditionsNotVerified": "Non démarré : conditions non vérifiées",
 		"waitingConfirmation": "en attente de confirmation pour démarrer",
-		"conflict": "Conflit : en attente de confirmation pour démarrer",
 		"scheduled": "Démarrage planifié : en attente de confirmation",
 		"inConflictWith": "En conflit avec « {{name}} »",
 		"current": "(actuel : {{value}})",
@@ -60,8 +58,8 @@
 	},
 	"filter": {
 		"CYCLE": "Cycles",
-		"FERTIGATION": "Groupes",
-		"MODULE": "Modules"
+		"MODULE": "Modules",
+		"EVENTS": "Événements"
 	},
 	"controlLoop": {
 		"follow": "Suivi",
@@ -69,7 +67,6 @@
 	},
 	"sequence": {
 		"expectedEnd": "fin prévue dans {{time}}",
-		"duration": "durée {{time}}",
 		"removeTitle": "Supprimer la séquence",
 		"removeMessage": "Voulez-vous vraiment retirer cette séquence de la liste ?",
 		"selectActuator": "Choisir un actionneur {{type}}",
@@ -94,20 +91,18 @@
 	"create": {
 		"cycle": "Créer un cycle",
 		"fertigation": "Créer une fertigation",
-		"module": "Créer un module"
+		"module": "Créer un module",
+		"chooseTitle": "Type de cycle",
+		"classic": "Classique",
+		"group": "Groupe"
 	},
 	"events": {
-		"type": "Type",
-		"status": "Statut",
-		"startedAt": "Démarré le",
+		"device": "Cycle",
+		"period": "Période",
+		"allDevices": "Tous les cycles",
 		"duration": "Durée",
-		"element": "Élément",
 		"requested": "demandée",
 		"conflict": "Conflit",
-		"willBeStopped": "sera arrêté",
-		"lost": "perdu",
-		"causes": "Causes",
-		"older": "Événements plus anciens",
 		"from": "Journaux depuis :",
 		"to": "jusqu'à :",
 		"startRequired": "la date de début est obligatoire",
@@ -120,7 +115,8 @@
 		"themeRequired": "Le thème est obligatoire",
 		"executionMode": "Exécution (séquentielle/parallèle)",
 		"addCycle": "Ajouter un cycle ...",
-		"addSequence": "Ajouter une séquence ..."
+		"addSequence": "Ajouter une séquence ...",
+		"sequenceOrderHint": "Appui long puis glisser pour changer l'ordre d'exécution."
 	},
 	"conditions": {
 		"removeTitle": "Supprimer la condition",
@@ -167,7 +163,7 @@
 	"schedules": {
 		"item": "planification {{name}}",
 		"add": "Ajouter une planification ...",
-		"newScheduling": "Nouvelle planification",
+		"newScheduling": "Planification",
 		"setPaused": "Mettre en pause",
 		"needConfirmation": "Demander confirmation"
 	},
@@ -231,7 +227,6 @@
 		"oneTime": "Date ponctuelle",
 		"dateTime": "Date et heure",
 		"oneTimeHint": "Une seule exécution à la date choisie.",
-		"boxTimeZone": "Heures exprimées en heure de la box ({{timeZone}}).",
 		"anyValue": "Toute valeur (*)",
 		"from": "À partir de",
 		"inRange": "Dans un intervalle",

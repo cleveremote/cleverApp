@@ -4,7 +4,7 @@ import {Pressable, StyleSheet, Text, View} from 'react-native';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {
-	faLayerGroup,
+	faTasks,
 	faPlug,
 	faPowerOff,
 	faSyncAlt,
@@ -12,12 +12,13 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import {hapticOptions} from '../../data/cycleTypes';
 
-export type FilterKey = 'CYCLE' | 'FERTIGATION' | 'MODULE';
+// Les groupes (GROUP) sont listés avec les cycles classiques sous 'CYCLE'.
+export type FilterKey = 'CYCLE' | 'MODULE' | 'EVENTS';
 
 const SEGMENTS: {key: FilterKey; icon: IconDefinition}[] = [
 	{key: 'CYCLE', icon: faSyncAlt},
-	{key: 'FERTIGATION', icon: faLayerGroup},
-	{key: 'MODULE', icon: faPowerOff}
+	{key: 'MODULE', icon: faPowerOff},
+	{key: 'EVENTS', icon: faTasks}
 ];
 
 export function CycleFilterBar({
@@ -27,14 +28,14 @@ export function CycleFilterBar({
 }: Readonly<{
 	active: FilterKey;
 	onChange: (key: FilterKey) => void;
-	counts: {CYCLE: number; FERTIGATION: number; MODULE: number};
+	counts: Partial<Record<FilterKey, number>>;
 }>) {
 	const {t} = useTranslation('cycle');
 	return (
 		<View style={styles.bar}>
 			{SEGMENTS.map(({key, icon}) => {
 				const isActive = active === key;
-				const count = counts[key];
+				const count = counts[key] ?? 0;
 				return (
 					<Pressable
 						key={key}

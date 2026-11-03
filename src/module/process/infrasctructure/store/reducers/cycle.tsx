@@ -19,7 +19,6 @@ import {
 	updateCycle,
 	updateStatus
 } from './cycle-reducer-helper';
-import {EMPTY_HISTORY} from '../models/cycleHistory';
 
 const initialState = {
 	cycles: [],
@@ -30,7 +29,7 @@ const initialState = {
 	status: [],
 	isLoading: false,
 	data: [],
-	events: EMPTY_HISTORY
+	events: []
 };
 
 export default (state = initialState, action: any) => {
@@ -121,7 +120,7 @@ export default (state = initialState, action: any) => {
 		case EVENTS_LOAD: {
 			return {
 				...state,
-				events: action.payload || EMPTY_HISTORY
+				events: action.payload || []
 			};
 		}
 

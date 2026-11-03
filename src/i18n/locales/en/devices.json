@@ -37,6 +37,7 @@
 	"slaveId": "Slave ID*",
 	"slaveIdRequired": "Slave ID is required",
 	"noActuator": "No actuator linked to this device.",
+	"noSensor": "No sensor linked to this device.",
 	"comRequest": {
 		"readWrite": "READ & WRITE",
 		"readOnly": "READ ONLY",

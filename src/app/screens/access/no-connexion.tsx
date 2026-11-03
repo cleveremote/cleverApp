@@ -96,7 +96,13 @@ export function NoConnectionScreen(props: any) {
 								</View>
 							</>
 						) : (
-							<Text style={{color: '#32404e', fontSize: 20}}>
+							<Text
+								style={{
+									color: '#32404e',
+									fontSize: 20,
+									textAlign: 'center',
+									alignSelf: 'stretch'
+								}}>
 								{t('noConnection.retrying')}
 							</Text>
 						)}

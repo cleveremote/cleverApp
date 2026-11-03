@@ -16,7 +16,8 @@ import {
 	DEVICE_MODELS_LOAD,
 	CONTROL_LOOPS_LOAD,
 	DEVICE_CONNECTIVITY_UPDATE,
-	ACTUATORS_LOAD
+	ACTUATORS_LOAD,
+	SETTINGS_LOAD
 } from './types';
 import {ThunkAction} from 'redux-thunk';
 import {AnyAction} from 'redux';
@@ -25,6 +26,7 @@ import {Alert} from 'react-native';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import {socketService, normalizeIds} from '../../../../../services/socket';
 import {statusFromConfiguration} from './cycle';
+import {settingsFromConfiguration} from './settings';
 import {parseConnectivity} from '../models/deviceConnectivity';
 import {CONTROL_LOOPS_CONFIG_KEY} from '../../../../../app/data/controlLoopTypes';
 
@@ -51,6 +53,14 @@ export const listenerEvents =
 						dispatch({
 							type: SENSOR_SAVE,
 							payload: data.sensor
+						});
+					}
+
+					const settings = settingsFromConfiguration(data);
+					if (settings) {
+						dispatch({
+							type: SETTINGS_LOAD,
+							payload: settings
 						});
 					}
 				}
@@ -153,6 +163,17 @@ export const loadConfiguration =
 			{},
 			(response: any) => {
 				const config = normalizeIds(JSON.parse(response.config));
+
+				// Settings de la box (fuseau, coordonnées, langue…) : lus par la
+				// planification, l'historique et les réglages globaux. Clé
+				// absente (box plus ancienne) : on garde ceux déjà connus.
+				const settings = settingsFromConfiguration(config);
+				if (settings) {
+					dispatch({
+						type: SETTINGS_LOAD,
+						payload: settings
+					});
+				}
 
 				dispatch({
 					type: CYCLES_LOAD,

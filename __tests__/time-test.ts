@@ -1,5 +1,8 @@
 import {
 	durationToPickerDate,
+	fromPickerDate,
+	startOfDayIn,
+	toPickerDate,
 	pickerDateToDuration,
 	serializeDatesDeep,
 	toEpoch,
@@ -27,6 +30,22 @@ describe('heure murale', () => {
 		for (const tz of ['Africa/Casablanca', 'Europe/Paris', 'America/New_York', 'UTC']) {
 			expect(zonedToEpoch(tz, wallClockIn(tz, t))).toBe(t);
 		}
+	});
+});
+
+describe('picker dans le fuseau de la box', () => {
+	it('fait l’aller-retour instant -> picker -> instant', () => {
+		const t = Date.UTC(2026, 10, 2, 13, 45);
+		for (const tz of ['Africa/Casablanca', 'Europe/Paris', 'America/New_York']) {
+			expect(fromPickerDate(tz, toPickerDate(tz, t))).toBe(t);
+		}
+	});
+
+	it('donne minuit du jour dans le fuseau', () => {
+		const t = Date.UTC(2026, 10, 2, 13, 45);
+		expect(new Date(startOfDayIn('America/New_York', t)).toISOString()).toBe(
+			'2026-11-02T05:00:00.000Z'
+		);
 	});
 });
 

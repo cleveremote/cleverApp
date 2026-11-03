@@ -9,6 +9,7 @@ import SlaveGeneralSettingsSection from '../screens/devices/slave/SlaveGeneralSe
 import ComRequestsSection from '../screens/devices/slave/ComRequestsSection';
 import {ComRequestSettingsStack} from './ComRequestSettingsStack';
 import {ActuatorSettingsStack} from './ActuatorSettingsStack';
+import {SensorSettingsStack} from './SensorSettingsStack';
 
 export function SlaveDeviceSettingsStack() {
 	const {t} = useTranslation('navigation');
@@ -45,6 +46,11 @@ export function SlaveDeviceSettingsStack() {
 			<Stack.Screen
 				name="ActuatorSettingsStack"
 				component={ActuatorSettingsStack}
+				options={{headerShown: false}}
+			/>
+			<Stack.Screen
+				name="SensorSettingsStack"
+				component={SensorSettingsStack}
 				options={{headerShown: false}}
 			/>
 		</Stack.Navigator>

@@ -7,7 +7,7 @@
 		"CANCELLED": "أُلغي",
 		"REFUSED": "مرفوض",
 		"MANUAL": "يدوي",
-		"SCHEDULED": "مجدول",
+		"SCHEDULE": "مجدول",
 		"TRIGGER": "مشغِّل آلي"
 	},
 	"run": {
@@ -16,7 +16,6 @@
 		"by": "بواسطة {{user}}",
 		"after": "بعد {{duration}}",
 		"waitingAnswer": "في انتظار الرد",
-		"requested": "مطلوب",
 		"planned": "المخطط {{duration}}",
 		"requestedAt": "تاريخ الطلب",
 		"started": "بدأ",
@@ -34,7 +33,6 @@
 	"notification": {
 		"conditionsNotVerified": "لم يبدأ: الشروط غير متحققة",
 		"waitingConfirmation": "في انتظار التأكيد للبدء",
-		"conflict": "تعارض: في انتظار التأكيد للبدء",
 		"scheduled": "بدء مجدول: في انتظار التأكيد",
 		"inConflictWith": "متعارض مع «{{name}}»",
 		"current": "(الحالي: {{value}})",
@@ -60,8 +58,8 @@
 	},
 	"filter": {
 		"CYCLE": "الدورات",
-		"FERTIGATION": "المجموعات",
-		"MODULE": "الوحدات"
+		"MODULE": "الوحدات",
+		"EVENTS": "الأحداث"
 	},
 	"controlLoop": {
 		"follow": "متابعة",
@@ -69,7 +67,6 @@
 	},
 	"sequence": {
 		"expectedEnd": "الانتهاء المتوقع خلال {{time}}",
-		"duration": "المدة {{time}}",
 		"removeTitle": "حذف التسلسل",
 		"removeMessage": "هل تريد بالتأكيد إزالة هذا التسلسل من القائمة؟",
 		"selectActuator": "اختر مشغل {{type}}",
@@ -94,20 +91,18 @@
 	"create": {
 		"cycle": "إنشاء دورة",
 		"fertigation": "إنشاء تسميد بالري",
-		"module": "إنشاء وحدة"
+		"module": "إنشاء وحدة",
+		"chooseTitle": "نوع الدورة",
+		"classic": "كلاسيكية",
+		"group": "مجموعة"
 	},
 	"events": {
-		"type": "النوع",
-		"status": "الحالة",
-		"startedAt": "بدأ في",
+		"device": "الدورة",
+		"period": "الفترة",
+		"allDevices": "كل الدورات",
 		"duration": "المدة",
-		"element": "العنصر",
 		"requested": "مطلوب",
 		"conflict": "تعارض",
-		"willBeStopped": "سيتم إيقافه",
-		"lost": "خسر",
-		"causes": "الأسباب",
-		"older": "أحداث أقدم",
 		"from": "السجلات من:",
 		"to": "إلى:",
 		"startRequired": "تاريخ البداية مطلوب",
@@ -120,7 +115,8 @@
 		"themeRequired": "السمة مطلوبة",
 		"executionMode": "التنفيذ (تسلسلي/متوازٍ)",
 		"addCycle": "إضافة دورة ...",
-		"addSequence": "إضافة تسلسل ..."
+		"addSequence": "إضافة تسلسل ...",
+		"sequenceOrderHint": "اضغط مطولاً ثم اسحب لتغيير ترتيب التنفيذ."
 	},
 	"conditions": {
 		"removeTitle": "حذف الشرط",
@@ -167,7 +163,7 @@
 	"schedules": {
 		"item": "الجدول {{name}}",
 		"add": "إضافة جدول زمني ...",
-		"newScheduling": "جدول زمني جديد",
+		"newScheduling": "جدول زمني",
 		"setPaused": "إيقاف مؤقت",
 		"needConfirmation": "يتطلب تأكيداً"
 	},
@@ -231,7 +227,6 @@
 		"oneTime": "تاريخ لمرة واحدة",
 		"dateTime": "التاريخ والوقت",
 		"oneTimeHint": "تنفيذ واحد في التاريخ المختار.",
-		"boxTimeZone": "الأوقات معبَّر عنها بتوقيت الصندوق ({{timeZone}}).",
 		"anyValue": "أي قيمة (*)",
 		"from": "ابتداءً من",
 		"inRange": "ضمن نطاق",

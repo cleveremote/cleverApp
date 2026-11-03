@@ -1,6 +1,8 @@
 {
 	"yes": "نعم",
 	"no": "لا",
+	"confirmChoice": "تأكيد",
+	"dateRange": "من {{from}} إلى {{to}}",
 	"cancel": "إلغاء",
 	"execute": "تنفيذ",
 	"remove": "حذف",
@@ -13,7 +15,9 @@
 	},
 	"overrideDuration": {
 		"title": "فرض المدة",
-		"message": "أدخل مدة (بالمللي ثانية) لاستبدال المدة الافتراضية للتسلسلات"
+		"message": "اختر مدة لاستبدال المدة الافتراضية للتسلسلات",
+		"hours": "ساعات",
+		"minutes": "دقائق"
 	},
 	"discard": {
 		"title": "تجاهل التغييرات؟",
@@ -59,7 +63,7 @@
 	},
 	"modes": {
 		"MANUAL": "يدوي",
-		"SCHEDULED": "مجدول",
+		"SCHEDULE": "مجدول",
 		"TRIGGER": "مشغِّل آلي"
 	},
 	"save": "حفظ",
@@ -73,10 +77,18 @@
 		"conditions": "الشروط",
 		"security": "الأمان",
 		"actuators": "المشغلات",
+		"sensors": "المستشعرات",
 		"configuration": "التهيئة",
 		"parameters": "المعلمات",
 		"execution": "التنفيذ",
 		"cycles": "الدورات",
 		"sequences": "التسلسلات"
+	},
+	"timeZoneNotice": {
+		"box": "توقيت الصندوق ({{timeZone}})",
+		"local": "التوقيت المحلي للهاتف ({{timeZone}})",
+		"boxDiffers": "تنبيه: الصندوق على توقيت {{timeZone}}.",
+		"localDiffers": "تنبيه: هاتفك على توقيت {{timeZone}}.",
+		"localShort": "التوقيت المحلي"
 	}
 }

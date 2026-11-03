@@ -2,6 +2,9 @@ import React from 'react';
 import {Text, TouchableOpacity, View} from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import i18n from 'i18next';
+import {useSelector} from 'react-redux';
+import {wallClockIn} from '../../../services/time';
+import {selectBoxTimeZone} from '../../../module/process/infrasctructure/store/models/boxSettings';
 import {
 	CycleRun,
 	EventOrigin,
@@ -70,27 +73,22 @@ export const runColor = (run: CycleRun) =>
 
 const pad = (n: number) => (n < 10 ? '0' + n : '' + n);
 
-export const formatTime = (value: any) => {
-	const date = new Date(value);
-	return (
-		pad(date.getHours()) +
-		':' +
-		pad(date.getMinutes()) +
-		':' +
-		pad(date.getSeconds())
-	);
+// Heure murale dans `timeZone` (celui de la box pour l'historique).
+export const formatTime = (value: any, timeZone: string) => {
+	const w = wallClockIn(timeZone, new Date(value));
+	return pad(w.hour) + ':' + pad(w.minute) + ':' + pad(w.second);
 };
 
-export const formatDateTime = (value: any) => {
-	const date = new Date(value);
+export const formatDateTime = (value: any, timeZone: string) => {
+	const w = wallClockIn(timeZone, new Date(value));
 	return (
-		pad(date.getDate()) +
+		pad(w.day) +
 		'/' +
-		pad(date.getMonth() + 1) +
+		pad(w.month) +
 		'/' +
-		pad(date.getFullYear() % 100) +
+		pad(w.year % 100) +
 		' ' +
-		formatTime(value)
+		formatTime(value, timeZone)
 	);
 };
 
@@ -214,6 +212,7 @@ type Props = {
 };
 
 export function RunCard({run, expanded, onToggle, nameOf}: Props) {
+	const tz: string = useSelector(selectBoxTimeZone);
 	const color = runColor(run);
 	const outcome = {
 		label: humanize(run.outcome),
@@ -264,7 +263,7 @@ export function RunCard({run, expanded, onToggle, nameOf}: Props) {
 							{run.name || nameOf(run.cycleId)}
 						</Text>
 						<Text style={{color: MUTED, fontSize: 12, marginLeft: 8}}>
-							{formatDateTime(run.startedAt || run.requestedAt)}
+							{formatDateTime(run.startedAt || run.requestedAt, tz)}
 						</Text>
 						<Text
 							style={{marginLeft: 8, color: '#32404e', fontSize: 12}}>
@@ -310,13 +309,13 @@ export function RunCard({run, expanded, onToggle, nameOf}: Props) {
 							}}>
 							<Detail
 								label={i18n.t('cycle:run.requestedAt')}
-								value={formatDateTime(run.requestedAt)}
+								value={formatDateTime(run.requestedAt, tz)}
 							/>
 							<Detail
 								label={i18n.t('cycle:run.started')}
 								value={
 									run.startedAt
-										? formatDateTime(run.startedAt)
+										? formatDateTime(run.startedAt, tz)
 										: undefined
 								}
 							/>
@@ -324,7 +323,7 @@ export function RunCard({run, expanded, onToggle, nameOf}: Props) {
 								label={i18n.t('cycle:run.ended')}
 								value={
 									run.endedAt
-										? formatDateTime(run.endedAt)
+										? formatDateTime(run.endedAt, tz)
 										: undefined
 								}
 							/>
@@ -399,7 +398,7 @@ export function RunCard({run, expanded, onToggle, nameOf}: Props) {
 														fontSize: 12,
 														width: 62
 													}}>
-													{formatTime(entry.date)}
+													{formatTime(entry.date, tz)}
 												</Text>
 												<Text
 													style={{

@@ -1,6 +1,8 @@
 {
 	"yes": "Yes",
 	"no": "No",
+	"confirmChoice": "Confirm",
+	"dateRange": "From {{from}} to {{to}}",
 	"cancel": "Cancel",
 	"execute": "Execute",
 	"remove": "Remove",
@@ -13,7 +15,9 @@
 	},
 	"overrideDuration": {
 		"title": "Override duration",
-		"message": "Enter a duration (in ms) to override the default sequence duration"
+		"message": "Pick a duration to override the default sequence duration",
+		"hours": "Hours",
+		"minutes": "Minutes"
 	},
 	"discard": {
 		"title": "Discard changes?",
@@ -73,10 +77,18 @@
 		"conditions": "Conditions",
 		"security": "Security",
 		"actuators": "Actuators",
+		"sensors": "Sensors",
 		"configuration": "Configuration",
 		"parameters": "Parameters",
 		"execution": "Execution",
 		"cycles": "Cycles",
 		"sequences": "Sequences"
+	},
+	"timeZoneNotice": {
+		"box": "Box time ({{timeZone}})",
+		"local": "Phone local time ({{timeZone}})",
+		"boxDiffers": "Warning: the box is in {{timeZone}}.",
+		"localDiffers": "Warning: your phone is in {{timeZone}}.",
+		"localShort": "local time"
 	}
 }

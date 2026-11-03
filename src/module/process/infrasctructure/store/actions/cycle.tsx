@@ -23,7 +23,7 @@ import {
 	newTempId
 } from '../../../../../services/socket';
 import {cleanCycleModuleConfigs} from '../models/sequenceModule';
-import {toCycleHistory} from '../models/cycleHistory';
+import {toCycleRuns} from '../models/cycleHistory';
 import {currentLanguage} from '../../../../../i18n/language';
 import {Alert} from 'react-native';
 import i18n from 'i18next';
@@ -121,9 +121,12 @@ export const loadValues =
 
 export const loadEvents =
 	(query: {
-		deviceId: string;
-		startDate: any;
-		endDate: any;
+		// Sans deviceId : événements de tous les cycles confondus. Sans aucun
+		// critère : la box renvoie les 50 derniers événements.
+		deviceId?: string;
+		startDate?: any;
+		endDate?: any;
+		limit?: number;
 	}): ThunkAction<void, RootState, unknown, AnyAction> =>
 	async dispatch => {
 		socketService.emit(
@@ -132,7 +135,7 @@ export const loadEvents =
 			(response: any) => {
 				dispatch({
 					type: EVENTS_LOAD,
-					payload: toCycleHistory(normalizeIds(response?.config))
+					payload: toCycleRuns(normalizeIds(response?.config))
 				});
 			}
 		);

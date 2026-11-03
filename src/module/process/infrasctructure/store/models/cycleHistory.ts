@@ -1,6 +1,5 @@
-// Historique d'un cycle renvoyé par 'box/fetch/events' : un run par
-// démarrage, plus les anciens events sans runId (avant la mise à jour, reset
-// boot). Les sous-types (origin, stop, confirmation…) sont lus de façon
+// Historique renvoyé par 'box/fetch/events' : une liste de runs, un par
+// démarrage. Les sous-types (origin, stop, confirmation…) sont lus de façon
 // tolérante : seuls les champs utiles au rendu sont typés.
 
 export type RunOutcome =
@@ -66,25 +65,9 @@ export type CycleRun = {
 	timeline: RunTimelineEntry[];
 };
 
-export type CycleHistory = {
-	cycleId?: string;
-	runs: CycleRun[];
-	legacy: any[];
-};
-
-export const EMPTY_HISTORY: CycleHistory = {runs: [], legacy: []};
-
-// Ancien format (tableau d'events) : tout part dans `legacy`.
-export const toCycleHistory = (raw: any): CycleHistory => {
+export const toCycleRuns = (raw: any): CycleRun[] => {
 	const value = typeof raw === 'string' ? safeParse(raw) : raw;
-	if (Array.isArray(value)) {
-		return {runs: [], legacy: value};
-	}
-	return {
-		cycleId: value?.cycleId,
-		runs: Array.isArray(value?.runs) ? value.runs : [],
-		legacy: Array.isArray(value?.legacy) ? value.legacy : []
-	};
+	return Array.isArray(value) ? value : [];
 };
 
 const safeParse = (raw: string) => {

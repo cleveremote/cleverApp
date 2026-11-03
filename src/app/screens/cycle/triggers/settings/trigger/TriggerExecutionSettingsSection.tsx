@@ -1,12 +1,15 @@
 import React, {useEffect, useRef, useState} from 'react';
 import {Alert, ScrollView, StyleSheet, Text, View} from 'react-native';
 import {AppSwitch} from '../../../../../components/common/AppSwitch';
+import {SolarTriggerFields} from '../../../../../components/common/SolarTriggerFields';
+import {WarningBox} from '../../../../../components/common/WarningBox';
 import type {EventArg, NavigationAction} from '@react-navigation/core';
 import {navigationHeader} from '../../../../../components/common/navigationHeaders';
 import {BoxFormStyle} from '../../../../../styles/components/common/boxForm';
 import {
 	DateTimePickerForm,
-	SelectForm
+	SelectForm,
+	SwitchForm
 } from '../../../../../components/common/FormComponents';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import {hapticOptions} from '../../../../../data/cycleTypes';
@@ -25,6 +28,12 @@ import {
 
 const SWITCH_TRACK_COLOR = {true: '#32404e', false: '#d1d1d6'};
 
+// Les anciens triggers n'ont pas de timeDirection : « après le coucher » et
+// « avant le lever » étaient implicites.
+const defaultTimeDirection = (sunBehavior: any) =>
+	sunBehavior?.timeDirection ??
+	(sunBehavior?.sunState === 'SUNSET' ? 'AFTER' : 'BEFORE');
+
 export function TriggerExecutionSettingsSection(props: any) {
 	const embedded = !!props.embedded;
 	const parentRef = useRef(props.triggerData);
@@ -37,7 +46,10 @@ export function TriggerExecutionSettingsSection(props: any) {
 		delay: durationToPickerDate(defValues.delay),
 		timeAfter: durationToPickerDate(defValues.trigger?.timeAfter),
 		sunState: defValues.trigger?.sunBehavior?.sunState,
-		time: durationToPickerDate(defValues.trigger?.sunBehavior?.time)
+		timeDirection: defaultTimeDirection(defValues.trigger?.sunBehavior),
+		time: durationToPickerDate(defValues.trigger?.sunBehavior?.time),
+		isPaused: defValues.isPaused,
+		shouldConfirmation: defValues.shouldConfirmation
 	};
 
 	const [sunState, setSunState] = useState(
@@ -71,6 +83,8 @@ export function TriggerExecutionSettingsSection(props: any) {
 				action: dto.action,
 				delay: dto.delay,
 				trigger: dto.trigger,
+				isPaused: dto.isPaused,
+				shouldConfirmation: dto.shouldConfirmation,
 				isModified: true
 			});
 		}
@@ -89,11 +103,14 @@ export function TriggerExecutionSettingsSection(props: any) {
 		const result = {...defValues};
 		result.delay = pickerDateToDuration(data.delay);
 		result.action = data.action;
+		result.isPaused = data.isPaused;
+		result.shouldConfirmation = data.shouldConfirmation;
 		if (sunStateRef.current) {
 			result.trigger = {
 				...result.trigger,
 				sunBehavior: {
 					sunState: data.sunState,
+					timeDirection: data.timeDirection,
 					time: pickerDateToDuration(data.time)
 				},
 				timeAfter: undefined
@@ -235,6 +252,9 @@ export function TriggerExecutionSettingsSection(props: any) {
 								setValue('sunState', 'SUNRISE', {
 									shouldValidate: true
 								});
+								setValue('timeDirection', 'BEFORE', {
+									shouldValidate: true
+								});
 							} else {
 								setValue('sunState', null, {
 									shouldValidate: true
@@ -250,37 +270,26 @@ export function TriggerExecutionSettingsSection(props: any) {
 					/>
 				</View>
 				{sunState ? (
-					<>
-						<SelectForm
-							lstData={[
-								{label: i18n.t('cycle:triggers.sunset'), value: 'SUNSET'},
-								{label: i18n.t('cycle:triggers.sunrise'), value: 'SUNRISE'}
-							]}
-							control={control}
-							errors={errors}
-							name="sunState"
-							placeholder={i18n.t('cycle:triggers.sunState')}
-							rules={{required: i18n.t('cycle:triggers.sunStateRequired')}}
-							onValueChange={() => {
-								saveUnchangedData.current = true;
-							}}
-						/>
-						<DateTimePickerForm
-							mode={'time'}
-							control={control}
-							errors={errors}
-							name="time"
-							placeholder={
-								watch('sunState') === 'SUNSET'
-									? i18n.t('cycle:triggers.afterSunset')
-									: i18n.t('cycle:triggers.beforeSunrise')
-							}
-							rules={{required: i18n.t('cycle:triggers.timeRequired')}}
-							onChangeText={() => {
-								saveUnchangedData.current = true;
-							}}
-						/>
-					</>
+					<SolarTriggerFields
+						value={{
+							sunState: watch('sunState') ?? 'SUNRISE',
+							timeDirection: watch('timeDirection') ?? 'BEFORE',
+							time: watch('time') ? pickerDateToDuration(watch('time')) : 0
+						}}
+						onChange={patch => {
+							if (patch.sunState)
+								setValue('sunState', patch.sunState, {shouldValidate: true});
+							if (patch.timeDirection)
+								setValue('timeDirection', patch.timeDirection, {
+									shouldValidate: true
+								});
+							if (patch.time !== undefined)
+								setValue('time', durationToPickerDate(patch.time), {
+									shouldValidate: true
+								});
+							saveUnchangedData.current = true;
+						}}
+					/>
 				) : (
 					<DateTimePickerForm
 						mode={'time'}
@@ -294,6 +303,28 @@ export function TriggerExecutionSettingsSection(props: any) {
 						}}
 					/>
 				)}
+				<WarningBox hideIcon style={styles.warning}>
+					<SwitchForm
+						control={control}
+						errors={errors}
+						name="isPaused"
+						placeholder={i18n.t('cycle:schedules.setPaused')}
+						rules={{required: false}}
+						onChangeText={() => {
+							saveUnchangedData.current = true;
+						}}
+					/>
+					<SwitchForm
+						control={control}
+						errors={errors}
+						name="shouldConfirmation"
+						placeholder={i18n.t('cycle:schedules.needConfirmation')}
+						rules={{required: false}}
+						onChangeText={() => {
+							saveUnchangedData.current = true;
+						}}
+					/>
+				</WarningBox>
 			</View>
 		</Body>
 	);
@@ -313,6 +344,9 @@ const styles = StyleSheet.create({
 		color: '#32404e',
 		fontSize: 15,
 		fontWeight: 'bold'
+	},
+	warning: {
+		marginTop: 8
 	}
 });
 

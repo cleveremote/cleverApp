@@ -4,6 +4,14 @@
     <style name="AppTheme" parent="Theme.AppCompat.DayNight.NoActionBar">
         <!-- Customize your theme here. -->
         <item name="android:editTextBackground">@drawable/rn_edit_text_material</item>
+        <item name="android:datePickerDialogTheme">@style/PickerDialogTheme</item>
+        <item name="android:timePickerDialogTheme">@style/PickerDialogTheme</item>
+    </style>
+
+    <!-- Dialogues date/heure natifs : sélection et boutons aux couleurs de l'app. -->
+    <style name="PickerDialogTheme" parent="Theme.AppCompat.Light.Dialog">
+        <item name="colorAccent">#32404e</item>
+        <item name="android:colorAccent">#32404e</item>
     </style>
 
 </resources>

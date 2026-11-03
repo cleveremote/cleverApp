@@ -1,6 +1,6 @@
 import React from 'react';
 import i18n from 'i18next';
-import {Text, View} from 'react-native';
+import {StyleSheet, Text, View} from 'react-native';
 import {useForm} from 'react-hook-form';
 import {connect} from 'react-redux';
 import {BoxFormStyle} from '../../../styles/components/common/boxForm';
@@ -17,6 +17,11 @@ import {
 import {toNumber} from '../../devices/deviceFieldUtils';
 
 const mutedColor = '#8a96a3';
+
+const styles = StyleSheet.create({
+	row: {flexDirection: 'row', gap: 10},
+	col: {flex: 1}
+});
 
 const withUnit = (label: string, unit?: string) =>
 	unit ? `${label} (${unit})` : label;
@@ -83,50 +88,62 @@ export function SensorAnalogScalingSection(props: any) {
 			<InputForm
 				control={control}
 				errors={errors}
-				name="scaling.inputMin"
-				placeholder={withUnit(`${i18n.t('sensor:analog.inputMin')}*`, inputUnit)}
-				keyboardType="numeric"
-				rules={requiredNumber(i18n.t('sensor:analog.inputMin'))}
-			/>
-			<InputForm
-				control={control}
-				errors={errors}
-				name="scaling.inputMax"
-				placeholder={withUnit(`${i18n.t('sensor:analog.inputMax')}*`, inputUnit)}
-				keyboardType="numeric"
-				rules={{
-					...requiredNumber(i18n.t('sensor:analog.inputMax')),
-					validate: (v: any) =>
-						Number.isNaN(Number(v))
-							? i18n.t('sensor:analog.mustBeNumber')
-							: Number(v) !==
-									Number(getValues('scaling.inputMin')) ||
-							  i18n.t('sensor:analog.inputMaxDiffers')
-				}}
-			/>
-			<InputForm
-				control={control}
-				errors={errors}
 				name="scaling.unit"
 				placeholder={i18n.t('sensor:analog.unit')}
 				rules={{required: i18n.t('sensor:analog.unitRequired')}}
 			/>
-			<InputForm
-				control={control}
-				errors={errors}
-				name="scaling.outputMin"
-				placeholder={withUnit(`${i18n.t('sensor:analog.outputMin')}*`, outputUnit)}
-				keyboardType="numeric"
-				rules={requiredNumber(i18n.t('sensor:analog.outputMin'))}
-			/>
-			<InputForm
-				control={control}
-				errors={errors}
-				name="scaling.outputMax"
-				placeholder={withUnit(`${i18n.t('sensor:analog.outputMax')}*`, outputUnit)}
-				keyboardType="numeric"
-				rules={requiredNumber(i18n.t('sensor:analog.outputMax'))}
-			/>
+			<View style={styles.row}>
+				<View style={styles.col}>
+					<InputForm
+						control={control}
+						errors={errors}
+						name="scaling.inputMin"
+						placeholder={withUnit(`${i18n.t('sensor:analog.inputMin')}*`, inputUnit)}
+						keyboardType="numeric"
+						rules={requiredNumber(i18n.t('sensor:analog.inputMin'))}
+					/>
+				</View>
+				<View style={styles.col}>
+					<InputForm
+						control={control}
+						errors={errors}
+						name="scaling.outputMin"
+						placeholder={withUnit(`${i18n.t('sensor:analog.outputMin')}*`, outputUnit)}
+						keyboardType="numeric"
+						rules={requiredNumber(i18n.t('sensor:analog.outputMin'))}
+					/>
+				</View>
+			</View>
+			<View style={styles.row}>
+				<View style={styles.col}>
+					<InputForm
+						control={control}
+						errors={errors}
+						name="scaling.inputMax"
+						placeholder={withUnit(`${i18n.t('sensor:analog.inputMax')}*`, inputUnit)}
+						keyboardType="numeric"
+						rules={{
+							...requiredNumber(i18n.t('sensor:analog.inputMax')),
+							validate: (v: any) =>
+								Number.isNaN(Number(v))
+									? i18n.t('sensor:analog.mustBeNumber')
+									: Number(v) !==
+											Number(getValues('scaling.inputMin')) ||
+									  i18n.t('sensor:analog.inputMaxDiffers')
+						}}
+					/>
+				</View>
+				<View style={styles.col}>
+					<InputForm
+						control={control}
+						errors={errors}
+						name="scaling.outputMax"
+						placeholder={withUnit(`${i18n.t('sensor:analog.outputMax')}*`, outputUnit)}
+						keyboardType="numeric"
+						rules={requiredNumber(i18n.t('sensor:analog.outputMax'))}
+					/>
+				</View>
+			</View>
 			<SelectForm
 				lstData={outOfRangeOptions}
 				control={control}

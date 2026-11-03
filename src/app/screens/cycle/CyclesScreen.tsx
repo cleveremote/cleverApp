@@ -1,5 +1,6 @@
 import React, {useEffect, useRef} from 'react';
-import {connect} from 'react-redux';
+import {connect, useSelector} from 'react-redux';
+import {useForm} from 'react-hook-form';
 import CycleStack from '../../components/cycle/cycleStack';
 import GroupStack from '../../components/cycle/groupStack';
 import CycleFilterBar, {FilterKey} from '../../components/cycle/CycleFilterBar';
@@ -11,27 +12,45 @@ import {
 } from '../../components/common/navigationHeaders';
 import Spinner from 'react-native-loading-spinner-overlay';
 import {styles} from '../../styles/cycleStyles';
-import {AppState, View} from 'react-native';
+import {Alert, AppState, Text, View} from 'react-native';
+import {useTranslation} from 'react-i18next';
 import {
 	executeCycle,
 	listenerEvents,
 	loadCycles,
+	loadEvents,
 	loadGroups
 } from '../../../module/process/infrasctructure/store/actions/cycle';
+import {RunCard} from '../../components/cycle/RunCard';
+import {SelectForm} from '../../components/common/FormComponents';
+import {DateRangePickerForm} from '../../components/common/DateRangePickerForm';
+import {TimeZoneNotice} from '../../components/common/TimeZoneNotice';
+import {BoxFormStyle} from '../../styles/components/common/boxForm';
+import {endOfDayIn, startOfDayIn} from '../../../services/time';
+import {selectBoxTimeZone} from '../../../module/process/infrasctructure/store/models/boxSettings';
+import {CycleRun} from '../../../module/process/infrasctructure/store/models/cycleHistory';
 
 const IN_PROCESS = 'IN_PROCCESS';
+const ALL_DEVICES = 'ALL';
+
+type EventCriteria = {
+	deviceId: string;
+	startDate: Date;
+	endDate: Date;
+};
+
+const runDate = (run: CycleRun) =>
+	new Date(run.startedAt ?? run.requestedAt).getTime() || 0;
 
 const filterFromTypeFilter = (typeFilter?: string): FilterKey => {
 	if (typeFilter === 'MODULE') {
 		return 'MODULE';
 	}
-	if (typeFilter === 'FERTIGATION') {
-		return 'FERTIGATION';
-	}
 	return 'CYCLE';
 };
 
 export function Cycle(props: any) {
+	const {t} = useTranslation(['cycle', 'common']);
 	const [activeMenu, setActiveMenu] = React.useState<string>();
 	const [activeFilter, setActiveFilter] = React.useState<FilterKey>(
 		filterFromTypeFilter(props.route?.params?.typeFilter)
@@ -41,8 +60,26 @@ export function Cycle(props: any) {
 	);
 	const [refreshing, setRefreshing] = React.useState<boolean>(false);
 	const [isLoading, setIsLoading] = React.useState<boolean>(false);
+	const [expandedRunId, setExpandedRunId] = React.useState<string | null>(
+		null
+	);
 
 	const appState = useRef(AppState.currentState);
+
+	// Critères de l'onglet événements, dates en heure de la box comme l'écran
+	// d'historique d'un cycle.
+	const tz: string = useSelector(selectBoxTimeZone);
+	const {
+		control,
+		formState: {errors},
+		getValues
+	} = useForm<any>({
+		defaultValues: {
+			deviceId: ALL_DEVICES,
+			startDate: new Date(startOfDayIn(tz)),
+			endDate: new Date(endOfDayIn(tz))
+		}
+	});
 
 	useEffect(() => {
 		const subscription = AppState.addEventListener(
@@ -74,9 +111,10 @@ export function Cycle(props: any) {
 		});
 	}, []);
 
-	// The "+" header opens creation directly for the currently selected
-	// filter: a plain cycle, a GROUP fertigation, or a MODULE. Keyed on
-	// activeFilter so the handler always targets the visible segment.
+	// The "+" header opens creation for the currently selected filter. Cycles
+	// and GROUPs share the 'CYCLE' segment, so the user picks the kind first;
+	// MODULE opens directly. Keyed on activeFilter so the handler always
+	// targets the visible segment.
 	const openCreate = (params: any) => {
 		props.navigation.navigate('Settings', {
 			screen: 'CycleSettingsMenu',
@@ -84,15 +122,44 @@ export function Cycle(props: any) {
 		});
 	};
 
+	// Période + cycle (sans deviceId : tous les cycles).
+	const loadRecentEvents = () => {
+		const c = getValues() as EventCriteria;
+		props.loadEvents({
+			...(c.deviceId !== ALL_DEVICES && {deviceId: c.deviceId}),
+			startDate: c.startDate,
+			endDate: c.endDate
+		});
+	};
+	// Laisse le formulaire enregistrer la valeur avant de relancer la requête.
+	const reloadEvents = () => setTimeout(loadRecentEvents, 0);
+
+	// Le slice `events` est partagé avec l'écran d'historique d'un cycle : on
+	// recharge à chaque retour sur l'onglet pour ne pas afficher un seul cycle.
 	useEffect(() => {
+		if (activeFilter !== 'EVENTS') return;
+		loadRecentEvents();
+		return props.navigation.addListener('focus', loadRecentEvents);
+	}, [activeFilter]);
+
+	useEffect(() => {
+		if (activeFilter === 'EVENTS') {
+			props.navigation.setOptions({headerRight: undefined});
+			return;
+		}
 		const onCreate = () => {
-			if (activeFilter === 'FERTIGATION') {
-				openCreate({isGroup: true});
-			} else if (activeFilter === 'MODULE') {
+			if (activeFilter === 'MODULE') {
 				openCreate({type: 'MODULE'});
-			} else {
-				openCreate({});
+				return;
 			}
+			Alert.alert(t('cycle:create.chooseTitle'), undefined, [
+				{text: t('cycle:create.classic'), onPress: () => openCreate({})},
+				{
+					text: t('cycle:create.group'),
+					onPress: () => openCreate({isGroup: true})
+				},
+				{text: t('common:cancel'), style: 'cancel'}
+			]);
 		};
 		props.navigation.setOptions({
 			headerRight: () => navigationHeader(onCreate, 'times-circle', true)
@@ -218,7 +285,11 @@ export function Cycle(props: any) {
 
 	const onRefresh = async () => {
 		setRefreshing(true);
-		await Promise.all([props.loadCycles(), props.loadGroups()]);
+		await Promise.all([
+			props.loadCycles(),
+			props.loadGroups(),
+			activeFilter === 'EVENTS' && loadRecentEvents()
+		]);
 		setRefreshing(false);
 	};
 
@@ -243,10 +314,7 @@ export function Cycle(props: any) {
 	);
 
 	const counts = {
-		CYCLE: cycleItems.filter(
-			(x: any) => statusOf(x.id) === IN_PROCESS
-		).length,
-		FERTIGATION: groupItems.filter(
+		CYCLE: [...groupItems, ...cycleItems].filter(
 			(x: any) => statusOf(x.id) === IN_PROCESS
 		).length,
 		MODULE: moduleItems.filter(
@@ -254,28 +322,100 @@ export function Cycle(props: any) {
 		).length
 	};
 
-	const renderList = () => {
-		if (activeFilter === 'FERTIGATION') {
-			return groupItems.map((group: any) => (
-				<GroupStack
-					key={group.id}
-					groupData={group}
-					cycles={cycles}
-					navigation={props.navigation}
-					current={activeMenu}
-					orientation={orientation}
-					closeSibillings={closeSibillings}
-					onSwitch={onGroupSwitch}
-					onSkip={onGroupSkip}
-					onForceSequence={onForceSequence}
-					onQueueCycle={onQueueCycle}
-					onExecute={onGroupExecute}
-				/>
-			));
-		}
+	const renderGroups = () =>
+		groupItems.map((group: any) => (
+			<GroupStack
+				key={group.id}
+				groupData={group}
+				cycles={cycles}
+				navigation={props.navigation}
+				current={activeMenu}
+				orientation={orientation}
+				closeSibillings={closeSibillings}
+				onSwitch={onGroupSwitch}
+				onSkip={onGroupSkip}
+				onForceSequence={onForceSequence}
+				onQueueCycle={onQueueCycle}
+				onExecute={onGroupExecute}
+			/>
+		));
 
+	const runs: CycleRun[] = props.events ?? [];
+	const recentRuns = [...runs].sort((a, b) => runDate(b) - runDate(a));
+
+	const deviceOptions = [
+		{label: t('cycle:events.allDevices'), value: ALL_DEVICES},
+		...[...groupItems, ...cycleItems, ...moduleItems].map((x: any) => ({
+			label: x.name ?? x.id,
+			value: x.id
+		}))
+	];
+
+	const renderEventCriteria = () => (
+		<View style={BoxFormStyle.boxForm}>
+			<SelectForm
+				lstData={deviceOptions}
+				control={control}
+				errors={errors}
+				name="deviceId"
+				placeholder={t('cycle:events.device')}
+				onValueChange={reloadEvents}
+			/>
+			<TimeZoneNotice kind="box" />
+			<DateRangePickerForm
+				control={control}
+				startName="startDate"
+				endName="endDate"
+				timeZone={tz}
+				placeholder={t('cycle:events.period')}
+				onChange={reloadEvents}
+			/>
+		</View>
+	);
+
+	const nameOf = (id: string) => {
+		const entity = [...cycles, ...groups].find((x: any) => x.id === id);
+		if (entity?.name) return entity.name;
+		for (const run of recentRuns) {
+			const entry = run.timeline?.find(e => e.elementId === id);
+			if (entry?.name) return entry.name;
+		}
+		return id;
+	};
+
+	const renderRecentEvents = () => {
+		if (!recentRuns.length) {
+			return props.isLoading ? null : (
+				<Text style={{color: '#777', textAlign: 'center', marginTop: 24}}>
+					{t('cycle:events.noRun')}
+				</Text>
+			);
+		}
+		return recentRuns.map(run => {
+			const expanded = expandedRunId === run.runId;
+			return (
+				<RunCard
+					key={run.runId}
+					run={run}
+					expanded={expanded}
+					onToggle={() => setExpandedRunId(expanded ? null : run.runId)}
+					nameOf={nameOf}
+				/>
+			);
+		});
+	};
+
+	const renderList = () => {
+		if (activeFilter === 'EVENTS') {
+			return (
+				<>
+					{renderEventCriteria()}
+					{renderRecentEvents()}
+				</>
+			);
+		}
 		const list = activeFilter === 'MODULE' ? moduleItems : cycleItems;
-		return list.map((cycle: any) => (
+		const cycleCards = list.map((cycle: any) => (
 			<CycleStack
 				key={cycle.id}
 				cycleData={cycle}
@@ -292,6 +432,10 @@ export function Cycle(props: any) {
 				onExecute={onExecute}
 			/>
 		));
+		// Groups first: they orchestrate the classic cycles listed below.
+		return activeFilter === 'MODULE'
+			? cycleCards
+			: [...renderGroups(), ...cycleCards];
 	};
 
 	return (
@@ -333,6 +477,7 @@ const mapStateToProps = (state: any) => ({
 	cycles: state.root_cycle.cycles,
 	groups: state.root_cycle.groups,
 	status: state.root_cycle.status,
+	events: state.root_cycle.events,
 	isLoading: state.root_cycle.isLoading,
 	connected: state.status.connected,
 	isBoxConnected: state.status.isBoxConnected
@@ -341,5 +486,6 @@ const mapStateToProps = (state: any) => ({
 export default connect(mapStateToProps, {
 	loadCycles,
 	loadGroups,
+	loadEvents,
 	executeCycle
 })(Cycle);

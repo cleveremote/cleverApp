@@ -96,3 +96,31 @@ export const zonedToEpoch = (
 	t = asUtc - offsetAt(t);
 	return t;
 };
+
+/**
+ * Les pickers natifs affichent et rendent une heure du téléphone. Pour saisir
+ * une heure d'un autre fuseau, on leur présente une Date dont l'heure locale
+ * est l'heure murale voulue…
+ */
+export const toPickerDate = (timeZone: string, date: Date | number): Date => {
+	const w = wallClockIn(timeZone, date);
+	return new Date(w.year, w.month - 1, w.day, w.hour, w.minute);
+};
+
+/** …et on réinterprète leur résultat dans ce fuseau (epoch ms). */
+export const fromPickerDate = (timeZone: string, d: Date): number =>
+	zonedToEpoch(timeZone, {
+		year: d.getFullYear(),
+		month: d.getMonth() + 1,
+		day: d.getDate(),
+		hour: d.getHours(),
+		minute: d.getMinutes()
+	});
+
+/** Minuit du jour courant dans un fuseau (epoch ms). */
+export const startOfDayIn = (timeZone: string, date: Date | number = Date.now()): number =>
+	zonedToEpoch(timeZone, {...wallClockIn(timeZone, date), hour: 0, minute: 0, second: 0});
+
+/** Dernière milliseconde du jour courant dans un fuseau (epoch ms). */
+export const endOfDayIn = (timeZone: string, date: Date | number = Date.now()): number =>
+	zonedToEpoch(timeZone, {...wallClockIn(timeZone, date), hour: 23, minute: 59, second: 59}) + 999;

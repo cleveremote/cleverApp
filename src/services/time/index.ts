@@ -1,5 +1,9 @@
 export {
 	deviceTimeZone,
+	endOfDayIn,
+	fromPickerDate,
+	startOfDayIn,
+	toPickerDate,
 	wallClockIn,
 	zonedToEpoch
 } from './timeZone';
