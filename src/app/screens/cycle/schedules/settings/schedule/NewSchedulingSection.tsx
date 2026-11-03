@@ -1,6 +1,5 @@
 import React from 'react';
 import {
-	ScrollView,
 	StyleSheet,
 	Text,
 	TextInput,
@@ -9,6 +8,8 @@ import {
 	View
 } from 'react-native';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
+import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
+import {faPen} from '@fortawesome/free-solid-svg-icons';
 import {pickerLocaleProps} from '../../../../../components/common/pickerLocale';
 import {connect, useSelector} from 'react-redux';
 import i18n from 'i18next';
@@ -16,6 +17,7 @@ import {AppSwitch} from '../../../../../components/common/AppSwitch';
 import {TimeZoneNotice} from '../../../../../components/common/TimeZoneNotice';
 import {WarningBox} from '../../../../../components/common/WarningBox';
 import {SolarTriggerFields} from '../../../../../components/common/SolarTriggerFields';
+import {ModalRangePicker} from '../../../../../components/common/ModalRangePicker';
 import {updateSchedule} from '../../../../../../module/process/infrasctructure/store/actions/schedule';
 import {
 	selectBoxCoordinates,
@@ -701,6 +703,31 @@ function solarDescription(s: CronState): string | null {
 
 const MODES: Exclude<FieldMode, 'free'>[] = ['every', 'list', 'range', 'step'];
 
+// Les intervalles (du / au) se saisissent dans une popup à deux roues,
+// présélectionnée sur tout l'intervalle du champ (min → max).
+// Libellé complet (mois / jours de semaine en toutes lettres, heures, minutes
+// et secondes sur deux chiffres) pour le champ et les roues.
+function wheelLabel(key: FieldKey, v: number): string {
+	if (key === 'dom') return String(v);
+	if (key !== 'month' && key !== 'dow') return String(v).padStart(2, '0');
+	const names = toNameList(
+		i18n.t(key === 'month' ? 'cycle:cron.monthsLong' : 'cycle:cron.weekdaysLong', {
+			returnObjects: true
+		})
+	);
+	return names[key === 'month' ? v - 1 : v] ?? String(v);
+}
+// Jours (du mois / de semaine) : « du … au … » ; autres champs : « de … à … ».
+// Le libellé du champ et ceux des roues suivent la même tournure.
+const isDayRange = (key: FieldKey) => key === 'dom' || key === 'dow';
+function wheelOptions(key: FieldKey): {label: string; value: number}[] {
+	const cfg = FIELDCFG[key];
+	return Array.from({length: cfg.hi - cfg.lo + 1}, (_, i) => {
+		const v = cfg.lo + i;
+		return {label: wheelLabel(key, v), value: v};
+	});
+}
+
 // --- Petits composants d'UI ------------------------------------------------
 function Chip({
 	label,
@@ -886,6 +913,7 @@ export function NewSchedulingSection(props: any) {
 
 	const oneTimeEnabled = state.oneTime.enabled;
 	const [pickerVisible, setPickerVisible] = React.useState(false);
+	const [rangeModalOpen, setRangeModalOpen] = React.useState(false);
 	const combineMode =
 		!oneTimeEnabled && state.solar.enabled && state.solar.mode === 'combine';
 	const replaceMode =
@@ -968,6 +996,21 @@ export function NewSchedulingSection(props: any) {
 		? i18n.t('cycle:cron.stepInvalid', {hi: cfg.hi})
 		: null;
 
+	// Champ « du … au … » : ouvre la popup à deux roues.
+	const rangeField = (
+		<TouchableOpacity
+			onPress={() => setRangeModalOpen(true)}
+			style={[styles.textInput, styles.rangeField]}>
+			<Text style={styles.rangeFieldTxt} numberOfLines={1}>
+				{i18n.t(isDayRange(activeTab) ? 'cycle:cron.rangeTextDay' : 'cycle:cron.rangeText', {
+					from: wheelLabel(activeTab, f.from),
+					to: wheelLabel(activeTab, f.to)
+				})}
+			</Text>
+			<FontAwesomeIcon icon={faPen} size={14} color={C.muted} />
+		</TouchableOpacity>
+	);
+
 	return (
 		<View style={styles.wrap}>
 			<TimeZoneNotice kind="box" />
@@ -1030,7 +1073,17 @@ export function NewSchedulingSection(props: any) {
 											key={m}
 											label={i18n.t(`cycle:cron.mode.${m}`)}
 											active={f.mode === m}
-											onPress={() => patch(n => (n.fields[activeTab].mode = m))}
+											onPress={() =>
+												patch(n => {
+													const nf = n.fields[activeTab];
+													// Passage en intervalle : présélection sur tout l'intervalle (min → max).
+													if (m === 'range' && nf.mode !== 'range') {
+														nf.from = FIELDCFG[activeTab].lo;
+														nf.to = FIELDCFG[activeTab].hi;
+													}
+													nf.mode = m;
+												})
+											}
 											style={styles.modeChip}
 										/>
 									))}
@@ -1082,47 +1135,8 @@ export function NewSchedulingSection(props: any) {
 
 						{f.mode === 'range' && (
 							<>
-								<View style={styles.rangeRow}>
-									{cfg.type === 'name' && cfg.names ? (
-										<>
-											<RangePicker
-												cfg={cfg}
-												value={f.from}
-												onChange={v => patch(n => (n.fields[activeTab].from = v))}
-											/>
-											<Text style={styles.rangeSep}>{i18n.t('cycle:cron.to')}</Text>
-											<RangePicker
-												cfg={cfg}
-												value={f.to}
-												onChange={v => patch(n => (n.fields[activeTab].to = v))}
-											/>
-										</>
-									) : (
-										<>
-											<NumInput
-												value={f.from}
-												invalid={fromInvalid}
-												onChange={v => patch(n => (n.fields[activeTab].from = v))}
-												width={80}
-											/>
-											<Text style={styles.rangeSep}>{i18n.t('cycle:cron.to')}</Text>
-											<NumInput
-												value={f.to}
-												invalid={toInvalid || orderInvalid}
-												onChange={v => patch(n => (n.fields[activeTab].to = v))}
-												width={80}
-											/>
-										</>
-									)}
-								</View>
-								{cfg.type !== 'name' &&
-									(rangeError ? (
-										<Text style={styles.errorTxt}>{rangeError}</Text>
-									) : (
-										<Text style={styles.hint}>
-											{i18n.t('cycle:cron.between', {lo: cfg.lo, hi: cfg.hi})}
-										</Text>
-									))}
+								{rangeField}
+								{rangeError && <Text style={styles.errorTxt}>{rangeError}</Text>}
 							</>
 						)}
 
@@ -1147,7 +1161,14 @@ export function NewSchedulingSection(props: any) {
 									</TouchableOpacity>
 									<TouchableOpacity
 										onPress={() =>
-											patch(n => (n.fields[activeTab].stepBase = 'range'))
+											patch(n => {
+												const nf = n.fields[activeTab];
+												if (nf.stepBase !== 'range') {
+													nf.from = FIELDCFG[activeTab].lo;
+													nf.to = FIELDCFG[activeTab].hi;
+												}
+												nf.stepBase = 'range';
+											})
 										}
 										style={[
 											styles.segBtn,
@@ -1164,21 +1185,7 @@ export function NewSchedulingSection(props: any) {
 								</View>
 								{f.stepBase === 'range' && (
 									<>
-										<View style={styles.rangeRow}>
-											<NumInput
-												value={f.from}
-												invalid={fromInvalid}
-												onChange={v => patch(n => (n.fields[activeTab].from = v))}
-												width={80}
-											/>
-											<Text style={styles.rangeSep}>{i18n.t('cycle:cron.to')}</Text>
-											<NumInput
-												value={f.to}
-												invalid={toInvalid || orderInvalid}
-												onChange={v => patch(n => (n.fields[activeTab].to = v))}
-												width={80}
-											/>
-										</View>
+										{rangeField}
 										{rangeError && (
 											<Text style={styles.errorTxt}>{rangeError}</Text>
 										)}
@@ -1407,6 +1414,27 @@ export function NewSchedulingSection(props: any) {
 				onCancel={() => setPickerVisible(false)}
 				{...pickerLocaleProps('datetime')}
 			/>
+			<ModalRangePicker
+				isOpen={rangeModalOpen}
+				title={cfg.label}
+				message={i18n.t('cycle:cron.rangeModal.message')}
+				fromLabel={i18n.t(
+					isDayRange(activeTab) ? 'cycle:cron.rangeModal.fromDay' : 'cycle:cron.rangeModal.from'
+				)}
+				toLabel={i18n.t(
+					isDayRange(activeTab) ? 'cycle:cron.rangeModal.toDay' : 'cycle:cron.rangeModal.to'
+				)}
+				options={wheelOptions(activeTab)}
+				from={f.from}
+				to={f.to}
+				onClose={() => setRangeModalOpen(false)}
+				onConfirm={(from, to) =>
+					patch(n => {
+						n.fields[activeTab].from = from;
+						n.fields[activeTab].to = to;
+					})
+				}
+			/>
 		</View>
 	);
 }
@@ -1429,32 +1457,6 @@ function SegBtn({
 	);
 }
 
-function RangePicker({
-	cfg,
-	value,
-	onChange
-}: {
-	cfg: (typeof FIELDCFG)[FieldKey];
-	value: number;
-	onChange: (v: number) => void;
-}) {
-	if (!cfg.names) return null;
-	return (
-		<ScrollView
-			horizontal
-			showsHorizontalScrollIndicator={false}
-			style={styles.rangePicker}
-			contentContainerStyle={styles.rowScroll}>
-			{cfg.names.map((nm, i) => {
-				const v = cfg.base === 0 ? i : i + 1;
-				return (
-					<Chip key={nm} label={nm} active={value === v} onPress={() => onChange(v)} />
-				);
-			})}
-		</ScrollView>
-	);
-}
-
 const styles = StyleSheet.create({
 	// Contenu calé sur la verticale de l'icône de l'en-tête (marginLeft: 10 du
 	// MenuAccordion) pour que tout s'aligne sous l'icône de la section.
@@ -1466,7 +1468,6 @@ const styles = StyleSheet.create({
 		marginTop: 4,
 		fontWeight: 'bold'
 	},
-	rowScroll: {gap: 8, paddingVertical: 2, paddingRight: 10},
 	tabRows: {gap: 8, marginTop: 2},
 	tabRow: {flexDirection: 'row', gap: 8},
 	tabChip: {
@@ -1570,9 +1571,13 @@ const styles = StyleSheet.create({
 		fontSize: 15,
 		fontWeight: 'bold'
 	},
-	rangeRow: {flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 6},
-	rangeSep: {fontSize: 14, color: C.muted, marginHorizontal: 2},
-	rangePicker: {flex: 1},
+	rangeField: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		justifyContent: 'space-between',
+		gap: 8
+	},
+	rangeFieldTxt: {flex: 1, color: C.text, fontSize: 15, fontWeight: 'bold'},
 	segRow: {flexDirection: 'row', gap: 8, marginBottom: 10},
 	segBtn: {
 		flex: 1,

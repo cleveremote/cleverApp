@@ -12,6 +12,7 @@ import {
 	Text,
 	View
 } from 'react-native';
+import { WheelPicker } from './WheelPicker';
 
 const HOUR = 60 * 60 * 1000;
 const MINUTE = 60 * 1000;
@@ -26,7 +27,7 @@ const HOUR_ITEMS = toItems(24);
 const MINUTE_ITEMS = toItems(60);
 // Même hauteur pour la roue iOS et ses items : sinon la roue (216 par défaut)
 // est rognée et la ligne sélectionnée n'est plus centrée verticalement.
-const PICKER_HEIGHT = Platform.OS === 'ios' ? 160 : 50;
+const PICKER_HEIGHT = 160;
 
 // La roue iOS n'émet onChange qu'une fois arrêtée, sans événement de début de
 // défilement : on la considère « en rotation » dès qu'on la touche, jusqu'à
@@ -35,7 +36,8 @@ const PICKER_HEIGHT = Platform.OS === 'ios' ? 160 : 50;
 const SPIN_SETTLE_FALLBACK = 2000;
 
 // Mémoïsé : changer les heures ne re-rend pas la roue des minutes (et inversement).
-const DurationColumn = memo(function DurationColumn({
+// Exporté pour les autres popups à roues (ex. ModalRangePicker).
+export const DurationColumn = memo(function DurationColumn({
 	label,
 	value,
 	onChange,
@@ -46,7 +48,7 @@ const DurationColumn = memo(function DurationColumn({
 	value: number;
 	onChange: (value: number) => void;
 	onSpinningChange: (spinning: boolean) => void;
-	items: React.ReactElement[];
+	items: React.ReactElement<{ label: string; value: number }>[];
 }) {
 	const settleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
 
@@ -72,18 +74,31 @@ const DurationColumn = memo(function DurationColumn({
 		);
 	};
 
-	// Sur Android le Picker est une liste déroulante : pas d'inertie.
-	const spinHandlers =
-		Platform.OS === 'ios'
-			? {
-					onTouchStart,
-					onTouchEnd,
-					onTouchCancel: onTouchEnd
-				}
-			: {};
+	// Sur Android le Picker natif est une liste déroulante (dialog plein
+	// écran) : on le remplace par une roue JS au rendu proche de celle d'iOS,
+	// qui signale elle-même son défilement. Les options sont relues des items.
+	if (Platform.OS !== 'ios') {
+		return (
+			<View style={styles.column}>
+				<Text style={styles.columnLabel}>{label}</Text>
+				<WheelPicker
+					options={items.map(item => item.props)}
+					value={value}
+					onChange={onChange}
+					onSpinningChange={onSpinningChange}
+					color={COLORS.primary}
+				/>
+			</View>
+		);
+	}
 
 	return (
-		<View style={styles.column} {...spinHandlers}>
+		<View
+			style={styles.column}
+			onTouchStart={onTouchStart}
+			onTouchEnd={onTouchEnd}
+			onTouchCancel={onTouchEnd}
+		>
 			<Text style={styles.columnLabel}>{label}</Text>
 			<Picker
 				selectedValue={value}
@@ -256,7 +271,9 @@ const styles = StyleSheet.create({
 		// Rogne le BlurView aux coins arrondis.
 		overflow: 'hidden',
 		padding: 20,
-		width: '80%'
+		width: '80%',
+		// Pas de flou sur Android : une ombre détache la carte du fond.
+		elevation: 8
 	},
 	title: {
 		fontSize: 17,
@@ -283,6 +300,7 @@ const styles = StyleSheet.create({
 	},
 	columnLabel: {
 		fontWeight: 'bold',
+		marginBottom: Platform.OS === 'ios' ? 0 : 8,
 		color: COLORS.primary,
 		textAlign: 'center'
 	},
