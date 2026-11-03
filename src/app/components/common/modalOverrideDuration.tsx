@@ -233,7 +233,7 @@ export function ModalOverrideDuration({
 
 // Mêmes couleurs que le bouton « Discover » de la liste des master devices.
 // Fond légèrement assombri et carte floutée semi-transparente, comme l'alerte
-// native (ex. choix du type de cycle à la création).
+// native (même style que ModalCreateChoice).
 const COLORS = {
 	primary: '#32404e',
 	backdrop: 'rgba(0,0,0,0.2)',

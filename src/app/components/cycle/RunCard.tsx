@@ -232,21 +232,27 @@ export function RunCard({run, expanded, onToggle, nameOf}: Props) {
 		ids?.length ? ids.map(nameOf).join(', ') : undefined;
 
 	return (
-		<View style={{marginVertical: 4}}>
+		// Ombre sur le conteneur : sur iOS, `overflow: 'hidden'` (coins de la
+		// barre de couleur) la masquerait sur la carte elle-même.
+		<View
+			style={{
+				marginVertical: 4,
+				marginHorizontal: 4,
+				backgroundColor: 'white',
+				borderRadius: 12,
+				elevation: 4,
+				shadowColor: '#000',
+				shadowOffset: {width: 0, height: 2},
+				shadowOpacity: 0.18,
+				shadowRadius: 4
+			}}>
 			<TouchableOpacity
 				activeOpacity={0.7}
 				onPress={onToggle}
 				style={{
 					flexDirection: 'row',
 					alignSelf: 'stretch',
-					backgroundColor: 'white',
 					borderRadius: 12,
-					elevation: 3,
-					shadowColor: '#000',
-					shadowOffset: {width: 0, height: 1},
-					shadowOpacity: 0.22,
-					shadowRadius: 2.22,
-					marginHorizontal: 4,
 					overflow: 'hidden'
 				}}>
 				<View style={{width: 5, backgroundColor: color}} />

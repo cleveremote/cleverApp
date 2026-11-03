@@ -45,4 +45,17 @@ class ReactNativeDelegate: RCTDefaultReactNativeFactoryDelegate {
     Bundle.main.url(forResource: "main", withExtension: "jsbundle")
 #endif
   }
+
+  // @react-native-community/blur 4.4.1 ne déclare pas `ios.componentProvider`
+  // dans son codegenConfig : la codegen ne l'enregistre donc pas et Fabric
+  // affiche « Unimplemented component <BlurView> ». On ajoute ses vues ici.
+  override func thirdPartyFabricComponents() -> [String: RCTComponentViewProtocol.Type] {
+    var components = super.thirdPartyFabricComponents()
+    for name in ["BlurView", "VibrancyView"] {
+      if let cls = NSClassFromString(name) as? RCTComponentViewProtocol.Type {
+        components[name] = cls
+      }
+    }
+    return components
+  }
 }

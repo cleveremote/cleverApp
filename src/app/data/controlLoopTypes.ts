@@ -9,6 +9,7 @@
 
 import {newTempId} from '../../services/socket';
 import i18n from 'i18next';
+import {getSensorUnit} from '../components/sensor/SensorValue';
 
 // Événements socket (relayés vers `box/synchronize/valve` et
 // `box/synchronize/control-loop`) et clé de la configuration box.
@@ -130,5 +131,7 @@ export const enabledLoopOf = (loops: any[] = [], actuatorId: any) => {
 };
 
 // Unité du capteur de retour, affichée à côté de la consigne et de la tolérance.
+// Même résolution que l'affichage de la valeur (échelle ANALOG, `config.unit`,
+// puis unité du champ lu dans la commande de l'appareil).
 export const sensorUnit = (sensor: any): string | undefined =>
-	sensor?.config?.scaling?.unit ?? sensor?.config?.unit ?? sensor?.unit;
+	getSensorUnit(sensor) || sensor?.unit || undefined;

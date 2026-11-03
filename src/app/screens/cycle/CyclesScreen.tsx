@@ -12,7 +12,7 @@ import {
 } from '../../components/common/navigationHeaders';
 import Spinner from 'react-native-loading-spinner-overlay';
 import {styles} from '../../styles/cycleStyles';
-import {Alert, AppState, Text, View} from 'react-native';
+import {AppState, Text, View} from 'react-native';
 import {useTranslation} from 'react-i18next';
 import {
 	executeCycle,
@@ -22,6 +22,7 @@ import {
 	loadGroups
 } from '../../../module/process/infrasctructure/store/actions/cycle';
 import {RunCard} from '../../components/cycle/RunCard';
+import {ModalCreateChoice} from '../../components/cycle/ModalCreateChoice';
 import {SelectForm} from '../../components/common/FormComponents';
 import {DateRangePickerForm} from '../../components/common/DateRangePickerForm';
 import {TimeZoneNotice} from '../../components/common/TimeZoneNotice';
@@ -60,6 +61,8 @@ export function Cycle(props: any) {
 	);
 	const [refreshing, setRefreshing] = React.useState<boolean>(false);
 	const [isLoading, setIsLoading] = React.useState<boolean>(false);
+	const [createChoiceVisible, setCreateChoiceVisible] =
+		React.useState<boolean>(false);
 	const [expandedRunId, setExpandedRunId] = React.useState<string | null>(
 		null
 	);
@@ -152,14 +155,7 @@ export function Cycle(props: any) {
 				openCreate({type: 'MODULE'});
 				return;
 			}
-			Alert.alert(t('cycle:create.chooseTitle'), undefined, [
-				{text: t('cycle:create.classic'), onPress: () => openCreate({})},
-				{
-					text: t('cycle:create.group'),
-					onPress: () => openCreate({isGroup: true})
-				},
-				{text: t('common:cancel'), style: 'cancel'}
-			]);
+			setCreateChoiceVisible(true);
 		};
 		props.navigation.setOptions({
 			headerRight: () => navigationHeader(onCreate, 'times-circle', true)
@@ -440,6 +436,11 @@ export function Cycle(props: any) {
 
 	return (
 		<View style={{flex: 1}}>
+			<ModalCreateChoice
+				isOpen={createChoiceVisible}
+				onClose={() => setCreateChoiceVisible(false)}
+				onChoose={openCreate}
+			/>
 			<CycleFilterBar
 				active={activeFilter}
 				onChange={setActiveFilter}
