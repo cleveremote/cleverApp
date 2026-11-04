@@ -90,13 +90,13 @@ export function SequenceStack({
 					setMiliseconds(timerParams.millisenconds);
 					setProgression(timerParams.progression);
 
+					// Recalculé depuis startedAt à chaque tick : les timers JS
+					// sont suspendus en arrière-plan, un cumul de pas laisserait
+					// la barre en retard au retour au premier plan.
 					timerId = setInterval(() => {
-						setProgression(progression =>
-							progression + timerParams.step < 100
-								? progression + timerParams.step
-								: 100
-						);
-						setMiliseconds((ms: number) => ms - timerSpeed);
+						const tick = getTimerParams(startedAt, duration, status);
+						setProgression(tick.progression);
+						setMiliseconds(tick.millisenconds);
 					}, timerSpeed);
 				}
 				return () => {

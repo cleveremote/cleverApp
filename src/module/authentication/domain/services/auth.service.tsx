@@ -261,6 +261,9 @@ class AuthenticationService {
 
 	// try first local if ok else distant
 	private async setSocketServer(isLocal = true, login = ''): Promise<void> {
+		if(login) {
+			await AsyncStorage.setItem('boxId', login);
+		}
 		const boxId = (await AsyncStorage.getItem('boxId')) || '';
 
 		let server = WEBSITE_URL;
@@ -302,10 +305,16 @@ class AuthenticationService {
 				});
 
 				socketService.on('disconnect', (reason: unknown) => {
-					this.setStatusServer(false);
-					if (reason !== 'io client disconnect') {
-						this.signout();
+					// Déconnexion volontaire (pause en arrière-plan, reconnect) :
+					// passer le serveur à déconnecté démonterait tout le
+					// Tab.Navigator (AppStack), et les écrans repartiraient de zéro
+					// au retour. L'échec de la reconnexion est géré par
+					// executeRefresh et le timeout d'AppStack.
+					if (reason === 'io client disconnect') {
+						return;
 					}
+					this.setStatusServer(false);
+					this.signout();
 				});
 			});
 		};
@@ -325,6 +334,7 @@ class AuthenticationService {
 		// Force a fresh mDNS scan for this login session — the cached host
 		// from a previous session must not be reused on a new login.
 		this.resolvedLocalService = null;
+		
 		await this.setSocketServer(true, login);
 		const sendLogin = (): Promise<{res: boolean; error?: string}> => {
 			return new Promise((resolve, _reject) => {

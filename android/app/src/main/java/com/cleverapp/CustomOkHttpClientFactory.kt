@@ -1,10 +1,17 @@
 package com.cleverApp
 
 import android.content.Context
+import android.util.Log
 import com.facebook.react.modules.network.OkHttpClientFactory
 import com.facebook.react.modules.network.OkHttpClientProvider
+import okhttp3.Call
 import okhttp3.ConnectionPool
+import okhttp3.EventListener
 import okhttp3.OkHttpClient
+import okhttp3.Protocol
+import java.io.IOException
+import java.net.InetSocketAddress
+import java.net.Proxy
 import java.security.KeyStore
 import java.security.cert.CertificateFactory
 import javax.net.ssl.HttpsURLConnection
@@ -86,10 +93,41 @@ class CustomOkHttpClientFactory(private val context: Context) : OkHttpClientFact
             e.printStackTrace()
         }
 
+        builder.eventListener(FailureLogger)
+
         return builder.build()
     }
 
+    /**
+     * Logs the native cause of a failed call.
+     *
+     * React Native reduces every transport failure to "Network request failed",
+     * which cannot tell a refused port from a rejected certificate — and on the
+     * box's access point those call for very different fixes.
+     */
+    private object FailureLogger : EventListener() {
+        override fun connectFailed(
+            call: Call,
+            inetSocketAddress: InetSocketAddress,
+            proxy: Proxy,
+            protocol: Protocol?,
+            ioe: IOException
+        ) {
+            Log.w(TAG, "connect ${call.request().url} via $inetSocketAddress failed: ${describe(ioe)}")
+        }
+
+        override fun callFailed(call: Call, ioe: IOException) {
+            Log.w(TAG, "${call.request().method} ${call.request().url} failed: ${describe(ioe)}", ioe)
+        }
+
+        private fun describe(e: Throwable): String =
+            generateSequence(e) { it.cause }
+                .take(4)
+                .joinToString(" <- ") { "${it.javaClass.simpleName}: ${it.message}" }
+    }
+
     companion object {
+        private const val TAG = "BoxHttp"
         private val IP_PATTERN = Regex("^\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}\\.\\d{1,3}$")
 
         private const val CONNECT_TIMEOUT_S = 8L

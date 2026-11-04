@@ -271,7 +271,7 @@ export function BoxConfiguration(props: any) {
 		try {
 			await saveSigninData(
 				deviceName,
-				"ZJzzA6Di",
+				login,
 				login,
 				form.password,
 				true,

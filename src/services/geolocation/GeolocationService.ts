@@ -46,11 +46,24 @@ export const getLocationPermissionStatus = (): LocationPermissionStatus =>
 //    silencieusement jusqu'au redémarrage de l'app.
 // `getCurrentPosition` rappelle toujours (succès, erreur ou timeout natif), donc
 // aucun appel ne peut rester en attente.
+//
+// Android : avec `enableHighAccuracy`, le LocationManager n'écoute que le
+// provider GPS (satellites seuls) : en intérieur aucun fix n'arrive et chaque
+// appel finit en timeout. On demande donc la basse précision, qui passe par le
+// provider réseau (Wi-Fi + antennes) et retombe sur le GPS s'il est coupé —
+// largement assez précis pour situer une box.
+// Le fused provider ('playServices') n'est pas une option : la librairie
+// (3.4.0) renvoie une erreur au premier `onLocationAvailability(false)`, que
+// Play Services émet presque toujours avant le premier fix.
 Geolocation.setRNConfiguration({
 	skipPermissionRequests: false,
 	authorizationLevel: 'whenInUse',
-	locationProvider: 'auto'
+	locationProvider: Platform.OS === 'android' ? 'android' : 'auto'
 });
+
+// Filet de sécurité : si le natif ne rappelle jamais (provider qui ne répond
+// pas), ce délai côté JS garantit qu'on rend la main quand même.
+const JS_TIMEOUT_MARGIN_MS = 1000;
 
 /**
  * Android only: ask for the fine location permission.
@@ -106,7 +119,19 @@ export const readLocalCoordinates = async (
 			return remember({status: 'denied'});
 		}
 
-		return await new Promise<LocalCoordinatesResult>(resolve => {
+		return await new Promise<LocalCoordinatesResult>(settle => {
+			let settled = false;
+			const resolve = (result: LocalCoordinatesResult) => {
+				if (settled) return;
+				settled = true;
+				clearTimeout(guard);
+				settle(result);
+			};
+			const guard = setTimeout(() => {
+				console.warn('Unable to get position', 'timeout');
+				resolve({status: 'unknown'});
+			}, timeoutMs + JS_TIMEOUT_MARGIN_MS);
+
 			Geolocation.getCurrentPosition(
 				position =>
 					resolve(
@@ -130,7 +155,7 @@ export const readLocalCoordinates = async (
 					);
 				},
 				{
-					enableHighAccuracy: true,
+					enableHighAccuracy: Platform.OS !== 'android',
 					timeout: timeoutMs,
 					maximumAge: maximumAgeMs
 				}

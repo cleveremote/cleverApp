@@ -16,6 +16,9 @@ import {TriggersStack} from './TriggersStack';
 import {SchedulesStack} from './SchedulesStack';
 import {MasterDeviceSettingsStack} from './MasterDeviceSettingsStack';
 
+// Créé une seule fois (cf. AppStack) : sinon un re-rendu remonte les écrans.
+const Stack = createStackNavigator();
+
 export function CycleStack({typeFilter}: {typeFilter?: string} = {}) {
 	const {t} = useTranslation('navigation');
 	const options = (title: string) =>
@@ -26,7 +29,6 @@ export function CycleStack({typeFilter}: {typeFilter?: string} = {}) {
 			headerTintColor: '#32404e',
 			headerTitleStyle: {fontSize: 20, fontWeight: 'bold'}
 		} as StackNavigationOptions);
-	const Stack = createStackNavigator();
 	return (
 		<Stack.Navigator screenOptions={{animation: 'none'}}>
 			<Stack.Screen

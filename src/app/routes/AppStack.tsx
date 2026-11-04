@@ -17,7 +17,7 @@ import {
 	faMap,
 	faPlane
 } from '@fortawesome/free-solid-svg-icons';
-import { AppState } from 'react-native';
+import { AppState, StyleSheet, View } from 'react-native';
 import { authenticationService } from '../../module/authentication/domain/services/auth.service';
 import { socketService } from '../../services/socket';
 import { connect } from 'react-redux';
@@ -66,6 +66,10 @@ const tabBarIconCfg = (
 	);
 };
 
+// Créé une seule fois : recréé à chaque rendu, chaque re-rendu d'AppStack
+// remonterait tous les écrans (états locaux, timers de progression…).
+const Tab = createBottomTabNavigator();
+
 export function AppStack(props: any) {
 	const {t} = useTranslation('navigation');
 	const appState = useRef(AppState.currentState);
@@ -106,6 +110,9 @@ export function AppStack(props: any) {
 							clearTimeout(reconnectTimer);
 							reconnectTimer = null;
 						}
+						// Le socket a pu être recréé (listeners perdus) sans que
+						// isServerConnected ne change : on les ré-enregistre.
+						props.listenerEvents();
 						// Retour au premier plan : les données sont déjà à
 						// l'écran, on les rafraîchit sans loader global.
 						props.loadConfiguration(undefined, true);
@@ -159,10 +166,22 @@ export function AppStack(props: any) {
 		}
 	};
 
-	const Tab = createBottomTabNavigator();
+	const isOnline = props.isServerConnected && props.isBoxConnected;
+	// Une fois les onglets montés, une coupure (ex. échec de la première
+	// tentative de reconnexion au retour au premier plan) ne les démonte plus :
+	// l'écran « pas de connexion » s'affiche par-dessus et les écrans gardent
+	// leur état.
+	const wasOnline = useRef(false);
+	if (isOnline) {
+		wasOnline.current = true;
+	}
+	if (!props.isConnected) {
+		wasOnline.current = false;
+	}
+
 	return (
 		<>
-			{props.isServerConnected && props.isBoxConnected ? (
+			{isOnline || wasOnline.current ? (
 				<Tab.Navigator
 					safeAreaInsets={{ bottom: 20 }}
 					screenOptions={({ route }) => ({
@@ -202,9 +221,12 @@ export function AppStack(props: any) {
 						component={SettingsStack}
 					/>
 				</Tab.Navigator>
-			) : (
-				noConnectionScreen()
-			)}
+			) : null}
+			{!isOnline ? (
+				<View style={[StyleSheet.absoluteFill, { backgroundColor: 'white' }]}>
+					{noConnectionScreen()}
+				</View>
+			) : null}
 		</>
 	);
 }

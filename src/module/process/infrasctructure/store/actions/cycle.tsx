@@ -102,9 +102,21 @@ export const loadValues =
 			(response: any) => {
 				//dispatch({ type: CYCLE_EXECUTE, payload: false });
 				if (type !== 'DATA') {
+					const values = normalizeIds(JSON.parse(response.config));
+					// Le box renvoie tout l'objet des valeurs ({processes,
+					// sensors…}) et non la seule liste : l'appliquer tel quel
+					// remplaçait la tranche par une entrée vide et coupait
+					// visuellement les cycles en cours jusqu'au fetch de
+					// configuration suivant.
+					const statuses = Array.isArray(values)
+						? values
+						: values?.processes;
+					if (!Array.isArray(statuses)) {
+						return;
+					}
 					dispatch({
 						type: CYCLE_STATUS,
-						payload: normalizeIds(JSON.parse(response.config)),
+						payload: statuses,
 						// Snapshot complet renvoyé par le box : il remplace la
 						// tranche au lieu de s'y superposer.
 						replace: true

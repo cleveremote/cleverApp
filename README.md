@@ -40,3 +40,7 @@ rm -rf Pods
 rm -rf build
 pod install --repo-update
 cd ..
+
+
+
+{"type":"cleverbox","ssid":"CleverBox-4F8A","password":"motdepasse123","security":"WPA2","host":"cleverbox-4f8a.local","port":443,"deviceId":"4F8A-0001"}
