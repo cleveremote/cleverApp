@@ -21,6 +21,7 @@ import {
 	ResolvedService
 } from '../../../../services/mdns/mdnsResolver';
 import {getBoxEndpoint} from '../../../../services/hotspot';
+import * as tokenStorage from './tokenStorage';
 
 const USER_NAME_KEY = 'userName';
 
@@ -61,7 +62,7 @@ class AuthenticationService {
 	}
 
 	public async executeRefresh() {
-		const rt = await AsyncStorage.getItem('refreshToken');
+		const rt = await tokenStorage.getRefreshToken();
 		if (!rt) {
 			socketService.disconnect();
 			this.setIsExpired(true);
@@ -100,7 +101,7 @@ class AuthenticationService {
 			}
 		}
 
-		const tok = await AsyncStorage.getItem('accessToken');
+		const tok = await tokenStorage.getAccessToken();
 		if (socketService.connected && tok) {
 			const exp = this.getIsTokenExpired(tok);
 			if ((exp && exp < Date.now() / 1000) || !exp) {
@@ -151,14 +152,13 @@ class AuthenticationService {
 				);
 			});
 		};
-		const refreshToken = (await AsyncStorage.getItem('refreshToken')) ?? '';
+		const refreshToken = await tokenStorage.getRefreshToken();
 		return await refresh(refreshToken);
 	}
 
 	private async saveTokens(tokens: any): Promise<void> {
 		try {
-			await AsyncStorage.setItem('refreshToken', tokens.refreshToken);
-			await AsyncStorage.setItem('accessToken', tokens.accessToken);
+			await tokenStorage.saveTokens(tokens);
 		} catch (error) {
 			console.error('Error storing tokens:', error);
 		}
@@ -172,7 +172,7 @@ class AuthenticationService {
 		if (stored) {
 			return stored;
 		}
-		const token = await AsyncStorage.getItem('accessToken');
+		const token = await tokenStorage.getAccessToken();
 		if (!token) {
 			return undefined;
 		}
@@ -197,8 +197,7 @@ class AuthenticationService {
 
 	public async signout() {
 		socketService.disconnect();
-		await AsyncStorage.removeItem('refreshToken');
-		await AsyncStorage.removeItem('accessToken');
+		await tokenStorage.clearTokens();
 		await AsyncStorage.removeItem(USER_NAME_KEY);
 		this.resolvedLocalService = null;
 		this.setIsExpired(true);
@@ -274,11 +273,11 @@ class AuthenticationService {
 			server = WEBSITE_URL;
 		}
 
-		const token = (await AsyncStorage.getItem('accessToken')) ?? '';
+		const token = await tokenStorage.getAccessToken();
 		const extraHeaders = {
 			boxId
 		};
-        console.log('Connecting to server at', server, 'with boxId', boxId, 'and token', token)
+        console.log('Connecting to server at', server, 'with boxId', boxId)
 		await socketService.init(server, token, extraHeaders);
 
 		const connectResult = (): Promise<{res: boolean; error?: string; retry?: boolean}> => {

@@ -51,7 +51,11 @@ export function SignIn(props: any) {
 				const sd = await getSigninData(profile);
 				if (sd) {
 					setSigninData(sd);
-					if (sd.login && sd.password && sd.profile) {
+					if (sd.credentialsError === 'cancelled') {
+						Alert.alert(t('signIn.credentialsCancelled'));
+					} else if (sd.credentialsError === 'unavailable') {
+						Alert.alert(t('signIn.credentialsUnavailable'));
+					} else if (sd.login && sd.password && sd.profile) {
 						//await onLogin(sd);
 					} else {
 						Alert.alert(t('signIn.missingInfo'));

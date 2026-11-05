@@ -1,5 +1,21 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
+import {Alert, Platform} from 'react-native';
 import * as Keychain from 'react-native-keychain';
+import i18n from 'i18next';
+
+// Face ID / Touch ID, avec repli sur le code du téléphone : sans biométrie
+// enrôlée (ou refusée à l'app), le code suffit au lieu de bloquer l'accès.
+const CREDENTIALS_ACCESS = {
+	accessControl: Keychain.ACCESS_CONTROL.BIOMETRY_ANY_OR_DEVICE_PASSCODE,
+	accessible: Keychain.ACCESSIBLE.WHEN_UNLOCKED_THIS_DEVICE_ONLY
+};
+
+// Les éléments rangés avant ce réglage restent lisibles ; on les réécrit une
+// fois avec les nouveaux attributs.
+const migratedKey = (account: string) => `keychainV2:${account}`;
+
+const isCancellation = (error: unknown) =>
+	/cancel|annul/i.test(String((error as Error)?.message ?? error));
 
 /**
  * `account` identifie la box (son nom, qui sert aussi de `boxId`) et `login`
@@ -12,37 +28,75 @@ const setCredentials = async (
 	account: string,
 	login: string,
 	password: string
-) => {
+): Promise<boolean> => {
 	try {
+		// Sans code de verrouillage, iOS refuse l'élément protégé : on le dit
+		// plutôt que de garder le mot de passe sans protection.
+		if (
+			Platform.OS === 'ios' &&
+			!(await Keychain.canImplyAuthentication({
+				authenticationType:
+					Keychain.AUTHENTICATION_TYPE.DEVICE_PASSCODE_OR_BIOMETRICS
+			}))
+		) {
+			Alert.alert(i18n.t('access:signIn.noPasscode'));
+			return false;
+		}
 		await Keychain.setGenericPassword(login, password, {
-			accessControl: Keychain.ACCESS_CONTROL.BIOMETRY_ANY,
-			accessible: Keychain.ACCESSIBLE.ALWAYS,
+			...CREDENTIALS_ACCESS,
 			service: account
 		});
-		await AsyncStorage.setItem('boxId', account);
+		await AsyncStorage.multiSet([
+			['boxId', account],
+			[migratedKey(account), '1']
+		]);
+		return true;
 	} catch (error) {
-		console.error('Error storing email for remembre me:', error);
+		console.error('Error storing credentials for remember me:', error);
+		Alert.alert(i18n.t('access:signIn.credentialsNotSaved'));
+		return false;
+	}
+};
+
+type CredentialsResult =
+	| {credentials: Keychain.UserCredentials | null; error?: undefined}
+	| {credentials: null; error: 'cancelled' | 'unavailable'};
+
+const readCredentials = async (account: string): Promise<CredentialsResult> => {
+	try {
+		const credentials = await Keychain.getGenericPassword({
+			...CREDENTIALS_ACCESS,
+			service: account,
+			authenticationPrompt: {
+				title: i18n.t('access:signIn.unlockPrompt'),
+				cancel: i18n.t('common:cancel')
+			}
+		});
+		if (!credentials) {
+			return {credentials: null};
+		}
+		if (!(await AsyncStorage.getItem(migratedKey(account)))) {
+			await setCredentials(account, credentials.username, credentials.password);
+		}
+		return {credentials};
+	} catch (error) {
+		console.error("Keychain couldn't be accessed!", error);
+		return {
+			credentials: null,
+			error: isCancellation(error) ? 'cancelled' : 'unavailable'
+		};
 	}
 };
 
 const getCredentials = async (
 	account: string
-): Promise<Keychain.UserCredentials | null> => {
-	try {
-		return (await Keychain.getGenericPassword({
-			accessControl: Keychain.ACCESS_CONTROL.BIOMETRY_ANY,
-			accessible: Keychain.ACCESSIBLE.ALWAYS,
-			service: account
-		})) as Keychain.UserCredentials;
-	} catch (error) {
-		console.error("Keychain couldn't be accessed!", error);
-	}
-	return null;
-};
+): Promise<Keychain.UserCredentials | null> =>
+	(await readCredentials(account)).credentials;
 
 const clearCredentials = async (account: string) => {
 	try {
 		await Keychain.resetGenericPassword({service: account});
+		await AsyncStorage.removeItem(migratedKey(account));
 	} catch (error) {
 		console.error('error resetGenericPassword', error);
 	}
@@ -124,7 +178,7 @@ const getSigninData = async (profile: string) => {
 	try {
 		const data = await getAssociationProfileAccount(profile);
 		if (data) {
-			const credentials = await getCredentials(data.account);
+			const {credentials, error} = await readCredentials(data.account);
 			return {
 				login: credentials?.username || '',
 				// Nom de la box : distinct du login depuis que la configuration
@@ -132,7 +186,8 @@ const getSigninData = async (profile: string) => {
 				account: data.account,
 				password: credentials?.password || '',
 				rememberCredentials: data.rememberCredentials,
-				profile
+				profile,
+				credentialsError: error
 			};
 		}
 	} catch (error) {

@@ -52,6 +52,7 @@
 		"passwordTooShort": "Mot de passe trop court ({{min}} caractères minimum).",
 		"passwordWeak": "Le mot de passe doit contenir au moins une lettre et un chiffre.",
 		"deviceNameRequired": "Nom de la box obligatoire.",
+		"boxIdentifierRequired": "Identifiant de la box obligatoire.",
 		"ssidRequired": "Sélectionnez un réseau Wi-Fi.",
 		"pskRequired": "Clé du réseau Wi-Fi obligatoire.",
 		"confirmRequired": "Confirmation obligatoire.",
@@ -66,9 +67,15 @@
 		"refused": "Configuration refusée par la box — {{body}}",
 		"wifiNetwork": "Réseau Wi-Fi",
 		"deviceName": "Nom de la box",
+		"boxIdentifier": "Identifiant de la box",
+		"boxIdentifierReminder": "C'est votre identifiant de connexion : notez-le.",
+		"email": "Adresse email",
+		"emailRecoveryHint": "Cette adresse servira d'email de récupération du compte.",
 		"noNetwork": "Aucun réseau — relancer la recherche",
 		"psk": "Clé Wi-Fi (psk)",
-		"login": "Login (adresse email)",
+		"defaultPassword": "Mot de passe par défaut",
+		"newPassword": "Nouveau mot de passe",
+		"defaultPasswordHint": "Le mot de passe par défaut de la box sera conservé. Vous pourrez le changer plus tard.",
 		"confirmPassword": "Confirmer le mot de passe",
 		"configure": "Configurer",
 		"configuredTag": "(configuré)"
@@ -144,6 +151,11 @@
 		"missingInfo": "Informations obligatoires manquantes !",
 		"boxId": "Identifiant de la box",
 		"rememberMe": "Se souvenir de moi",
-		"submit": "Se connecter"
+		"submit": "Se connecter",
+		"unlockPrompt": "Déverrouiller vos identifiants",
+		"noPasscode": "Aucun code de verrouillage n'est défini sur ce téléphone : le mot de passe n'a pas été mémorisé. Définissez un code dans Réglages pour utiliser « Se souvenir de moi ».",
+		"credentialsNotSaved": "Le mot de passe n'a pas pu être mémorisé sur ce téléphone.",
+		"credentialsCancelled": "Déverrouillage annulé : saisissez votre mot de passe.",
+		"credentialsUnavailable": "Identifiants mémorisés inaccessibles (Face ID / Touch ID ou code indisponible). Saisissez votre mot de passe."
 	}
 }

@@ -52,6 +52,7 @@
 		"passwordTooShort": "Password too short ({{min}} characters minimum).",
 		"passwordWeak": "The password must contain at least one letter and one digit.",
 		"deviceNameRequired": "Box name is required.",
+		"boxIdentifierRequired": "Box identifier is required.",
 		"ssidRequired": "Select a Wi-Fi network.",
 		"pskRequired": "Wi-Fi key is required.",
 		"confirmRequired": "Confirmation is required.",
@@ -66,9 +67,15 @@
 		"refused": "Configuration refused by the box — {{body}}",
 		"wifiNetwork": "Wi-Fi network",
 		"deviceName": "Box name",
+		"boxIdentifier": "Box identifier",
+		"boxIdentifierReminder": "This is your sign-in identifier: write it down.",
+		"email": "Email address",
+		"emailRecoveryHint": "This address will be used as the account recovery email.",
 		"noNetwork": "No network — search again",
 		"psk": "Wi-Fi key (psk)",
-		"login": "Login (email address)",
+		"defaultPassword": "Default box password",
+		"newPassword": "New password",
+		"defaultPasswordHint": "The box's default password will be kept. You can change it later.",
 		"confirmPassword": "Confirm password",
 		"configure": "Configure",
 		"configuredTag": "(configured)"
@@ -144,6 +151,11 @@
 		"missingInfo": "Required information missing!",
 		"boxId": "Box ID",
 		"rememberMe": "Remember me",
-		"submit": "Sign in"
+		"submit": "Sign in",
+		"unlockPrompt": "Unlock your credentials",
+		"noPasscode": "No passcode is set on this phone, so the password was not saved. Set a passcode in Settings to use “Remember me”.",
+		"credentialsNotSaved": "The password could not be saved on this phone.",
+		"credentialsCancelled": "Unlock cancelled: enter your password.",
+		"credentialsUnavailable": "Saved credentials are unavailable (Face ID / Touch ID or passcode unavailable). Enter your password."
 	}
 }

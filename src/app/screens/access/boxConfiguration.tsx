@@ -23,7 +23,7 @@ import {
 	navigationHeader
 } from '../../components/common/navigationHeaders';
 import {saveSigninData} from '../../components/common/RememberMeManager';
-import {hotspotService} from '../../../services/hotspot';
+import {getBoxEndpoint, hotspotService} from '../../../services/hotspot';
 import {boxGet, boxPost, boxUrl} from '../../../services/http';
 import {
 	PendingCoordinates,
@@ -78,17 +78,19 @@ type NetworkOption = {
 export function BoxConfiguration(props: any) {
 	// Repris du brouillon quand on revient ici après un échec de bascule :
 	// refaire saisir six champs pour corriger une clé Wi-Fi serait une punition.
-	const [form, setForm] = React.useState<BoxConfigurationForm>(
-		() =>
-			readBoxConfigurationDraft() ?? {
-				deviceName: '',
-				ssid: '',
-				psk: '',
-				login: '',
-				password: '',
-				confirmPassword: ''
-			}
-	);
+	// Fusionné aux valeurs par défaut : un brouillon d'une version antérieure du
+	// formulaire n'a pas forcément tous les champs.
+	const [form, setForm] = React.useState<BoxConfigurationForm>(() => ({
+		deviceName: '',
+		ssid: '',
+		psk: '',
+		boxIdentifier: '',
+		email: '',
+		useDefaultPassword: true,
+		password: '',
+		confirmPassword: '',
+		...readBoxConfigurationDraft()
+	}));
 	// Un champ jamais rempli ne doit pas être signalé en rouge d'entrée de jeu :
 	// son erreur n'apparaît qu'une fois qu'il a été touché, ou à la soumission.
 	const [touched, setTouched] = React.useState<
@@ -155,6 +157,22 @@ export function BoxConfiguration(props: any) {
 		loadNetworks();
 	}, [loadNetworks]);
 
+	// L'identifiant de la box est le `deviceId` du QR scanné, sans `.local` : il
+	// vient du QR et n'a pas à être ressaisi. Toujours relu, même par-dessus
+	// un brouillon, qui pourrait venir d'une autre box.
+	useEffect(() => {
+		let cancelled = false;
+		getBoxEndpoint().then(endpoint => {
+			// Un endpoint enregistré avant l'ajout de `deviceId` n'en a pas.
+			if (cancelled || !endpoint?.deviceId) return;
+			const boxIdentifier = endpoint.deviceId.replace(/\.local$/i, '');
+			setForm(previous => ({...previous, boxIdentifier}));
+		});
+		return () => {
+			cancelled = true;
+		};
+	}, []);
+
 	// Position demandée dès l'affichage plutôt qu'au moment d'envoyer : voir
 	// `startLocalCoordinates`. Ici le retard se paierait doublement, puisqu'il
 	// s'écoulerait sur le point d'accès de la box sans que rien ne soit émis.
@@ -174,9 +192,13 @@ export function BoxConfiguration(props: any) {
 	const errors = validateBoxConfiguration(form);
 	const isFormValid = isBoxConfigurationValid(errors);
 
-	/** Message à afficher sous un champ : rien tant qu'il n'a pas été touché. */
+	/**
+	 * Message à afficher sous un champ : rien tant qu'il n'a pas été touché —
+	 * sauf l'identifiant, en lecture seule, qui ne le sera jamais.
+	 */
 	const errorFor = (field: keyof BoxConfigurationForm) => {
-		const issue = touched[field] ? errors[field] : undefined;
+		const shown = touched[field] || field === 'boxIdentifier';
+		const issue = shown ? errors[field] : undefined;
 		return issue
 			? t(`validation.${issue}`, {min: PASSWORD_MIN_LENGTH})
 			: undefined;
@@ -197,14 +219,16 @@ export function BoxConfiguration(props: any) {
 	const configure = async () => {
 		ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
 
-		// Le bouton est déjà désactivé quand le formulaire est invalide ; ce
-		// garde-fou rend juste les erreurs visibles si on arrive ici autrement.
+		// Le bouton reste pressable même grisé : c'est ici qu'un formulaire
+		// invalide montre enfin ce qui bloque, y compris sur les champs jamais
+		// touchés.
 		if (!isFormValid) {
 			setTouched({
 				deviceName: true,
 				ssid: true,
 				psk: true,
-				login: true,
+				boxIdentifier: true,
+				email: true,
 				password: true,
 				confirmPassword: true
 			});
@@ -221,7 +245,10 @@ export function BoxConfiguration(props: any) {
 		saveBoxConfigurationDraft(form);
 
 		const deviceName = form.deviceName.trim();
-		const login = form.login.trim();
+		// C'est l'identifiant de la box, et non l'email, qui sert de login.
+		const login = form.boxIdentifier.trim();
+		const email = form.email.trim();
+		const password = form.useDefaultPassword ? '' : form.password;
 
 		// Préparé hors du try réseau : ni l'un ni l'autre ne parle à la box, et
 		// leur échec n'aurait donc rien à dire sur la configuration. Best effort
@@ -246,7 +273,10 @@ export function BoxConfiguration(props: any) {
 					ssid: form.ssid,
 					psk: form.psk,
 					login,
-					password: form.password,
+					...(email ? {email} : {}),
+					// Sans mot de passe, la box garde celui qu'elle a par défaut.
+					useDefaultPassword: form.useDefaultPassword,
+					...(form.useDefaultPassword ? {} : {password}),
 					// La box en déduit elle-même son fuseau horaire.
 					...(localCoordinates ? {localCoordinates} : {})
 				},
@@ -267,13 +297,15 @@ export function BoxConfiguration(props: any) {
 		// Hors du try réseau : un échec de trousseau ne doit pas être présenté
 		// comme un refus de la box, alors qu'elle a déjà accepté la config.
 		// Le nom de la box sert aussi de nom de profil — c'est le seul libellé
-		// que l'utilisateur ait saisi ici.
+		// que l'utilisateur ait saisi ici. Avec le mot de passe par défaut, que
+		// l'app ne connaît pas, seul l'identifiant est retenu : il sera saisi à
+		// la connexion.
 		try {
 			await saveSigninData(
 				deviceName,
 				login,
 				login,
-				form.password,
+				password,
 				true,
 				''
 			);
@@ -444,50 +476,110 @@ export function BoxConfiguration(props: any) {
 						<TextInput
 							style={[
 								styles.field,
-								errorFor('login') ? styles.fieldInvalid : null
+								styles.fieldReadonly,
+								errorFor('boxIdentifier')
+									? styles.fieldInvalid
+									: null
 							]}
-							placeholder={t('boxConfig.login')}
+							placeholder={t('boxConfig.boxIdentifier')}
+							placeholderTextColor={placeholderColor}
+							editable={false}
+							value={form.boxIdentifier}
+						/>
+						<FieldError message={errorFor('boxIdentifier')} />
+						<Text style={styles.loginReminder}>
+							{t('boxConfig.boxIdentifierReminder')}
+						</Text>
+
+						<TextInput
+							style={[
+								styles.field,
+								errorFor('email') ? styles.fieldInvalid : null
+							]}
+							placeholder={t('boxConfig.email')}
 							placeholderTextColor={placeholderColor}
 							keyboardType="email-address"
 							textContentType={'emailAddress'}
 							autoCapitalize="none"
 							autoCorrect={false}
-							value={form.login}
-							onChangeText={value => set('login', value)}
+							value={form.email}
+							onChangeText={value => set('email', value)}
 						/>
-						<FieldError message={errorFor('login')} />
+						<FieldError message={errorFor('email')} />
+						<Text style={styles.hint}>
+							{t('boxConfig.emailRecoveryHint')}
+						</Text>
 
-						<TextInput
-							style={[
-								styles.field,
-								errorFor('password') ? styles.fieldInvalid : null
-							]}
-							placeholder={t('common:password')}
-							placeholderTextColor={placeholderColor}
-							secureTextEntry={true}
-							textContentType={'newPassword'}
-							autoCapitalize="none"
-							value={form.password}
-							onChangeText={value => set('password', value)}
-						/>
-						<FieldError message={errorFor('password')} />
+						<View style={styles.choice}>
+							{[true, false].map(useDefault => (
+								<TouchableOpacity
+									key={String(useDefault)}
+									style={[
+										styles.choiceItem,
+										form.useDefaultPassword === useDefault &&
+											styles.choiceItemSelected
+									]}
+									onPress={() =>
+										setForm(previous => ({
+											...previous,
+											useDefaultPassword: useDefault
+										}))
+									}>
+									<Text
+										style={[
+											styles.choiceText,
+											form.useDefaultPassword ===
+												useDefault &&
+												styles.choiceTextSelected
+										]}>
+										{useDefault
+											? t('boxConfig.defaultPassword')
+											: t('boxConfig.newPassword')}
+									</Text>
+								</TouchableOpacity>
+							))}
+						</View>
 
-						<TextInput
-							style={[
-								styles.field,
-								errorFor('confirmPassword')
-									? styles.fieldInvalid
-									: null
-							]}
-							placeholder={t('boxConfig.confirmPassword')}
-							placeholderTextColor={placeholderColor}
-							secureTextEntry={true}
-							textContentType={'newPassword'}
-							autoCapitalize="none"
-							value={form.confirmPassword}
-							onChangeText={value => set('confirmPassword', value)}
-						/>
-						<FieldError message={errorFor('confirmPassword')} />
+						{form.useDefaultPassword ? (
+							<Text style={styles.hint}>
+								{t('boxConfig.defaultPasswordHint')}
+							</Text>
+						) : (
+							<>
+
+							<TextInput
+								style={[
+									styles.field,
+									errorFor('password') ? styles.fieldInvalid : null
+								]}
+								placeholder={t('common:password')}
+								placeholderTextColor={placeholderColor}
+								secureTextEntry={true}
+								textContentType={'newPassword'}
+								autoCapitalize="none"
+								value={form.password}
+								onChangeText={value => set('password', value)}
+							/>
+							<FieldError message={errorFor('password')} />
+
+							<TextInput
+								style={[
+									styles.field,
+									errorFor('confirmPassword')
+										? styles.fieldInvalid
+										: null
+								]}
+								placeholder={t('boxConfig.confirmPassword')}
+								placeholderTextColor={placeholderColor}
+								secureTextEntry={true}
+								textContentType={'newPassword'}
+								autoCapitalize="none"
+								value={form.confirmPassword}
+								onChangeText={value => set('confirmPassword', value)}
+							/>
+							<FieldError message={errorFor('confirmPassword')} />
+							</>
+						)}
 
 						{error ? (
 							<Text style={styles.error}>{error}</Text>
@@ -498,7 +590,7 @@ export function BoxConfiguration(props: any) {
 								styles.submit,
 								!isFormValid && styles.submitDisabled
 							]}
-							disabled={!isFormValid || isLoading}
+							disabled={isLoading}
 							onPress={configure}>
 							<Text style={{color: 'white', fontSize: 20}}>
 								{' '}
@@ -619,6 +711,17 @@ const styles = StyleSheet.create({
 		borderRadius: 12,
 		paddingHorizontal: 12
 	},
+	loginReminder: {
+		alignSelf: 'stretch',
+		color: '#dd6b20',
+		fontSize: 13,
+		marginTop: -4,
+		paddingHorizontal: 4
+	},
+	fieldReadonly: {
+		backgroundColor: '#EDF2F7',
+		color: '#4a5568'
+	},
 	fieldInvalid: {
 		borderColor: '#d64545'
 	},
@@ -637,6 +740,39 @@ const styles = StyleSheet.create({
 		borderRadius: 6,
 		marginTop: 4,
 		backgroundColor: '#32404e'
+	},
+	choice: {
+		alignSelf: 'stretch',
+		flexDirection: 'row',
+		borderWidth: 1,
+		borderColor: '#32404e',
+		borderRadius: 12,
+		overflow: 'hidden'
+	},
+	choiceItem: {
+		flex: 1,
+		paddingVertical: 12,
+		paddingHorizontal: 6,
+		justifyContent: 'center',
+		alignItems: 'center',
+		backgroundColor: 'white'
+	},
+	choiceItemSelected: {
+		backgroundColor: '#32404e'
+	},
+	choiceText: {
+		fontSize: 15,
+		color: '#32404e',
+		textAlign: 'center'
+	},
+	choiceTextSelected: {
+		color: 'white'
+	},
+	hint: {
+		alignSelf: 'stretch',
+		color: '#4a5568',
+		fontSize: 14,
+		paddingHorizontal: 4
 	},
 	submitDisabled: {
 		backgroundColor: '#a5a4a5'

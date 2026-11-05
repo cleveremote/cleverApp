@@ -52,6 +52,7 @@
 		"passwordTooShort": "كلمة المرور قصيرة جداً ({{min}} أحرف على الأقل).",
 		"passwordWeak": "يجب أن تحتوي كلمة المرور على حرف ورقم على الأقل.",
 		"deviceNameRequired": "اسم الصندوق مطلوب.",
+		"boxIdentifierRequired": "معرّف الصندوق مطلوب.",
 		"ssidRequired": "اختر شبكة Wi-Fi.",
 		"pskRequired": "مفتاح شبكة Wi-Fi مطلوب.",
 		"confirmRequired": "التأكيد مطلوب.",
@@ -66,9 +67,15 @@
 		"refused": "رفض الصندوق التهيئة — {{body}}",
 		"wifiNetwork": "شبكة Wi-Fi",
 		"deviceName": "اسم الصندوق",
+		"boxIdentifier": "معرّف الصندوق",
+		"boxIdentifierReminder": "هذا هو معرّف تسجيل الدخول الخاص بك: احتفظ به.",
+		"email": "البريد الإلكتروني",
+		"emailRecoveryHint": "سيُستخدم هذا العنوان كبريد إلكتروني لاستعادة الحساب.",
 		"noNetwork": "لا توجد شبكة — أعد البحث",
 		"psk": "مفتاح Wi-Fi (psk)",
-		"login": "اسم الدخول (البريد الإلكتروني)",
+		"defaultPassword": "كلمة المرور الافتراضية",
+		"newPassword": "كلمة مرور جديدة",
+		"defaultPasswordHint": "سيتم الاحتفاظ بكلمة المرور الافتراضية للصندوق. يمكنك تغييرها لاحقًا.",
 		"confirmPassword": "تأكيد كلمة المرور",
 		"configure": "تهيئة",
 		"configuredTag": "(مُهيّأ)"
@@ -144,6 +151,11 @@
 		"missingInfo": "معلومات مطلوبة مفقودة!",
 		"boxId": "معرّف الصندوق",
 		"rememberMe": "تذكرني",
-		"submit": "تسجيل الدخول"
+		"submit": "تسجيل الدخول",
+		"unlockPrompt": "فتح بيانات الدخول",
+		"noPasscode": "لم يتم تعيين رمز قفل على هذا الهاتف، لذلك لم يتم حفظ كلمة المرور. عيّن رمزًا في الإعدادات لاستخدام «تذكرني».",
+		"credentialsNotSaved": "تعذّر حفظ كلمة المرور على هذا الهاتف.",
+		"credentialsCancelled": "تم إلغاء الفتح: أدخل كلمة المرور.",
+		"credentialsUnavailable": "بيانات الدخول المحفوظة غير متاحة (Face ID / Touch ID أو الرمز غير متاح). أدخل كلمة المرور."
 	}
 }

@@ -15,8 +15,19 @@ export type BoxConfigurationForm = {
 	ssid: string;
 	/** Clé du réseau ci-dessus. */
 	psk: string;
-	/** Identifiant du compte créé sur la box — une adresse email. */
-	login: string;
+	/**
+	 * Identifiant de la box : c'est lui le vrai login de connexion, celui que
+	 * l'écran de connexion redemandera (« Identifiant de la box »). Non saisi :
+	 * c'est le `deviceId` du QR scanné, sans le `.local`.
+	 */
+	boxIdentifier: string;
+	/** Email de récupération du compte créé sur la box. Facultatif. */
+	email: string;
+	/**
+	 * Garder le mot de passe par défaut de la box plutôt qu'en créer un.
+	 * `password` et `confirmPassword` sont alors ignorés.
+	 */
+	useDefaultPassword: boolean;
 	password: string;
 	confirmPassword: string;
 };
@@ -32,6 +43,7 @@ export type BoxConfigurationIssue =
 	| 'passwordTooShort'
 	| 'passwordWeak'
 	| 'deviceNameRequired'
+	| 'boxIdentifierRequired'
 	| 'ssidRequired'
 	| 'pskRequired'
 	| 'confirmRequired'
@@ -79,7 +91,8 @@ export function passwordIssue(value: string): BoxConfigurationIssue | '' {
  * Erreurs du formulaire, champ par champ. Un champ absent du résultat est
  * valide ; un objet vide veut dire que le formulaire est envoyable.
  *
- * Tous les champs sont obligatoires.
+ * Tous les champs sont obligatoires, sauf l'email, et les mots de passe quand
+ * celui par défaut de la box est conservé.
  */
 export function validateBoxConfiguration(
 	form: BoxConfigurationForm
@@ -90,8 +103,16 @@ export function validateBoxConfiguration(
 	if (!form.ssid) errors.ssid = 'ssidRequired';
 	if (!form.psk) errors.psk = 'pskRequired';
 
-	const login = emailIssue(form.login);
-	if (login) errors.login = login;
+	if (!form.boxIdentifier.trim())
+		errors.boxIdentifier = 'boxIdentifierRequired';
+
+	// Facultatif : vérifié seulement s'il est renseigné.
+	if (form.email.trim()) {
+		const email = emailIssue(form.email);
+		if (email) errors.email = email;
+	}
+
+	if (form.useDefaultPassword) return errors;
 
 	const password = passwordIssue(form.password);
 	if (password) {
