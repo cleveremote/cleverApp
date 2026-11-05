@@ -43,5 +43,6 @@
 	"triggers": "Déclencheurs",
 	"comRequest": "Requête COM",
 	"scheduleSettings": "Réglages de la planification",
-	"triggerSettings": "Réglages du déclencheur"
+	"triggerSettings": "Réglages du déclencheur",
+	"forgotPassword": "Mot de passe oublié"
 }

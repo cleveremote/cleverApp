@@ -25,6 +25,99 @@ import * as tokenStorage from './tokenStorage';
 
 const USER_NAME_KEY = 'userName';
 
+/** Résultat d'un appel `front/box/login` (connexion ou récupération). */
+export type BoxLoginResult = {
+	res: boolean;
+	/** Message à afficher, déjà traduit par la box (langue des réglages globaux). */
+	error?: string;
+	/** Statut métier renvoyé par la box, ex. `RECOVERY_CODE_INVALID`. */
+	status?: string;
+	failedAttempts?: number;
+	attemptsRemaining?: number;
+	/** Fin du blocage du compte (ms), après trop de tentatives échouées. */
+	lockedUntil?: number;
+};
+
+// Statuts d'échec de la box : `{success: false, status, message, failedAttempts,
+// attemptsRemaining}`.
+const FAILURE_STATUS = /INVALID|EXPIRED|LOCKED|BLOCKED|FAIL|ERROR|DENIED|TOO_MANY|NOT_FOUND|MISSING|REQUIRED/i;
+
+const RESULT_KEYS = ['success', 'res', 'status', 'error', 'message', 'accessToken'];
+
+const toObject = (value: unknown): any => {
+	if (typeof value !== 'string') return value;
+	try {
+		return JSON.parse(value);
+	} catch {
+		return {error: value};
+	}
+};
+
+/**
+ * Trouve l'objet résultat parmi les arguments de l'ack : le premier argument
+ * peut être `null` (style `(err, data)`), et le résultat peut être enveloppé
+ * dans `data` / `result` / `payload`.
+ */
+const pickResult = (args: unknown[]): any => {
+	const candidates = args.map(toObject).filter(a => a && typeof a === 'object');
+	for (const candidate of candidates) {
+		if (RESULT_KEYS.some(key => key in candidate)) return candidate;
+		for (const wrapper of ['data', 'result', 'payload']) {
+			const inner = toObject(candidate[wrapper]);
+			if (inner && typeof inner === 'object' && RESULT_KEYS.some(key => key in inner)) {
+				return inner;
+			}
+		}
+	}
+	return candidates[0];
+};
+
+const parseLockedUntil = (value: unknown): number | undefined => {
+	if (typeof value !== 'string' && typeof value !== 'number') return undefined;
+	const time = new Date(value).getTime();
+	return Number.isNaN(time) ? undefined : time;
+};
+
+/**
+ * Normalise la réponse de `front/box/login`. La box répond soit à l'ancienne
+ * (`{res: false, error}`), soit `{success, status, message, failedAttempts,
+ * attemptsRemaining}` ; le message arrive déjà dans la langue de l'utilisateur.
+ */
+const parseBoxLoginResponse = (...args: unknown[]): BoxLoginResult => {
+	const response = pickResult(args);
+	if (__DEV__) {
+		console.log('[front/box/login] ack', JSON.stringify(args));
+	}
+	const status: string | undefined =
+		typeof response?.status === 'string' ? response.status : undefined;
+	const explicitSuccess = response?.success === true || response?.res === true;
+	const failed =
+		!response ||
+		response.success === false ||
+		response.res === false ||
+		!!response.error ||
+		(!explicitSuccess &&
+			((status !== undefined && FAILURE_STATUS.test(status)) ||
+				typeof response.attemptsRemaining === 'number'));
+	if (!failed) {
+		return {res: true, status};
+	}
+	const error = response?.error;
+	const message: string =
+		(typeof response?.message === 'string' && response.message) ||
+		(typeof error === 'string' && error) ||
+		error?.message ||
+		i18n.t('common:errors.unexpected');
+	return {
+		res: false,
+		error: message,
+		status,
+		failedAttempts: response?.failedAttempts,
+		attemptsRemaining: response?.attemptsRemaining,
+		lockedUntil: parseLockedUntil(response?.lockedUntil)
+	};
+};
+
 class AuthenticationService {
 	public newEvent = new EventEmitter();
 	public socketChangeEvent = new EventEmitter();
@@ -36,6 +129,33 @@ class AuthenticationService {
 	 * re-scanning. Cleared on signout or on a new login.
 	 */
 	private resolvedLocalService: ResolvedService | null = null;
+	/**
+	 * Blocages de compte en cours (`ACCOUNT_LOCKED`), par identifiant de box :
+	 * conservés hors des écrans pour que le blocage survive à une navigation.
+	 */
+	private accountLocks = new Map<string, {until: number; message?: string}>();
+
+	/** Blocage en cours pour cet identifiant, ou `null` s'il n'y en a pas / plus. */
+	public getAccountLock(login: string): {until: number; message?: string} | null {
+		const lock = this.accountLocks.get(login.trim());
+		if (!lock) return null;
+		if (lock.until <= Date.now()) {
+			this.accountLocks.delete(login.trim());
+			return null;
+		}
+		return lock;
+	}
+
+	private recordAccountLock(login: string, result: BoxLoginResult) {
+		if (result.lockedUntil && result.lockedUntil > Date.now()) {
+			this.accountLocks.set(login.trim(), {
+				until: result.lockedUntil,
+				message: result.error
+			});
+		} else if (result.res) {
+			this.accountLocks.delete(login.trim());
+		}
+	}
 
 	constructor() {
 		global.atob = decode;
@@ -328,14 +448,14 @@ class AuthenticationService {
 		login: string,
 		password: string,
 		_isLocal = true
-	): Promise<{res: boolean; error?: string}> {
+	): Promise<BoxLoginResult> {
 		this.reset();
 		// Force a fresh mDNS scan for this login session — the cached host
 		// from a previous session must not be reused on a new login.
 		this.resolvedLocalService = null;
 		
 		await this.setSocketServer(true, login);
-		const sendLogin = (): Promise<{res: boolean; error?: string}> => {
+		const sendLogin = (): Promise<BoxLoginResult> => {
 			return new Promise((resolve, _reject) => {
 				if (!socketService.connected) {
 					resolve({res: false, error: i18n.t('common:errors.noServer')});
@@ -343,10 +463,20 @@ class AuthenticationService {
 				socketService.emit(
 					'front/box/login',
 					{login, password},
-					async (response: any) => {
-						if (response.error) {
+					async (...ackArgs: unknown[]) => {
+						const result = parseBoxLoginResponse(...ackArgs);
+						const response = pickResult(ackArgs);
+						this.recordAccountLock(login, result);
+						if (!result.res || !response?.accessToken) {
 							socketService.disconnect();
-							resolve({res: false, error: response.error});
+							resolve(
+								result.res
+									? {
+											res: false,
+											error: i18n.t('common:errors.unexpected')
+									  }
+									: result
+							);
 						} else {
 							await this.saveTokens(response);
 							await AsyncStorage.setItem(USER_NAME_KEY, login);
@@ -360,6 +490,60 @@ class AuthenticationService {
 			});
 		};
 		return await sendLogin();
+	}
+
+	/**
+	 * Récupération du mot de passe, par le même événement que la connexion
+	 * (`front/box/login` avec `isRecovery: true`). La box distingue l'étape aux
+	 * champs présents :
+	 * - `{login}` seul : envoie un code à l'email de récupération ;
+	 * - `+ code` : vérifie le code ;
+	 * - `+ code + newPassword` : remplace le mot de passe.
+	 * Aucun jeton n'est enregistré : l'utilisateur se reconnecte ensuite avec
+	 * son nouveau mot de passe.
+	 */
+	private async sendRecovery(payload: {
+		login: string;
+		code?: string;
+		newPassword?: string;
+	}): Promise<BoxLoginResult> {
+		if (!socketService.connected) {
+			this.resolvedLocalService = null;
+			await this.setSocketServer(true, payload.login);
+		}
+		return new Promise(resolve => {
+			if (!socketService.connected) {
+				resolve({res: false, error: i18n.t('common:errors.noServer')});
+				return;
+			}
+			socketService.emit(
+				'front/box/login',
+				{...payload, isRecovery: true},
+				(...ackArgs: unknown[]) => {
+					const result = parseBoxLoginResponse(...ackArgs);
+					this.recordAccountLock(payload.login, result);
+					resolve(result);
+				}
+			);
+		});
+	}
+
+	public requestRecoveryCode(login: string) {
+		return this.sendRecovery({login});
+	}
+
+	public verifyRecoveryCode(login: string, code: string) {
+		return this.sendRecovery({login, code});
+	}
+
+	public resetPassword(login: string, code: string, newPassword: string) {
+		return this.sendRecovery({login, code, newPassword});
+	}
+
+	/** Ferme le socket ouvert sans session pour la récupération. */
+	public endRecovery() {
+		socketService.disconnect();
+		this.resolvedLocalService = null;
 	}
 
 	private setStatusServer(value: boolean) {

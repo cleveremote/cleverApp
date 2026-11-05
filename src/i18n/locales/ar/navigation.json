@@ -43,5 +43,6 @@
 	"triggers": "المشغِّلات الآلية",
 	"comRequest": "طلب COM",
 	"scheduleSettings": "إعدادات الجدولة",
-	"triggerSettings": "إعدادات المشغِّل الآلي"
+	"triggerSettings": "إعدادات المشغِّل الآلي",
+	"forgotPassword": "نسيت كلمة المرور"
 }

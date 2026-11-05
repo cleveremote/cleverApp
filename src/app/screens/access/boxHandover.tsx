@@ -95,6 +95,8 @@ type PhoneOutcome =
 export function BoxHandover(props: any) {
 	const deviceName: string = props.route?.params?.deviceName ?? '';
 	const ssid: string = props.route?.params?.ssid ?? '';
+	// Identifiant choisi à la configuration : la connexion l'affiche figé.
+	const login: string = props.route?.params?.login ?? '';
 
 	const [phase, setPhase] = useState<Phase>('waiting');
 	const [elapsed, setElapsed] = useState(0);
@@ -121,10 +123,10 @@ export function BoxHandover(props: any) {
 			index: 1,
 			routes: [
 				{name: 'Profiles'},
-				{name: 'Signin', params: {profile: deviceName}}
+				{name: 'Signin', params: {profile: deviceName, login}}
 			]
 		});
-	}, [deviceName, props.navigation]);
+	}, [deviceName, login, props.navigation]);
 
 	/**
 	 * Chemin de correction : rescanner le QR code.

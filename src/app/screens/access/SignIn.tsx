@@ -1,13 +1,14 @@
 import React from 'react';
 import {
+	Keyboard,
 	StyleSheet,
 	Text,
 	TextInput,
-	Alert,
 	TouchableOpacity,
 	View
 } from 'react-native';
 import {AppSwitch} from '../../components/common/AppSwitch';
+import {KeyboardAwareScrollView} from '../../components/common/KeyboardAwareScrollView';
 import {placeholderColor} from '../../styles/components/common/Input';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import {hapticOptions} from '../../data/cycleTypes';
@@ -25,16 +26,56 @@ import {
 	navigationHeader
 } from '../../components/common/navigationHeaders';
 import {useTranslation} from 'react-i18next';
+import {
+	faRightToBracket,
+	faTriangleExclamation
+} from '@fortawesome/free-solid-svg-icons';
+import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
+import {authenticationService} from '../../../module/authentication/domain/services/auth.service';
+import {OutlineButton, useLockedUntil} from './accessUi';
 
 export function SignIn(props: any) {
 	const {t} = useTranslation(['access', 'common']);
+	// Identifiant de la box : saisi une seule fois, à la configuration de la
+	// box ou à la création d'un profil. Une fois connu (profil existant ou
+	// arrivée depuis la configuration), il reste en lecture seule.
+	const presetLogin: string = props.route.params?.login ?? '';
+	const [loginLocked, setLoginLocked] = React.useState(!!presetLogin);
 	const [signinData, setSigninData] = React.useState({
-		login: '',
+		login: presetLogin,
 		password: '',
 		rememberCredentials: false,
 		profile: ''
 	});
 	const [isLoading, setIsLoading] = React.useState(false);
+	// Message affiché sous le bouton (plus aucune popup sur cet écran) ; il
+	// disparaît dès que l'utilisateur modifie un champ.
+	const [message, setMessage] = React.useState('');
+	// Compte bloqué par la box après trop d'échecs (`ACCOUNT_LOCKED`) : le
+	// bouton reste désactivé jusqu'à `lockedUntil`. Le blocage est mémorisé par
+	// le service, par identifiant, pour survivre à une navigation.
+	const [lock, setLock] = React.useState<{
+		until: number;
+		message?: string;
+	} | null>(null);
+	const locked = useLockedUntil(lock?.until ?? null);
+	React.useEffect(() => {
+		setLock(
+			signinData.login
+				? authenticationService.getAccountLock(signinData.login)
+				: null
+		);
+	}, [signinData.login]);
+	const updateField = (field: Partial<typeof signinData>) => {
+		setMessage('');
+		setSigninData(data => ({...data, ...field}));
+	};
+	// Règles du bouton « Se connecter » : identifiant et mot de passe requis,
+	// et compte non bloqué. Pendant l'appel, il affiche un loader.
+	const missingFields = !signinData.login?.trim() || !signinData.password;
+	const shownMessage = locked
+		? lock?.message || t('common:errors.unexpected')
+		: message;
 	const nav = useNavigation();
 	React.useEffect(() => {
 		nav.setOptions({
@@ -50,15 +91,17 @@ export function SignIn(props: any) {
 			try {
 				const sd = await getSigninData(profile);
 				if (sd) {
-					setSigninData(sd);
+					const savedLogin = sd.login || presetLogin;
+					setSigninData({...sd, login: savedLogin});
+					if (savedLogin) setLoginLocked(true);
 					if (sd.credentialsError === 'cancelled') {
-						Alert.alert(t('signIn.credentialsCancelled'));
+						setMessage(t('signIn.credentialsCancelled'));
 					} else if (sd.credentialsError === 'unavailable') {
-						Alert.alert(t('signIn.credentialsUnavailable'));
+						setMessage(t('signIn.credentialsUnavailable'));
 					} else if (sd.login && sd.password && sd.profile) {
 						//await onLogin(sd);
 					} else {
-						Alert.alert(t('signIn.missingInfo'));
+						setMessage(t('signIn.missingInfo'));
 					}
 				}
 			} catch (error) {
@@ -72,6 +115,9 @@ export function SignIn(props: any) {
 	}, []);
 
 	const onLogin = async (data: any) => {
+		// Le focus quitte le champ : le clavier se referme pendant l'appel.
+		Keyboard.dismiss();
+		setMessage('');
 		setIsLoading(true);
 		props
 			.login(
@@ -83,8 +129,22 @@ export function SignIn(props: any) {
 				data.login
 			)
 			.then((res: any) => {
-				if (res.error) {
-					Alert.alert(res.error);
+				if (res && !res.res) {
+					ReactNativeHapticFeedback.trigger(
+						'notificationError',
+						hapticOptions
+					);
+					// Blocage : son message vit dans `lock` et s'efface seul à
+					// l'échéance ; les autres erreurs restent jusqu'à la saisie.
+					const accountLock = authenticationService.getAccountLock(
+						data.login
+					);
+					setLock(accountLock);
+					setMessage(
+						accountLock
+							? ''
+							: res.error || t('common:errors.unexpected')
+					);
 					setIsLoading(false);
 				}
 			})
@@ -95,7 +155,13 @@ export function SignIn(props: any) {
 	};
 
 	return (
-		<View style={{flex: 1, marginTop: 25}}>
+		// Le champ actif (et l'encadré d'avertissement en dessous) défile
+		// au-dessus du clavier ; un appui hors des champs le referme.
+		<KeyboardAwareScrollView
+			style={{flex: 1}}
+			contentContainerStyle={{paddingTop: 25, paddingBottom: 24}}
+			keyboardDismissMode="on-drag"
+			extraOffset={120}>
 			<View style={{gap: 16, alignItems: 'center'}}>
 				<Spinner
 					visible={isLoading}
@@ -135,35 +201,23 @@ export function SignIn(props: any) {
 								style={styles.input}
 								placeholder={t('profile')}
 								placeholderTextColor={placeholderColor}
-								onChangeText={profile => {
-									setSigninData({
-										login: signinData.login,
-										password: signinData.password,
-										rememberCredentials:
-											signinData.rememberCredentials,
-										profile
-									});
-								}}
+								onChangeText={profile => updateField({profile})}
 							/>
 							<TextInput
 								value={
-									signinData.rememberCredentials
+									loginLocked || signinData.rememberCredentials
 										? signinData.login
 										: undefined
 								}
+								editable={!loginLocked}
 								textContentType={'username'}
-								style={styles.input}
+								style={[
+									styles.input,
+									loginLocked && styles.readOnly
+								]}
 								placeholder={t('signIn.boxId')}
 								placeholderTextColor={placeholderColor}
-								onChangeText={login => {
-									setSigninData({
-										login,
-										password: signinData.password,
-										rememberCredentials:
-											signinData.rememberCredentials,
-										profile: signinData.profile
-									});
-								}}
+								onChangeText={login => updateField({login})}
 							/>
 							<TextInput
 								style={styles.input}
@@ -176,16 +230,26 @@ export function SignIn(props: any) {
 										? signinData.password
 										: undefined
 								}
-								onChangeText={password => {
-									setSigninData({
-										login: signinData.login,
-										password,
-										rememberCredentials:
-											signinData.rememberCredentials,
-										profile: signinData.profile
-									});
+								onChangeText={password => updateField({password})}
+								returnKeyType={'go'}
+								onSubmitEditing={() => {
+									if (!locked && !missingFields && !isLoading) {
+										onLogin(signinData);
+									}
 								}}
 							/>
+							{shownMessage ? (
+								<View style={styles.warningBox}>
+									<FontAwesomeIcon
+										icon={faTriangleExclamation}
+										size={16}
+										color={WARNING.text}
+									/>
+									<Text style={styles.warningText}>
+										{shownMessage}
+									</Text>
+								</View>
+							) : null}
 
 							<View
 								style={{
@@ -217,61 +281,39 @@ export function SignIn(props: any) {
 									{t('signIn.rememberMe')}
 								</Text>
 							</View>
-							<View
-								style={{
-									marginLeft: 40,
-									marginRight: 40,
-									marginBottom: 20,
-									alignSelf: 'center'
-								}}>
-								{/* <IconButton
-									_pressed={{_icon: {size: 35}}}
-									variant="unstyled"
-									alignSelf="center"
-									size={35}
-									icon={
-										<Icon
-											name={'id-badge'}
-											size={30}
-											color="#32404e"
-										/>
-									}
-									onPress={() => {
-										ReactNativeHapticFeedback.trigger(
-											'impactMedium',
-											hapticOptions
-										);
-										props.navigation.goBack();
-									}}
-								/>
-								<Text
-									style={{
-										color: '#32404e',
-										fontSize: 15
-									}}>
-									back to profiles
-								</Text> */}
-							</View>
-
-							<TouchableOpacity
-								style={{
-									alignSelf: 'stretch',
-									height: 50,
-									backgroundColor: '#32404e',
-									justifyContent: 'center',
-									alignItems: 'center',
-									borderRadius: 6
-								}}
+							<OutlineButton
+								label={t('signIn.submit')}
+								icon={faRightToBracket}
+								style={{marginTop: 4}}
+								busy={isLoading}
+								disabled={locked || missingFields}
 								onPress={async () => {
 									ReactNativeHapticFeedback.trigger(
 										'impactMedium',
 										hapticOptions
 									);
 									await onLogin(signinData);
+								}}
+							/>
+							<TouchableOpacity
+								onPress={() => {
+									Keyboard.dismiss();
+									if (!signinData.login?.trim()) {
+										setMessage(t('signIn.boxIdRequired'));
+										return;
+									}
+									props.navigation.navigate('ForgotPassword', {
+										login: signinData.login.trim()
+									});
 								}}>
-								<Text style={{color: 'white', fontSize: 20}}>
-									{' '}
-									{t('signIn.submit')}{' '}
+								<Text
+									style={{
+										color: '#32404e',
+										fontSize: 15,
+										textAlign: 'center',
+										marginTop: 4
+									}}>
+									{t('signIn.forgotPassword')}
 								</Text>
 							</TouchableOpacity>
 						</View>
@@ -305,7 +347,7 @@ export function SignIn(props: any) {
 					}}
 				/>
 			</VStack> */}
-		</View>
+		</KeyboardAwareScrollView>
 	);
 }
 
@@ -320,6 +362,13 @@ export default connect(mapStateToProps, {
 	setIsConnected
 })(SignIn);
 
+// Encadré d'avertissement sous le dernier champ (erreurs, compte bloqué…).
+const WARNING = {
+	background: '#FFF8E1',
+	border: '#F5C26B',
+	text: '#8A5A00'
+};
+
 const styles = StyleSheet.create({
 	input: {
 		height: 50,
@@ -329,6 +378,25 @@ const styles = StyleSheet.create({
 		borderRadius: 12,
 		paddingHorizontal: 12,
 		color: '#32404e'
+	},
+	readOnly: {
+		backgroundColor: '#F1F5F9'
+	},
+	warningBox: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		gap: 10,
+		paddingVertical: 10,
+		paddingHorizontal: 12,
+		borderRadius: 12,
+		borderWidth: 1,
+		borderColor: WARNING.border,
+		backgroundColor: WARNING.background
+	},
+	warningText: {
+		flex: 1,
+		color: WARNING.text,
+		fontSize: 14
 	},
 	spinnerTextStyle: {
 		color: '#32404e',

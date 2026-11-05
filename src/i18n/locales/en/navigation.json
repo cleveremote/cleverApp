@@ -43,5 +43,6 @@
 	"triggers": "Triggers",
 	"comRequest": "COM request",
 	"scheduleSettings": "Schedule settings",
-	"triggerSettings": "Trigger settings"
+	"triggerSettings": "Trigger settings",
+	"forgotPassword": "Forgot password"
 }

@@ -105,12 +105,15 @@ const clearCredentials = async (account: string) => {
 const setAssociationProfileAccount = async (
 	profile: string,
 	account: string,
-	rememberCredentials: boolean
+	rememberCredentials: boolean,
+	login?: string
 ) => {
 	try {
+		// Le login est gardé avec le profil, hors du trousseau : il reste
+		// affiché (en lecture seule) même si le déverrouillage est refusé.
 		await AsyncStorage.setItem(
 			profile,
-			JSON.stringify({account, rememberCredentials})
+			JSON.stringify({account, rememberCredentials, login})
 		);
 	} catch (error) {
 		console.error('Error setAssociationProfileAccount:', error);
@@ -119,7 +122,11 @@ const setAssociationProfileAccount = async (
 
 const getAssociationProfileAccount = async (
 	profile: string
-): Promise<{account: string; rememberCredentials: boolean} | null> => {
+): Promise<{
+	account: string;
+	rememberCredentials: boolean;
+	login?: string;
+} | null> => {
 	try {
 		const data = await AsyncStorage.getItem(profile);
 		if (data) {
@@ -180,7 +187,7 @@ const getSigninData = async (profile: string) => {
 		if (data) {
 			const {credentials, error} = await readCredentials(data.account);
 			return {
-				login: credentials?.username || '',
+				login: credentials?.username || data.login || '',
 				// Nom de la box : distinct du login depuis que la configuration
 				// par hotspot demande une adresse email.
 				account: data.account,
@@ -223,7 +230,8 @@ const saveSigninData = async (
 		await setAssociationProfileAccount(
 			newProfile,
 			account,
-			rememberCredentials
+			rememberCredentials,
+			login
 		);
 		await setCredentials(account, login, password);
 	}

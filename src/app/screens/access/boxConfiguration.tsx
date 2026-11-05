@@ -325,7 +325,7 @@ export function BoxConfiguration(props: any) {
 				{name: 'Profiles'},
 				{
 					name: 'BoxHandover',
-					params: {deviceName, ssid: form.ssid}
+					params: {deviceName, ssid: form.ssid, login}
 				}
 			]
 		});

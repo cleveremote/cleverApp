@@ -9,6 +9,7 @@ import {DeviceScreen} from '../screens/access/device';
 import {ScanBoxScreen} from '../screens/access/scanBox';
 import {BoxConfiguration} from '../screens/access/boxConfiguration';
 import {BoxHandover} from '../screens/access/boxHandover';
+import {ForgotPassword} from '../screens/access/forgotPassword';
 export function AccessStack() {
 	const {t} = useTranslation('navigation');
 	useEffect(() => {
@@ -66,6 +67,11 @@ export function AccessStack() {
 					name="Signin"
 					options={{headerShown: true, title: t('signIn'),headerStyle: {backgroundColor: 'white'}}}
 					component={SignIn}
+				/>
+				<Stack.Screen
+					name="ForgotPassword"
+					options={{headerShown: true, title: t('forgotPassword'), headerStyle: {backgroundColor: 'white'}}}
+					component={ForgotPassword}
 				/>
 			</Stack.Navigator>
 		</>

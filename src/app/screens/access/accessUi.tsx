@@ -1,12 +1,17 @@
 import React from 'react';
 import {
+	ActivityIndicator,
 	Linking,
 	Platform,
+	StyleProp,
 	StyleSheet,
 	Text,
 	TouchableOpacity,
-	View
+	View,
+	ViewStyle
 } from 'react-native';
+import {IconDefinition} from '@fortawesome/fontawesome-svg-core';
+import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 
 /**
  * Vocabulaire visuel commun aux écrans d'appairage (`scanBox`, `boxHandover`).
@@ -47,6 +52,59 @@ export const PrimaryButton = ({
 	</TouchableOpacity>
 );
 
+/**
+ * Bouton contouré, même format que « Discover New Devices » du master : icône
+ * (ou loader pendant l'appel) + libellé en gras.
+ */
+export const OutlineButton = ({
+	label,
+	icon,
+	busy = false,
+	disabled = false,
+	onPress,
+	style
+}: {
+	label: string;
+	icon: IconDefinition;
+	busy?: boolean;
+	disabled?: boolean;
+	onPress: () => void;
+	style?: StyleProp<ViewStyle>;
+}) => (
+	<TouchableOpacity
+		style={[
+			accessStyles.outlineButton,
+			(busy || disabled) && accessStyles.outlineButtonBusy,
+			style
+		]}
+		disabled={busy || disabled}
+		onPress={onPress}>
+		{busy ? (
+			<ActivityIndicator size="small" color={COLORS.primary} />
+		) : (
+			<FontAwesomeIcon icon={icon} size={16} color={COLORS.primary} />
+		)}
+		<Text style={accessStyles.outlineLabel}>{label}</Text>
+	</TouchableOpacity>
+);
+
+/**
+ * Vrai tant que `until` (ms) n'est pas atteint ; repasse à faux tout seul à
+ * l'échéance, sans attendre une autre mise à jour de l'écran.
+ */
+export const useLockedUntil = (until: number | null): boolean => {
+	const [, setTick] = React.useState(0);
+	const locked = until !== null && until > Date.now();
+	React.useEffect(() => {
+		if (until === null) return;
+		const delay = until - Date.now();
+		if (delay <= 0) return;
+		const timer = setTimeout(() => setTick(n => n + 1), delay + 250);
+		return () => clearTimeout(timer);
+	}, [until]);
+	return locked;
+};
+
 /** Action secondaire : même poids visuel qu'un lien, pas qu'un bouton. */
 export const LinkButton = ({
 	label,
@@ -84,6 +142,26 @@ export async function openWifiSettings(): Promise<void> {
 // qui l'importent.
 /* eslint-disable react-native/no-unused-styles */
 export const accessStyles = StyleSheet.create({
+	outlineButton: {
+		marginTop: 20,
+		alignSelf: 'center',
+		flexDirection: 'row',
+		alignItems: 'center',
+		gap: 10,
+		paddingVertical: 8,
+		paddingHorizontal: 14,
+		borderRadius: 12,
+		borderWidth: 2,
+		borderColor: COLORS.primary
+	},
+	outlineButtonBusy: {
+		opacity: 0.7
+	},
+	outlineLabel: {
+		color: COLORS.primary,
+		fontSize: 15,
+		fontWeight: 'bold'
+	},
 	centered: {
 		flex: 1,
 		justifyContent: 'center',
