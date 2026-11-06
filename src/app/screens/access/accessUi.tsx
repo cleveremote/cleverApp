@@ -1,3 +1,4 @@
+import {ELEMENT_HEIGHT, ELEMENT_FONT_SIZE} from '../../styles/metrics';
 import React from 'react';
 import {
 	ActivityIndicator,
@@ -54,7 +55,8 @@ export const PrimaryButton = ({
 
 /**
  * Bouton contouré, même format que « Discover New Devices » du master : icône
- * (ou loader pendant l'appel) + libellé en gras.
+ * (ou loader pendant l'appel) + libellé en gras. `color` teinte contour, icône
+ * et libellé (ex. `COLORS.danger` pour une action destructive).
  */
 export const OutlineButton = ({
 	label,
@@ -62,29 +64,35 @@ export const OutlineButton = ({
 	busy = false,
 	disabled = false,
 	onPress,
+	onLongPress,
+	color = COLORS.primary,
 	style
 }: {
 	label: string;
 	icon: IconDefinition;
 	busy?: boolean;
 	disabled?: boolean;
-	onPress: () => void;
+	onPress?: () => void;
+	onLongPress?: () => void;
+	color?: string;
 	style?: StyleProp<ViewStyle>;
 }) => (
 	<TouchableOpacity
 		style={[
 			accessStyles.outlineButton,
+			{borderColor: color},
 			(busy || disabled) && accessStyles.outlineButtonBusy,
 			style
 		]}
 		disabled={busy || disabled}
-		onPress={onPress}>
+		onPress={onPress}
+		onLongPress={onLongPress}>
 		{busy ? (
-			<ActivityIndicator size="small" color={COLORS.primary} />
+			<ActivityIndicator size="small" color={color} />
 		) : (
-			<FontAwesomeIcon icon={icon} size={16} color={COLORS.primary} />
+			<FontAwesomeIcon icon={icon} size={16} color={color} />
 		)}
-		<Text style={accessStyles.outlineLabel}>{label}</Text>
+		<Text style={[accessStyles.outlineLabel, {color}]}>{label}</Text>
 	</TouchableOpacity>
 );
 
@@ -148,7 +156,7 @@ export const accessStyles = StyleSheet.create({
 		flexDirection: 'row',
 		alignItems: 'center',
 		gap: 10,
-		paddingVertical: 8,
+		height: ELEMENT_HEIGHT,
 		paddingHorizontal: 14,
 		borderRadius: 12,
 		borderWidth: 2,
@@ -159,7 +167,7 @@ export const accessStyles = StyleSheet.create({
 	},
 	outlineLabel: {
 		color: COLORS.primary,
-		fontSize: 15,
+		fontSize: ELEMENT_FONT_SIZE,
 		fontWeight: 'bold'
 	},
 	centered: {

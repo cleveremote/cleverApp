@@ -1,3 +1,4 @@
+import {ELEMENT_HEIGHT, ELEMENT_FONT_SIZE} from '../../styles/metrics';
 import React, {useRef} from 'react';
 import {useTranslation} from 'react-i18next';
 import {faLayerGroup, faSyncAlt, IconDefinition} from '@fortawesome/free-solid-svg-icons';
@@ -119,7 +120,7 @@ const styles = StyleSheet.create({
 		justifyContent: 'center',
 		alignItems: 'center',
 		gap: 10,
-		paddingVertical: 8,
+		height: ELEMENT_HEIGHT,
 		paddingHorizontal: 14,
 		borderRadius: 12,
 		borderWidth: 2,
@@ -130,7 +131,7 @@ const styles = StyleSheet.create({
 	},
 	label: {
 		color: COLORS.primary,
-		fontSize: 15,
+		fontSize: ELEMENT_FONT_SIZE,
 		fontWeight: 'bold'
 	}
 });

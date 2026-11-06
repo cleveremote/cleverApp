@@ -24,6 +24,8 @@ import {getBoxEndpoint} from '../../../../services/hotspot';
 import * as tokenStorage from './tokenStorage';
 
 const USER_NAME_KEY = 'userName';
+/** Attente maximale de la réponse de la box à une action sur le compte. */
+const ACCOUNT_ACTION_TIMEOUT_MS = 15000;
 
 /** Résultat d'un appel `front/box/login` (connexion ou récupération). */
 export type BoxLoginResult = {
@@ -118,6 +120,16 @@ const parseBoxLoginResponse = (...args: unknown[]): BoxLoginResult => {
 	};
 };
 
+/**
+ * Connexion à pré-remplir après une déconnexion (cf. `signout`) : login,
+ * profil qui le mémorise, et le nouveau mot de passe qui vient d'être choisi.
+ */
+export type PendingSignin = {
+	login: string;
+	profile?: string;
+	password?: string;
+};
+
 class AuthenticationService {
 	public newEvent = new EventEmitter();
 	public socketChangeEvent = new EventEmitter();
@@ -129,6 +141,10 @@ class AuthenticationService {
 	 * re-scanning. Cleared on signout or on a new login.
 	 */
 	private resolvedLocalService: ResolvedService | null = null;
+	// Connexion à ouvrir après une déconnexion (changement de mot de passe) :
+	// login, et profil qui le mémorise s'il y en a un. Lue une seule fois par
+	// l'écran des profils.
+	private pendingSignin: PendingSignin | null = null;
 	/**
 	 * Blocages de compte en cours (`ACCOUNT_LOCKED`), par identifiant de box :
 	 * conservés hors des écrans pour que le blocage survive à une navigation.
@@ -315,12 +331,25 @@ class AuthenticationService {
 		}
 	}
 
-	public async signout() {
+	/**
+	 * Ferme la session. `next` : on atterrit directement sur l'écran de
+	 * connexion, ce login (et son profil) pré-remplis (cf.
+	 * `takePendingSignin`).
+	 */
+	public async signout(next?: PendingSignin) {
 		socketService.disconnect();
 		await tokenStorage.clearTokens();
 		await AsyncStorage.removeItem(USER_NAME_KEY);
 		this.resolvedLocalService = null;
+		this.pendingSignin = next?.login ? next : null;
 		this.setIsExpired(true);
+	}
+
+	/** Connexion laissée par `signout(next)`, rendue une seule fois. */
+	public takePendingSignin(): PendingSignin | null {
+		const next = this.pendingSignin;
+		this.pendingSignin = null;
+		return next;
 	}
 
 	private parseLocalUrl(url: string): {hostname: string; port: string} {
@@ -538,6 +567,100 @@ class AuthenticationService {
 
 	public resetPassword(login: string, code: string, newPassword: string) {
 		return this.sendRecovery({login, code, newPassword});
+	}
+
+	/**
+	 * Action sur le compte de la session en cours, sur le socket déjà ouvert.
+	 * La box répond au même format que `front/box/login` ; sans réponse dans
+	 * le délai (box qui ne connaît pas l'événement…), on abandonne plutôt que
+	 * de laisser l'écran attendre indéfiniment.
+	 */
+	private emitAccountAction(
+		event: string,
+		payload: Record<string, unknown>
+	): Promise<BoxLoginResult> {
+		return new Promise(resolve => {
+			if (!socketService.connected) {
+				resolve({res: false, error: i18n.t('common:errors.noServer')});
+				return;
+			}
+			const timer = setTimeout(
+				() => resolve({res: false, error: i18n.t('common:errors.unexpected')}),
+				ACCOUNT_ACTION_TIMEOUT_MS
+			);
+			socketService.emit(event, payload, (...ackArgs: unknown[]) => {
+				clearTimeout(timer);
+				resolve(parseBoxLoginResponse(...ackArgs));
+			});
+		});
+	}
+
+	/** Envoie un code (OTP) au nouvel email de récupération, pour le vérifier. */
+	public requestRecoveryEmailCode(login: string, email: string) {
+		return this.emitAccountAction('front/box/send/verificationcode', {
+			login,
+			email
+		});
+	}
+
+	/** Vérifie le code reçu sur le nouvel email, sans encore l'enregistrer. */
+	public verifyRecoveryEmailCode(login: string, email: string, code: string) {
+		return this.emitAccountAction('front/box/check/verificationcode', {
+			login,
+			email,
+			code
+		});
+	}
+
+	/**
+	 * Enregistre les changements du compte de la session
+	 * (`front/box/sync/account`) : le mot de passe actuel (`password`)
+	 * confirme l'opération. Seuls les champs modifiés sont envoyés : `email` (avec le
+	 * `code` qui prouve que l'adresse est vérifiée) et/ou `newPassword`.
+	 */
+	public syncAccount(
+		login: string,
+		password: string,
+		changes: {email?: string; code?: string; newPassword?: string}
+	) {
+		return this.emitAccountAction('front/box/sync/account', {
+			login,
+			password,
+			...changes
+		});
+	}
+
+	/** Remplace l'email de récupération (adresse vérifiée par `code`). */
+	public changeRecoveryEmail(
+		login: string,
+		password: string,
+		email: string,
+		code: string
+	) {
+		return this.syncAccount(login, password, {email, code});
+	}
+
+	/** Remplace le mot de passe, sans code (OTP). */
+	public changePassword(
+		login: string,
+		password: string,
+		newPassword: string
+	) {
+		return this.syncAccount(login, password, {newPassword});
+	}
+
+	/**
+	 * Réinitialise sur la box les données (cycles, programmations…) et/ou le
+	 * compte ; l'appelant déconnecte ensuite si le compte est effacé.
+	 */
+	public resetAccount(
+		login: string,
+		scope: {data: boolean; account: boolean}
+	) {
+		return this.emitAccountAction('front/box/reset/account', {
+			login,
+			...scope
+		});
 	}
 
 	/** Ferme le socket ouvert sans session pour la récupération. */

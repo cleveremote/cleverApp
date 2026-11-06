@@ -1,3 +1,4 @@
+import {ELEMENT_HEIGHT, ELEMENT_FONT_SIZE} from '../../../../styles/metrics';
 import {
 	ScrollView,
 	StyleSheet,
@@ -197,14 +198,14 @@ const styles = StyleSheet.create({
 		alignItems: 'center',
 		justifyContent: 'space-between',
 		borderRadius: 12,
-		height: 45,
+		height: ELEMENT_HEIGHT,
 		paddingHorizontal: 12,
 		margin: 4
 	},
 	rowLabel: {
 		flex: 1,
 		fontWeight: 'bold',
-		fontSize: 15,
+		fontSize: ELEMENT_FONT_SIZE,
 		marginRight: 8
 	},
 	addButtonWrapper: {

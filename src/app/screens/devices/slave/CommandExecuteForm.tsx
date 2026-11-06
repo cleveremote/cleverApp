@@ -1,3 +1,4 @@
+import {inputText} from '../../../styles/components/common/Input';
 import React, {useEffect, useRef, useState} from 'react';
 import {
 	ActivityIndicator,
@@ -682,7 +683,7 @@ const styles = StyleSheet.create({
 		borderRadius: 8,
 		paddingHorizontal: 10,
 		paddingVertical: 6,
-		color: COLORS.primary
+		...inputText
 	},
 	error: {color: COLORS.error, fontSize: 12, marginTop: 4},
 	button: {

@@ -17,7 +17,8 @@ import {
 	CONTROL_LOOPS_LOAD,
 	DEVICE_CONNECTIVITY_UPDATE,
 	ACTUATORS_LOAD,
-	SETTINGS_LOAD
+	SETTINGS_LOAD,
+	ACCOUNT_LOAD
 } from './types';
 import {ThunkAction} from 'redux-thunk';
 import {AnyAction} from 'redux';
@@ -172,6 +173,15 @@ export const loadConfiguration =
 					dispatch({
 						type: SETTINGS_LOAD,
 						payload: settings
+					});
+				}
+
+				// Compte de la box (email de récupération…), affiché dans les
+				// réglages utilisateur. Clé absente : on garde celui déjà connu.
+				if (config.account && typeof config.account === 'object') {
+					dispatch({
+						type: ACCOUNT_LOAD,
+						payload: config.account
 					});
 				}
 

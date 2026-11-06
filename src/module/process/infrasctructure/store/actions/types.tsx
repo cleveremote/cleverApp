@@ -96,6 +96,7 @@ export const CONDITIONS_SAVE = 'CONDITIONS_SAVE';
 export const SETTINGS_LOAD = 'SETTINGS_LOAD';
 export const SETTINGS_UPDATE = 'SETTINGS_UPDATE';
 export const SETTINGS_SAVE = 'SETTINGS_SAVE';
+export const ACCOUNT_LOAD = 'ACCOUNT_LOAD';
 
 ////////// new
 export const PROCESS_STATUS = 'PROCESS_STATUS';

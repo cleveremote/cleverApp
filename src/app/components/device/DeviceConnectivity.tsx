@@ -1,3 +1,4 @@
+import {ELEMENT_HEIGHT} from '../../styles/metrics';
 import React, {useEffect, useMemo, useRef, useState} from 'react';
 import {
 	ActivityIndicator,
@@ -513,7 +514,7 @@ const styles = StyleSheet.create({
 	},
 	// Même gabarit qu'un InputForm.
 	status: {
-		height: 50,
+		height: ELEMENT_HEIGHT,
 		borderRadius: 12,
 		borderWidth: 1,
 		paddingHorizontal: 12

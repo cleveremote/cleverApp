@@ -1,5 +1,5 @@
 import React from 'react';
-import {ScrollView, Text, View} from 'react-native';
+import {ScrollView, Text, TextInput, View} from 'react-native';
 import {connect} from 'react-redux';
 import {faMinus} from '@fortawesome/free-solid-svg-icons';
 import {
@@ -86,17 +86,17 @@ export function ComRequestGeneralSettingsSection(props: any) {
 		<View style={BoxFormStyle.boxForm}>
 			<Body {...bodyProps}>
 				<Text style={InputStyle.textInput}>{i18n.t('devices:comRequest.name')}</Text>
-				<Text style={styles.readOnlyValue}>{watch('name') || '-'}</Text>
+				<ReadOnlyField value={watch('name') || '-'} />
 				<Text style={InputStyle.textInput}>
 					{i18n.t('devices:comRequest.accessMode')}
 				</Text>
-				<Text style={styles.readOnlyValue}>{accessLabel}</Text>
+				<ReadOnlyField value={accessLabel} />
 				{unit ? (
 					<View style={styles.infoRow}>
 						<Text style={InputStyle.textInput}>
 							{i18n.t('sensor:config.unit')}
 						</Text>
-						<Text style={styles.readOnlyValue}>{unit}</Text>
+						<ReadOnlyField value={unit} style={styles.infoValue} />
 					</View>
 				) : null}
 				<TextAreaForm
@@ -141,14 +141,32 @@ const styles = {
 		flexDirection: 'row' as const,
 		alignItems: 'center' as const
 	},
-	readOnlyValue: {
-		color: '#32404e',
-		fontSize: 15,
-		fontWeight: 'bold' as const,
-		paddingHorizontal: 12,
-		paddingVertical: 8
+	readOnlyField: {
+		borderRadius: 12,
+		borderWidth: 1,
+		paddingHorizontal: 12
+	},
+	infoValue: {
+		flex: 1,
+		marginLeft: 8
 	}
 };
+
+// Valeur non modifiable : même rendu qu'un InputForm désactivé.
+function ReadOnlyField({value, style}: Readonly<{value: string; style?: any}>) {
+	return (
+		<TextInput
+			style={[
+				InputStyle.input,
+				styles.readOnlyField,
+				InputStyle.inputDisabled,
+				style
+			]}
+			value={value}
+			editable={false}
+		/>
+	);
+}
 
 export default connect(null, {updateModbusTask})(
 	ComRequestGeneralSettingsSection

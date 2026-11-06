@@ -1,3 +1,4 @@
+import {ELEMENT_HEIGHT} from '../../../styles/metrics';
 import React from 'react';
 import {
 	Pressable,
@@ -18,7 +19,7 @@ import Icon from 'react-native-vector-icons/FontAwesome5';
 import {connect} from 'react-redux';
 import {isTempId, newTempId} from '../../../../services/socket';
 import {DropdownSelect} from '../../../components/common/FormComponents';
-import {placeholderColor} from '../../../styles/components/common/Input';
+import {placeholderColor, inputText} from '../../../styles/components/common/Input';
 import i18n from 'i18next';
 
 /**
@@ -681,9 +682,9 @@ const styles = StyleSheet.create({
 	},
 	// Bouton type (Cycle/Sensor) — mêmes couleurs que les boutons de filtre de
 	// la page Cycles (segment actif : fond slate + texte blanc, ombre douce),
-	// et même format que l'input à côté (hauteur 50, coins 12).
+	// et même format que l'input à côté (ELEMENT_HEIGHT, coins 12).
 	typeBtn: {
-		height: 50,
+		height: ELEMENT_HEIGHT,
 		marginVertical: 4,
 		paddingHorizontal: 14,
 		borderRadius: 12,
@@ -709,15 +710,13 @@ const styles = StyleSheet.create({
 	},
 	valueInput: {
 		flex: 1.5,
-		height: 50,
+		height: ELEMENT_HEIGHT,
 		marginVertical: 4,
 		borderWidth: 1,
 		borderColor: C.border,
 		borderRadius: 12,
 		paddingHorizontal: 12,
-		color: C.text,
-		fontSize: 15,
-		fontWeight: 'bold'
+		...inputText
 	},
 	valueInputError: {borderWidth: 2, borderColor: C.errorBorder},
 	actions: {flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 8},

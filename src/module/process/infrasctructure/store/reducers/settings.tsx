@@ -1,4 +1,5 @@
 import {
+	ACCOUNT_LOAD,
 	RESET_STORE,
 	SETTINGS_LOAD,
 	SETTINGS_SAVE,
@@ -7,8 +8,10 @@ import {
 
 // Box-level settings: a single object (no list), fetched with
 // `front/box/fetch/settings` and persisted with `front/box/sync/settings`.
+// `account` : compte de la box, remonté par `front/box/fetch/configuration`.
 const initialState = {
-	settings: undefined
+	settings: undefined,
+	account: undefined
 };
 
 export default (state = initialState, action: any) => {
@@ -18,7 +21,8 @@ export default (state = initialState, action: any) => {
 		case RESET_STORE: {
 			return {
 				...state,
-				settings: initialState.settings
+				settings: initialState.settings,
+				account: initialState.account
 			};
 		}
 
@@ -28,6 +32,13 @@ export default (state = initialState, action: any) => {
 			return {
 				...state,
 				settings: action.payload
+			};
+		}
+
+		case ACCOUNT_LOAD: {
+			return {
+				...state,
+				account: action.payload
 			};
 		}
 

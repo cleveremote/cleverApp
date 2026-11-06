@@ -1,3 +1,4 @@
+import {ELEMENT_HEIGHT} from '../../styles/metrics';
 import React from 'react';
 import {
 	Keyboard,
@@ -9,11 +10,14 @@ import {
 } from 'react-native';
 import {AppSwitch} from '../../components/common/AppSwitch';
 import {KeyboardAwareScrollView} from '../../components/common/KeyboardAwareScrollView';
-import {placeholderColor} from '../../styles/components/common/Input';
+import {InputStyle, placeholderColor, inputText} from '../../styles/components/common/Input';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import {hapticOptions} from '../../data/cycleTypes';
 import Spinner from 'react-native-loading-spinner-overlay';
-import {getSigninData} from '../../components/common/RememberMeManager';
+import {
+	findProfileByLogin,
+	getSigninData
+} from '../../components/common/RememberMeManager';
 import Logo from '../../../../hydrophyto.svg';
 import {connect} from 'react-redux';
 import {
@@ -26,13 +30,11 @@ import {
 	navigationHeader
 } from '../../components/common/navigationHeaders';
 import {useTranslation} from 'react-i18next';
-import {
-	faRightToBracket,
-	faTriangleExclamation
-} from '@fortawesome/free-solid-svg-icons';
-import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
+import {faRightToBracket} from '@fortawesome/free-solid-svg-icons';
 import {authenticationService} from '../../../module/authentication/domain/services/auth.service';
 import {OutlineButton, useLockedUntil} from './accessUi';
+import {ErrorBox} from '../../components/common/ErrorBox';
+import {PasswordInput} from '../../components/common/PasswordInput';
 
 export function SignIn(props: any) {
 	const {t} = useTranslation(['access', 'common']);
@@ -40,12 +42,19 @@ export function SignIn(props: any) {
 	// box ou à la création d'un profil. Une fois connu (profil existant ou
 	// arrivée depuis la configuration), il reste en lecture seule.
 	const presetLogin: string = props.route.params?.login ?? '';
+	// Retour après un changement de mot de passe : le profil qui mémorise ce
+	// login est repris tel quel (nom, « se souvenir de moi ») sans relire le
+	// trousseau, qui ne contient que l'ancien mot de passe ; la connexion y
+	// enregistre le nouveau.
+	const passwordChanged = !!props.route.params?.passwordChanged;
+	const changedProfile: string =
+		(passwordChanged && props.route.params?.profile) || '';
 	const [loginLocked, setLoginLocked] = React.useState(!!presetLogin);
 	const [signinData, setSigninData] = React.useState({
 		login: presetLogin,
 		password: '',
-		rememberCredentials: false,
-		profile: ''
+		rememberCredentials: !!changedProfile,
+		profile: changedProfile
 	});
 	const [isLoading, setIsLoading] = React.useState(false);
 	// Message affiché sous le bouton (plus aucune popup sur cet écran) ; il
@@ -66,6 +75,17 @@ export function SignIn(props: any) {
 				: null
 		);
 	}, [signinData.login]);
+	// Retour de « mot de passe oublié » : le nouveau mot de passe est
+	// pré-rempli, puis retiré des paramètres pour ne pas traîner dans l'état
+	// de navigation.
+	const resetPassword: string | undefined =
+		props.route.params?.resetPassword;
+	React.useEffect(() => {
+		if (!resetPassword) return;
+		setMessage('');
+		setSigninData(data => ({...data, password: resetPassword}));
+		props.navigation.setParams({resetPassword: undefined});
+	}, [resetPassword, props.navigation]);
 	const updateField = (field: Partial<typeof signinData>) => {
 		setMessage('');
 		setSigninData(data => ({...data, ...field}));
@@ -109,7 +129,7 @@ export function SignIn(props: any) {
 			}
 		};
 
-		if (props.route.params?.profile) {
+		if (props.route.params?.profile && !passwordChanged) {
 			fetchCredentials(props.route.params.profile);
 		}
 	}, []);
@@ -118,6 +138,19 @@ export function SignIn(props: any) {
 		// Le focus quitte le champ : le clavier se referme pendant l'appel.
 		Keyboard.dismiss();
 		setMessage('');
+		// « Se souvenir de moi » crée (ou renomme) le profil : refusé si un
+		// autre profil utilise déjà ce login.
+		if (data.rememberCredentials) {
+			const owner = await findProfileByLogin(
+				data.login,
+				props.route.params?.profile
+			);
+			if (owner) {
+				ReactNativeHapticFeedback.trigger('notificationError', hapticOptions);
+				setMessage(t('signIn.loginAlreadyUsed', {profile: owner}));
+				return;
+			}
+		}
 		setIsLoading(true);
 		props
 			.login(
@@ -213,23 +246,18 @@ export function SignIn(props: any) {
 								textContentType={'username'}
 								style={[
 									styles.input,
-									loginLocked && styles.readOnly
+									loginLocked && InputStyle.inputDisabled
 								]}
 								placeholder={t('signIn.boxId')}
 								placeholderTextColor={placeholderColor}
 								onChangeText={login => updateField({login})}
 							/>
-							<TextInput
+							<PasswordInput
 								style={styles.input}
 								placeholder={t('common:password')}
 								placeholderTextColor={placeholderColor}
-								secureTextEntry={true}
 								textContentType={'newPassword'}
-								value={
-									signinData.rememberCredentials
-										? signinData.password
-										: undefined
-								}
+								value={signinData.password}
 								onChangeText={password => updateField({password})}
 								returnKeyType={'go'}
 								onSubmitEditing={() => {
@@ -239,16 +267,7 @@ export function SignIn(props: any) {
 								}}
 							/>
 							{shownMessage ? (
-								<View style={styles.warningBox}>
-									<FontAwesomeIcon
-										icon={faTriangleExclamation}
-										size={16}
-										color={WARNING.text}
-									/>
-									<Text style={styles.warningText}>
-										{shownMessage}
-									</Text>
-								</View>
+								<ErrorBox message={shownMessage} />
 							) : null}
 
 							<View
@@ -362,41 +381,14 @@ export default connect(mapStateToProps, {
 	setIsConnected
 })(SignIn);
 
-// Encadré d'avertissement sous le dernier champ (erreurs, compte bloqué…).
-const WARNING = {
-	background: '#FFF8E1',
-	border: '#F5C26B',
-	text: '#8A5A00'
-};
-
 const styles = StyleSheet.create({
 	input: {
-		height: 50,
-		fontSize: 20,
+		...inputText,
+		height: ELEMENT_HEIGHT,
 		borderWidth: 1,
 		borderColor: '#CBD5E0',
 		borderRadius: 12,
-		paddingHorizontal: 12,
-		color: '#32404e'
-	},
-	readOnly: {
-		backgroundColor: '#F1F5F9'
-	},
-	warningBox: {
-		flexDirection: 'row',
-		alignItems: 'center',
-		gap: 10,
-		paddingVertical: 10,
-		paddingHorizontal: 12,
-		borderRadius: 12,
-		borderWidth: 1,
-		borderColor: WARNING.border,
-		backgroundColor: WARNING.background
-	},
-	warningText: {
-		flex: 1,
-		color: WARNING.text,
-		fontSize: 14
+		paddingHorizontal: 12
 	},
 	spinnerTextStyle: {
 		color: '#32404e',

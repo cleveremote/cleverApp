@@ -1,3 +1,5 @@
+import {inputText} from '../../styles/components/common/Input';
+import {ELEMENT_HEIGHT} from '../../styles/metrics';
 import React from 'react';
 import {StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
@@ -127,10 +129,10 @@ const styles = StyleSheet.create({
 		borderColor: C.border,
 		borderRadius: 12,
 		paddingHorizontal: 12,
-		height: 50,
+		height: ELEMENT_HEIGHT,
 		justifyContent: 'center'
 	},
-	dateFieldTxt: {color: C.text, fontSize: 15, fontWeight: 'bold'},
+	dateFieldTxt: inputText,
 	segRow: {flexDirection: 'row', gap: 8, marginBottom: 10},
 	segBtn: {
 		flex: 1,

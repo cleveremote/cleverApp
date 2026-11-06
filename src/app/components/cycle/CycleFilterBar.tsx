@@ -1,3 +1,4 @@
+import {ELEMENT_HEIGHT, ELEMENT_FONT_SIZE} from '../../styles/metrics';
 import React from 'react';
 import {useTranslation} from 'react-i18next';
 import {Pressable, StyleSheet, Text, View} from 'react-native';
@@ -99,7 +100,7 @@ const styles = StyleSheet.create({
 		alignItems: 'center',
 		justifyContent: 'center',
 		gap: 6,
-		height: 38,
+		height: ELEMENT_HEIGHT,
 		borderRadius: 12,
 		backgroundColor: 'white',
 		borderWidth: 1,
@@ -116,7 +117,7 @@ const styles = StyleSheet.create({
 	},
 	label: {
 		color: '#32404e',
-		fontSize: 13,
+		fontSize: ELEMENT_FONT_SIZE,
 		fontWeight: 'bold'
 	},
 	labelActive: {

@@ -158,20 +158,22 @@
 		"credentialsCancelled": "Unlock cancelled: enter your password.",
 		"credentialsUnavailable": "Saved credentials are unavailable (Face ID / Touch ID or passcode unavailable). Enter your password.",
 		"forgotPassword": "Forgot password?",
-		"boxIdRequired": "Enter the box ID first."
+		"boxIdRequired": "Enter the box ID first.",
+		"loginAlreadyUsed": "This login is already used by the “{{profile}}” profile."
 	},
 	"forgotPassword": {
 		"codeSent": "A recovery code has been sent to your recovery email address.",
 		"code": "Recovery code",
 		"validate": "Validate",
 		"resend": "Resend code",
-		"chooseNew": "Code validated: enter your new password.",
+		"chooseNew": "Code validated.",
+		"chooseNewLabel": "Enter your new password",
 		"sendFailed": "The recovery code could not be sent.",
 		"invalidCode": "Invalid recovery code.",
 		"resetFailed": "The password could not be changed.",
 		"successTitle": "Password changed",
 		"success": "You can now sign in with your new password.",
-		"codeExpired": "The recovery code has expired. Send a new code.",
-		"codeLocked": "Maximum number of attempts reached for this code. Send a new code."
+		"codeExpired": "The recovery code has expired.",
+		"codeLocked": "Maximum number of attempts reached for this code."
 	}
 }

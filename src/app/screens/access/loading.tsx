@@ -9,6 +9,7 @@ import {
 import {useFocusEffect} from '@react-navigation/native';
 import Logo from '../../../../hydrophyto.svg';
 import {useTranslation} from 'react-i18next';
+import {authenticationService} from '../../../module/authentication/domain/services/auth.service';
 
 const hapticOptions = {
 	enableVibrateFallback: false,
@@ -23,6 +24,22 @@ const hapticTriggerType: string = Platform.select({
 export function ProfilesScreen(props: any) {
 	const {t} = useTranslation('access');
 	const [profiles, setProfiles] = React.useState<string[]>([]);
+	// Déconnexion après changement de mot de passe : on passe directement à
+	// la connexion de ce login et de son profil, le nouveau mot de passe
+	// pré-rempli, par-dessus les profils (le
+	// retour y ramène). Lu une fois l'écran monté : avant, la navigation de
+	// la pile n'est pas encore prête et l'action serait perdue.
+	React.useEffect(() => {
+		const pending = authenticationService.takePendingSignin();
+		if (!pending) return;
+		props.navigation.navigate('Signin', {
+			login: pending.login,
+			profile: pending.profile,
+			passwordChanged: true,
+			// Même pré-remplissage qu'au retour de « mot de passe oublié ».
+			resetPassword: pending.password
+		});
+	}, [props.navigation]);
 
 	useFocusEffect(
 		useCallback(() => {

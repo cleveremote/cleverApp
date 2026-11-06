@@ -203,13 +203,34 @@ const getSigninData = async (profile: string) => {
 	return null;
 };
 
+/**
+ * Profil (autre que `exceptProfile`) qui utilise déjà ce login, s'il y en a
+ * un : un login ne peut appartenir qu'à un seul profil. Lu sans le trousseau
+ * (pas de déverrouillage) ; les profils sans login gardé retombent sur
+ * l'account, qui le portait avant.
+ */
+const findProfileByLogin = async (
+	login: string,
+	exceptProfile?: string
+): Promise<string | undefined> => {
+	const wanted = login.trim().toLowerCase();
+	if (!wanted) return undefined;
+	for (const profile of await getAllProfiles()) {
+		if (!profile || profile === exceptProfile) continue;
+		const data = await getAssociationProfileAccount(profile);
+		const used = (data?.login || data?.account || '').trim().toLowerCase();
+		if (used === wanted) return profile;
+	}
+	return undefined;
+};
+
 const deleteProfile = async (profile: string) => {
 	//remove assocition profile acount.
 	await AsyncStorage.removeItem(profile);
 	//remove profile from profiles list
 	const profilesLst = await getAllProfiles();
 	const index = profilesLst.findIndex(x => x === profile);
-	profilesLst.splice(index, 1);
+	if (index >= 0) profilesLst.splice(index, 1);
 	await AsyncStorage.setItem('profiles', profilesLst.join(','));
 };
 
@@ -249,5 +270,6 @@ export {
 	getAllProfiles,
 	setProfiles,
 	saveSigninData,
-	deleteProfile
+	deleteProfile,
+	findProfileByLogin
 };

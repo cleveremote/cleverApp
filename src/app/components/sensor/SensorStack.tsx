@@ -1,3 +1,4 @@
+import {ELEMENT_HEIGHT, ELEMENT_FONT_SIZE} from '../../styles/metrics';
 import React, {useState} from 'react';
 import {Pressable, Text, TouchableOpacity, View} from 'react-native';
 import Animated, {FadeInDown} from 'react-native-reanimated';
@@ -73,7 +74,7 @@ export function SensorStack({
 					alignSelf: 'stretch',
 					backgroundColor: bgColor,
 					borderRadius: 12,
-					height: 45,
+					height: ELEMENT_HEIGHT,
 					marginHorizontal: 4,
 					marginTop: 4,
 					flex: 1,
@@ -124,7 +125,7 @@ export function SensorStack({
 								flexShrink: 1,
 								fontWeight: 'bold',
 								color: fontColor,
-								fontSize: 15
+								fontSize: ELEMENT_FONT_SIZE
 							}}
 							numberOfLines={1}
 							ellipsizeMode="middle">

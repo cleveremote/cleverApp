@@ -1,7 +1,6 @@
 {
 	"chooseSvg": "Choisir un SVG",
 	"menu": {
-		"logoutHint": "(Appui long pour se déconnecter)",
 		"logout": "déconnexion",
 		"devices": "Équipements"
 	},
@@ -34,5 +33,43 @@
 		"modePriorityRequired": "La priorité des modes est obligatoire",
 		"box": "Box",
 		"version": "Version"
+	},
+	"user": {
+		"title": "Compte",
+		"boxId": "Box ID / Login",
+		"security": {
+			"title": "Authentification & Sécurité"
+		},
+		"currentPassword": "Mot de passe actuel",
+		"email": {
+			"title": "Email de récupération",
+			"newEmail": "Nouvelle adresse email de récupération",
+			"success": "L'email de récupération a été modifié.",
+			"failed": "L'email de récupération n'a pas pu être modifié.",
+			"confirmMessage": "Saisissez votre mot de passe actuel pour confirmer le changement.",
+			"verify": "Vérifier l'adresse",
+			"codeSent": "Un code a été envoyé à {{email}}. Il est valable 5 minutes.",
+			"codeExpired": "Le code a expiré.",
+			"verified": "Adresse vérifiée. Validez pour l'enregistrer.",
+			"sendFailed": "Le code n'a pas pu être envoyé à cette adresse."
+		},
+		"password": {
+			"title": "Mot de passe",
+			"success": "Votre mot de passe a été modifié.",
+			"failed": "Le mot de passe n'a pas pu être modifié.",
+			"confirmMessage": "Saisissez votre mot de passe actuel pour confirmer le changement."
+		},
+		"reset": {
+			"title": "Réinitialisation",
+			"data": "Données",
+			"dataHint": "Cycles, programmations, capteurs et historique",
+			"account": "Compte",
+			"accountHint": "Identifiants et email de récupération",
+			"warning": "Cette action est irréversible : les éléments cochés seront effacés sur la box.",
+			"logoutNotice": "Vous serez déconnecté.",
+			"typeLogin": "Saisissez « {{login}} » pour confirmer",
+			"success": "Les données ont été réinitialisées.",
+			"failed": "La réinitialisation a échoué."
+		}
 	}
 }

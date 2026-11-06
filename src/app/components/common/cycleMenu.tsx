@@ -51,10 +51,12 @@ export function MenuGroup({children, ...viewProps}: ViewProps) {
 	);
 }
 
+const DEFAULT_MENU_COLOR = '#32404e';
+
 export function MenuAccordion({
 	name,
 	icon,
-	color = '#32404e',
+	color = DEFAULT_MENU_COLOR,
 	isLast: isLastProp = false,
 	closeSibillings,
 	current,
@@ -88,6 +90,9 @@ export function MenuAccordion({
 	// Section non conforme : icône + titre en rouge et mention « not valid ».
 	const errorColor = '#E53E3E';
 	const activeColor = invalid ? errorColor : color;
+	// Chevron gris, sauf pour une section de couleur propre (ex. rouge pour
+	// une réinitialisation) : il en prend la couleur.
+	const chevronColor = color === DEFAULT_MENU_COLOR ? 'grey' : color;
 
 	return (
 		<View>
@@ -177,7 +182,7 @@ export function MenuAccordion({
 										isExpanded ? 'angle-down' : directionalIcon('angle-right')
 									}
 									size={20}
-									color={'grey'}
+									color={chevronColor}
 								/>
 							)}
 						</View>

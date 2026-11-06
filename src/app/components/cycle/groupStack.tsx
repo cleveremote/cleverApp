@@ -1,3 +1,4 @@
+import {ELEMENT_HEIGHT, ELEMENT_FONT_SIZE} from '../../styles/metrics';
 import React, {useState} from 'react';
 import {Pressable, Text, View} from 'react-native';
 import {OrientationType} from 'react-native-orientation-locker';
@@ -105,7 +106,7 @@ export function GroupStack({
 					shadowOffset: {width: 0, height: 1},
 					shadowOpacity: 0.22,
 					shadowRadius: 2.22,
-					height: 45,
+					height: ELEMENT_HEIGHT,
 					marginHorizontal: 4,
 					marginTop: 4,
 					flex: 1,
@@ -141,7 +142,7 @@ export function GroupStack({
 								flexShrink: 1,
 								fontWeight: 'bold',
 								color: fontColor,
-								fontSize: 15
+								fontSize: ELEMENT_FONT_SIZE
 							}}
 							numberOfLines={1}
 							ellipsizeMode="middle">

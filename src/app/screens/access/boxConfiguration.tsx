@@ -1,3 +1,4 @@
+import {ELEMENT_HEIGHT, ELEMENT_FONT_SIZE} from '../../styles/metrics';
 import React, {useCallback, useEffect} from 'react';
 import {
 	FlatList,
@@ -16,7 +17,7 @@ import i18n from 'i18next';
 import {useTranslation} from 'react-i18next';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import {useNavigation} from '@react-navigation/native';
-import {placeholderColor} from '../../styles/components/common/Input';
+import {InputStyle, placeholderColor, inputText} from '../../styles/components/common/Input';
 import {hapticOptions} from '../../data/cycleTypes';
 import {
 	brandLogo,
@@ -386,12 +387,7 @@ export function BoxConfiguration(props: any) {
 								}}>
 								<View style={styles.dropdownHeader}>
 									<Text
-										style={{
-											fontSize: 20,
-											color: form.ssid
-												? '#000'
-												: placeholderColor
-										}}>
+										style={[inputText, !form.ssid && {color: placeholderColor}]}>
 										{selectedLabel}
 									</Text>
 									<Icon
@@ -476,7 +472,7 @@ export function BoxConfiguration(props: any) {
 						<TextInput
 							style={[
 								styles.field,
-								styles.fieldReadonly,
+								InputStyle.inputDisabled,
 								errorFor('boxIdentifier')
 									? styles.fieldInvalid
 									: null
@@ -592,7 +588,7 @@ export function BoxConfiguration(props: any) {
 							]}
 							disabled={isLoading}
 							onPress={configure}>
-							<Text style={{color: 'white', fontSize: 20}}>
+							<Text style={{color: 'white', fontSize: ELEMENT_FONT_SIZE}}>
 								{' '}
 								{configureFailed ? t('common:retry') : t('boxConfig.configure')}{' '}
 							</Text>
@@ -695,17 +691,17 @@ const styles = StyleSheet.create({
 		padding: 20
 	},
 	input: {
-		height: 50,
-		fontSize: 20,
+		...inputText,
+		height: ELEMENT_HEIGHT,
 		borderWidth: 1,
 		borderColor: '#CBD5E0',
 		borderRadius: 12,
 		paddingHorizontal: 12
 	},
 	field: {
+		...inputText,
 		width: '100%',
-		height: 50,
-		fontSize: 20,
+		height: ELEMENT_HEIGHT,
 		borderWidth: 1,
 		borderColor: '#CBD5E0',
 		borderRadius: 12,
@@ -717,10 +713,6 @@ const styles = StyleSheet.create({
 		fontSize: 13,
 		marginTop: -4,
 		paddingHorizontal: 4
-	},
-	fieldReadonly: {
-		backgroundColor: '#EDF2F7',
-		color: '#4a5568'
 	},
 	fieldInvalid: {
 		borderColor: '#d64545'
@@ -734,7 +726,7 @@ const styles = StyleSheet.create({
 	},
 	submit: {
 		alignSelf: 'stretch',
-		height: 50,
+		height: ELEMENT_HEIGHT,
 		justifyContent: 'center',
 		alignItems: 'center',
 		borderRadius: 6,

@@ -1,3 +1,4 @@
+import {ELEMENT_HEIGHT, ELEMENT_FONT_SIZE} from '../../styles/metrics';
 import React from 'react';
 import {TextInput, TouchableOpacity, View} from 'react-native';
 import {Text} from 'react-native';
@@ -5,7 +6,7 @@ import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {IconDefinition, faCog} from '@fortawesome/free-solid-svg-icons';
 import {styles} from '../../styles/cycleStyles';
-import {InputStyle} from '../../styles/components/common/Input';
+import {InputStyle, inputText, placeholderColor} from '../../styles/components/common/Input';
 import {hapticOptions} from '../../data/cycleTypes';
 
 // When `numericInput` is provided (devices of a task cycle), the row also
@@ -42,6 +43,8 @@ export function elementStack(
 				borderColor: WARNING_BORDER,
 				borderRadius: 12,
 				margin: 4,
+				minHeight: ELEMENT_HEIGHT,
+				justifyContent: 'center',
 				elevation: 3,
 				shadowColor: '#000',
 				shadowOffset: {width: 0, height: 1},
@@ -54,7 +57,13 @@ export function elementStack(
 				<View style={{flex: 1, marginVertical: 8, marginLeft: 8}}>
 					{/* 'left' = côté de début : RN l'inverse en RTL, alors que 'auto'
 					    suit le contenu et laisse un libellé latin à gauche en arabe. */}
-					<Text style={[styles.textSequence, {textAlign: 'left'}]}>{label}</Text>
+					<Text
+						style={[
+							styles.textSequence,
+							{textAlign: 'left', fontSize: ELEMENT_FONT_SIZE, fontWeight: 'bold'}
+						]}>
+						{label}
+					</Text>
 					{warning ? (
 						<Text
 							style={{color: '#6b7280', fontSize: 11, textAlign: 'left'}}
@@ -75,7 +84,7 @@ export function elementStack(
 						onChangeText={numericInput.onChangeValue}
 						editable={!numericInput.disabled}
 						placeholder={numericInput.placeholder ?? '0'}
-						placeholderTextColor="#A0AEC0"
+						placeholderTextColor={placeholderColor}
 						style={[
 							{
 								minWidth: 70, //ZJzzA6Di
@@ -86,7 +95,7 @@ export function elementStack(
 								borderWidth: 1,
 								borderColor: '#CBD5E0',
 								borderRadius: 8,
-								color: '#32404e',
+								...inputText,
 								textAlign: 'right'
 							},
 							numericInput.disabled && InputStyle.inputDisabled

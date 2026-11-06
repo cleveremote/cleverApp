@@ -1,9 +1,10 @@
+import {ELEMENT_HEIGHT, ELEMENT_FONT_SIZE} from '../../styles/metrics';
 import React, {useState} from 'react';
 import i18n from 'i18next';
 import {valueLabel} from '../../../i18n';
 import {Control, Controller, FieldErrors} from 'react-hook-form';
 import {getColors} from '../../data/cycleTypes';
-import {InputStyle, placeholderColor} from '../../styles/components/common/Input';
+import {InputStyle, placeholderColor, inputText} from '../../styles/components/common/Input';
 import {
 	FlatList,
 	Keyboard,
@@ -83,10 +84,10 @@ export function DropdownSelect<T extends {iconColor?: {base: string}}>({
 						alignItems: 'center',
 						justifyContent: 'space-between',
 						marginVertical: 4,
-						opacity: disabled ? 0.6 : 1,
 						backgroundColor:
 							selectedItem?.iconColor?.base ?? 'transparent'
-					}
+					},
+					disabled && InputStyle.inputDisabled
 				]}>
 				<View
 					style={{
@@ -98,11 +99,10 @@ export function DropdownSelect<T extends {iconColor?: {base: string}}>({
 						? renderPrefix(selectedItem)
 						: null}
 					<Text
-						style={{
-							color: '#32404e',
-							fontSize: 15,
-							fontWeight: 'bold'
-						}}>
+						style={[
+							inputText,
+							disabled && {color: InputStyle.inputDisabled.color}
+						]}>
 						{label}
 					</Text>
 				</View>
@@ -275,7 +275,7 @@ export function DateTimePickerForm({
 							}}>
 							{placeholder}
 						</Text>
-						<Pressable onPress={showDatePicker}>
+						<Pressable disabled={disabled} onPress={showDatePicker}>
 							<TextInput
 								style={[
 									InputStyle.input,
@@ -284,7 +284,8 @@ export function DateTimePickerForm({
 										borderWidth: 1,
 										borderColor: '#CBD5E0',
 										paddingHorizontal: 12
-									}
+									},
+									disabled && InputStyle.inputDisabled
 								]}
 								placeholder={placeholder}
 								placeholderTextColor={placeholderColor}
@@ -660,10 +661,10 @@ export function TextAreaForm({
 	// Le champ s'adapte à son contenu : `scrollEnabled={false}` fait
 	// s'auto-dimensionner un TextInput multiline (iOS comme Android), à
 	// condition de ne pas lui imposer de hauteur — d'où le `height: 'auto'`
-	// qui neutralise le `height: 50` de InputStyle.input, remplacé par un
+	// qui neutralise la hauteur fixe de InputStyle.input, remplacé par un
 	// simple minimum. La description est donc toujours affichée en entier,
 	// sans scroll interne, et reste à une ligne quand le texte est court.
-	const minHeight = 50;
+	const minHeight = ELEMENT_HEIGHT;
 
 	return (
 		<>
@@ -799,7 +800,9 @@ export function DragableForm({
 											shadowOffset: {width: 0, height: 1},
 											shadowOpacity: 0.22,
 											shadowRadius: 2.22,
-											margin: 4
+											margin: 4,
+											minHeight: ELEMENT_HEIGHT,
+											justifyContent: 'center'
 										}}>
 										<View style={{flexDirection: 'row'}}>
 											<Text
@@ -810,7 +813,9 @@ export function DragableForm({
 													{
 														flex: 2,
 														alignSelf: 'flex-start',
-														margin: 8
+														margin: 8,
+														fontSize: ELEMENT_FONT_SIZE,
+														fontWeight: 'bold'
 													}
 												]}>
 												{valueLabel('common:modes', item.mode)}

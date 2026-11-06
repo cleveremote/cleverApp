@@ -1,3 +1,4 @@
+import {ELEMENT_HEIGHT, ELEMENT_FONT_SIZE} from '../../styles/metrics';
 import * as React from 'react';
 import {Text, TouchableOpacity, View} from 'react-native';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
@@ -121,13 +122,22 @@ export function SequenceStack({
 				shadowOffset: {width: 0, height: 1},
 				shadowOpacity: 0.22,
 				shadowRadius: 2.22,
-				margin: 4
+				margin: 4,
+				minHeight: ELEMENT_HEIGHT,
+				justifyContent: 'center'
 			}}>
 			<View style={{flexDirection: 'row'}}>
 				<Text
 					style={[
 						isActive ? styles.textSequenceDrag : styles.textSequence,
-						{flex: 1, alignSelf: 'flex-start', marginVertical: 8, marginLeft: 8}
+						{
+							flex: 1,
+							alignSelf: 'flex-start',
+							marginVertical: 8,
+							marginLeft: 8,
+							fontSize: ELEMENT_FONT_SIZE,
+							fontWeight: 'bold'
+						}
 					]}>
 					{item.name}
 				</Text>

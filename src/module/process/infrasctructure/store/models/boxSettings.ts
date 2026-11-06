@@ -22,3 +22,14 @@ export const selectBoxCoordinates = (
 		? {latitude, longitude}
 		: undefined;
 };
+
+/**
+ * Email de récupération du compte (`account.email` de la configuration, à
+ * défaut `settings.recoveryEmail`), si connu.
+ */
+export const selectRecoveryEmail = (state: any): string | undefined => {
+	const email =
+		state.root_settings?.account?.email ??
+		state.root_settings?.settings?.recoveryEmail;
+	return typeof email === 'string' && email ? email : undefined;
+};

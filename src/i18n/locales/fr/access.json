@@ -158,20 +158,22 @@
 		"credentialsCancelled": "Déverrouillage annulé : saisissez votre mot de passe.",
 		"credentialsUnavailable": "Identifiants mémorisés inaccessibles (Face ID / Touch ID ou code indisponible). Saisissez votre mot de passe.",
 		"forgotPassword": "Mot de passe oublié ?",
-		"boxIdRequired": "Saisissez d'abord l'identifiant de la box."
+		"boxIdRequired": "Saisissez d'abord l'identifiant de la box.",
+		"loginAlreadyUsed": "Ce login est déjà utilisé par le profil « {{profile}} »."
 	},
 	"forgotPassword": {
 		"codeSent": "Un code de récupération vous a été envoyé sur votre adresse email de récupération.",
 		"code": "Code de récupération",
 		"validate": "Valider",
 		"resend": "Renvoyer le code",
-		"chooseNew": "Code validé : saisissez votre nouveau mot de passe.",
+		"chooseNew": "Code validé.",
+		"chooseNewLabel": "Saisissez votre nouveau mot de passe",
 		"sendFailed": "Le code de récupération n'a pas pu être envoyé.",
 		"invalidCode": "Code de récupération invalide.",
 		"resetFailed": "Le mot de passe n'a pas pu être modifié.",
 		"successTitle": "Mot de passe modifié",
 		"success": "Vous pouvez vous connecter avec votre nouveau mot de passe.",
-		"codeExpired": "Le code de récupération a expiré. Renvoyez un nouveau code.",
-		"codeLocked": "Nombre maximal de tentatives atteint pour ce code. Renvoyez un nouveau code."
+		"codeExpired": "Le code de récupération a expiré.",
+		"codeLocked": "Nombre maximal de tentatives atteint pour ce code."
 	}
 }

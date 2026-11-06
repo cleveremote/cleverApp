@@ -1,3 +1,5 @@
+import {inputText, placeholderColor} from '../../../../../styles/components/common/Input';
+import {ELEMENT_HEIGHT} from '../../../../../styles/metrics';
 import React from 'react';
 import {
 	StyleSheet,
@@ -826,7 +828,7 @@ function ListNumInput({
 			<TextInput
 				keyboardType="numbers-and-punctuation"
 				placeholder={i18n.t('cycle:cron.listExample')}
-				placeholderTextColor={C.muted}
+				placeholderTextColor={placeholderColor}
 				value={txt}
 				onFocus={() => (focused.current = true)}
 				onBlur={() => (focused.current = false)}
@@ -1214,7 +1216,7 @@ export function NewSchedulingSection(props: any) {
 							<>
 								<TextInput
 									placeholder={i18n.t('cycle:cron.freeExample')}
-									placeholderTextColor={C.muted}
+									placeholderTextColor={placeholderColor}
 									defaultValue={f.free}
 									autoCapitalize="none"
 									onChangeText={t => patch(n => (n.fields[activeTab].free = t))}
@@ -1310,7 +1312,7 @@ export function NewSchedulingSection(props: any) {
 										autoCapitalize="none"
 										autoCorrect={false}
 										placeholder={combineMode ? '* * *' : '* * * * * *'}
-										placeholderTextColor={C.muted}
+										placeholderTextColor={placeholderColor}
 										style={styles.expressionInput}
 									/>
 									<Text style={styles.hint}>
@@ -1496,9 +1498,7 @@ const styles = StyleSheet.create({
 	switchLabel: {
 		flexShrink: 1,
 		marginRight: 8,
-		color: C.text,
-		fontSize: 15,
-		fontWeight: 'bold'
+		...inputText
 	},
 	// Même style que la carte englobant la liste des séquences : fond blanc,
 	// coins arrondis, ombre douce (pas de bordure).
@@ -1544,10 +1544,10 @@ const styles = StyleSheet.create({
 		borderColor: C.border,
 		borderRadius: 12,
 		paddingHorizontal: 12,
-		height: 50,
+		height: ELEMENT_HEIGHT,
 		justifyContent: 'center'
 	},
-	dateFieldTxt: {color: C.text, fontSize: 15, fontWeight: 'bold'},
+	dateFieldTxt: inputText,
 	textInput: {
 		marginTop: 10,
 		backgroundColor: C.surface,
@@ -1555,21 +1555,17 @@ const styles = StyleSheet.create({
 		borderColor: C.border,
 		borderRadius: 12,
 		paddingHorizontal: 12,
-		height: 44,
-		color: C.text,
-		fontSize: 15,
-		fontWeight: 'bold'
+		height: ELEMENT_HEIGHT,
+		...inputText
 	},
 	numInput: {
 		backgroundColor: C.surface,
 		borderWidth: 1,
 		borderColor: C.border,
 		borderRadius: 12,
-		height: 44,
+		height: ELEMENT_HEIGHT,
 		textAlign: 'center',
-		color: C.text,
-		fontSize: 15,
-		fontWeight: 'bold'
+		...inputText
 	},
 	rangeField: {
 		flexDirection: 'row',
@@ -1607,23 +1603,17 @@ const styles = StyleSheet.create({
 		shadowRadius: 2.22
 	},
 	expression: {
-		fontFamily: 'Courier',
-		fontSize: 16,
-		fontWeight: '700',
-		color: C.text,
+		...inputText,
 		marginBottom: 10
 	},
 	expressionInput: {
-		fontFamily: 'Courier',
-		fontSize: 16,
-		fontWeight: '700',
-		color: C.text,
+		...inputText,
 		backgroundColor: C.surface,
 		borderWidth: 1,
 		borderColor: C.border,
 		borderRadius: 12,
 		paddingHorizontal: 12,
-		height: 46
+		height: ELEMENT_HEIGHT
 	},
 	summary: {fontSize: 13, color: C.secondary, lineHeight: 18},
 	solarExprBox: {

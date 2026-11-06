@@ -1,3 +1,4 @@
+import {ELEMENT_HEIGHT, ELEMENT_FONT_SIZE} from '../../styles/metrics';
 import React, {useEffect} from 'react';
 import {
 	ScrollView,
@@ -11,7 +12,7 @@ import {
 	FlatList
 } from 'react-native';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
-import {placeholderColor} from '../../styles/components/common/Input';
+import {placeholderColor, inputText} from '../../styles/components/common/Input';
 import {hapticOptions} from '../../data/cycleTypes';
 import Spinner from 'react-native-loading-spinner-overlay';
 import Icon from 'react-native-vector-icons/FontAwesome5';
@@ -222,7 +223,7 @@ export function DeviceSettings(props: any) {
 									style={[styles.input, {justifyContent: 'center'}]}
 									onPress={() => setDropdownOpen(!dropdownOpen)}>
 									<View style={{flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center'}}>
-										<Text style={{fontSize: 20, color: ssid ? '#000' : placeholderColor}}>
+										<Text style={[inputText, !ssid && {color: placeholderColor}]}>
 											{networks.find((n: any) => n.value === ssid)?.label || t('deviceSettings.selectNetwork')}
 										</Text>
 										<Icon name={dropdownOpen ? 'chevron-up' : 'chevron-down'} size={14} color="#32404e" />
@@ -275,7 +276,7 @@ export function DeviceSettings(props: any) {
 						<TouchableOpacity
 							style={{
 								alignSelf: 'stretch',
-								height: 50,
+								height: ELEMENT_HEIGHT,
 								backgroundColor:
 									!(ssid && psk && password)
 										? '#a5a4a5'
@@ -292,7 +293,7 @@ export function DeviceSettings(props: any) {
 								);
 								await onLogin(props.route.params?.deviceId);
 							}}>
-							<Text style={{color: 'white', fontSize: 20}}>
+							<Text style={{color: 'white', fontSize: ELEMENT_FONT_SIZE}}>
 								{' '}
 								{t('boxConfig.configure')}{' '}
 							</Text>
@@ -306,8 +307,8 @@ export function DeviceSettings(props: any) {
 
 const styles = StyleSheet.create({
 	input: {
-		height: 50,
-		fontSize: 20,
+		...inputText,
+		height: ELEMENT_HEIGHT,
 		borderWidth: 1,
 		borderColor: '#CBD5E0',
 		borderRadius: 12,

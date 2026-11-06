@@ -1,7 +1,6 @@
 {
 	"chooseSvg": "Choose an SVG",
 	"menu": {
-		"logoutHint": "(Long press to log out)",
 		"logout": "logout",
 		"devices": "Devices"
 	},
@@ -34,5 +33,43 @@
 		"modePriorityRequired": "Mode priority is required",
 		"box": "Box",
 		"version": "Version"
+	},
+	"user": {
+		"title": "Account",
+		"boxId": "Box ID / Login",
+		"security": {
+			"title": "Authentication & Security"
+		},
+		"currentPassword": "Current password",
+		"email": {
+			"title": "Recovery email",
+			"newEmail": "New recovery email address",
+			"success": "The recovery email has been changed.",
+			"failed": "The recovery email could not be changed.",
+			"confirmMessage": "Enter your current password to confirm the change.",
+			"verify": "Verify address",
+			"codeSent": "A code has been sent to {{email}}. It is valid for 5 minutes.",
+			"codeExpired": "The code has expired.",
+			"verified": "Address verified. Confirm to save it.",
+			"sendFailed": "The code could not be sent to this address."
+		},
+		"password": {
+			"title": "Password",
+			"success": "Your password has been changed.",
+			"failed": "The password could not be changed.",
+			"confirmMessage": "Enter your current password to confirm the change."
+		},
+		"reset": {
+			"title": "Reset",
+			"data": "Data",
+			"dataHint": "Cycles, schedules, sensors and history",
+			"account": "Account",
+			"accountHint": "Credentials and recovery email",
+			"warning": "This cannot be undone: the selected items will be erased on the box.",
+			"logoutNotice": "You will be logged out.",
+			"typeLogin": "Type “{{login}}” to confirm",
+			"success": "The data has been reset.",
+			"failed": "The reset failed."
+		}
 	}
 }

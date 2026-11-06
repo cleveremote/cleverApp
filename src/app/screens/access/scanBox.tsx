@@ -390,7 +390,6 @@ const styles = {
 		testSpinner: {marginTop: 20},
 		result: {
 			color: COLORS.primary,
-			fontFamily: 'Courier',
 			fontSize: 12,
 			lineHeight: 17
 		},

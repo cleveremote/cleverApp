@@ -1,3 +1,4 @@
+import {ELEMENT_HEIGHT, ELEMENT_FONT_SIZE} from '../../styles/metrics';
 import React, { useEffect, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
@@ -224,7 +225,7 @@ function DisplayManagerScreen(props: any) {
 										flexDirection: 'row',
 										alignItems: 'center',
 										justifyContent: 'space-between',
-										height: 50,
+										height: ELEMENT_HEIGHT,
 										paddingLeft: parent ? 40 : 16,
 										paddingRight: 16,
 										borderBottomColor: '#32404e',
@@ -242,7 +243,7 @@ function DisplayManagerScreen(props: any) {
 											color: parentHidden
 												? '#a0aab4'
 												: '#32404e',
-											fontSize: parent ? 14 : 15,
+											fontSize: ELEMENT_FONT_SIZE,
 											flex: 1,
 											marginRight: 8,
 											// 'left' = côté de début : RN l'inverse en RTL, alors que 'auto'
@@ -300,7 +301,7 @@ const styles = StyleSheet.create({
 		alignItems: 'center',
 		justifyContent: 'center',
 		gap: 6,
-		height: 38,
+		height: ELEMENT_HEIGHT,
 		borderRadius: 12,
 		backgroundColor: 'white',
 		borderWidth: 1,
@@ -317,7 +318,7 @@ const styles = StyleSheet.create({
 	},
 	label: {
 		color: '#32404e',
-		fontSize: 13,
+		fontSize: ELEMENT_FONT_SIZE,
 		fontWeight: 'bold'
 	},
 	labelActive: {

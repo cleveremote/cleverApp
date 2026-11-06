@@ -1,17 +1,19 @@
+import {ELEMENT_HEIGHT} from '../../styles/metrics';
 import React from 'react';
 import {
-	Alert,
+	ActivityIndicator,
+	Keyboard,
+	Pressable,
 	StyleSheet,
 	Text,
 	TextInput,
-	TouchableOpacity,
 	View
 } from 'react-native';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import { useTranslation } from 'react-i18next';
 import { faCheck } from '@fortawesome/free-solid-svg-icons';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { placeholderColor } from '../../styles/components/common/Input';
+import {InputStyle, placeholderColor, inputText} from '../../styles/components/common/Input';
 import { hapticOptions } from '../../data/cycleTypes';
 import { navigationHeader } from '../../components/common/navigationHeaders';
 import {
@@ -25,76 +27,24 @@ import {
 } from '../../../services/validation/boxConfigurationForm';
 import { COLORS, OutlineButton, useLockedUntil } from './accessUi';
 import Logo from '../../../../hydrophyto.svg';
-import Svg, { Circle } from 'react-native-svg';
+import {
+	WarningBox,
+	WARNING_COLORS
+} from '../../components/common/WarningBox';
+import { ErrorBox } from '../../components/common/ErrorBox';
+import { InfoBox } from '../../components/common/InfoBox';
+import { PasswordInput } from '../../components/common/PasswordInput';
+import {
+	CODE_LENGTH,
+	CODE_TTL_SECONDS,
+	CodeInput,
+	CountdownCircle,
+	isCodeExpired,
+	isCodeFailure,
+	isCodeLocked
+} from '../../components/common/CodeInput';
 
 type Step = 'code' | 'password';
-
-/** Durée de validité du code de récupération. */
-const CODE_TTL_SECONDS = 1 * 60;
-
-/** Compte à rebours circulaire, le temps restant affiché au centre. */
-const CountdownCircle = ({
-	remaining,
-	total,
-	size = 90,
-	strokeWidth = 6
-}: {
-	remaining: number;
-	total: number;
-	size?: number;
-	strokeWidth?: number;
-}) => {
-	const radius = (size - strokeWidth) / 2;
-	const circumference = 2 * Math.PI * radius;
-	const progress = total > 0 ? remaining / total : 0;
-	const minutes = Math.floor(remaining / 60);
-	const seconds = String(remaining % 60).padStart(2, '0');
-	return (
-		<View style={[styles.countdown, { width: size, height: size }]}>
-			<Svg
-				width={size}
-				height={size}
-				// Le cercle part du haut et se vide dans le sens horaire.
-				style={{ transform: [{ rotate: '-90deg' }] }}
-			>
-				<Circle
-					cx={size / 2}
-					cy={size / 2}
-					r={radius}
-					stroke={COLORS_TRACK}
-					strokeWidth={strokeWidth}
-					fill="none"
-				/>
-				<Circle
-					cx={size / 2}
-					cy={size / 2}
-					r={radius}
-					stroke={COLORS.primary}
-					strokeWidth={strokeWidth}
-					strokeLinecap="round"
-					strokeDasharray={circumference}
-					strokeDashoffset={circumference * (1 - progress)}
-					fill="none"
-				/>
-			</Svg>
-			<Text style={styles.countdownText}>
-				{minutes}:{seconds}
-			</Text>
-		</View>
-	);
-};
-
-const COLORS_TRACK = '#CBD5E0';
-
-/** Échec lié au code (et non au mot de passe) : il faut en saisir un autre. */
-const isCodeFailure = (res: BoxLoginResult) =>
-	!!res.status && /RECOVERY_CODE/i.test(res.status);
-const isCodeExpired = (res: BoxLoginResult) =>
-	!!res.status && /EXPIRED/i.test(res.status);
-/** Plus aucune tentative : le code est grillé, seul un renvoi débloque. */
-const isCodeLocked = (res: BoxLoginResult) =>
-	res.attemptsRemaining === 0 ||
-	(!!res.status && /LOCKED|BLOCKED|TOO_MANY/i.test(res.status));
 
 /**
  * Mot de passe oublié : l'identifiant de la box vient de l'écran de connexion,
@@ -206,13 +156,13 @@ export function ForgotPassword(props: any) {
 		}
 	};
 
-	const validateCode = async () => {
+	const validateCode = async (value: string) => {
 		ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
 		setBusy(true);
 		setError('');
 		const res = await authenticationService.verifyRecoveryCode(
 			login,
-			code.trim()
+			value.trim()
 		);
 		setBusy(false);
 		if (res.res) {
@@ -221,6 +171,19 @@ export function ForgotPassword(props: any) {
 			handleCodeFailure(res);
 		}
 	};
+
+	const codeComplete = code.trim().length === CODE_LENGTH;
+	// Lien « Renvoyer le code », intégré au texte des messages.
+	const resendDisabled = busy || accountLocked;
+	const resendLink = (
+		<Text
+			style={[styles.resendLink, resendDisabled && styles.resendDisabled]}
+			disabled={resendDisabled}
+			onPress={requestCode}
+		>
+			{t('forgotPassword.resend')}
+		</Text>
+	);
 
 	const passwordError = passwordIssue(password);
 	const confirmError: BoxConfigurationIssue | '' = !confirmPassword
@@ -248,10 +211,11 @@ export function ForgotPassword(props: any) {
 		);
 		setBusy(false);
 		if (res.res) {
-			Alert.alert(
-				t('forgotPassword.successTitle'),
-				t('forgotPassword.success'),
-				[{ text: 'OK', onPress: () => props.navigation.goBack() }]
+			// Retour direct à la connexion, le nouveau mot de passe déjà saisi.
+			props.navigation.popTo(
+				'Signin',
+				{ resetPassword: password },
+				{ merge: true }
 			);
 		} else if (isCodeFailure(res)) {
 			// Le code n'est plus accepté (expiré entre-temps…) : retour à sa
@@ -268,7 +232,12 @@ export function ForgotPassword(props: any) {
 	const confirmMessage = messageFor(confirmError, touched.confirmPassword);
 
 	return (
-		<View style={{ flex: 1, marginTop: 25, gap: 28 }}>
+		// Un tap hors des champs ferme le clavier.
+		<Pressable
+			style={{ flex: 1, marginTop: 25, gap: 28 }}
+			accessible={false}
+			onPress={Keyboard.dismiss}
+		>
 			<View style={{ alignItems: 'center' }}>
 				<Logo width={'70'} height={'70'} />
 			</View>
@@ -276,7 +245,7 @@ export function ForgotPassword(props: any) {
 				<View style={{ gap: 8 }}>
 					<Text style={styles.label}>{t('signIn.boxId')}</Text>
 					<TextInput
-						style={[styles.input, styles.readOnly]}
+						style={[styles.input, InputStyle.inputDisabled]}
 						value={login}
 						editable={false}
 					/>
@@ -284,86 +253,96 @@ export function ForgotPassword(props: any) {
 					{step === 'code' ? (
 						<>
 							{codeSent && !codeUnusable ? (
-								<>
-									<Text style={styles.info}>
-										{t('forgotPassword.codeSent')}
-									</Text>
-									<CountdownCircle
-										remaining={remaining}
-										total={CODE_TTL_SECONDS}
-									/>
-								</>
+								<InfoBox
+									message={t('forgotPassword.codeSent')}
+									style={styles.warning}
+								/>
 							) : null}
 							{expired ? (
-								<Text style={styles.info}>
-									{t('forgotPassword.codeExpired')}
-								</Text>
+								<WarningBox hideIcon={true} style={styles.warning}>
+									<Text style={styles.warningText}>
+										{t('forgotPassword.codeExpired')} {resendLink}
+									</Text>
+								</WarningBox>
 							) : null}
 							{locked && !expired ? (
-								<Text style={styles.info}>
-									{t('forgotPassword.codeLocked')}
-								</Text>
+								<WarningBox hideIcon={true} style={styles.warning}>
+									<Text style={styles.warningText}>
+										{t('forgotPassword.codeLocked')} {resendLink}
+									</Text>
+								</WarningBox>
+							) : null}
+							{error ? (
+								<ErrorBox
+									message={
+										// Envoi initial raté : pas de cadre orange,
+										// le renvoi se propose ici.
+										!codeSent && !busy ? (
+											<>
+												{error} {resendLink}
+											</>
+										) : (
+											error
+										)
+									}
+									style={styles.errorBox}
+								/>
 							) : null}
 							{!codeUnusable ? (
 								<>
-									<TextInput
-										style={styles.input}
-										placeholder={t('forgotPassword.code')}
-										placeholderTextColor={placeholderColor}
-										textContentType={'oneTimeCode'}
-										autoComplete={'one-time-code'}
-										autoCapitalize={'none'}
-										autoCorrect={false}
-										value={code}
-										onChangeText={value => {
-											setCode(value);
-											if (error) setError('');
-										}}
-									/>
-									<OutlineButton
-										label={t('forgotPassword.validate')}
-										icon={faCheck}
-										busy={busy}
-										disabled={!code.trim() || accountLocked}
-										onPress={validateCode}
-									/>
-									{error ? (
-										<Text style={styles.submitError}>
-											{error}
-										</Text>
+									<View style={styles.codeLine}>
+										<CodeInput
+											value={code}
+											onChangeText={value => {
+												setCode(value);
+												if (error) setError('');
+												// Code complet : validation sans attendre le bouton.
+												if (
+													value.length === CODE_LENGTH &&
+													value !== code &&
+													!busy &&
+													!accountLocked
+												)
+													validateCode(value);
+											}}
+											onSubmit={() => {
+												if (codeComplete && !busy && !accountLocked)
+													validateCode(code);
+											}}
+										/>
+										{codeSent ? (
+											<CountdownCircle
+												remaining={remaining}
+												total={CODE_TTL_SECONDS}
+											/>
+										) : null}
+									</View>
+									{busy ? (
+										<ActivityIndicator
+											style={styles.codeBusy}
+											size="small"
+											color={COLORS.primary}
+										/>
 									) : null}
 								</>
 							) : null}
-							{codeUnusable && error ? (
-								<Text style={styles.submitError}>{error}</Text>
-							) : null}
-							<TouchableOpacity
-								disabled={busy || accountLocked}
-								onPress={requestCode}
-							>
-								<Text
-									style={[
-										styles.link,
-										accountLocked && styles.linkDisabled
-									]}
-								>
-									{t('forgotPassword.resend')}
-								</Text>
-							</TouchableOpacity>
 						</>
 					) : (
 						<>
-							<Text style={styles.info}>
-								{t('forgotPassword.chooseNew')}
+							<InfoBox
+								message={t('forgotPassword.chooseNew')}
+								style={styles.warning}
+							/>
+							<Text style={styles.label}>
+								{t('forgotPassword.chooseNewLabel')}
 							</Text>
-							<TextInput
+							<PasswordInput
 								style={[
 									styles.input,
 									passwordMessage ? styles.fieldInvalid : null
 								]}
 								placeholder={t('boxConfig.newPassword')}
 								placeholderTextColor={placeholderColor}
-								secureTextEntry={true}
 								textContentType={'newPassword'}
 								value={password}
 								onChangeText={setPassword}
@@ -376,14 +355,13 @@ export function ForgotPassword(props: any) {
 									{passwordMessage}
 								</Text>
 							) : null}
-							<TextInput
+							<PasswordInput
 								style={[
 									styles.input,
 									confirmMessage ? styles.fieldInvalid : null
 								]}
 								placeholder={t('boxConfig.confirmPassword')}
 								placeholderTextColor={placeholderColor}
-								secureTextEntry={true}
 								textContentType={'newPassword'}
 								value={confirmPassword}
 								onChangeText={setConfirmPassword}
@@ -413,7 +391,7 @@ export function ForgotPassword(props: any) {
 					)}
 				</View>
 			</View>
-		</View>
+		</Pressable>
 	);
 }
 
@@ -435,16 +413,12 @@ const styles = StyleSheet.create({
 		fontSize: 15
 	},
 	input: {
-		height: 50,
-		fontSize: 20,
+		...inputText,
+		height: ELEMENT_HEIGHT,
 		borderWidth: 1,
 		borderColor: '#CBD5E0',
 		borderRadius: 12,
-		paddingHorizontal: 12,
-		color: COLORS.primary
-	},
-	readOnly: {
-		backgroundColor: '#F1F5F9'
+		paddingHorizontal: 12
 	},
 	fieldInvalid: {
 		borderColor: COLORS.danger
@@ -459,30 +433,29 @@ const styles = StyleSheet.create({
 		textAlign: 'center',
 		marginTop: 8
 	},
-	info: {
-		color: COLORS.primary,
-		fontSize: 15,
+	warning: {
 		marginVertical: 8
 	},
-	countdown: {
-		alignSelf: 'center',
+	warningText: {
+		color: WARNING_COLORS.text,
+		fontSize: 14
+	},
+	resendLink: {
+		fontWeight: 'bold',
+		textDecorationLine: 'underline'
+	},
+	resendDisabled: {
+		opacity: 0.5
+	},
+	errorBox: {
+		marginBottom: 8
+	},
+	codeLine: {
+		flexDirection: 'row',
 		alignItems: 'center',
-		justifyContent: 'center',
-		marginVertical: 8
+		gap: 12
 	},
-	countdownText: {
-		position: 'absolute',
-		color: COLORS.primary,
-		fontSize: 20,
-		fontWeight: 'bold'
-	},
-	link: {
-		color: COLORS.primary,
-		fontSize: 15,
-		textAlign: 'center',
+	codeBusy: {
 		marginTop: 12
-	},
-	linkDisabled: {
-		opacity: 0.4
 	}
 });
