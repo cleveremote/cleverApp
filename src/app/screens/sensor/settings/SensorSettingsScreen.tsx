@@ -1,5 +1,5 @@
 import React, {useEffect, useRef} from 'react';
-import {View} from 'react-native';
+import {StyleSheet, View} from 'react-native';
 import {connect} from 'react-redux';
 import {
 	DeleteItemMenu,
@@ -8,12 +8,12 @@ import {
 } from '../../../components/common/cycleMenu';
 import {
 	useSectionSettingsHeader,
-	isEmpty
+	isEmpty,
+	useEntityLoaded
 } from '../../../components/common/useSectionSettingsHeader';
 import {SettingsScrollView} from '../../../components/common/SettingsScrollView';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import {
-	faTrafficLight,
 	faSliders,
 	faRulerHorizontal
 } from '@fortawesome/free-solid-svg-icons';
@@ -30,12 +30,14 @@ import SensorDataSourceSettingsSection, {
 	isDeviceCommandType
 } from './SensorDataSourceSettingsSection';
 import SensorAnalogScalingSection from './SensorAnalogScalingSection';
+import {generalContainerStyle} from '../../../components/common/GeneralSettingsFields';
 import i18n from 'i18next';
 
 function SensorSettingsScreen(props: any) {
 	const isNew = !props.route.params?.id;
 	const sensorRef = useRef(props.sensor);
 	sensorRef.current = props.sensor;
+	const generalLoaded = useEntityLoaded(props.sensor, props.route.params?.id);
 
 	const _deleteItem = () => {
 		ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
@@ -61,6 +63,8 @@ function SensorSettingsScreen(props: any) {
 		isNew,
 		// Pas de bouton save tant que rien n'a été modifié (simple retour).
 		backWhenPristine: true,
+		// Section General toujours visible : pas de rouge à l'entrée en création.
+		deferNewValidation: true,
 		hasChanges: () => !!sensorRef.current?.isModified,
 		save: onDone => {
 			props.saveSensor(sensorRef.current);
@@ -93,32 +97,19 @@ function SensorSettingsScreen(props: any) {
 
 	return (
 		<SettingsScrollView>
-			<MenuGroup
-				style={{
-					alignSelf: 'stretch',
-					backgroundColor: 'white',
-					marginTop: 8,
-					marginHorizontal: 20,
-					borderRadius: 12,
-					elevation: 3,
-					shadowColor: '#000',
-					shadowOffset: {width: 0, height: 1},
-					shadowOpacity: 0.22,
-					shadowRadius: 2.22
-				}}>
-				<MenuAccordion
-					key={41}
-					name={i18n.t('common:sections.general')}
-					icon={faTrafficLight}
-					invalid={invalidSections.general}
-					onPress={() => {}}>
+			{/* Général sorti du menu : sans carte blanche, en première position. Son
+			    formulaire lit ses valeurs au montage : on attend le chargement. */}
+			{generalLoaded ? (
+				<View style={generalContainerStyle}>
 					<SensorGeneralSettingsSection
 						embedded
 						sensorData={sensorRef.current}
 						showErrors={invalidSections.general}
 						navigation={props.navigation}
 					/>
-				</MenuAccordion>
+				</View>
+			) : null}
+			<MenuGroup style={styles.card}>
 				<MenuAccordion
 					key={51}
 					name={i18n.t('common:sections.configuration')}
@@ -164,6 +155,26 @@ function SensorSettingsScreen(props: any) {
 		</SettingsScrollView>
 	);
 }
+
+const COLORS = {
+	shadow: '#000',
+	cardBackground: 'white'
+};
+
+const styles = StyleSheet.create({
+	card: {
+		alignSelf: 'stretch',
+		backgroundColor: COLORS.cardBackground,
+		marginTop: 8,
+		marginHorizontal: 20,
+		borderRadius: 12,
+		elevation: 3,
+		shadowColor: COLORS.shadow,
+		shadowOffset: {width: 0, height: 1},
+		shadowOpacity: 0.22,
+		shadowRadius: 2.22
+	}
+});
 
 const mapStateToProps = (state: any) => ({
 	sensor: state.root_sensor.sensor

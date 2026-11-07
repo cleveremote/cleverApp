@@ -1,3 +1,5 @@
+import {InfoBox, INFO_COLORS} from '../../components/common/InfoBox';
+import {fieldLabelText} from '../../styles/components/common/Input';
 import React, {useEffect, useRef, useState} from 'react';
 import {
 	ActivityIndicator,
@@ -270,7 +272,6 @@ export function GlobalSettingsScreen(props: any) {
 					name={t('global.localCoordinates')}
 					icon={faLocationDot}
 					invalid={locationInvalid}
-					defaultExpanded
 					onPress={() => {}}>
 					<View style={styles.section}>
 						<View style={styles.row}>
@@ -347,11 +348,18 @@ export function GlobalSettingsScreen(props: any) {
 								}
 							}}
 						/>
-						<View style={styles.row}>
-							<Text style={styles.label}>{t('global.timeZone')}</Text>
-							<Text style={styles.value}>{timeZone}</Text>
-						</View>
-						<Text style={styles.hint}>{t('global.timeZoneHint')}</Text>
+						{/* Fuseau de la box et son explication, dans une InfoBox. */}
+						<InfoBox style={styles.infoBox}>
+							<View style={styles.row}>
+								<Text style={styles.label}>{t('global.timeZone')}</Text>
+								<Text style={[styles.value, styles.infoText]}>
+									{timeZone}
+								</Text>
+							</View>
+							<Text style={[styles.infoHint, styles.infoText]}>
+								{t('global.timeZoneHint')}
+							</Text>
+						</InfoBox>
 					</View>
 				</MenuAccordion>
 				<MenuAccordion
@@ -359,12 +367,8 @@ export function GlobalSettingsScreen(props: any) {
 					name={t('global.modePriority')}
 					icon={faTrafficLight}
 					invalid={!!errors.modeRanks}
-					defaultExpanded
 					onPress={() => {}}>
 					<View style={styles.section}>
-						<Text style={styles.hint}>
-							{t('global.modePriorityHint')}
-						</Text>
 						<DragableForm
 							control={control}
 							errors={errors}
@@ -372,6 +376,18 @@ export function GlobalSettingsScreen(props: any) {
 							name="modeRanks"
 							rules={{required: t('global.modePriorityRequired')}}
 						/>
+						{/* Mode d'emploi (appui long puis glisser), sous la liste :
+						    petite icône info + texte discret. */}
+						<View style={styles.dragHint}>
+							<FontAwesomeIcon
+								icon={faCircleInfo}
+								size={12}
+								color={COLORS.hint}
+							/>
+							<Text style={styles.dragHintText}>
+								{t('global.modePriorityHint')}
+							</Text>
+						</View>
 					</View>
 				</MenuAccordion>
 				{settings?.version ? (
@@ -421,11 +437,7 @@ const styles = StyleSheet.create({
 		alignItems: 'center',
 		justifyContent: 'space-between'
 	},
-	label: {
-		fontWeight: 'bold',
-		color: COLORS.text,
-		fontSize: 15
-	},
+	label: fieldLabelText,
 	value: {
 		color: COLORS.hint,
 		fontSize: 15
@@ -435,6 +447,19 @@ const styles = StyleSheet.create({
 		color: COLORS.hint,
 		fontSize: 12
 	},
+	// InfoBox du fuseau : bien détachée des champs.
+	infoBox: {marginTop: 16},
+	// Centré sous la liste.
+	dragHint: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		justifyContent: 'center',
+		gap: 6,
+		marginTop: 10
+	},
+	dragHintText: {flexShrink: 1, color: COLORS.hint, fontSize: 12, textAlign: 'center'},
+	infoText: {color: INFO_COLORS.text},
+	infoHint: {marginTop: 6, fontSize: 12},
 	hintInline: {
 		flex: 1,
 		color: COLORS.hint,

@@ -1,7 +1,7 @@
 import React from 'react';
 import {StyleSheet, View} from 'react-native';
 import {connect} from 'react-redux';
-import {faGear, faSitemap} from '@fortawesome/free-solid-svg-icons';
+import {faNetworkWired, faSitemap} from '@fortawesome/free-solid-svg-icons';
 import {
 	DeleteItemMenu,
 	MenuAccordion,
@@ -18,6 +18,8 @@ import {useDeviceEntity} from '../useDeviceEntity';
 import {isEmpty} from '../../../components/common/useSectionSettingsHeader';
 import MasterGeneralSettingsSection from './MasterGeneralSettingsSection';
 import SlaveDevicesSection from './SlaveDevicesSection';
+import {MasterConnectivitySection} from './MasterConnectivitySection';
+import {generalContainerStyle} from '../../../components/common/GeneralSettingsFields';
 import i18n from 'i18next';
 
 export function MasterDeviceSettingsScreen(props: any) {
@@ -31,23 +33,26 @@ export function MasterDeviceSettingsScreen(props: any) {
 
 	return (
 		<SettingsScrollView>
+			{/* Général sorti du menu, sans carte blanche, en première position :
+			    bannière de connexion, icône info + nom, description au toucher. */}
+			{ready ? (
+				<View style={generalContainerStyle}>
+					<MasterGeneralSettingsSection
+						key={deviceRef.current.id}
+						embedded
+						deviceData={deviceRef.current}
+						showErrors={invalidSections.general}
+						navigation={props.navigation}
+					/>
+				</View>
+			) : null}
 			<MenuGroup style={styles.card}>
 				<MenuAccordion
-					key={1}
-					name={i18n.t('common:sections.general')}
-					icon={faGear}
-					defaultExpanded
-					invalid={invalidSections.general}
+					key={2}
+					name={i18n.t('common:sections.connectivity')}
+					icon={faNetworkWired}
 					onPress={() => {}}>
-					{ready && (
-						<MasterGeneralSettingsSection
-							key={deviceRef.current.id}
-							embedded
-							deviceData={deviceRef.current}
-							showErrors={invalidSections.general}
-							navigation={props.navigation}
-						/>
-					)}
+					{ready && <MasterConnectivitySection device={deviceRef.current} />}
 				</MenuAccordion>
 				<MenuAccordion
 					key={3}

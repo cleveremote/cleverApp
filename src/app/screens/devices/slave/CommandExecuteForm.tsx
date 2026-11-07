@@ -1,9 +1,8 @@
-import {inputText} from '../../../styles/components/common/Input';
+import {fieldLabelColor,fieldLabelText,inputText} from '../../../styles/components/common/Input';
 import React, {useEffect, useRef, useState} from 'react';
 import {
 	ActivityIndicator,
 	Alert,
-	Pressable,
 	StyleSheet,
 	Switch,
 	Text,
@@ -11,19 +10,40 @@ import {
 	View
 } from 'react-native';
 import {connect} from 'react-redux';
-import Icon from 'react-native-vector-icons/FontAwesome5';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import {hapticOptions} from '../../../data/cycleTypes';
 import {executeDeviceCommand} from '../../../../module/process/infrasctructure/store/actions/device';
+import {
+	faClipboardCheck,
+	faFlask,
+	faPlay
+} from '@fortawesome/free-solid-svg-icons';
+import {
+	MenuAccordion,
+	MenuGroup
+} from '../../../components/common/cycleMenu';
+import {DropdownSelect} from '../../../components/common/FormComponents';
+import {OutlineButton} from '../../access/accessUi';
+import {InfoBox} from '../../../components/common/InfoBox';
+import {ErrorBox} from '../../../components/common/ErrorBox';
+import {SuccessBox} from '../../../components/common/SuccessBox';
 import i18n from 'i18next';
 
-// Formulaire d'exécution d'une device command, construit depuis ses `params` :
+// Formulaire d'exécution d'une device command, construit depuis ses `params`
+// (tout choix se fait en liste déroulante) :
 //  - `{type: 'enum', entries}`         → choix parmi les libellés ;
-//  - `{type: 'enum[]', enum, length}`  → un choix obligatoire par port, envoyé
+//  - `{type: 'enum[]', enum, length}`  → un choix par port (la première entrée
+//    à défaut de `default`), envoyé
 //    en tableau de `length` valeurs (`input` de la commande) ;
+//  - `{type: 'boolean[]'}`             → idem avec OFF / ON ;
+//    sans `length`, un tableau suit la plage `range` choisie : une ligne par
+//    canal de « de » à « à » ;
 //  - `range: {min, max, labelStart}`   → plage « de / à » ;
 //  - `{min, max, labelStart}`          → un index (voie…) ;
 //  - `{type: 'boolean'}`               → interrupteur ;
+//  - `{type: 'composite', …}`          → un groupe de sous-champs, chacun
+//    décrit comme ci-dessus (`fields: [{name, …}]`, `properties: {nom: …}` ou
+//    directement en clés), envoyé en objet `{nom: valeur}` ;
 //  - autre `{type}`                    → saisie libre (numérique si `number`).
 // Un enum peut porter ses `entries` ou les nommer (`enum: 'outputMode'`) : la
 // liste est alors cherchée dans le modèle.
@@ -33,8 +53,6 @@ import i18n from 'i18next';
 // sur la commande (`command.channel`, `command.value`…).
 
 const META_KEYS = ['result', 'isConfirmRequired', 'isPersistable'];
-// Au-delà, un index se saisit au clavier plutôt qu'en pastilles.
-const MAX_CHIPS = 16;
 const EXECUTE_TIMEOUT_MS = 10000;
 
 type InputKind =
@@ -44,16 +62,21 @@ type InputKind =
 	| 'index'
 	| 'boolean'
 	| 'number'
+	| 'composite'
 	| 'text';
 
-type EnumEntry = {label: string; value: any};
+type EnumEntry = {label: string; value: any; description?: string};
 
 const isObject = (x: any) => x !== null && typeof x === 'object';
 const hasBounds = (spec: any) => spec?.min != null && spec?.max != null;
 
 const inputKind = (key: string, spec: any): InputKind => {
-	if (spec?.type === 'enum[]') return 'enumArray';
-	if (spec?.type === 'enum') return 'enum';
+	if (spec?.type === 'composite') return 'composite';
+	if (spec?.type === 'enum[]' || spec?.type === 'boolean[]') return 'enumArray';
+	// Un champ qui porte ses `entries` est un enum, même sans `type`.
+	if (spec?.type === 'enum' || (spec?.type === undefined && spec?.entries)) {
+		return 'enum';
+	}
 	if (key === 'range' && hasBounds(spec)) return 'range';
 	if (hasBounds(spec)) return 'index';
 	if (spec?.type === 'boolean') return 'boolean';
@@ -71,7 +94,11 @@ const toEntries = (def: any): EnumEntry[] | undefined => {
 	if (Array.isArray(def)) {
 		return def.map((e: any) =>
 			isObject(e)
-				? {label: `${e.label ?? e.name ?? e.value}`, value: e.value}
+				? {
+						label: `${e.label ?? e.name ?? e.value}`,
+						value: e.value,
+						description: e.description
+				  }
 				: {label: `${e}`, value: e}
 		);
 	}
@@ -85,32 +112,142 @@ const toEntries = (def: any): EnumEntry[] | undefined => {
 	return undefined;
 };
 
-// Entrées d'un enum : les siennes, ou celles de l'enum nommé dans le modèle.
-const resolveEnum = (spec: any, model: any): EnumEntry[] | undefined => {
+// Enum nommé `name` dans une portée : ses `enums`, ou ses `entries` quand
+// elles sont un objet indexé par nom d'enum.
+const enumIn = (scope: any, name: string) =>
+	scope?.enums?.[name] ??
+	(isObject(scope?.entries) && !Array.isArray(scope.entries)
+		? scope.entries[name]
+		: undefined);
+
+// Entrées d'un enum : les siennes, sinon celles de l'enum nommé (`enum`, à
+// défaut le nom du champ) cherché dans les `scopes` — du composite parent le
+// plus proche jusqu'à la commande — puis dans le modèle.
+const resolveEnum = (
+	spec: any,
+	model: any,
+	scopes: any[] = [],
+	key?: string
+): EnumEntry[] | undefined => {
 	if (spec?.entries) return toEntries(spec.entries);
-	const name = spec?.enum;
-	if (typeof name !== 'string') return toEntries(spec?.enum);
-	const def =
-		model?.enums?.[name] ??
-		model?.device?.enums?.[name] ??
-		model?.params?.enums?.[name];
+	if (spec?.enum !== undefined && typeof spec.enum !== 'string') {
+		return toEntries(spec.enum);
+	}
+	const name = spec?.enum ?? key;
+	if (!name) return undefined;
+	const def = [...scopes, model, model?.device, model?.params]
+		.map(scope => enumIn(scope, name))
+		.find(d => d !== undefined);
 	return toEntries(def);
 };
 
-const defaultValue = (
-	command: any,
+// Champ du formulaire ; un composite porte ses sous-champs dans `children`.
+type Field = {
+	key: string;
+	label: string;
+	spec: any;
+	kind: InputKind;
+	entries?: EnumEntry[];
+	length?: number;
+	children?: Field[];
+};
+
+// Clés descriptives d'un composite décrit directement en clés (ses `enums` /
+// `entries` servent aux sous-champs enum, ce ne sont pas des sous-champs).
+const COMPOSITE_META = [
+	'type',
+	'label',
+	'name',
+	'description',
+	'default',
+	'enums',
+	'entries'
+];
+
+// Sous-champs d'un composite : `fields` (liste de `{name, …}`), `properties`
+// (objet `{nom: spec}`), sinon ses propres clés objet.
+const compositeFields = (spec: any): [string, any][] => {
+	const def = spec?.fields ?? spec?.properties;
+	if (Array.isArray(def)) {
+		return def
+			.filter(isObject)
+			.map((f: any, i: number) => [`${f.name ?? f.key ?? i}`, f]);
+	}
+	const source = isObject(def) ? def : spec;
+	return Object.entries(source ?? {}).filter(
+		([key, sub]) =>
+			isObject(sub) && (source !== spec || !COMPOSITE_META.includes(key))
+	);
+};
+
+// `scopes` : où chercher les enums nommés (composites parents, commande).
+const buildField = (
 	key: string,
 	spec: any,
-	entries?: EnumEntry[],
+	model: any,
+	scopes: any[],
 	length?: number
-) => {
-	// Un enum[] se choisit port par port : rien n'est présélectionné.
-	if (inputKind(key, spec) === 'enumArray') {
-		return Array.from({length: length ?? 0}, () => undefined);
+): Field => {
+	const kind = inputKind(key, spec);
+	return {
+		key,
+		label: `${spec?.label ?? key}`,
+		spec,
+		kind,
+		entries:
+			spec?.type === 'boolean[]'
+				? BOOLEAN_ENTRIES
+				: kind === 'enum' || kind === 'enumArray'
+				? resolveEnum(spec, model, scopes, key)
+				: undefined,
+		length: kind === 'enumArray' ? spec.length ?? length : undefined,
+		children:
+			kind === 'composite'
+				? compositeFields(spec).map(([k, sub]) =>
+						buildField(k, sub, model, [spec, ...scopes])
+				  )
+				: undefined
+	};
+};
+
+const BOOLEAN_ENTRIES: EnumEntry[] = [
+	{label: 'OFF', value: false},
+	{label: 'ON', value: true}
+];
+
+// Valeur par défaut de la case `i` d'un tableau : le `default` de la
+// définition (tableau ou valeur commune), sinon la première entrée (OFF pour
+// un boolean[]).
+const itemDefault = (field: Field, i: number) => {
+	const def = field.spec?.default;
+	const own = Array.isArray(def) ? def[i] : def;
+	return own !== undefined ? own : field.entries?.[0]?.value;
+};
+
+// Tableau de `length` cases : les valeurs saisies, complétées par le défaut.
+const fillArray = (field: Field, value: any, length: number) =>
+	Array.from({length}, (_, i) => value?.[i] ?? itemDefault(field, i));
+
+// Valeur initiale : `initial` (posée sur la commande), sinon le `default` de
+// la définition, sinon une valeur neutre selon le type.
+const defaultValue = (field: Field, initial: any): any => {
+	const {spec, kind, entries, length} = field;
+	if (kind === 'composite') {
+		return Object.fromEntries(
+			(field.children ?? []).map(c => [
+				c.key,
+				defaultValue(c, isObject(initial) ? initial[c.key] : undefined)
+			])
+		);
 	}
-	if (command?.[key] !== undefined) return command[key];
+	// Un tableau se choisit case par case (sa longueur peut suivre la plage :
+	// complété à l'affichage).
+	if (kind === 'enumArray') {
+		return fillArray(field, undefined, length ?? 0);
+	}
+	if (initial !== undefined) return initial;
 	if (spec?.default !== undefined) return spec.default;
-	switch (inputKind(key, spec)) {
+	switch (kind) {
 		case 'enum':
 			return entries?.[0]?.value;
 		case 'range':
@@ -166,75 +303,38 @@ const describeRequest = (request: any) =>
 				.join(' ')
 		: undefined;
 
-function Chips({
-	options,
-	selected,
-	onSelect
-}: Readonly<{
-	options: {label: string; value: any}[];
-	selected: any;
-	onSelect: (value: any) => void;
-}>) {
-	return (
-		<View style={styles.chips}>
-			{options.map(o => {
-				const active = `${o.value}` === `${selected}`;
-				return (
-					<Pressable
-						key={`${o.value}`}
-						onPress={() => onSelect(o.value)}
-						style={[styles.chip, active && styles.chipActive]}
-					>
-						<Text
-							style={[
-								styles.chipText,
-								active && styles.chipTextActive
-							]}
-						>
-							{o.label}
-						</Text>
-					</Pressable>
-				);
-			})}
-		</View>
-	);
-}
+type SelectOption = {label: string; value: any; iconColor?: {base: string}};
 
-// Un index compris entre `spec.min` et `spec.max`, affiché à partir de
-// `labelStart` : en pastilles s'il y en a peu, au clavier sinon.
-function IndexInput({
-	spec,
+// Choix parmi des options : liste déroulante (la valeur reste typée, ex. un
+// nombre pour un index).
+function Select({
+	options,
 	value,
 	onChange
-}: Readonly<{spec: any; value: any; onChange: (value: any) => void}>) {
-	const count = spec.max - spec.min + 1;
-	if (count <= MAX_CHIPS) {
-		const options = Array.from({length: count}, (_, i) => ({
-			label: `${labelOf(spec.min + i, spec)}`,
-			value: spec.min + i
-		}));
-		return <Chips options={options} selected={value} onSelect={onChange} />;
-	}
+}: Readonly<{
+	options: SelectOption[];
+	value: any;
+	onChange: (value: any) => void;
+}>) {
 	return (
-		<TextInput
-			style={styles.input}
-			keyboardType="numeric"
-			defaultValue={value == null ? '' : `${labelOf(value, spec)}`}
-			placeholder={`${labelOf(spec.min, spec)} – ${labelOf(
-				spec.max,
-				spec
-			)}`}
-			onChangeText={text => {
-				const n = Number(text);
-				onChange(
-					text === '' || isNaN(n)
-						? undefined
-						: n - (spec.labelStart ?? 0)
-				);
-			}}
+		<DropdownSelect
+			items={options}
+			value={value}
+			getLabel={o => o.label}
+			getValue={o => o.value}
+			onChange={onChange}
+			hasError={false}
 		/>
 	);
 }
+
+// Index compris entre `spec.min` et `spec.max`, affichés à partir de
+// `labelStart`.
+const indexOptions = (spec: any): SelectOption[] =>
+	Array.from({length: spec.max - spec.min + 1}, (_, i) => ({
+		label: `${labelOf(spec.min + i, spec)}`,
+		value: spec.min + i
+	}));
 
 const inRange = (value: any, spec: any) =>
 	typeof value === 'number' && value >= spec.min && value <= spec.max;
@@ -280,11 +380,90 @@ const validate = (
 	return undefined;
 };
 
+// Plage « de / à » : deux listes déroulantes côte à côte, libellé à leur
+// gauche (index entre `spec.min` et `spec.max`, affichés à partir de
+// `labelStart`), suivies de `trailing` éventuel.
+function RangeSelect({
+	spec,
+	value,
+	onChange,
+	trailing
+}: Readonly<{
+	spec: any;
+	value: any;
+	onChange: (value: any) => void;
+	trailing?: React.ReactNode;
+}>) {
+	const options = indexOptions(spec);
+	const select = (bound: 'min' | 'max', title: string) => (
+		<View style={styles.rangeSelect}>
+			<Text style={styles.rangeLabel}>{title}</Text>
+			<View style={styles.rangeDropdown}>
+				<Select
+					options={options}
+					value={value?.[bound]}
+					onChange={v => onChange({...value, [bound]: v})}
+				/>
+			</View>
+		</View>
+	);
+	return (
+		<View style={styles.rangeRow}>
+			{select('min', i18n.t('devices:command.from'))}
+			{select('max', i18n.t('devices:command.to'))}
+			{trailing}
+		</View>
+	);
+}
+
+// Un composite est valide si tous ses sous-champs le sont.
+// `lengthOf` : longueur effective d'un tableau (fixe ou suivant la plage).
+const fieldError = (
+	field: Field,
+	value: any,
+	lengthOf: (field: Field) => number | undefined
+) => {
+	if (field.kind !== 'enumArray') {
+		return validate(field.kind, field.spec, value, field.entries, field.length);
+	}
+	const length = lengthOf(field);
+	return validate(
+		field.kind,
+		field.spec,
+		fillArray(field, value, length ?? 0),
+		field.entries,
+		length
+	);
+};
+
+const isFieldValid = (
+	field: Field,
+	value: any,
+	lengthOf: (field: Field) => number | undefined
+): boolean =>
+	field.kind === 'composite'
+		? (field.children ?? []).every(c =>
+				isFieldValid(c, value?.[c.key], lengthOf)
+		  )
+		: !fieldError(field, value, lengthOf);
+
 export function CommandExecuteForm(props: any) {
 	const {command, deviceId, model} = props;
 	const params = command?.params ?? {};
 	// Premier numéro de port affiché pour un enum[] (un choix par port).
 	const portStart = model?.device?.portConfig?.portNumStart ?? 1;
+	// Libellé du canal i d'un enum[] : celui de `params.channel` s'il est
+	// décrit (à partir de son `min` / `labelStart`), sinon le numéro de port.
+	// Un tableau qui suit la plage numérote ses lignes à partir de « de ».
+	// (`rangeField` / `range` : définis plus bas, lus au rendu.)
+	const channelLabel = (field: Field, i: number) => {
+		if (rangeField && range) {
+			return `${labelOf(range.min + i, rangeField.spec)}`;
+		}
+		return hasBounds(params.channel)
+			? `${labelOf(params.channel.min + i, params.channel)}`
+			: i18n.t('devices:command.port', {number: portStart + i});
+	};
 	const specs: [string, any][] = Object.entries(params).filter(
 		([key, spec]) => !META_KEYS.includes(key) && isObject(spec)
 	);
@@ -292,32 +471,32 @@ export function CommandExecuteForm(props: any) {
 	if (isObject(command?.input) && params.input === undefined) {
 		specs.push(['input', command.input]);
 	}
-	const inputs = specs.map(([key, spec]) => {
-		const kind = inputKind(key, spec);
-		return {
-			key,
-			spec,
-			kind,
-			entries:
-				kind === 'enum' || kind === 'enumArray'
-					? resolveEnum(spec, model)
-					: undefined,
-			length:
-				kind === 'enumArray' ? spec.length ?? params.length : undefined
-		};
-	});
+	const inputs = specs.map(([key, spec]) =>
+		buildField(key, spec, model, [params, command], params.length)
+	);
 	const resultFields: any[] =
 		params.result?.type === 'fields' ? params.result.fields ?? [] : [];
 
 	const [values, setValues] = useState<Record<string, any>>(() =>
 		Object.fromEntries(
-			inputs.map(({key, spec, entries, length}) => [
-				key,
-				defaultValue(command, key, spec, entries, length)
+			inputs.map(field => [
+				field.key,
+				// La valeur posée sur la commande, sauf si c'est la définition
+				// elle-même (`command.input`).
+				defaultValue(
+					field,
+					command?.[field.key] === field.spec
+						? undefined
+						: command?.[field.key]
+				)
 			])
 		)
 	);
 	const [running, setRunning] = useState(false);
+	// Section Test dépliée ; à chaque exécution elle se replie et la section
+	// Résultat se déplie.
+	const [open, setOpen] = useState(true);
+	const [resultOpen, setResultOpen] = useState(true);
 	const [result, setResult] = useState<{error?: string; report?: any}>();
 	const timeout = useRef<ReturnType<typeof setTimeout> | null>(null);
 	useEffect(
@@ -327,16 +506,35 @@ export function CommandExecuteForm(props: any) {
 		[]
 	);
 
+	// Remarque (`description`) de l'entrée choisie d'un champ à liste.
+	const entryHint = (field: Field, value: any): string | undefined =>
+		field.entries?.find(e => `${e.value}` === `${value}`)?.description;
+	// Canal / valeur affichés sur une ligne commune (voir `paired`).
+	const isPaired = (field: Field) =>
+		!!paired && (field === paired.channel || field === paired.value);
+
 	const setValue = (key: string, value: any) =>
 		setValues(prev => ({...prev, [key]: value}));
 
-	const errors = Object.fromEntries(
-		inputs.map(({key, spec, kind, entries, length}) => [
-			key,
-			validate(kind, spec, values[key], entries, length)
-		])
+	// Plage de la commande et sa valeur choisie, si elle est valide. Un tableau
+	// suit la plage quand il y en a une (une ligne par canal de « de » à « à »,
+	// même si sa définition a une `length`) ; sinon sa `length`.
+	const rangeField = inputs.find(f => f.kind === 'range');
+	const rangeValue = rangeField ? values[rangeField.key] : undefined;
+	const range =
+		typeof rangeValue?.min === 'number' &&
+		typeof rangeValue?.max === 'number' &&
+		rangeValue.min <= rangeValue.max
+			? rangeValue
+			: undefined;
+	const lengthOf = (field: Field) => {
+		if (rangeField) return range ? range.max - range.min + 1 : 0;
+		return field.length;
+	};
+
+	const isValid = inputs.every(field =>
+		isFieldValid(field, values[field.key], lengthOf)
 	);
-	const isValid = Object.values(errors).every(e => !e);
 
 	// Params envoyés : les params fixes (non objets) de la définition, puis
 	// les valeurs saisies dans le formulaire.
@@ -346,7 +544,16 @@ export function CommandExecuteForm(props: any) {
 				([key, spec]) => !META_KEYS.includes(key) && !isObject(spec)
 			)
 		),
-		...values
+		// Tableaux envoyés à leur longueur effective, cases non touchées
+		// comprises.
+		...Object.fromEntries(
+			inputs.map(field => [
+				field.key,
+				field.kind === 'enumArray'
+					? fillArray(field, values[field.key], lengthOf(field) ?? 0)
+					: values[field.key]
+			])
+		)
 	});
 
 	const run = (payload: {
@@ -355,6 +562,8 @@ export function CommandExecuteForm(props: any) {
 		params: Record<string, any>;
 	}) => {
 		console.log('[executeDeviceCommand]', JSON.stringify(payload));
+		setOpen(false);
+		setResultOpen(true);
 		setRunning(true);
 		setResult(undefined);
 		timeout.current = setTimeout(() => {
@@ -419,109 +628,168 @@ export function CommandExecuteForm(props: any) {
 		run(payload);
 	};
 
-	const renderInput = ({
-		key,
-		spec,
-		kind,
-		entries,
-		length
-	}: (typeof inputs)[number]) => {
-		const value = values[key];
+	// Libellé, saisie et erreur d'un champ ; un composite affiche ses
+	// sous-champs en retrait, chacun mis à jour dans l'objet du composite.
+	// `trailing` : rendu à côté de la saisie d'un range (bouton Exécuter).
+	const renderField = (
+		field: Field,
+		value: any,
+		onChange: (value: any) => void,
+		trailing?: React.ReactNode
+	) => {
+		// Un composite n'a pas d'erreur propre : chaque sous-champ affiche la
+		// sienne.
+		const error = fieldError(field, value, lengthOf);
+		return (
+			<View key={field.key} style={styles.field}>
+				<Text style={styles.label}>{field.label}</Text>
+				{renderInput(field, value, onChange, trailing)}
+				{error ? <Text style={styles.error}>{error}</Text> : null}
+			</View>
+		);
+	};
+
+	const renderInput = (
+		field: Field,
+		value: any,
+		onChange: (value: any) => void,
+		trailing?: React.ReactNode
+	): React.ReactNode => {
+		const {spec, kind, entries} = field;
+		// La saisie suivie de `trailing` (bouton Exécuter) sur la même ligne.
+		const withTrailing = (node: React.ReactNode) =>
+			trailing ? (
+				<View style={styles.rangeRow}>
+					<View style={styles.rowInput}>{node}</View>
+					{trailing}
+				</View>
+			) : (
+				node
+			);
 		switch (kind) {
-			case 'enum':
+			case 'composite': {
+				// `trailing` descend sur le dernier sous-champ.
+				const children = field.children ?? [];
 				return (
-					<Chips
-						options={entries ?? []}
-						selected={value}
-						onSelect={v => setValue(key, v)}
-					/>
+					<View style={styles.composite}>
+						{children.map((c, i) =>
+							renderField(
+								c,
+								value?.[c.key],
+								v => onChange({...value, [c.key]: v}),
+								i === children.length - 1 ? trailing : undefined
+							)
+						)}
+					</View>
 				);
-			case 'enumArray':
+			}
+			case 'enum': {
+				// Remarque de l'entrée choisie (ex. réglage à vérifier) sous la
+				// ligne ; pour canal + valeur, sous leur ligne commune.
+				const hint = isPaired(field) ? undefined : entryHint(field, value);
 				return (
 					<View>
-						{Array.from({length: length ?? 0}, (_, i) => (
+						{withTrailing(
+							<Select
+								options={entries ?? []}
+								value={value}
+								onChange={onChange}
+							/>
+						)}
+						{hint ? <InfoBox message={hint} style={styles.hint} /> : null}
+					</View>
+				);
+			}
+			case 'enumArray': {
+				// Longueur fixe (`length`) ou suivant la plage choisie.
+				const count = lengthOf(field) ?? 0;
+				const cells = fillArray(field, value, count);
+				return (
+					<View>
+						{/* Une ligne par canal : canal en lecture seule, valeur en
+						    liste déroulante. */}
+						<View style={styles.portRow}>
+							<Text style={[styles.portLabel, styles.portHeader]}>
+								{i18n.t('sensor:dataSource.channel')}
+							</Text>
+							<Text style={styles.portHeader}>
+								{i18n.t('sensor:dataSource.value')}
+							</Text>
+						</View>
+						{cells.map((cell, i) => (
 							<View key={i} style={styles.portRow}>
 								<Text
 									style={[
 										styles.portLabel,
-										value?.[i] === undefined &&
-											styles.portLabelMissing
+										cell === undefined && styles.portLabelMissing
 									]}
 								>
-									{i18n.t('devices:command.port', {number: portStart + i})}
+									{channelLabel(field, i)}
 								</Text>
 								<View style={{flex: 1}}>
-									<Chips
+									<Select
 										options={entries ?? []}
-										selected={value?.[i]}
-										onSelect={v =>
-											setValue(
-												key,
-												Array.from(
-													{length: length ?? 0},
-													(_, j) =>
-														j === i ? v : value?.[j]
-												)
-											)
+										value={cell}
+										onChange={v =>
+											onChange(cells.map((c, j) => (j === i ? v : c)))
 										}
 									/>
 								</View>
 							</View>
 						))}
+						{/* Remarques des valeurs choisies, une fois chacune. */}
+						{[...new Set(cells.map(c => entryHint(field, c)))]
+							.filter((h): h is string => !!h)
+							.map(h => (
+								<InfoBox key={h} message={h} style={styles.hint} />
+							))}
+						{/* Liste de longueur variable : `trailing` (bouton Exécuter)
+						    tout à la fin, sous le dernier élément. */}
+						{trailing ? <View style={styles.arrayButton}>{trailing}</View> : null}
 					</View>
 				);
+			}
 			case 'index':
-				return (
-					<IndexInput
-						spec={spec}
+				return withTrailing(
+					<Select
+						options={indexOptions(spec)}
 						value={value}
-						onChange={v => setValue(key, v)}
+						onChange={onChange}
 					/>
 				);
 			case 'range':
 				return (
-					<View>
-						<Text style={styles.subLabel}>{i18n.t('devices:command.from')}</Text>
-						<IndexInput
-							spec={spec}
-							value={value?.min}
-							onChange={v => setValue(key, {...value, min: v})}
-						/>
-						<Text style={styles.subLabel}>{i18n.t('devices:command.to')}</Text>
-						<IndexInput
-							spec={spec}
-							value={value?.max}
-							onChange={v => setValue(key, {...value, max: v})}
-						/>
-					</View>
+					<RangeSelect
+						spec={spec}
+						value={value}
+						onChange={onChange}
+						trailing={trailing}
+					/>
 				);
 			case 'boolean':
-				return (
+				return withTrailing(
 					<Switch
 						value={!!value}
-						onValueChange={v => setValue(key, v)}
+						onValueChange={v => onChange(v)}
 					/>
 				);
 			case 'number':
-				return (
+				return withTrailing(
 					<TextInput
 						style={styles.input}
 						keyboardType="numeric"
 						defaultValue={value == null ? '' : `${value}`}
 						onChangeText={text =>
-							setValue(
-								key,
-								text === '' ? undefined : Number(text)
-							)
+							onChange(text === '' ? undefined : Number(text))
 						}
 					/>
 				);
 			default:
-				return (
+				return withTrailing(
 					<TextInput
 						style={styles.input}
 						defaultValue={value == null ? '' : `${value}`}
-						onChangeText={text => setValue(key, text)}
+						onChangeText={text => onChange(text)}
 					/>
 				);
 		}
@@ -557,126 +825,208 @@ export function CommandExecuteForm(props: any) {
 		);
 	};
 
+	// Statut dans une boîte verte (ou rouge en cas d'échec), valeurs lues et
+	// détail technique dans une boîte d'information.
 	const renderResult = () => {
 		if (!result) return null;
 		if (result.error) {
-			return (
-				<Text style={[styles.result, styles.resultError]}>
-					{result.error}
-				</Text>
-			);
+			return <ErrorBox message={result.error} style={styles.result} />;
 		}
 		const report = result.report;
 		if (!isObject(report)) {
 			return (
-				<Text style={[styles.result, styles.resultOk]}>
-					{report === undefined || report === null || report === true
-						? i18n.t('devices:command.sent')
-						: formatResultValue(report)}
-				</Text>
+				<SuccessBox
+					style={styles.result}
+					message={
+						report === undefined || report === null || report === true
+							? i18n.t('devices:command.sent')
+							: formatResultValue(report)
+					}
+				/>
 			);
 		}
 		const request = describeRequest(report.request);
+		const shownValue = renderValue(report.value);
+		const technical =
+			request || report.raw !== undefined
+				? [
+						request,
+						report.raw !== undefined &&
+							i18n.t('devices:command.raw', {
+								value: JSON.stringify(report.raw)
+							})
+				  ]
+						.filter(Boolean)
+						.join(' · ')
+				: undefined;
 		return (
 			<View style={styles.result}>
-				<Text style={styles.resultOk}>
-					{[
-						'OK',
-						report.durationMs != null && `${report.durationMs} ms`
-					]
+				<SuccessBox
+					message={['OK', report.durationMs != null && `${report.durationMs} ms`]
 						.filter(Boolean)
 						.join(' · ')}
-				</Text>
-				{renderValue(report.value)}
-				{request || report.raw !== undefined ? (
-					<Text style={styles.resultTechnical}>
-						{[
-							request,
-							report.raw !== undefined &&
-								i18n.t('devices:command.raw', {value: JSON.stringify(report.raw)})
-						]
-							.filter(Boolean)
-							.join(' · ')}
-					</Text>
+				/>
+				{shownValue || technical ? (
+					<InfoBox style={styles.resultBox}>
+						{shownValue}
+						{technical ? (
+							<Text style={styles.resultTechnical}>{technical}</Text>
+						) : null}
+					</InfoBox>
 				) : null}
 			</View>
 		);
 	};
 
+	// Le bouton se place sur la ligne de la dernière saisie, sinon (aucune
+	// saisie) seul sous le titre.
+	const besideKey = inputs[inputs.length - 1]?.key;
+	// `channel` et `value` simples (un choix ou une saisie chacun) partagent une
+	// ligne.
+	const SINGLE_LINE: InputKind[] = ['enum', 'index', 'boolean', 'number', 'text'];
+	const channelField = inputs.find(f => f.key === 'channel');
+	const valueField = inputs.find(f => f.key === 'value');
+	const paired =
+		channelField &&
+		valueField &&
+		SINGLE_LINE.includes(channelField.kind) &&
+		SINGLE_LINE.includes(valueField.kind)
+			? {channel: channelField, value: valueField}
+			: undefined;
+	const pairedLast =
+		!!paired && (besideKey === 'channel' || besideKey === 'value');
+	const executeButton = (
+		<OutlineButton
+			icon={faPlay}
+			accessibilityLabel={i18n.t('common:execute')}
+			busy={running}
+			disabled={!isValid}
+			onPress={onExecute}
+			style={[styles.executeButton, !besideKey && styles.executeButtonBelow]}
+		/>
+	);
+
+	// Saisies de la commande et bouton Exécuter (section dépliée).
+	const renderInputs = () => (
+		<>
+			{inputs.map(field => {
+				if (paired && field === paired.value) return null;
+				if (paired && field === paired.channel) {
+					// Canal et valeur côte à côte, bouton au bout de la ligne
+					// s'ils sont la dernière saisie.
+					const hints = [paired.channel, paired.value]
+						.map(f => entryHint(f, values[f.key]))
+						.filter((h): h is string => !!h);
+					return (
+						<View key="channel-value">
+							<View style={styles.pairRow}>
+								{[paired.channel, paired.value].map(f => (
+									<View key={f.key} style={styles.rowInput}>
+										{renderField(f, values[f.key], v =>
+											setValue(f.key, v)
+										)}
+									</View>
+								))}
+								{pairedLast ? (
+									<View style={styles.pairButton}>{executeButton}</View>
+								) : null}
+							</View>
+							{/* Remarques des valeurs choisies, sous la ligne canal +
+							    valeur + exécuter. */}
+							{hints.map(h => (
+								<InfoBox key={h} message={h} style={styles.hint} />
+							))}
+						</View>
+					);
+				}
+				return renderField(
+					field,
+					values[field.key],
+					v => setValue(field.key, v),
+					field.key === besideKey ? executeButton : undefined
+				);
+			})}
+			{besideKey ? null : executeButton}
+		</>
+	);
+
 	return (
 		<View style={styles.form}>
-			<Text style={styles.title}>{i18n.t('devices:command.test')}</Text>
-			{inputs.map(input => (
-				<View key={input.key} style={styles.field}>
-					<Text style={styles.label}>{input.key}</Text>
-					{renderInput(input)}
-					{errors[input.key] ? (
-						<Text style={styles.error}>{errors[input.key]}</Text>
-					) : null}
-				</View>
-			))}
-			<Pressable
-				onPress={onExecute}
-				disabled={running || !isValid}
-				style={({pressed}) => [
-					styles.button,
-					{opacity: running || !isValid ? 0.5 : pressed ? 0.7 : 1}
-				]}
-			>
-				{running ? (
-					<ActivityIndicator size="small" color={COLORS.onPrimary} />
-				) : (
-					<>
-						<Icon name="play" size={12} color={COLORS.onPrimary} />
-						<Text style={styles.buttonText}>{i18n.t('common:execute')}</Text>
-					</>
-				)}
-			</Pressable>
-			{renderResult()}
+			{/* Sections façon réglages : « Test » (saisies), replié à l'exécution,
+			    et « Résultat », déplié dès qu'une exécution est lancée. */}
+			<MenuGroup style={styles.card}>
+				<MenuAccordion
+					key="test"
+					name={i18n.t('devices:command.test')}
+					icon={faFlask}
+					expanded={open}
+					onPress={() => setOpen(o => !o)}
+				>
+					<View style={styles.sectionBody}>{renderInputs()}</View>
+				</MenuAccordion>
+				{running || result ? (
+					<MenuAccordion
+						key="result"
+						name={i18n.t('devices:command.result')}
+						icon={faClipboardCheck}
+						expanded={resultOpen}
+						onPress={() => setResultOpen(o => !o)}
+					>
+						<View style={styles.sectionBody}>
+							{running ? (
+								<ActivityIndicator size="small" color={COLORS.primary} />
+							) : (
+								renderResult()
+							)}
+						</View>
+					</MenuAccordion>
+				) : null}
+			</MenuGroup>
 		</View>
 	);
 }
 
 const COLORS = {
 	primary: '#32404e',
-	onPrimary: 'white',
-	muted: '#8a96a3',
+	muted: fieldLabelColor,
 	border: '#e5e7eb',
-	chip: '#eef1f4',
 	error: '#d9534f',
-	ok: '#2e7d32'
+	cardBackground: 'white',
+	shadow: '#000'
 };
 
 const styles = StyleSheet.create({
-	form: {
-		marginTop: 10,
-		paddingTop: 10,
-		borderTopWidth: 1,
-		borderTopColor: COLORS.border
+	form: {marginTop: 12},
+	// Même carte que les sections des écrans de réglages.
+	card: {
+		alignSelf: 'stretch',
+		backgroundColor: COLORS.cardBackground,
+		borderRadius: 12,
+		elevation: 3,
+		shadowColor: COLORS.shadow,
+		shadowOffset: {width: 0, height: 1},
+		shadowOpacity: 0.22,
+		shadowRadius: 2.22
 	},
-	title: {color: COLORS.primary, fontWeight: 'bold', fontSize: 14},
+	sectionBody: {paddingHorizontal: 12, paddingBottom: 12},
 	field: {marginTop: 8},
-	label: {color: COLORS.muted, fontSize: 13, marginBottom: 4},
+	label: {...fieldLabelText, marginBottom: 4},
+	hint: {marginTop: 6},
+	arrayButton: {marginTop: 8, alignItems: 'flex-end'},
+	composite: {
+		paddingStart: 10,
+		borderStartWidth: 2,
+		borderStartColor: COLORS.border
+	},
 	portRow: {
 		flexDirection: 'row',
 		alignItems: 'center',
+		gap: 8,
 		paddingVertical: 4
 	},
 	portLabel: {width: 60, color: COLORS.primary, fontSize: 13},
 	portLabelMissing: {color: COLORS.error},
-	subLabel: {color: COLORS.muted, fontSize: 12, marginVertical: 4},
-	chips: {flexDirection: 'row', flexWrap: 'wrap', gap: 6},
-	chip: {
-		backgroundColor: COLORS.chip,
-		borderRadius: 8,
-		paddingHorizontal: 10,
-		paddingVertical: 6,
-		minWidth: 36,
-		alignItems: 'center'
-	},
-	chipActive: {backgroundColor: COLORS.primary},
-	chipText: {color: COLORS.primary, fontSize: 13},
-	chipTextActive: {color: COLORS.onPrimary, fontWeight: '600'},
+	portHeader: {color: COLORS.muted, fontSize: 12},
 	input: {
 		borderWidth: 1,
 		borderColor: COLORS.border,
@@ -686,20 +1036,26 @@ const styles = StyleSheet.create({
 		...inputText
 	},
 	error: {color: COLORS.error, fontSize: 12, marginTop: 4},
-	button: {
-		marginTop: 12,
-		flexDirection: 'row',
-		alignItems: 'center',
+	// Bouton icône seule : carré, à côté des roues du range.
+	executeButton: {
+		marginTop: 0,
+		width: 45,
 		justifyContent: 'center',
-		gap: 8,
-		backgroundColor: COLORS.primary,
-		borderRadius: 10,
-		paddingVertical: 10
+		paddingHorizontal: 0
 	},
-	buttonText: {color: COLORS.onPrimary, fontWeight: '600', fontSize: 15},
-	result: {marginTop: 10},
-	resultError: {color: COLORS.error},
-	resultOk: {color: COLORS.ok},
+	executeButtonBelow: {marginTop: 12},
+	rangeRow: {flexDirection: 'row', alignItems: 'center', gap: 8},
+	rowInput: {flex: 1},
+	// Canal + valeur : alignés en bas (libellés au-dessus des saisies).
+	pairRow: {flexDirection: 'row', alignItems: 'flex-end', gap: 8},
+	// Même marge basse que les listes déroulantes pour s'aligner sur elles.
+	pairButton: {marginBottom: 4},
+	// Libellé « De » / « À » à gauche de sa liste.
+	rangeSelect: {flex: 1, flexDirection: 'row', alignItems: 'center', gap: 6},
+	rangeLabel: {color: COLORS.primary, fontWeight: 'bold'},
+	rangeDropdown: {flex: 1},
+	result: {marginTop: 8},
+	resultBox: {marginTop: 6},
 	resultRow: {flexDirection: 'row', paddingVertical: 3},
 	resultLabel: {flex: 1, color: COLORS.muted},
 	resultTechnical: {color: COLORS.muted, fontSize: 11, marginTop: 4},

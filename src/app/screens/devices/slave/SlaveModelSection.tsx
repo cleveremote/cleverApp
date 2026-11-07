@@ -1,9 +1,23 @@
+import {fieldLabelColor} from '../../../styles/components/common/Input';
 import React from 'react';
 import i18n from 'i18next';
 import {Pressable, StyleSheet, Text, View} from 'react-native';
 import {connect} from 'react-redux';
-import Icon from 'react-native-vector-icons/FontAwesome5';
-import CommandExecuteForm from './CommandExecuteForm';
+import {ELEMENT_FONT_SIZE} from '../../../styles/metrics';
+import DeviceCommandModal from './DeviceCommandModal';
+import {
+	ACCESS_STYLE,
+	AccessBadge,
+	CONFIRM_STYLE,
+	CommandAccess,
+	Row,
+	commandAccess,
+	formatRange
+} from './commandUi';
+
+// Colonne libellé des lignes du modèle : assez large pour « ID esclave »,
+// « Appareil »… sur une seule ligne.
+const MODEL_LABEL_WIDTH = 90;
 
 // Modèle du slave (`config.modelId`) dans `config.models`.
 export const findModel = (models: any[], device: any) =>
@@ -12,190 +26,125 @@ export const findModel = (models: any[], device: any) =>
 export const modelKind = (model: any): string | undefined =>
 	model?.kind ?? model?.device?.kind;
 
-// Un index (voie, plage) est stocké à partir de 0 et affiché à partir de
-// `labelStart`.
-const label = (index: number, spec: any) => index + (spec?.labelStart ?? 0);
-
-const formatRange = (spec: any) => {
-	if (spec?.min == null || spec?.max == null) return undefined;
-	const from = label(spec.min, spec);
-	const to = label(spec.max, spec);
-	return from === to ? `${from}` : `${from} – ${to}`;
-};
-
-const enumLabel = (spec: any, value: any) =>
-	(spec?.entries ?? []).find((e: any) => `${e.value}` === `${value}`)
-		?.label ?? (value == null ? undefined : `${value}`);
-
-const formatValueSpec = (spec: any) => {
-	if (!spec) return undefined;
-	if (spec.type === 'enum') {
-		return (spec.entries ?? []).map((e: any) => e.label).join(' / ');
-	}
-	const range = formatRange(spec);
-	return [spec.type, range].filter(Boolean).join(' · ') || undefined;
-};
-
-const resultFields = (command: any): any[] =>
-	command?.params?.result?.type === 'fields'
-		? command.params.result.fields ?? []
-		: [];
-
 const textColor = '#32404e';
-const mutedColor = '#8a96a3';
+// Ligne du nom d'une commande (au plus 2 lignes, tronqué au-delà).
+const COMMAND_LINE_HEIGHT = 20;
+// Couleur des libellés : source unique (Input.tsx).
+const mutedColor = fieldLabelColor;
 const COLORS = {
 	cardBackground: 'white',
 	border: '#e5e7eb',
-	chip: '#eef1f4'
+	chip: '#eef1f4',
+	shadow: '#000',
+	transparent: 'transparent'
 };
 
-function Row({
-	icon,
-	label: rowLabel,
-	value,
-	sub
-}: Readonly<{icon?: string; label: string; value?: string; sub?: string}>) {
+type CommandFilter = CommandAccess | 'confirm';
+
+// Filtres : pastilles grises « lecture / écriture / à confirmer », chacune
+// précédée d'un petit cercle à la couleur de l'icône des commandes.
+const FILTERS: {key: CommandFilter; color: string}[] = [
+	{key: 'read', color: ACCESS_STYLE.read.color},
+	{key: 'write', color: ACCESS_STYLE.write.color},
+	{key: 'confirm', color: CONFIRM_STYLE.color}
+];
+
+const matchesFilters = (command: any, filters: CommandFilter[]) => {
+	const access = filters.filter(f => f !== 'confirm');
+	if (access.length && !access.includes(commandAccess(command))) return false;
+	return !filters.includes('confirm') || !!command.params?.isConfirmRequired;
+};
+
+function FilterChips({
+	selected,
+	onToggle
+}: Readonly<{
+	selected: CommandFilter[];
+	onToggle: (key: CommandFilter) => void;
+}>) {
 	return (
-		<View style={styles.row}>
-			<View style={styles.rowIcon}>
-				{icon ? (
-					<Icon name={icon} size={14} color={mutedColor} />
-				) : null}
-			</View>
-			<Text style={styles.rowLabel}>{rowLabel}</Text>
-			<View style={{flex: 1}}>
-				<Text style={styles.rowValue}>{value || '—'}</Text>
-				{sub ? <Text style={styles.rowSub}>{sub}</Text> : null}
-			</View>
+		<View style={styles.filters}>
+			{FILTERS.map(({key, color}) => {
+				const active = selected.includes(key);
+				return (
+					<Pressable
+						key={key}
+						onPress={() => onToggle(key)}
+						accessibilityState={{selected: active}}
+						style={[styles.filter, active && {borderColor: color}]}
+					>
+						<View
+							style={[
+								styles.filterDot,
+								{borderColor: color},
+								active && {backgroundColor: color}
+							]}
+						/>
+						<Text
+							numberOfLines={1}
+							adjustsFontSizeToFit
+							minimumFontScale={0.8}
+							style={[
+								styles.filterText,
+								active && styles.filterTextActive
+							]}
+						>
+							{i18n.t(`devices:model.${key}`)}
+						</Text>
+					</Pressable>
+				);
+			})}
 		</View>
 	);
 }
 
-function Chip({text}: Readonly<{text: string}>) {
-	return (
-		<View style={styles.chip}>
-			<Text style={styles.chipText}>{text}</Text>
-		</View>
-	);
-}
-
-function CommandCard({
+function CommandRow({
 	command,
-	deviceId,
-	model
-}: Readonly<{command: any; deviceId: string; model: any}>) {
-	const [open, setOpen] = React.useState(false);
-	const params = command.params ?? {};
-	const fields = resultFields(command);
-	const valueSpec = params.value;
-	// `channel` / `value` posés sur la commande = valeurs par défaut envoyées.
-	const defaults = [
-		command.channel != null && params.channel
-			? i18n.t('devices:model.channelValue', {
-					value: label(command.channel, params.channel)
-			  })
-			: undefined,
-		command.value != null ? enumLabel(valueSpec, command.value) : undefined
-	]
-		.filter(Boolean)
-		.join(' · ');
-
+	onOpen
+}: Readonly<{command: any; onOpen: () => void}>) {
+	const access = commandAccess(command);
 	return (
 		<View style={styles.command}>
+			<View style={{flex: 1}}>
+				<Text style={styles.commandName} numberOfLines={2}>
+					{command.name ?? command.label}
+				</Text>
+			</View>
 			<Pressable
-				onPress={() => setOpen(o => !o)}
-				style={({pressed}) => [
-					styles.commandHeader,
-					{opacity: pressed ? 0.6 : 1}
-				]}
+				onPress={onOpen}
+				hitSlop={8}
+				style={({pressed}) => ({opacity: pressed ? 0.6 : 1})}
 			>
-				<View style={{flex: 1}}>
-					<Text style={styles.commandName}>
-						{command.name ?? command.label}
-					</Text>
-					<View style={styles.chips}>
-						{(command.types ?? []).map((t: string) => (
-							<Chip key={t} text={t} />
-						))}
-						{params.isConfirmRequired ? (
-							<Chip text="confirm" />
-						) : null}
-						{params.isPersistable ? (
-							<Chip text="persisted" />
-						) : null}
-					</View>
-				</View>
-				<Icon
-					name={open ? 'chevron-up' : 'chevron-down'}
-					size={14}
-					color={mutedColor}
+				<AccessBadge
+					access={access}
+					confirm={!!command.params?.isConfirmRequired}
 				/>
 			</Pressable>
-			{open ? (
-				<View style={styles.commandBody}>
-					{params.channel ? (
-						<Row
-							icon="random"
-							label={i18n.t('sensor:dataSource.channel')}
-							value={formatRange(params.channel)}
-						/>
-					) : null}
-					{params.range ? (
-						<Row
-							icon="arrows-alt-h"
-							label={i18n.t('devices:model.range')}
-							value={formatRange(params.range)}
-						/>
-					) : null}
-					{valueSpec ? (
-						<Row
-							icon="sliders-h"
-							label={i18n.t('sensor:dataSource.value')}
-							value={formatValueSpec(valueSpec)}
-						/>
-					) : null}
-					{defaults ? (
-						<Row icon="check" label={i18n.t('devices:model.default')} value={defaults} />
-					) : null}
-					{fields.length ? (
-						<>
-							<Text style={styles.subTitle}>{i18n.t('devices:model.measures')}</Text>
-							{fields.map((f: any) => (
-								<Row
-									key={f.name}
-									label={f.label || f.name}
-									value={[f.type, f.unit]
-										.filter(Boolean)
-										.join(' · ')}
-									sub={
-										f.autoCreate
-											? i18n.t('devices:model.autoSensor')
-											: undefined
-									}
-								/>
-							))}
-						</>
-					) : null}
-					<Text style={styles.technical}>
-						{[command.blockId, command.operationId]
-							.filter(Boolean)
-							.join(' / ')}
-					</Text>
-					<CommandExecuteForm
-						command={command}
-						deviceId={deviceId}
-						model={model}
-					/>
-				</View>
-			) : null}
 		</View>
 	);
 }
 
-// Modèle d'un slave : identité de l'appareil puis la liste de ses device
-// commands, dépliables pour voir leurs paramètres et les exécuter en test.
+// Modèle d'un slave : identité de l'appareil (dont son ID esclave) puis la liste de ses device
+// commands (lecture / écriture) ; leur icône ouvre la popin d'exécution.
 export function SlaveModelSection(props: any) {
 	const model = findModel(props.models, props.device);
+	const [opened, setOpened] = React.useState<any>();
+	const [filters, setFilters] = React.useState<CommandFilter[]>([]);
+	const toggleFilter = (key: CommandFilter) =>
+		setFilters(prev =>
+			prev.includes(key) ? prev.filter(f => f !== key) : [...prev, key]
+		);
+
+	// Unit id Modbus du slave (`config.slaveId`), en lecture seule.
+	const slaveId = props.device?.config?.slaveId;
+	const slaveIdRow = (
+		<Row
+			labelWidth={MODEL_LABEL_WIDTH}
+			icon="hashtag"
+			label={i18n.t('devices:model.slaveId')}
+			value={slaveId != null ? `${slaveId}` : undefined}
+		/>
+	);
 
 	if (!model) {
 		return (
@@ -203,6 +152,7 @@ export function SlaveModelSection(props: any) {
 				<Text style={styles.empty}>
 					{i18n.t('devices:model.none')}
 				</Text>
+				{slaveIdRow}
 			</View>
 		);
 	}
@@ -216,11 +166,19 @@ export function SlaveModelSection(props: any) {
 					labelStart: ports.portNumStart ?? 0
 			  })
 			: undefined;
-	const commands = model.deviceCommands ?? [];
+	// Lectures d'abord, puis écritures (ordre du modèle conservé dans chaque
+	// groupe : `sort` est stable).
+	const allCommands = [...(model.deviceCommands ?? [])].sort(
+		(a: any, b: any) =>
+			(commandAccess(a) === 'read' ? 0 : 1) -
+			(commandAccess(b) === 'read' ? 0 : 1)
+	);
+	const commands = allCommands.filter(c => matchesFilters(c, filters));
 
 	return (
 		<View style={styles.embeddedCard}>
 			<Row
+				labelWidth={MODEL_LABEL_WIDTH}
 				icon="microchip"
 				label={i18n.t('devices:model.title')}
 				value={model.name}
@@ -228,30 +186,47 @@ export function SlaveModelSection(props: any) {
 					.filter(Boolean)
 					.join(' · ')}
 			/>
+			{slaveIdRow}
 			{model.device?.name ? (
-				<Row icon="hdd" label={i18n.t('sensor:dataSource.device')} value={model.device.name} />
+				<Row labelWidth={MODEL_LABEL_WIDTH} icon="hdd" label={i18n.t('sensor:dataSource.device')} value={model.device.name} />
 			) : null}
 			{portRange ? (
 				<Row
+					labelWidth={MODEL_LABEL_WIDTH}
 					icon="plug"
 					label={i18n.t('devices:model.ports')}
-					value={portRange}
-					sub={i18n.t('devices:model.portCount', {count: ports.portCount})}
+					value={`${i18n.t('devices:model.portCount', {
+						count: ports.portCount
+					})} · ${portRange}`}
 				/>
 			) : null}
 			<Text style={styles.subTitle}>{i18n.t('devices:model.commands')}</Text>
+			{allCommands.length ? (
+				<FilterChips selected={filters} onToggle={toggleFilter} />
+			) : null}
 			{commands.length === 0 ? (
-				<Text style={styles.empty}>{i18n.t('devices:model.noCommand')}</Text>
+				<Text style={styles.empty}>
+					{i18n.t(
+						allCommands.length
+							? 'devices:model.noMatch'
+							: 'devices:model.noCommand'
+					)}
+				</Text>
 			) : (
 				commands.map((c: any) => (
-					<CommandCard
+					<CommandRow
 						key={c.id ?? c.name}
 						command={c}
-						deviceId={props.device?.id}
-						model={model}
+						onOpen={() => setOpened(c)}
 					/>
 				))
 			)}
+			<DeviceCommandModal
+				command={opened}
+				deviceId={props.device?.id}
+				model={model}
+				onClose={() => setOpened(undefined)}
+			/>
 		</View>
 	);
 }
@@ -266,13 +241,6 @@ const styles = StyleSheet.create({
 		paddingTop: 8,
 		paddingBottom: 16
 	},
-	// textAlign 'left' = côté de début (inversé par RN en RTL) : sans lui, une
-	// valeur latine resterait à gauche en arabe.
-	row: {flexDirection: 'row', paddingVertical: 6},
-	rowIcon: {width: 26, paddingTop: 2},
-	rowLabel: {width: 90, textAlign: 'left', color: mutedColor, fontSize: 14},
-	rowValue: {textAlign: 'left', color: textColor, fontSize: 15, fontWeight: '600'},
-	rowSub: {textAlign: 'left', color: mutedColor, fontSize: 12, marginTop: 2},
 	subTitle: {
 		color: textColor,
 		fontWeight: 'bold',
@@ -283,28 +251,61 @@ const styles = StyleSheet.create({
 		borderTopWidth: 1,
 		borderTopColor: COLORS.border
 	},
+	// Même carte que les lignes `elementStack` (cycles) : blanche et ombrée.
 	command: {
-		borderWidth: 1,
-		borderColor: COLORS.border,
-		borderRadius: 10,
-		marginTop: 8
-	},
-	commandHeader: {
 		flexDirection: 'row',
 		alignItems: 'center',
-		padding: 10
+		gap: 10,
+		alignSelf: 'stretch',
+		backgroundColor: COLORS.cardBackground,
+		borderRadius: 12,
+		margin: 4,
+		// Hauteur fixe pour toutes les commandes : 2 lignes de nom + padding.
+		height: 2 * COMMAND_LINE_HEIGHT + 2 * 8,
+		paddingVertical: 8,
+		paddingLeft: 8,
+		paddingRight: 10,
+		elevation: 3,
+		shadowColor: COLORS.shadow,
+		shadowOffset: {width: 0, height: 1},
+		shadowOpacity: 0.22,
+		shadowRadius: 2.22
 	},
-	commandName: {textAlign: 'left', color: textColor, fontSize: 15, fontWeight: '600'},
-	commandBody: {paddingHorizontal: 10, paddingBottom: 10},
-	chips: {flexDirection: 'row', flexWrap: 'wrap', gap: 4, marginTop: 4},
-	chip: {
+	// Les pastilles se partagent toute la largeur, contenu centré.
+	filters: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		gap: 6,
+		marginTop: 4,
+		marginBottom: 4,
+		// Mord sur le padding de la carte (16) pour laisser plus de largeur.
+		marginHorizontal: -10
+	},
+	filter: {
+		flex: 1,
+		flexDirection: 'row',
+		alignItems: 'center',
+		justifyContent: 'center',
+		gap: 4,
 		backgroundColor: COLORS.chip,
-		borderRadius: 8,
-		paddingHorizontal: 6,
-		paddingVertical: 2
+		borderRadius: 18,
+		// Cadre toujours présent (transparent au repos) pour que la sélection
+		// ne décale rien ; il prend la couleur du filtre une fois actif.
+		borderWidth: 2,
+		borderColor: COLORS.transparent,
+		paddingHorizontal: 4,
+		paddingVertical: 8
 	},
-	chipText: {color: textColor, fontSize: 11},
-	technical: {textAlign: 'left', color: mutedColor, fontSize: 11, marginTop: 6},
+	filterDot: {width: 16, height: 16, borderRadius: 8, borderWidth: 2},
+	filterText: {flexShrink: 1, color: textColor, fontSize: 12},
+	filterTextActive: {fontWeight: '600'},
+	commandName: {
+		textAlign: 'left',
+		color: textColor,
+		fontSize: ELEMENT_FONT_SIZE,
+		lineHeight: COMMAND_LINE_HEIGHT,
+		fontWeight: 'bold'
+	},
 	empty: {color: mutedColor, paddingVertical: 8}
 });
 

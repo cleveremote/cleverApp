@@ -29,7 +29,8 @@ export function useSectionSettingsHeader({
 	save,
 	validate,
 	backWhenPristine,
-	discard
+	discard,
+	deferNewValidation = false
 }: {
 	navigation: any;
 	entity: any;
@@ -46,6 +47,9 @@ export function useSectionSettingsHeader({
 	// réapparaissent dès la première édition (l'entité redux devient modifiée,
 	// ce qui relance cet effet).
 	backWhenPristine?: boolean;
+	// En création, pas de validation à l'entrée : les sections ne passent en
+	// rouge qu'après la première tentative de save (formulaire vide visible).
+	deferNewValidation?: boolean;
 }): {invalidSections: InvalidSections} {
 	const leaveIntentRef = useRef<'save' | 'cancel' | null>(null);
 	const [invalidSections, setInvalidSections] = useState<InvalidSections>({});
@@ -65,6 +69,7 @@ export function useSectionSettingsHeader({
 	// pour lever le cadre dès correction — sans attendre une tentative de save.
 	useEffect(() => {
 		if (validate) {
+			if (deferNewValidation && isNew && !attemptedSaveRef.current) return;
 			attemptedSaveRef.current = true;
 			setInvalidSections(validate());
 		}
@@ -233,4 +238,17 @@ export function useEmbeddedSection({
 		return () => sub.unsubscribe();
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [embedded]);
+}
+
+// Entité de l'écran chargée dans son slice redux : le slice a changé depuis le
+// montage (résultat du load*), ou contient déjà l'entité éditée (`id`). Avant,
+// il peut contenir l'entité précédemment ouverte. Sert à ne monter une section
+// embarquée toujours visible (react-hook-form lit ses defaultValues au montage
+// seulement) qu'une fois ses données présentes.
+export function useEntityLoaded(entity: any, id: any): boolean {
+	const onMount = useRef(entity);
+	return (
+		entity != null &&
+		(entity !== onMount.current || (id != null && entity.id === id))
+	);
 }

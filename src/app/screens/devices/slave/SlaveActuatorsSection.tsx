@@ -1,3 +1,4 @@
+import {fieldLabelColor} from '../../../styles/components/common/Input';
 import React, {useEffect} from 'react';
 import i18n from 'i18next';
 import {StyleSheet, Text, View} from 'react-native';
@@ -79,7 +80,7 @@ export function SlaveActuatorsSection(props: any) {
 
 const COLORS = {
 	primary: '#32404e',
-	muted: '#8a96a3',
+	muted: fieldLabelColor,
 	cardBackground: 'white'
 };
 

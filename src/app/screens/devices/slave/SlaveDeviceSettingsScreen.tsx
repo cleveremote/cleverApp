@@ -3,7 +3,6 @@ import {StyleSheet, View} from 'react-native';
 import {connect} from 'react-redux';
 import {
 	faGauge,
-	faGear,
 	faMicrochip,
 	faPlug
 } from '@fortawesome/free-solid-svg-icons';
@@ -26,6 +25,7 @@ import SlaveActuatorsSection, {
 	hasActuatorsSection
 } from './SlaveActuatorsSection';
 import SlaveSensorsSection, {hasSensorsSection} from './SlaveSensorsSection';
+import {generalContainerStyle} from '../../../components/common/GeneralSettingsFields';
 import i18n from 'i18next';
 
 export function SlaveDeviceSettingsScreen(props: any) {
@@ -33,30 +33,27 @@ export function SlaveDeviceSettingsScreen(props: any) {
 		props,
 		'SLAVE',
 		device => ({
-			general: isEmpty(device?.name) || isEmpty(device?.config?.slaveId)
+			// L'ID esclave (lecture seule) est affiché dans la section Modèle.
+			general: isEmpty(device?.name)
 		})
 	);
 
 	return (
 		<SettingsScrollView>
+			{/* Général sorti du menu, sans carte blanche, en première position :
+			    bannière de connexion, icône info + nom, description au toucher. */}
+			{ready ? (
+				<View style={generalContainerStyle}>
+					<SlaveGeneralSettingsSection
+						key={deviceRef.current.id}
+						embedded
+						deviceData={deviceRef.current}
+						showErrors={invalidSections.general}
+						navigation={props.navigation}
+					/>
+				</View>
+			) : null}
 			<MenuGroup style={styles.card}>
-				<MenuAccordion
-					key={1}
-					name={i18n.t('common:sections.general')}
-					icon={faGear}
-					defaultExpanded={props.route.params?.section === 'connectivity'}
-					invalid={invalidSections.general}
-					onPress={() => {}}>
-					{ready && (
-						<SlaveGeneralSettingsSection
-							key={deviceRef.current.id}
-							embedded
-							deviceData={deviceRef.current}
-							showErrors={invalidSections.general}
-							navigation={props.navigation}
-						/>
-					)}
-				</MenuAccordion>
 				<MenuAccordion
 					key={2}
 					name={i18n.t('devices:model.title')}

@@ -1,3 +1,4 @@
+import {fieldLabelColor} from '../../../styles/components/common/Input';
 import React from 'react';
 import i18n from 'i18next';
 import {StyleSheet, Text, View} from 'react-native';
@@ -16,7 +17,8 @@ import {
 } from '../../../data/analogTypes';
 import {toNumber} from '../../devices/deviceFieldUtils';
 
-const mutedColor = '#8a96a3';
+// Couleur des libellés : source unique (Input.tsx).
+const mutedColor = fieldLabelColor;
 
 const styles = StyleSheet.create({
 	row: {flexDirection: 'row', gap: 10},

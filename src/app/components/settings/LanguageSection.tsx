@@ -6,6 +6,8 @@ import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {faCheck, faLanguage} from '@fortawesome/free-solid-svg-icons';
 import {MenuAccordion} from '../common/cycleMenu';
 import {hapticOptions} from '../../data/cycleTypes';
+import {ELEMENT_HEIGHT} from '../../styles/metrics';
+import {stackLabelText} from '../../styles/components/common/Input';
 import {
 	changeLanguage,
 	getLanguagePreference,
@@ -70,41 +72,64 @@ export function LanguageSection({
 			icon={faLanguage}
 			onPress={() => {}}>
 			<View style={styles.section}>
-				{OPTIONS.map(option => (
-					<Pressable
-						key={option.value}
-						style={styles.row}
-						onPress={() => select(option.value)}>
-						<Text style={styles.label}>
-							{option.label ?? t('language.system')}
-						</Text>
-						{current === option.value ? (
-							<FontAwesomeIcon icon={faCheck} color={COLORS.text} />
-						) : null}
-					</Pressable>
-				))}
+				{/* Chaque langue sur une ligne elementStack ; la langue choisie a
+				    un libellé en gras et une coche. */}
+				{OPTIONS.map(option => {
+					const active = current === option.value;
+					return (
+						<Pressable
+							key={option.value}
+							accessibilityRole="button"
+							accessibilityState={{selected: active}}
+							style={({pressed}) => [
+								styles.row,
+								{transform: [{scale: pressed ? 0.99 : 1}]}
+							]}
+							onPress={() => select(option.value)}>
+							<Text style={[styles.label, active && styles.labelActive]}>
+								{option.label ?? t('language.system')}
+							</Text>
+							{active ? (
+								<FontAwesomeIcon icon={faCheck} color={COLORS.text} />
+							) : null}
+						</Pressable>
+					);
+				})}
 			</View>
 		</MenuAccordion>
 	);
 }
 
 const COLORS = {
-	text: '#32404e'
+	text: '#32404e',
+	background: '#ffffff',
+	shadow: '#000'
 };
 
 const styles = StyleSheet.create({
 	section: {
-		paddingHorizontal: 12,
-		paddingVertical: 4
+		paddingHorizontal: 8,
+		paddingVertical: 6
 	},
+	// Ligne au format elementStack (liste des master devices) : carte blanche,
+	// coins 12, ombre douce, hauteur d'un champ.
 	row: {
 		flexDirection: 'row',
 		alignItems: 'center',
 		justifyContent: 'space-between',
-		paddingVertical: 10
+		minHeight: ELEMENT_HEIGHT,
+		margin: 4,
+		paddingHorizontal: 14,
+		borderRadius: 12,
+		backgroundColor: COLORS.background,
+		elevation: 3,
+		shadowColor: COLORS.shadow,
+		shadowOffset: {width: 0, height: 1},
+		shadowOpacity: 0.22,
+		shadowRadius: 2.22
 	},
-	label: {
-		color: COLORS.text,
-		fontSize: 15
-	}
+	// Texte des lignes elementStack : style centralisé (Input.tsx).
+	label: stackLabelText,
+	// Langue choisie : libellé en gras (+ coche).
+	labelActive: {fontWeight: 'bold'}
 });

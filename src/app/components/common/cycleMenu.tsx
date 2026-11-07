@@ -64,7 +64,8 @@ export function MenuAccordion({
 	children,
 	invalid = false,
 	alwaysExpanded = false,
-	defaultExpanded = false
+	defaultExpanded = false,
+	expanded
 }: {
 	name: string;
 	icon: IconDefinition;
@@ -81,10 +82,13 @@ export function MenuAccordion({
 	alwaysExpanded?: boolean;
 	// Déplié à l'ouverture de l'écran, mais repliable.
 	defaultExpanded?: boolean;
+	// Ouverture pilotée par le parent (qui la bascule dans `onPress`) ; absent,
+	// l'accordéon gère seul son état.
+	expanded?: boolean;
 }) {
 	const isLast = useContext(MenuIsLastContext) ?? isLastProp;
 	const [expandedState, setExpended] = useState(defaultExpanded);
-	const isExpanded = alwaysExpanded || expandedState;
+	const isExpanded = alwaysExpanded || (expanded ?? expandedState);
 	const showSeparator = !alwaysExpanded && (!isLast || isExpanded);
 
 	// Section non conforme : icône + titre en rouge et mention « not valid ».
@@ -105,7 +109,7 @@ export function MenuAccordion({
 					// Avec un contenu déplié, l'accordéon se déplie/replie inline
 					// au lieu de déléguer la navigation.
 					if (alwaysExpanded) return;
-					if (children) {
+					if (children && expanded === undefined) {
 						setExpended(prev => !prev);
 					}
 					onPress();

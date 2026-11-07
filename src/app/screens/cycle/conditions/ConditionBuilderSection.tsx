@@ -19,7 +19,8 @@ import Icon from 'react-native-vector-icons/FontAwesome5';
 import {connect} from 'react-redux';
 import {isTempId, newTempId} from '../../../../services/socket';
 import {DropdownSelect} from '../../../components/common/FormComponents';
-import {placeholderColor, inputText} from '../../../styles/components/common/Input';
+import {fieldLabelColor,placeholderColor, inputText} from '../../../styles/components/common/Input';
+import {OutlineButton} from '../../access/accessUi';
 import i18n from 'i18next';
 
 /**
@@ -46,7 +47,7 @@ const C = {
 	surface3: '#EDF2F7',
 	border: '#CBD5E0',
 	borderStrong: '#A0AEC0',
-	muted: '#718096',
+	muted: fieldLabelColor,
 	danger: '#E53E3E',
 	errorBorder: '#FC8181',
 	text: '#32404e'
@@ -455,32 +456,28 @@ function GroupView({
 			))}
 
 			<View style={styles.actions}>
-				<TouchableOpacity
+				<OutlineButton
+					label={i18n.t('cycle:conditions.condition')}
+					icon={faPlus}
+					color={C.accent}
 					onPress={() => onAddCondition(group)}
-					style={[styles.btn, {flex: 1}]}>
-					<FontAwesomeIcon icon={faPlus} size={12} color={C.text} />
-					<Text style={styles.btnTxt}>{i18n.t('cycle:conditions.condition')}</Text>
-				</TouchableOpacity>
-				<TouchableOpacity
+					style={styles.actionBtn}
+				/>
+				<OutlineButton
+					label={i18n.t('cycle:conditions.subGroup')}
+					icon={faLayerGroup}
+					color={C.accent}
 					onPress={() => onAddSubGroup(group)}
-					style={[styles.btn, {flex: 1}]}>
-					<FontAwesomeIcon
-						icon={faLayerGroup}
-						size={12}
-						color={C.text}
-					/>
-					<Text style={styles.btnTxt}>{i18n.t('cycle:conditions.subGroup')}</Text>
-				</TouchableOpacity>
+					style={styles.actionBtn}
+				/>
 				{canDelete ? (
-					<TouchableOpacity
+					<OutlineButton
+						icon={faTrash}
+						color={C.danger}
+						accessibilityLabel={i18n.t('cycle:conditions.deleteGroup')}
 						onPress={() => onRemove(group.id)}
-						style={[styles.btn, styles.btnDanger]}>
-						<FontAwesomeIcon
-							icon={faTrash}
-							size={12}
-							color={C.danger}
-						/>
-					</TouchableOpacity>
+						style={styles.actionBtnIcon}
+					/>
 				) : null}
 			</View>
 		</View>
@@ -624,22 +621,10 @@ const styles = StyleSheet.create({
 	addButtonWrapper: {justifyContent: 'center', alignItems: 'center'},
 	addButton: {marginTop: 20, transform: [{rotate: '135deg'}]},
 	addLabel: {color: C.accent, fontSize: 15},
-	// Bouton générique aligné sur le style de l'app (cf. chips/segments) :
-	// fond blanc, bordure #CBD5E0, coins arrondis, icône + libellé slate.
-	btn: {
-		flexDirection: 'row',
-		alignItems: 'center',
-		justifyContent: 'center',
-		gap: 6,
-		paddingVertical: 9,
-		paddingHorizontal: 12,
-		borderRadius: 10,
-		borderWidth: 1,
-		borderColor: C.border,
-		backgroundColor: C.surface
-	},
-	btnDanger: {paddingHorizontal: 12, borderColor: '#FEB2B2'},
-	btnTxt: {fontSize: 13, color: C.text, fontWeight: '600'},
+	// Boutons d'action du groupe : OutlineButton (cf. accessUi), même hauteur
+	// que les inputs (ELEMENT_HEIGHT) ; on neutralise sa marge/centrage par défaut.
+	actionBtn: {flex: 1, marginTop: 0, alignSelf: 'auto', justifyContent: 'center'},
+	actionBtnIcon: {marginTop: 0, alignSelf: 'auto', justifyContent: 'center'},
 	// Même style que la box de la liste des séquences : carte blanche, coins
 	// arrondis, ombre douce (cf. CycleSeqSettingsSection).
 	group: {

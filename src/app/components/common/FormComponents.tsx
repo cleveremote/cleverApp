@@ -11,8 +11,10 @@ import {
 	KeyboardTypeOptions,
 	Modal,
 	Pressable,
+	StyleProp,
 	Text,
 	TextInput,
+	TextStyle,
 	View
 } from 'react-native';
 import {AppSwitch} from './AppSwitch';
@@ -51,7 +53,8 @@ export function DropdownSelect<T extends {iconColor?: {base: string}}>({
 	renderPrefix,
 	onChange,
 	hasError,
-	disabled = false
+	disabled = false,
+	hideChevron = false
 }: Readonly<{
 	items: T[];
 	value: any;
@@ -61,6 +64,8 @@ export function DropdownSelect<T extends {iconColor?: {base: string}}>({
 	onChange: (value: any) => void;
 	hasError: boolean;
 	disabled?: boolean;
+	// Masque la flèche d'ouverture à droite du champ.
+	hideChevron?: boolean;
 }>) {
 	const [isOpen, setIsOpen] = useState(false);
 	const selectedItem = items.find(item => {
@@ -106,7 +111,7 @@ export function DropdownSelect<T extends {iconColor?: {base: string}}>({
 						{label}
 					</Text>
 				</View>
-				{disabled ? null : (
+				{disabled || hideChevron ? null : (
 					<FontAwesomeIcon
 						icon={faChevronDown}
 						size={12}
@@ -181,7 +186,8 @@ export function DateTimePickerForm({
 	onChangeText = () => {},
 	maximumDate,
 	minimumDate,
-	timeZone
+	timeZone,
+	labelStyle
 }: Readonly<{
 	control: Control<any, any>;
 	placeholder: string;
@@ -199,6 +205,8 @@ export function DateTimePickerForm({
 	 * heure du téléphone.
 	 */
 	timeZone?: string;
+	// Style du libellé (ex. InputStyle.fieldLabel).
+	labelStyle?: StyleProp<TextStyle>;
 }>) {
 	const [isDatePickerVisible, setDatePickerVisibility] =
 		React.useState(false);
@@ -269,10 +277,11 @@ export function DateTimePickerForm({
 				render={({field: {onChange, onBlur, value}}) => (
 					<View>
 						<Text
-							style={{
-								...InputStyle.textInput,
-								color: getFieldError(errors, name) ? 'red' : '#32404e'
-							}}>
+							style={[
+								InputStyle.textInput,
+								labelStyle,
+								getFieldError(errors, name) ? {color: 'red'} : null
+							]}>
 							{placeholder}
 						</Text>
 						<Pressable disabled={disabled} onPress={showDatePicker}>
@@ -377,10 +386,11 @@ export function SliderForm({
 				render={({field: {onChange, onBlur, value}}) => (
 					<View>
 						<Text
-							style={{
-								...InputStyle.textInput,
-								color: getFieldError(errors, name) ? 'red' : '#32404e'
-							}}>
+							style={[
+								InputStyle.textInput,
+								// Couleur du libellé : celle du style central, rouge en erreur.
+								getFieldError(errors, name) ? {color: 'red'} : null
+							]}>
 							{placeholder}
 						</Text>
 						<Slider
@@ -424,6 +434,8 @@ export function InputForm({
 	refr,
 	keyboardType,
 	maxLength,
+	hideLabel = false,
+	inputStyle,
 	onChangeText = () => {}
 }: Readonly<{
 	control: Control<any, any>;
@@ -435,6 +447,10 @@ export function InputForm({
 	refr?: any;
 	keyboardType?: KeyboardTypeOptions;
 	maxLength?: number;
+	// Masque le libellé au-dessus du champ (le placeholder reste affiché).
+	hideLabel?: boolean;
+	// Style ajouté au champ (ex. fond blanc hors carte).
+	inputStyle?: StyleProp<TextStyle>;
 	onChangeText?: (value: any) => void;
 }>) {
 	return (
@@ -444,13 +460,16 @@ export function InputForm({
 				rules={rules}
 				render={({field: {onChange, onBlur, value}}) => (
 					<View>
-						<Text
-							style={{
-								...InputStyle.textInput,
-								color: getFieldError(errors, name) ? 'red' : '#32404e'
-							}}>
-							{placeholder}
-						</Text>
+						{hideLabel ? null : (
+							<Text
+								style={[
+									InputStyle.textInput,
+									// Couleur du libellé : celle du style central, rouge en erreur.
+									getFieldError(errors, name) ? {color: 'red'} : null
+								]}>
+								{placeholder}
+							</Text>
+						)}
 						<TextInput
 							style={[
 								InputStyle.input,
@@ -462,6 +481,7 @@ export function InputForm({
 										: '#CBD5E0',
 									paddingHorizontal: 12
 								},
+								inputStyle,
 								disabled && InputStyle.inputDisabled
 							]}
 							placeholder={placeholder}
@@ -503,6 +523,7 @@ export function SwitchForm({
 	errors,
 	rules = {},
 	disabled = false,
+	labelStyle,
 	onChangeText = () => {}
 }: Readonly<{
 	control: Control<any, any>;
@@ -511,6 +532,8 @@ export function SwitchForm({
 	errors: FieldErrors<any>;
 	rules?: any;
 	disabled?: boolean;
+	// Style du libellé (ex. InputStyle.fieldLabel).
+	labelStyle?: StyleProp<TextStyle>;
 	onChangeText?: (value: any) => void;
 }>) {
 	return (
@@ -527,13 +550,7 @@ export function SwitchForm({
 							marginVertical: 8
 						}}>
 						<Text
-							style={{
-								color: '#32404e',
-								fontSize: 15,
-								fontWeight: 'bold',
-								flexShrink: 1,
-								marginRight: 8
-							}}>
+							style={[InputStyle.switchLabel, labelStyle]}>
 							{placeholder}
 						</Text>
 						<AppSwitch
@@ -572,6 +589,7 @@ export function SelectColor({
 	disabled = false,
 	style,
 	colorProportion = 0,
+	hideLabel = false,
 	onChangeText = () => {}
 }: Readonly<{
 	control: Control<any, any>;
@@ -582,6 +600,8 @@ export function SelectColor({
 	disabled?: boolean;
 	style: any;
 	colorProportion?: number;
+	// Masque le code couleur et la flèche : seule la pastille reste affichée.
+	hideLabel?: boolean;
 	onChangeText?: (value: any) => void;
 }>) {
 	return (
@@ -602,7 +622,7 @@ export function SelectColor({
 						<DropdownSelect
 							items={items}
 							value={selected ? JSON.stringify(selected) : ''}
-							getLabel={color => color.bgColor || ''}
+							getLabel={color => (hideLabel ? '' : color.bgColor || '')}
 							getValue={color => JSON.stringify(color)}
 							renderPrefix={color => (
 								<View
@@ -618,6 +638,7 @@ export function SelectColor({
 								onChange(val);
 							}}
 							hasError={!!getFieldError(errors, name)}
+							hideChevron={hideLabel}
 						/>
 					</View>
 					);
@@ -647,6 +668,8 @@ export function TextAreaForm({
 	rules = {},
 	disabled = false,
 	maxLength = 500,
+	hideLabel = false,
+	inputStyle,
 	onChangeText = () => {}
 }: Readonly<{
 	control: Control<any, any>;
@@ -656,6 +679,10 @@ export function TextAreaForm({
 	rules?: any;
 	disabled?: boolean;
 	maxLength?: number;
+	// Masque le libellé au-dessus du champ (le placeholder reste affiché).
+	hideLabel?: boolean;
+	// Style ajouté au champ (ex. fond blanc hors carte).
+	inputStyle?: StyleProp<TextStyle>;
 	onChangeText?: (value: any) => void;
 }>) {
 	// Le champ s'adapte à son contenu : `scrollEnabled={false}` fait
@@ -673,13 +700,16 @@ export function TextAreaForm({
 				rules={rules}
 				render={({field: {onChange, onBlur, value}}) => (
 					<View>
-						<Text
-							style={{
-								...InputStyle.textInput,
-								color: getFieldError(errors, name) ? 'red' : '#32404e'
-							}}>
-							{placeholder}
-						</Text>
+						{hideLabel ? null : (
+							<Text
+								style={[
+									InputStyle.textInput,
+									// Couleur du libellé : celle du style central, rouge en erreur.
+									getFieldError(errors, name) ? {color: 'red'} : null
+								]}>
+								{placeholder}
+							</Text>
+						)}
 						<TextInput
 							multiline={true}
 							scrollEnabled={false}
@@ -699,6 +729,7 @@ export function TextAreaForm({
 									minHeight: minHeight,
 									textAlignVertical: 'top'
 								},
+								inputStyle,
 								disabled && InputStyle.inputDisabled
 							]}
 							placeholder={placeholder}
@@ -919,10 +950,11 @@ export function SelectForm({
 				render={({field: {onChange, onBlur, value}}) => (
 					<View>
 						<Text
-							style={{
-								...InputStyle.textInput,
-								color: getFieldError(errors, name) ? 'red' : '#32404e'
-							}}>
+							style={[
+								InputStyle.textInput,
+								// Couleur du libellé : celle du style central, rouge en erreur.
+								getFieldError(errors, name) ? {color: 'red'} : null
+							]}>
 							{placeholder}
 						</Text>
 						<DropdownSelect

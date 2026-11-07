@@ -1,7 +1,13 @@
-import {inputText, placeholderColor} from '../../../../../styles/components/common/Input';
+import {fieldLabelColor,
+	fieldLabelText,
+	inputText,
+	InputStyle,
+	placeholderColor
+} from '../../../../../styles/components/common/Input';
 import {ELEMENT_HEIGHT} from '../../../../../styles/metrics';
 import React from 'react';
 import {
+	ScrollView,
 	StyleSheet,
 	Text,
 	TextInput,
@@ -11,15 +17,18 @@ import {
 } from 'react-native';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
-import {faPen} from '@fortawesome/free-solid-svg-icons';
+import {faCalendarDays, faCheck, faPen} from '@fortawesome/free-solid-svg-icons';
 import {pickerLocaleProps} from '../../../../../components/common/pickerLocale';
 import {connect, useSelector} from 'react-redux';
 import i18n from 'i18next';
 import {AppSwitch} from '../../../../../components/common/AppSwitch';
 import {TimeZoneNotice} from '../../../../../components/common/TimeZoneNotice';
 import {WarningBox} from '../../../../../components/common/WarningBox';
+import {InfoBox, INFO_COLORS} from '../../../../../components/common/InfoBox';
 import {SolarTriggerFields} from '../../../../../components/common/SolarTriggerFields';
 import {ModalRangePicker} from '../../../../../components/common/ModalRangePicker';
+import {ModalCard} from '../../../../../components/common/ModalCard';
+import {OutlineButton} from '../../../../access/accessUi';
 import {updateSchedule} from '../../../../../../module/process/infrasctructure/store/actions/schedule';
 import {
 	selectBoxCoordinates,
@@ -49,7 +58,10 @@ import {
  * remplace `scheduleData.cron`, `onChange(dto)` remplace le staging redux, et
  * `cronOnly` masque la date ponctuelle et le déclencheur solaire, `hideRuns`
  * masque les prochaines exécutions, `hidePreview`
- * masque l'expression et les prochaines exécutions.
+ * masque l'expression et les prochaines exécutions. `editInModal` n'affiche
+ * que l'expression (pause / confirmation après son explication) et les
+ * prochaines exécutions ; le builder s'ouvre dans une popin via le bouton
+ * planification à côté de l'expression.
  *
  * Fuseau : la box interprète les crons dans son propre fuseau
  * (`settings.timeZone`). Toutes les heures affichées ou saisies ici sont donc
@@ -66,7 +78,7 @@ const C = {
 	surface: '#ffffff',
 	surface2: '#F7FAFC',
 	border: '#CBD5E0',
-	muted: '#718096',
+	muted: fieldLabelColor,
 	secondary: '#4A5568',
 	text: '#32404e'
 };
@@ -155,6 +167,9 @@ function toNameList(v: unknown): string[] {
 	return [];
 }
 
+// Nombre de prochaines exécutions affichées dans l'aperçu.
+const RUNS_PREVIEW = 4;
+
 const ORDER: FieldKey[] = ['sec', 'min', 'hour', 'dom', 'month', 'dow'];
 const DAYORDER: FieldKey[] = ['dom', 'month', 'dow'];
 const TABLABEL: Record<FieldKey, string> = {
@@ -239,6 +254,18 @@ const initialState: CronState = {
 };
 
 // --- Génération d'expression cron ------------------------------------------
+// Nom complet (« janvier », « lundi ») pour l'explication de la cron.
+function fullNameOf(key: FieldKey, v: number): string {
+	const names =
+		key === 'month'
+			? toNameList(i18n.t('cycle:cron.monthsLong', {returnObjects: true}))
+			: key === 'dow'
+			? toNameList(i18n.t('cycle:cron.weekdaysLong', {returnObjects: true}))
+			: null;
+	if (!names) return nameOf(key, v);
+	return names[FIELDCFG[key].base === 0 ? v : v - 1] ?? nameOf(key, v);
+}
+
 function nameOf(key: FieldKey, v: number): string {
 	const cfg = FIELDCFG[key];
 	if (cfg.type !== 'name' || !cfg.names) return String(v);
@@ -463,9 +490,26 @@ function dtoToState(cron: CronDto | undefined | null): CronState {
 	return s;
 }
 
+// Mois et jour de la semaine : sans libellé de champ — « tous les Lun, Jeu »
+// pour une liste, « de Jan à Juil » pour un intervalle.
+const UNPREFIXED: FieldKey[] = ['month', 'dow'];
+
 function describeField(s: CronState, key: FieldKey): string | null {
 	const f = s.fields[key];
 	if (f.mode === 'every') return null;
+	if (UNPREFIXED.includes(key) && f.mode === 'list')
+		return i18n.t('cycle:cron.summaryList', {
+			list: f.list
+				.slice()
+				.sort((a, b) => a - b)
+				.map(v => fullNameOf(key, v))
+				.join(', ')
+		});
+	if (UNPREFIXED.includes(key) && f.mode === 'range')
+		return i18n.t('cycle:cron.summaryRange', {
+			from: fullNameOf(key, f.from),
+			to: fullNameOf(key, f.to)
+		});
 	if (f.mode === 'free') return TABLABEL[key] + ' ' + f.free;
 	if (f.mode === 'list')
 		return (
@@ -486,18 +530,67 @@ function describeField(s: CronState, key: FieldKey): string | null {
 				to: nameOf(key, f.to)
 			})
 		);
-	if (f.mode === 'step')
-		return TABLABEL[key] + ' ' + i18n.t('cycle:cron.stepText', {step: f.step});
+	// Pas : « tous les 2 mois », « toutes les 15 minutes », suivi de
+	// l'intervalle éventuel (« de janvier à juillet »).
+	if (f.mode === 'step') {
+		const every = i18n.t(`cycle:cron.summaryStep.${key}`, {count: f.step});
+		if (f.stepBase !== 'range') return every;
+		return (
+			every +
+			' ' +
+			i18n.t('cycle:cron.summaryRange', {
+				from: fullNameOf(key, f.from),
+				to: fullNameOf(key, f.to)
+			})
+		);
+	}
 	return null;
 }
 
+// Au-delà, la liste des heures serait illisible : on garde le détail par champ.
+const MAX_SUMMARY_TIMES = 6;
+
+// Seconde / minute / heure en valeurs fixes (mode liste) : rassemblées en
+// heures « 08:30 » (« 08:30:15 » si une seconde n'est pas 0). null sinon.
+function timesText(s: CronState): string | null {
+	const lists = (['hour', 'min', 'sec'] as FieldKey[]).map(k => {
+		const f = s.fields[k];
+		return f.mode === 'list' && f.list.length
+			? f.list.slice().sort((a, b) => a - b)
+			: null;
+	});
+	const [hours, mins, secs] = lists;
+	if (!hours || !mins || !secs) return null;
+	if (hours.length * mins.length * secs.length > MAX_SUMMARY_TIMES) return null;
+	const withSec = secs.some(v => v !== 0);
+	const pad = (v: number) => String(v).padStart(2, '0');
+	const times: string[] = [];
+	hours.forEach(h =>
+		mins.forEach(m =>
+			secs.forEach(sec =>
+				times.push(
+					`${pad(h)}:${pad(m)}` + (withSec ? `:${pad(sec)}` : '')
+				)
+			)
+		)
+	);
+	return i18n.t('cycle:cron.atTimes', {times: times.join(', ')});
+}
+
+// Ordre de lecture de l'explication : mois, jours, puis heure.
+const SUMMARY_DAY_ORDER: FieldKey[] = ['month', 'dom', 'dow'];
+const SUMMARY_TIME_ORDER: FieldKey[] = ['hour', 'min', 'sec'];
+
 function summaryText(s: CronState): string {
-	const parts = ORDER.map(k => describeField(s, k)).filter(Boolean);
+	const days = SUMMARY_DAY_ORDER.map(k => describeField(s, k));
+	const time = timesText(s);
+	const timeParts = time ? [time] : SUMMARY_TIME_ORDER.map(k => describeField(s, k));
+	const parts = [...days, ...timeParts].filter(Boolean);
 	return parts.length ? parts.join(' - ') : i18n.t('cycle:cron.everyUnit');
 }
 
 function daySummaryText(s: CronState): string {
-	const parts = DAYORDER.map(k => describeField(s, k)).filter(Boolean);
+	const parts = SUMMARY_DAY_ORDER.map(k => describeField(s, k)).filter(Boolean);
 	return parts.length ? parts.join(' - ') : i18n.t('cycle:cron.everyDay');
 }
 
@@ -688,19 +781,42 @@ function nextCombinedRuns(s: CronState, n: number, tz: string): Date[] {
 	return results;
 }
 
+// Décalage « 1 h 30 min » ; vide sans décalage.
+function solarOffsetLabel(s: CronState): string {
+	const parts: string[] = [];
+	if (s.solar.offsetH > 0) parts.push(s.solar.offsetH + ' h');
+	if (s.solar.offsetM > 0) parts.push(s.solar.offsetM + ' min');
+	return parts.join(' ');
+}
+
+function solarEventLabel(s: CronState): string {
+	return s.solar.event === 'SUNRISE'
+		? i18n.t('cycle:cron.solar.sunriseLower')
+		: i18n.t('cycle:cron.solar.sunsetLower');
+}
+
+// Expression solaire : « coucher du soleil », « 30 min avant le coucher du
+// soleil » (décalage d'abord, puis le sens et l'événement).
 function solarDescription(s: CronState): string | null {
-	const sol = s.solar;
-	if (!sol.enabled) return null;
-	const evLabel =
-		sol.event === 'SUNRISE' ? i18n.t('cycle:cron.solar.sunriseLower') : i18n.t('cycle:cron.solar.sunsetLower');
-	const dirLabel =
-		sol.dir === 'BEFORE' ? i18n.t('cycle:cron.solar.beforeLower') : i18n.t('cycle:cron.solar.afterLower');
-	const offParts: string[] = [];
-	if (sol.offsetH > 0) offParts.push(sol.offsetH + 'h');
-	if (sol.offsetM > 0) offParts.push(sol.offsetM + 'min');
-	const offLabel = offParts.join(' ');
-	const offText = sol.offsetH === 0 && sol.offsetM === 0 ? '' : ' ' + dirLabel + ' ' + offLabel;
-	return evLabel + offText;
+	if (!s.solar.enabled) return null;
+	const event = solarEventLabel(s);
+	const offset = solarOffsetLabel(s);
+	if (!offset) return event;
+	return i18n.t(
+		s.solar.dir === 'BEFORE'
+			? 'cycle:cron.solar.offsetBefore'
+			: 'cycle:cron.solar.offsetAfter',
+		{offset, event}
+	);
+}
+
+// Même chose dans une phrase (résumés) : « au coucher du soleil » sans
+// décalage, « 30 min avant le coucher du soleil » sinon.
+function solarPhrase(s: CronState): string {
+	if (!solarOffsetLabel(s)) {
+		return i18n.t('cycle:cron.solar.atEvent', {event: solarEventLabel(s)});
+	}
+	return solarDescription(s) ?? '';
 }
 
 const MODES: Exclude<FieldMode, 'free'>[] = ['every', 'list', 'range', 'step'];
@@ -916,6 +1032,8 @@ export function NewSchedulingSection(props: any) {
 	const oneTimeEnabled = state.oneTime.enabled;
 	const [pickerVisible, setPickerVisible] = React.useState(false);
 	const [rangeModalOpen, setRangeModalOpen] = React.useState(false);
+	// Popin de configuration (`editInModal`), ouverte par le bouton planification.
+	const [configOpen, setConfigOpen] = React.useState(false);
 	const combineMode =
 		!oneTimeEnabled && state.solar.enabled && state.solar.mode === 'combine';
 	const replaceMode =
@@ -958,9 +1076,9 @@ export function NewSchedulingSection(props: any) {
 		const sum = combine ? daySummaryText(state) : summaryText(state);
 		const solStr = sol.enabled ? solarDescription(state) : null;
 		let r: Date[];
-		if (sol.enabled && sol.mode === 'replace') r = nextSolarRuns(calc, 5, tz);
-		else if (combine) r = nextCombinedRuns(calc, 5, tz);
-		else r = nextRuns(calc, 5, tz);
+		if (sol.enabled && sol.mode === 'replace') r = nextSolarRuns(calc, RUNS_PREVIEW, tz);
+		else if (combine) r = nextCombinedRuns(calc, RUNS_PREVIEW, tz);
+		else r = nextRuns(calc, RUNS_PREVIEW, tz);
 		return {displayStr: dStr, summary: sum, solarStr: solStr, runs: r};
 	}, [state, tz, lat, lon]);
 
@@ -1013,8 +1131,10 @@ export function NewSchedulingSection(props: any) {
 		</TouchableOpacity>
 	);
 
-	return (
-		<View style={styles.wrap}>
+	// Builder (date ponctuelle, champs cron, solaire) : en ligne, ou dans la
+	// popin ouverte par le bouton planification du bloc Expression (`editInModal`).
+	const builder = (
+		<>
 			<TimeZoneNotice kind="box" />
 			{/* Date ponctuelle : planifie une seule exécution via le datetime picker. */}
 			{!props.cronOnly && (
@@ -1283,120 +1403,40 @@ export function NewSchedulingSection(props: any) {
 					/>
 				</View>
 			)}
+		</>
+	);
 
-			{!props.hidePreview && (
-				<>
-					{/* Expression */}
-					<View style={styles.outCard}>
-						{oneTimeEnabled ? (
-							<>
-								<Text style={styles.sectionLabel}>{i18n.t('cycle:cron.expression')}</Text>
-								<Text selectable style={styles.expression}>
-									{displayStr}
-								</Text>
-								<Text style={styles.summary}>{summary}</Text>
-							</>
-						) : (
-							/* En mode « remplacer » le cron est ignoré : pas d'expression cron. */
-							!replaceMode && (
-								<>
-									<Text style={styles.sectionLabel}>{i18n.t('cycle:cron.expression')}</Text>
-									<TextInput
-										value={exprText}
-										onChangeText={onExprChange}
-										onFocus={() => (exprFocused.current = true)}
-										onBlur={() => {
-											exprFocused.current = false;
-											setExprText(displayStr);
-										}}
-										autoCapitalize="none"
-										autoCorrect={false}
-										placeholder={combineMode ? '* * *' : '* * * * * *'}
-										placeholderTextColor={placeholderColor}
-										style={styles.expressionInput}
-									/>
-									<Text style={styles.hint}>
-										{combineMode
-											? i18n.t('cycle:cron.editCombineHint')
-											: i18n.t('cycle:cron.editHint')}
-									</Text>
-									<Text style={styles.summary}>{summary}</Text>
-								</>
-							)
-						)}
+	// Pause / confirmation : propres au schedule (absents en réutilisation
+	// hors schedule, ex. sensor). En `editInModal`, à la fin du bloc Expression.
+	const flags = !props.onChange && (
+		<WarningBox
+			hideIcon
+			style={props.editInModal ? styles.flagsBoxFirst : styles.flagsBox}>
+			<View style={styles.flagRow}>
+				<Text style={styles.switchLabel}>
+					{i18n.t('cycle:schedules.setPaused')}
+				</Text>
+				<AppSwitch
+					value={!!props.scheduleData?.isPaused}
+					onValueChange={v => stageFlag('isPaused', v)}
+				/>
+			</View>
+			<View style={styles.flagRow}>
+				<Text style={styles.switchLabel}>
+					{i18n.t('cycle:schedules.needConfirmation')}
+				</Text>
+				<AppSwitch
+					value={!!props.scheduleData?.shouldConfirmation}
+					onValueChange={v => stageFlag('shouldConfirmation', v)}
+				/>
+			</View>
+		</WarningBox>
+	);
 
-						{/* Expression du déclencheur solaire (séparée, n'altère pas le cron). */}
-						{solarStr && (
-							<View style={replaceMode ? undefined : styles.solarExprBox}>
-								<Text style={styles.sectionLabel}>{i18n.t('cycle:cron.solar.title')}</Text>
-								<Text selectable style={styles.solarExpr}>
-									{solarStr}
-								</Text>
-								<Text style={styles.summary}>
-									{state.solar.mode === 'replace'
-										? i18n.t('cycle:cron.solar.replaceSummary', {solar: solarStr})
-										: i18n.t('cycle:cron.solar.combineSummary', {solar: solarStr})}
-								</Text>
-							</View>
-						)}
-					</View>
-
-					{/* Prochaines exécutions */}
-					{!props.hideRuns && (
-					<View style={styles.outCard}>
-						<Text style={styles.sectionLabel}>{i18n.t('cycle:cron.nextRuns')}</Text>
-						{runs.length === 0 ? (
-							<Text style={styles.hint}>
-								{i18n.t('cycle:cron.noRuns')}
-							</Text>
-						) : (
-							runs.map((d, i) => (
-								<Text key={i} style={styles.runRow}>
-									{d.toLocaleDateString(i18n.language, {
-										timeZone: tz,
-										weekday: 'short',
-										day: '2-digit',
-										month: 'short'
-									})}
-									{', '}
-									{d.toLocaleTimeString(i18n.language, {
-										timeZone: tz,
-										hour: '2-digit',
-										minute: '2-digit'
-									})}
-								</Text>
-							))
-						)}
-					</View>
-					)}
-				</>
-			)}
-
-			{/* Pause / confirmation : propres au schedule (absents en réutilisation
-			    hors schedule, ex. sensor). */}
-			{!props.onChange && (
-				<WarningBox hideIcon style={styles.flagsBox}>
-					<View style={styles.flagRow}>
-						<Text style={styles.switchLabel}>
-							{i18n.t('cycle:schedules.setPaused')}
-						</Text>
-						<AppSwitch
-							value={!!props.scheduleData?.isPaused}
-							onValueChange={v => stageFlag('isPaused', v)}
-						/>
-					</View>
-					<View style={styles.flagRow}>
-						<Text style={styles.switchLabel}>
-							{i18n.t('cycle:schedules.needConfirmation')}
-						</Text>
-						<AppSwitch
-							value={!!props.scheduleData?.shouldConfirmation}
-							onValueChange={v => stageFlag('shouldConfirmation', v)}
-						/>
-					</View>
-				</WarningBox>
-			)}
-
+	// Sélecteurs (date ponctuelle, intervalle) : rendus dans la popin quand le
+	// builder y est, pour s'ouvrir au-dessus d'elle.
+	const pickers = (
+		<>
 			{/* Sélecteur de date ponctuelle (même picker que la section Execution). */}
 			<DateTimePickerModal
 				isVisible={pickerVisible}
@@ -1437,6 +1477,170 @@ export function NewSchedulingSection(props: any) {
 					})
 				}
 			/>
+		</>
+	);
+
+	// `editInModal` : bouton outline (icône planification) à côté de l'expression, qui
+	// ouvre la popin de configuration.
+	const editBtn = props.editInModal ? (
+		<OutlineButton
+			icon={faCalendarDays}
+			color={C.text}
+			accessibilityLabel={i18n.t('cycle:cron.edit')}
+			onPress={() => setConfigOpen(true)}
+			style={styles.editBtn}
+		/>
+	) : null;
+
+	// Expression + prochaines exécutions. En `editInModal`, le bloc Expression
+	// porte le bouton de configuration et, à la fin, pause / confirmation.
+	const preview = !props.hidePreview && (
+		<>
+			{/* Expression */}
+			<View style={styles.outCard}>
+				{oneTimeEnabled ? (
+					<>
+						<Text style={styles.sectionLabel}>{i18n.t('cycle:cron.expression')}</Text>
+						<View style={[styles.exprRow, styles.exprRowSpaced]}>
+							<Text
+								selectable
+								style={[styles.expression, styles.exprFlex, styles.noMargin]}>
+								{displayStr}
+							</Text>
+							{editBtn}
+						</View>
+						<InfoBox style={styles.summaryBox}>
+							<Text style={[styles.summary, styles.infoText]}>{summary}</Text>
+						</InfoBox>
+					</>
+				) : (
+					/* En mode « remplacer » le cron est ignoré : pas d'expression cron. */
+					!replaceMode && (
+						<>
+							<Text style={styles.sectionLabel}>{i18n.t('cycle:cron.expression')}</Text>
+							<View style={styles.exprRow}>
+								<TextInput
+									value={exprText}
+									onChangeText={onExprChange}
+									onFocus={() => (exprFocused.current = true)}
+									onBlur={() => {
+										exprFocused.current = false;
+										setExprText(displayStr);
+									}}
+									autoCapitalize="none"
+									autoCorrect={false}
+									placeholder={combineMode ? '* * *' : '* * * * * *'}
+									placeholderTextColor={placeholderColor}
+									style={[styles.expressionInput, styles.exprFlex]}
+								/>
+								{editBtn}
+							</View>
+							{/* Avec le déclencheur solaire (combiner), l'explication de
+							    la cron passe dans le bloc solaire. */}
+							{combineMode ? null : (
+								<InfoBox style={styles.summaryBox}>
+									<Text style={[styles.summary, styles.infoText]}>
+										{summary}
+									</Text>
+								</InfoBox>
+							)}
+						</>
+					)
+				)}
+
+				{/* Déclencheur solaire (séparé, n'altère pas le cron) : tout le bloc
+				    dans une InfoBox, sans titre — expression solaire et explication (cron
+				    des jours en « combiner », remplacement du cron en « remplacer »). */}
+				{solarStr && (
+					<InfoBox style={replaceMode ? undefined : styles.solarInfoBox}>
+						<View style={styles.exprRow}>
+							<Text
+								selectable
+								style={[styles.solarExpr, styles.infoText, styles.exprFlex]}>
+								{solarStr}
+							</Text>
+							{/* Remplacer : pas d'expression cron, le bouton suit le solaire. */}
+							{replaceMode ? editBtn : null}
+						</View>
+						<Text style={[styles.summary, styles.infoText]}>
+							{replaceMode
+								? i18n.t('cycle:cron.solar.replaceSummary', {
+										solar: solarPhrase(state)
+								  })
+								: summary}
+						</Text>
+					</InfoBox>
+				)}
+
+				{/* Pause / confirmation après l'explication de l'expression. */}
+				{props.editInModal ? flags : null}
+			</View>
+
+			{/* Prochaines exécutions */}
+			{!props.hideRuns && (
+				<View style={styles.outCard}>
+					<Text style={styles.sectionLabel}>{i18n.t('cycle:cron.nextRuns')}</Text>
+					{runs.length === 0 ? (
+						<Text style={styles.hint}>
+							{i18n.t('cycle:cron.noRuns')}
+						</Text>
+					) : (
+						runs.map((d, i) => (
+							<Text key={i} style={styles.runRow}>
+								{d.toLocaleDateString(i18n.language, {
+									timeZone: tz,
+									weekday: 'short',
+									day: '2-digit',
+									month: 'short'
+								})}
+								{', '}
+								{d.toLocaleTimeString(i18n.language, {
+									timeZone: tz,
+									hour: '2-digit',
+									minute: '2-digit'
+								})}
+							</Text>
+						))
+					)}
+				</View>
+			)}
+		</>
+	);
+
+	if (props.editInModal) {
+		return (
+			<View style={styles.wrap}>
+				{preview}
+				<ModalCard
+					isOpen={configOpen}
+					onClose={() => setConfigOpen(false)}
+					title={i18n.t('cycle:cron.configTitle')}
+					style={styles.modalSize}>
+					<ScrollView
+						style={styles.modalScroll}
+						keyboardShouldPersistTaps="handled">
+						{builder}
+					</ScrollView>
+					<OutlineButton
+						label={i18n.t('cycle:cron.done')}
+						icon={faCheck}
+						onPress={() => setConfigOpen(false)}
+					/>
+					{pickers}
+				</ModalCard>
+			</View>
+		);
+	}
+
+	return (
+		<View style={styles.wrap}>
+			{builder}
+
+			{preview}
+
+			{flags}
+
+			{pickers}
 		</View>
 	);
 }
@@ -1463,12 +1667,11 @@ const styles = StyleSheet.create({
 	// Contenu calé sur la verticale de l'icône de l'en-tête (marginLeft: 10 du
 	// MenuAccordion) pour que tout s'aligne sous l'icône de la section.
 	wrap: {paddingLeft: 10, paddingRight: 10, paddingTop: 4, paddingBottom: 14},
+	// Libellés au format « Décalage » (déclencheur solaire) : gris, 13, semi-gras.
 	sectionLabel: {
-		fontSize: 13,
-		color: C.text,
+		...fieldLabelText,
 		marginBottom: 8,
-		marginTop: 4,
-		fontWeight: 'bold'
+		marginTop: 4
 	},
 	tabRows: {gap: 8, marginTop: 2},
 	tabRow: {flexDirection: 'row', gap: 8},
@@ -1489,17 +1692,36 @@ const styles = StyleSheet.create({
 	flagsBox: {
 		marginTop: 14
 	},
+	// En tête du bloc Expression (`editInModal`).
+	// Dans le bloc Expression (`editInModal`), après l'explication.
+	flagsBoxFirst: {
+		marginTop: 12
+	},
+	// Expression + bouton de configuration sur une ligne.
+	exprRow: {flexDirection: 'row', alignItems: 'center', gap: 8},
+	exprFlex: {flex: 1},
+	// La marge de l'expression passe à la ligne (alignement avec le bouton).
+	exprRowSpaced: {marginBottom: 10},
+	noMargin: {marginBottom: 0},
+	// OutlineButton icône seule, carré à la hauteur du champ (ELEMENT_HEIGHT) ;
+	// on neutralise sa marge / son centrage par défaut.
+	editBtn: {
+		width: ELEMENT_HEIGHT,
+		marginTop: 0,
+		alignSelf: 'auto',
+		justifyContent: 'center',
+		paddingHorizontal: 0
+	},
+	modalSize: {width: '90%', maxHeight: '85%'},
+	// Se contracte dans la carte pour que le builder défile.
+	modalScroll: {flexShrink: 1},
 	flagRow: {
 		flexDirection: 'row',
 		alignItems: 'center',
 		justifyContent: 'space-between',
 		marginVertical: 4
 	},
-	switchLabel: {
-		flexShrink: 1,
-		marginRight: 8,
-		...inputText
-	},
+	switchLabel: InputStyle.switchLabel,
 	// Même style que la carte englobant la liste des séquences : fond blanc,
 	// coins arrondis, ombre douce (pas de bordure).
 	editorCard: {
@@ -1513,7 +1735,7 @@ const styles = StyleSheet.create({
 		shadowOpacity: 0.22,
 		shadowRadius: 2.22
 	},
-	fieldLabel: {fontSize: 13, color: C.muted, marginBottom: 10, fontWeight: '600'},
+	fieldLabel: {...fieldLabelText, marginBottom: 10},
 	chipsWrap: {flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 4},
 	chip: {
 		paddingHorizontal: 12,
@@ -1591,16 +1813,10 @@ const styles = StyleSheet.create({
 	inlineRow: {flexDirection: 'row', alignItems: 'center', gap: 10, marginTop: 6},
 	inlineTxt: {fontSize: 14, color: C.text, fontWeight: '600'},
 	inlineMuted: {fontSize: 14, color: C.muted},
+	// Blocs Expression et Prochaines exécutions : posés directement dans la
+	// section (pas de carte imbriquée), séparés par un simple espacement.
 	outCard: {
-		backgroundColor: C.surface,
-		borderRadius: 12,
-		padding: 14,
-		marginTop: 14,
-		elevation: 3,
-		shadowColor: '#000',
-		shadowOffset: {width: 0, height: 1},
-		shadowOpacity: 0.22,
-		shadowRadius: 2.22
+		marginTop: 14
 	},
 	expression: {
 		...inputText,
@@ -1616,12 +1832,11 @@ const styles = StyleSheet.create({
 		height: ELEMENT_HEIGHT
 	},
 	summary: {fontSize: 13, color: C.secondary, lineHeight: 18},
-	solarExprBox: {
-		marginTop: 12,
-		paddingTop: 12,
-		borderTopWidth: 1,
-		borderTopColor: C.border
-	},
+	// Bloc solaire (InfoBox) sous l'expression cron en « combiner ».
+	solarInfoBox: {marginTop: 12},
+	// Explication de la cron (sans solaire) dans une InfoBox, sous l'expression.
+	summaryBox: {marginTop: 8},
+	infoText: {color: INFO_COLORS.text},
 	solarExpr: {
 		fontSize: 15,
 		fontWeight: '700',

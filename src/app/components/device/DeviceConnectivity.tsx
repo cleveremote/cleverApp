@@ -29,6 +29,9 @@ import {
 import {isTempId} from '../../../services/socket';
 import i18n from 'i18next';
 import {directionalIcon} from '../../../i18n/rtl';
+import {WallClock, deviceTimeZone, wallClockIn} from '../../../services/time';
+import {selectBoxTimeZone} from '../../../module/process/infrasctructure/store/models/boxSettings';
+import {WARNING_COLORS, WarningBox} from '../common/WarningBox';
 
 // Le socket n'a pas de timeout : garde-fou pour ne pas bloquer le bouton.
 const CHECK_TIMEOUT_MS = 30000;
@@ -52,13 +55,45 @@ const BACKGROUNDS: Record<ConnectivityState, string> = {
 const pad = (n: number) => `${n}`.padStart(2, '0');
 
 // "29/10 08:12 (heure locale)" : Intl n'est pas fiable sous Hermes/Android.
-// Heure du téléphone, précisée car elle peut différer de celle de la box.
-export const formatChangedAt = (iso?: string) => {
+// Heure du téléphone, précisée car elle peut différer de celle de la box
+// (sauf `withZone: false`, quand un avertissement dédié le signale).
+export const formatChangedAt = (iso?: string, withZone = true) => {
 	const d = iso ? new Date(iso) : undefined;
 	if (!d || Number.isNaN(d.getTime())) return undefined;
-	return `${pad(d.getDate())}/${pad(d.getMonth() + 1)} ${pad(
+	const at = `${pad(d.getDate())}/${pad(d.getMonth() + 1)} ${pad(
 		d.getHours()
-	)}:${pad(d.getMinutes())} (${i18n.t('common:timeZoneNotice.localShort')})`;
+	)}:${pad(d.getMinutes())}`;
+	return withZone
+		? `${at} (${i18n.t('common:timeZoneNotice.localShort')})`
+		: at;
+};
+
+// Minutes depuis l'epoch d'une heure murale (pour comparer deux fuseaux).
+const wallMinutes = (w: WallClock) =>
+	Date.UTC(w.year, w.month - 1, w.day, w.hour, w.minute) / 60000;
+
+// Avance (> 0) ou retard (< 0) de l'heure de la box sur celle du téléphone, en
+// minutes, en ce moment. 0 si identiques ou fuseau inconnu du moteur JS.
+const boxClockOffset = (boxTz: string, phoneTz: string): number => {
+	if (!boxTz || boxTz === phoneTz) return 0;
+	try {
+		const now = Date.now();
+		return (
+			wallMinutes(wallClockIn(boxTz, now)) -
+			wallMinutes(wallClockIn(phoneTz, now))
+		);
+	} catch {
+		return 0;
+	}
+};
+
+// « 1 h », « 5 h 30 ».
+const formatOffset = (minutes: number) => {
+	const abs = Math.abs(minutes);
+	const h = Math.floor(abs / 60);
+	const m = abs % 60;
+	if (!h) return `${m} min`;
+	return m ? `${h} h ${pad(m)}` : `${h} h`;
 };
 
 const useDevicesState = () => {
@@ -308,24 +343,52 @@ export function CheckDevicesButton(
 }
 
 // État compact d'un device : pastille, libellé et date du dernier changement.
-export function DeviceConnectivityStatus({device}: Readonly<{device: any}>) {
+// `thin` : bannière plus fine (en tête de la section General).
+export function DeviceConnectivityStatus({
+	device,
+	thin = false
+}: Readonly<{device: any; thin?: boolean}>) {
 	const {state, changedAt} = useDeviceConnectivity(device);
-	const at = formatChangedAt(changedAt);
+	// Heure du téléphone, sans mention : l'avertissement ci-dessous signale un
+	// écart avec l'heure de la box.
+	const at = formatChangedAt(changedAt, false);
+	const boxTz: string = useSelector(selectBoxTimeZone);
+	const offset = boxClockOffset(boxTz, deviceTimeZone());
 	return (
-		<View
-			style={[
-				styles.row,
-				styles.status,
-				{borderColor: COLORS[state], backgroundColor: BACKGROUNDS[state]}
-			]}>
-			<View style={[styles.dot, {backgroundColor: COLORS[state]}]} />
-			<Text style={[styles.state, {color: COLORS[state]}]}>
-				{label(state)}
-			</Text>
-			{state !== 'UNKNOWN' && at ? (
-				<Text style={styles.detail}>
-					{i18n.t('devices:connectivity.since', {at})}
+		<View>
+			<View
+				style={[
+					styles.row,
+					styles.status,
+					thin && styles.statusThin,
+					{borderColor: COLORS[state], backgroundColor: BACKGROUNDS[state]}
+				]}>
+				<View style={[styles.dot, {backgroundColor: COLORS[state]}]} />
+				<Text
+					style={[
+						styles.state,
+						thin && styles.stateThin,
+						{color: COLORS[state]}
+					]}>
+					{label(state)}
 				</Text>
+				{state !== 'UNKNOWN' && at ? (
+					<Text style={[styles.detail, thin && styles.detailThin]}>
+						{i18n.t('devices:connectivity.since', {at})}
+					</Text>
+				) : null}
+			</View>
+			{offset ? (
+				<WarningBox style={styles.timeWarning}>
+					<Text style={styles.timeWarningText}>
+						{i18n.t(
+							offset > 0
+								? 'devices:connectivity.boxTimeAhead'
+								: 'devices:connectivity.boxTimeBehind',
+							{diff: formatOffset(offset), timeZone: boxTz}
+						)}
+					</Text>
+				</WarningBox>
 			) : null}
 		</View>
 	);
@@ -519,14 +582,23 @@ const styles = StyleSheet.create({
 		borderWidth: 1,
 		paddingHorizontal: 12
 	},
+	statusThin: {
+		height: 30,
+		borderRadius: 10,
+		paddingHorizontal: 10
+	},
 	state: {
 		fontWeight: 'bold',
 		fontSize: 15
 	},
+	stateThin: {fontSize: 13},
 	detail: {
 		color: '#32404e',
 		fontSize: 14
 	},
+	detailThin: {fontSize: 12},
+	timeWarning: {marginTop: 6},
+	timeWarningText: {flex: 1, fontSize: 12, color: WARNING_COLORS.text},
 	error: {
 		color: '#991b1b',
 		fontSize: 13

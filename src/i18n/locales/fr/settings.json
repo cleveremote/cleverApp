@@ -29,7 +29,7 @@
 		"timeZone": "Fuseau horaire",
 		"timeZoneHint": "Déduit des coordonnées par la box. Les horaires des programmations sont exprimés dans ce fuseau.",
 		"modePriority": "Priorité des modes",
-		"modePriorityHint": "Appui long puis glisser un mode pour changer sa priorité.",
+		"modePriorityHint": "Appui long puis glisser un mode.",
 		"modePriorityRequired": "La priorité des modes est obligatoire",
 		"box": "Box",
 		"version": "Version"

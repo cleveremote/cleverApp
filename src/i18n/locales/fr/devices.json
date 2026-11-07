@@ -15,6 +15,8 @@
 		"timeoutMessage": "La box n'a pas répondu. Vérifiez la connexion et réessayez.",
 		"checking": "Vérification…",
 		"since": "depuis {{at}}",
+		"boxTimeAhead": "La box a {{diff}} d'avance sur votre téléphone (box en {{timeZone}}). Les heures affichées sont celles du téléphone.",
+		"boxTimeBehind": "La box a {{diff}} de retard sur votre téléphone (box en {{timeZone}}). Les heures affichées sont celles du téléphone.",
 		"noReading": "Pas de mesure : équipement déconnecté",
 		"cannotStart": "Démarrage impossible : équipement déconnecté",
 		"slavesAffected": "Esclaves concernés : {{slaves}}",
@@ -57,7 +59,10 @@
 	},
 	"model": {
 		"title": "Modèle",
+		"slaveId": "ID esclave",
 		"channelValue": "canal {{value}}",
+		"type": "Type",
+		"path": "Chemin",
 		"range": "Plage",
 		"default": "Défaut",
 		"autoSensor": "capteur créé automatiquement",
@@ -67,7 +72,11 @@
 		"portCount_other": "{{count}} ports",
 		"commands": "Commandes",
 		"noCommand": "Aucune commande pour ce modèle.",
-		"measures": "Mesures"
+		"measures": "Mesures",
+		"read": "Lecture",
+		"write": "Écriture",
+		"confirm": "Confirmation",
+		"noMatch": "Aucune commande ne correspond aux filtres."
 	},
 	"command": {
 		"failed": "Échec de la commande",
@@ -88,6 +97,7 @@
 		"to": "À",
 		"sent": "Commande envoyée",
 		"raw": "brut {{value}}",
-		"test": "Test"
+		"test": "Test",
+		"result": "Résultat"
 	}
 }

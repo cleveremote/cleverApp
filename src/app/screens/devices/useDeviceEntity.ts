@@ -138,6 +138,8 @@ export function useDeviceEntity(
 		navigation: props.navigation,
 		entity: props.device,
 		isNew: isCreateFlow,
+		// Section General toujours visible : pas de rouge à l'entrée en création.
+		deferNewValidation: true,
 		hasChanges: () => hasChanges(deviceRef.current),
 		save: onDone => performSave(onDone),
 		validate: validate ? () => validate(deviceRef.current) : undefined,

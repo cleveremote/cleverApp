@@ -1,14 +1,14 @@
 import React, {useEffect, useRef} from 'react';
 import {Alert, ScrollView, Text, View} from 'react-native';
-import {navigationHeader} from '../../../../components/common/navigationHeaders';
 import {
-	InputForm,
-	SelectColor,
-	TextAreaForm
-} from '../../../../components/common/FormComponents';
+	GeneralSettingsFields,
+	generalEmbeddedBoxStyle
+} from '../../../../components/common/GeneralSettingsFields';
+import {navigationHeader} from '../../../../components/common/navigationHeaders';
 import {AppSwitch} from '../../../../components/common/AppSwitch';
 import {useForm} from 'react-hook-form';
 import {BoxFormStyle} from '../../../../styles/components/common/boxForm';
+import {InputStyle} from '../../../../styles/components/common/Input';
 
 import {connect} from 'react-redux';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
@@ -49,6 +49,7 @@ export function CycleGeneralSettingsSection(props: any) {
 		trigger,
 		formState: {errors}
 	} = useForm({defaultValues, mode: 'onChange'});
+
 
 	const executionMode =
 		watch('executionMode') ?? ExecutionMode.SEQUENTIAL;
@@ -198,51 +199,22 @@ export function CycleGeneralSettingsSection(props: any) {
 		: {automaticallyAdjustKeyboardInsets: true};
 
 	return (
-		<View style={BoxFormStyle.boxForm}>
-			<Text
-				style={{
-					color: '#32404e',
-					fontSize: 15,
-					fontWeight: 'bold',
-					marginTop: 5,
-					marginBottom: 5
-				}}>
-				{i18n.t('cycle:settings.theme')}
-			</Text>
-			<SelectColor
+		<View style={[BoxFormStyle.boxForm, embedded && generalEmbeddedBoxStyle]}>
+			<GeneralSettingsFields
 				control={control}
 				errors={errors}
-				name="style"
-				placeholder={i18n.t('cycle:settings.cycleTheme')}
-				rules={{required: i18n.t('cycle:settings.themeRequired')}}
+				showErrors={props.showErrors}
+				themeStyle={{...cycleData?.style}}
+				themePlaceholder={i18n.t('cycle:settings.cycleTheme')}
 				colorProportion={colorProportion}
-				style={{...cycleData?.style}}
-				onChangeText={value => {
+				nameMaxLength={25}
+				onThemeChange={value => {
 					setCycleData({...cycleData, style: JSON.parse(value)});
 					setSaveUnchangedData(true);
 				}}
+				onEdit={() => setSaveUnchangedData(true)}
 			/>
 			<Body {...bodyProps}>
-				<InputForm
-					control={control}
-					errors={errors}
-					name="name"
-					maxLength={25}
-					placeholder={i18n.t('common:form.name')}
-					rules={{required: i18n.t('common:form.nameRequired')}}
-					onChangeText={value => {
-						setSaveUnchangedData(true);
-					}}
-				/>
-				<TextAreaForm
-					control={control}
-					errors={errors}
-					name="description"
-					placeholder={i18n.t('common:form.description')}
-					onChangeText={value => {
-						setSaveUnchangedData(true);
-					}}
-				/>
 				{isGroup && (
 					<View
 						style={{
@@ -251,12 +223,7 @@ export function CycleGeneralSettingsSection(props: any) {
 							alignItems: 'center',
 							justifyContent: 'space-between'
 						}}>
-						<Text
-							style={{
-								color: '#32404e',
-								fontSize: 15,
-								fontWeight: 'bold'
-							}}>
+						<Text style={InputStyle.switchLabel}>
 							{i18n.t('cycle:settings.executionMode')}
 						</Text>
 						<View

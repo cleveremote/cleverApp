@@ -12,7 +12,6 @@ import {
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import {
 	faCheckDouble,
-	faGear,
 	faLayerGroup,
 	faRotateRight
 } from '@fortawesome/free-solid-svg-icons';
@@ -35,6 +34,7 @@ import ConditionBuilderSection, {
 } from '../../conditions/ConditionBuilderSection';
 import CycleChildrenSettingsSection from './CycleChildrenSettingsSection';
 import CycleGeneralSettingsSection from './CycleGeneralSettingsSection';
+import {generalContainerStyle} from '../../../../components/common/GeneralSettingsFields';
 import i18n from 'i18next';
 
 type BeforeRemoveEvent = {
@@ -78,6 +78,10 @@ export function CycleSett(props: any) {
 		}
 	}
 
+	// Entité de cet écran présente dans le slice (chargée par loadCycle/loadGroup).
+	const generalLoaded =
+		cycleRef.current != null && cycleRef.current.id === entityId.current;
+
 	// Latest `cycles` slice, read at save time to collect the group's in-memory
 	// (soft-saved) child cycles. A ref because they are added after this screen's
 	// save effect closes over its props (adding a child changes `cycles`, not our
@@ -111,7 +115,10 @@ export function CycleSett(props: any) {
 	// Validation dès l'accès à l'écran (comme la section Condition General) : on
 	// met en évidence les sections invalides immédiatement au chargement puis à
 	// chaque édition, pour lever le rouge dès correction — sans attendre un save.
+	// En création, la section General (toujours visible) est vide à l'entrée :
+	// pas de rouge avant la première tentative de save.
 	useEffect(() => {
+		if (isCreateFlow && !attemptedSaveRef.current) return;
 		attemptedSaveRef.current = true;
 		setInvalidSections(computeInvalidSections(cycleRef.current));
 	}, [props.cycle]);
@@ -398,13 +405,12 @@ export function CycleSett(props: any) {
 
 	return (
 		<SettingsScrollView>
-			<MenuGroup style={styles.card}>
-				<MenuAccordion
-					key={21}
-					name={i18n.t('common:sections.general')}
-					icon={faGear}
-					invalid={invalidSections.general}
-					onPress={() => {}}>
+			{/* Général sorti du menu, en première position, sans carte blanche :
+			    directement sur le fond de l'écran. Son
+			    formulaire lit ses valeurs au montage : on attend que l'entité de
+			    cet écran soit chargée (sinon champs vides ou cycle précédent). */}
+			{generalLoaded ? (
+				<View style={generalContainerStyle}>
 					<CycleGeneralSettingsSection
 						embedded
 						cycleData={cycleRef.current}
@@ -412,7 +418,9 @@ export function CycleSett(props: any) {
 						showErrors={invalidSections.general}
 						navigation={props.navigation}
 					/>
-				</MenuAccordion>
+				</View>
+			) : null}
+			<MenuGroup style={styles.card}>
 				<MenuAccordion
 					key={31}
 					name={i18n.t('common:sections.conditions')}

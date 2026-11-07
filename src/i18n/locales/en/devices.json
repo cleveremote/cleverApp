@@ -15,6 +15,8 @@
 		"timeoutMessage": "The box did not answer. Check the connection and try again.",
 		"checking": "Checking…",
 		"since": "since {{at}}",
+		"boxTimeAhead": "The box is {{diff}} ahead of your phone (box in {{timeZone}}). Times shown are your phone's.",
+		"boxTimeBehind": "The box is {{diff}} behind your phone (box in {{timeZone}}). Times shown are your phone's.",
 		"noReading": "No reading: device disconnected",
 		"cannotStart": "Cannot start: device disconnected",
 		"slavesAffected": "Slaves affected: {{slaves}}",
@@ -57,7 +59,10 @@
 	},
 	"model": {
 		"title": "Model",
+		"slaveId": "Slave ID",
 		"channelValue": "channel {{value}}",
+		"type": "Type",
+		"path": "Path",
 		"range": "Range",
 		"default": "Default",
 		"autoSensor": "auto-created sensor",
@@ -67,7 +72,11 @@
 		"portCount_other": "{{count}} ports",
 		"commands": "Commands",
 		"noCommand": "No command for this model.",
-		"measures": "Measures"
+		"measures": "Measures",
+		"read": "Read",
+		"write": "Set",
+		"confirm": "Confirmation",
+		"noMatch": "No command matches the filters."
 	},
 	"command": {
 		"failed": "Command failed",
@@ -88,6 +97,7 @@
 		"to": "To",
 		"sent": "Command sent",
 		"raw": "raw {{value}}",
-		"test": "Test"
+		"test": "Test",
+		"result": "Result"
 	}
 }

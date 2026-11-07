@@ -7,7 +7,7 @@ import {
 	MenuAccordion,
 	MenuGroup
 } from '../../../../components/common/cycleMenu';
-import {isEmpty} from '../../../../components/common/useSectionSettingsHeader';
+import {isEmpty, useEntityLoaded} from '../../../../components/common/useSectionSettingsHeader';
 import {SettingsScrollView} from '../../../../components/common/SettingsScrollView';
 import SequenceGeneralSettingsSection from './SequenceGeneralSettingsSection';
 import SequenceSecuritySettingsSection from './SequenceSecuritySettingsSection';
@@ -15,7 +15,6 @@ import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import {
 	faCheckDouble,
 	faEthernet,
-	faGear,
 	faShieldHalved
 } from '@fortawesome/free-solid-svg-icons';
 import {hapticOptions} from '../../../../data/cycleTypes';
@@ -28,6 +27,7 @@ import ConditionBuilderSection, {
 	isConditionIncomplete
 } from '../../conditions/ConditionBuilderSection';
 import SequenceActuatorsSettingsSection from './SequenceActuatorsSettingsSection';
+import {generalContainerStyle} from '../../../../components/common/GeneralSettingsFields';
 import i18n from 'i18next';
 
 function SequenceSettingsScreen(props: any) {
@@ -36,6 +36,10 @@ function SequenceSettingsScreen(props: any) {
 	const isModified = useRef(!props.route.params.item?.id);
 	const sequenceRef = useRef(props.sequence);
 	sequenceRef.current = props.sequence;
+	const generalLoaded = useEntityLoaded(
+		props.sequence,
+		props.route.params.item?.id
+	);
 	// Séquence d'un MODULE : on ne peut ni la supprimer ni retirer ses
 	// actionneurs déjà définis (seulement en ajouter). Le cycle parent est celui
 	// ouvert dans CycleSettingsScreen (slice partagé), vérifié par son id.
@@ -64,7 +68,10 @@ function SequenceSettingsScreen(props: any) {
 	// Validation dès l'accès à l'écran (comme la section Condition General) :
 	// sections invalides mises en évidence immédiatement puis à chaque édition,
 	// sans attendre une tentative de save.
+	// En création, la section General (toujours visible) est vide à l'entrée :
+	// pas de rouge avant la première tentative de save.
 	useEffect(() => {
+		if (isNew && !attemptedSaveRef.current) return;
 		attemptedSaveRef.current = true;
 		setInvalidSections(computeInvalidSections(sequenceRef.current));
 	}, [props.sequence]);
@@ -219,6 +226,18 @@ function SequenceSettingsScreen(props: any) {
 
 	return (
 		<SettingsScrollView>
+			{/* Général sorti du menu : sans carte blanche, en première position, montée
+			    une fois l'entité chargée (le formulaire lit ses valeurs au montage). */}
+			{generalLoaded ? (
+				<View style={generalContainerStyle}>
+					<SequenceGeneralSettingsSection
+						embedded
+						sequenceData={sequenceRef.current}
+						showErrors={invalidSections.general}
+						navigation={props.navigation}
+					/>
+				</View>
+			) : null}
 			<View
 				style={{
 					alignSelf: 'stretch',
@@ -234,19 +253,6 @@ function SequenceSettingsScreen(props: any) {
 				}}>
 				<View>
 					<MenuGroup>
-						<MenuAccordion
-							key={21}
-							name={i18n.t('common:sections.general')}
-							icon={faGear}
-							invalid={invalidSections.general}
-							onPress={() => {}}>
-							<SequenceGeneralSettingsSection
-								embedded
-								sequenceData={sequenceRef.current}
-								showErrors={invalidSections.general}
-								navigation={props.navigation}
-							/>
-						</MenuAccordion>
 						<MenuAccordion
 							key={41}
 							name={i18n.t('common:sections.security')}

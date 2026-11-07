@@ -66,15 +66,18 @@ export const OutlineButton = ({
 	onPress,
 	onLongPress,
 	color = COLORS.primary,
+	accessibilityLabel,
 	style
 }: {
-	label: string;
+	// Absent : bouton icône seule (donner alors `accessibilityLabel`).
+	label?: string;
 	icon: IconDefinition;
 	busy?: boolean;
 	disabled?: boolean;
 	onPress?: () => void;
 	onLongPress?: () => void;
 	color?: string;
+	accessibilityLabel?: string;
 	style?: StyleProp<ViewStyle>;
 }) => (
 	<TouchableOpacity
@@ -85,6 +88,8 @@ export const OutlineButton = ({
 			style
 		]}
 		disabled={busy || disabled}
+		accessibilityRole="button"
+		accessibilityLabel={accessibilityLabel ?? label}
 		onPress={onPress}
 		onLongPress={onLongPress}>
 		{busy ? (
@@ -92,7 +97,9 @@ export const OutlineButton = ({
 		) : (
 			<FontAwesomeIcon icon={icon} size={16} color={color} />
 		)}
-		<Text style={[accessStyles.outlineLabel, {color}]}>{label}</Text>
+		{label ? (
+			<Text style={[accessStyles.outlineLabel, {color}]}>{label}</Text>
+		) : null}
 	</TouchableOpacity>
 );
 

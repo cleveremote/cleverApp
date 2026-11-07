@@ -1,4 +1,4 @@
-import {inputText} from '../../styles/components/common/Input';
+import {fieldLabelText, inputText} from '../../styles/components/common/Input';
 import {ELEMENT_HEIGHT} from '../../styles/metrics';
 import React from 'react';
 import {StyleSheet, Text, TouchableOpacity, View} from 'react-native';
@@ -24,7 +24,6 @@ const C = {
 	surface: '#ffffff',
 	onAccent: '#ffffff',
 	border: '#CBD5E0',
-	muted: '#718096',
 	text: '#32404e'
 };
 
@@ -122,7 +121,7 @@ function SegBtn({
 }
 
 const styles = StyleSheet.create({
-	fieldLabel: {fontSize: 13, color: C.muted, marginBottom: 10, fontWeight: '600'},
+	fieldLabel: {...fieldLabelText, marginBottom: 10},
 	dateField: {
 		backgroundColor: C.surface,
 		borderWidth: 1,

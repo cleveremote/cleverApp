@@ -12,8 +12,10 @@ import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import {
 	faPowerOff,
 	faRotateLeft,
-	faShieldHalved
+	faShieldHalved,
+	faUser
 } from '@fortawesome/free-solid-svg-icons';
+import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {pick, types, isErrorWithCode} from '@react-native-documents/picker';
 import RNFS from 'react-native-fs';
 import {ELEMENT_HEIGHT} from '../../styles/metrics';
@@ -24,7 +26,6 @@ import {hapticOptions} from '../../data/cycleTypes';
 import {MenuAccordion, MenuGroup} from '../../components/common/cycleMenu';
 import {COLORS, OutlineButton} from '../access/accessUi';
 import {RowDivider, userStyles} from './user/userSettingsUi';
-import {InfoBox} from '../../components/common/InfoBox';
 import {RecoveryEmailRow, RecoveryEmailRowHandle} from './user/RecoveryEmailRow';
 import {PasswordRow, PasswordRowHandle} from './user/PasswordRow';
 import {
@@ -32,7 +33,7 @@ import {
 	ResetAccountSectionHandle
 } from './user/ResetAccountSection';
 
-// User account: the box id in an info box, then, laid out like the cycle
+// User account: a user icon and the box id in a white box, then, laid out like the cycle
 // settings, one card of collapsible sections — Authentication & Security
 // (recovery email and password, a toggle opens each edit form) and Reset
 // (data/account erase) — then logout. The SVG debug picker
@@ -134,12 +135,23 @@ export function UserSettingsScreen(props: any) {
 				style={styles.sections}
 				accessible={false}
 				onPress={Keyboard.dismiss}>
+				{/* Icône utilisateur (cercle, comme les icônes de section, sur leur
+				    verticale) + login dans une box blanche. */}
 				{login ? (
-					<InfoBox
-						message={`${t('user.boxId')} : ${login}`}
-						style={styles.boxId}
-						textStyle={userStyles.label}
-					/>
+					<View style={styles.boxIdRow}>
+						<View style={styles.userIcon}>
+							<FontAwesomeIcon
+								icon={faUser}
+								size={18}
+								color={COLORS.primary}
+							/>
+						</View>
+						<View style={styles.boxId}>
+							<Text style={userStyles.label} numberOfLines={1}>
+								{`${t('user.boxId')} : ${login}`}
+							</Text>
+						</View>
+					</View>
 				) : null}
 				<MenuGroup style={styles.card}>
 					{login ? (
@@ -225,12 +237,38 @@ const styles = StyleSheet.create({
 		shadowOpacity: 0.22,
 		shadowRadius: 2.22
 	},
-	// Même hauteur que le bouton de déconnexion.
-	boxId: {
+	// Icône à 10 du bord de la carte (marginLeft des en-têtes de section).
+	boxIdRow: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		gap: 12,
 		marginHorizontal: 20,
+		paddingLeft: 10
+	},
+	// Même cercle que les icônes des en-têtes MenuAccordion.
+	userIcon: {
+		width: 35,
+		height: 35,
+		borderRadius: 17.5,
+		borderWidth: 2.5,
+		borderColor: COLORS.primary,
+		justifyContent: 'center',
+		alignItems: 'center'
+	},
+	// Box blanche, même hauteur que le bouton de déconnexion, même ombre que
+	// la carte des sections.
+	boxId: {
+		flex: 1,
 		height: ELEMENT_HEIGHT,
-		paddingVertical: 0,
-		justifyContent: 'center'
+		justifyContent: 'center',
+		paddingHorizontal: 14,
+		backgroundColor: COLORS.light,
+		borderRadius: 12,
+		elevation: 3,
+		shadowColor: COLORS.shadow,
+		shadowOffset: {width: 0, height: 1},
+		shadowOpacity: 0.22,
+		shadowRadius: 2.22
 	},
 	sectionBody: {
 		paddingHorizontal: 16

@@ -2,16 +2,14 @@ import React, { memo, useEffect, useRef, useState } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Picker } from '@react-native-picker/picker';
 import { faPlay } from '@fortawesome/free-solid-svg-icons';
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { BlurView } from '@react-native-community/blur';
 import {
-	Modal,
 	Platform,
-	Pressable,
 	StyleSheet,
 	Text,
 	View
 } from 'react-native';
+import { OutlineButton } from '../../screens/access/accessUi';
+import { ModalCard } from './ModalCard';
 import { WheelPicker } from './WheelPicker';
 
 const HOUR = 60 * 60 * 1000;
@@ -172,121 +170,45 @@ export function ModalOverrideDuration({
 	};
 
 	return (
-		<Modal
-			visible={isOpen}
-			transparent
-			animationType="fade"
-			onRequestClose={cancel}
+		<ModalCard
+			isOpen={isOpen}
+			onClose={cancel}
 			onDismiss={flushPending}
+			title={t('overrideDuration.title')}
+			message={t('overrideDuration.message')}
 		>
-			<View style={styles.backdrop}>
-				{/* Toucher en dehors de la carte ferme la popup. Pressable frère
-				    (et non parent) de la carte pour ne pas capter les gestes des
-				    roues. */}
-				<Pressable style={StyleSheet.absoluteFill} onPress={cancel} />
-				<View style={styles.card}>
-					{/* Carte floutée comme l'alerte native iOS. Pas sur Android :
-					    le BlurView n'y capture pas le contenu derrière une Modal
-					    (fenêtre séparée) et rend un fond noir. */}
-					{Platform.OS === 'ios' && (
-						<BlurView
-							style={StyleSheet.absoluteFill}
-							blurType="light"
-							blurAmount={20}
-							reducedTransparencyFallbackColor={COLORS.cardFallback}
-						/>
-					)}
-					<Text style={styles.title}>
-						{t('overrideDuration.title')}
-					</Text>
-					<Text style={styles.message}>
-						{t('overrideDuration.message')}
-					</Text>
-					<View style={styles.columns}>
-						<DurationColumn
-							label={t('overrideDuration.hours')}
-							value={hours}
-							onChange={setHours}
-							onSpinningChange={setHoursSpinning}
-							items={HOUR_ITEMS}
-						/>
-						<DurationColumn
-							label={t('overrideDuration.minutes')}
-							value={minutes}
-							onChange={setMinutes}
-							onSpinningChange={setMinutesSpinning}
-							items={MINUTE_ITEMS}
-						/>
-					</View>
-					<View style={styles.actions}>
-						{/* Pressable plutôt que TouchableOpacity : ce dernier anime
-						    l'opacité sur 250 ms à chaque changement de `disabled`. */}
-						<Pressable
-							onPress={confirm}
-							disabled={!canExecute}
-							style={({ pressed }) => [
-								styles.executeButton,
-								pressed && styles.executeButtonPressed,
-								!canExecute && styles.executeButtonDisabled
-							]}
-						>
-							<FontAwesomeIcon
-								icon={faPlay}
-								size={16}
-								color={COLORS.onPrimary}
-							/>
-							<Text style={styles.executeLabel}>
-								{t('execute')}
-							</Text>
-						</Pressable>
-					</View>
-				</View>
+			<View style={styles.columns}>
+				<DurationColumn
+					label={t('overrideDuration.hours')}
+					value={hours}
+					onChange={setHours}
+					onSpinningChange={setHoursSpinning}
+					items={HOUR_ITEMS}
+				/>
+				<DurationColumn
+					label={t('overrideDuration.minutes')}
+					value={minutes}
+					onChange={setMinutes}
+					onSpinningChange={setMinutesSpinning}
+					items={MINUTE_ITEMS}
+				/>
 			</View>
-		</Modal>
+			<OutlineButton
+				label={t('execute')}
+				icon={faPlay}
+				disabled={!canExecute}
+				onPress={confirm}
+				style={styles.executeButton}
+			/>
+		</ModalCard>
 	);
 }
 
-// Mêmes couleurs que le bouton « Discover » de la liste des master devices.
-// Fond légèrement assombri et carte floutée semi-transparente, comme l'alerte
-// native (même style que ModalCreateChoice).
 const COLORS = {
-	primary: '#32404e',
-	backdrop: 'rgba(0,0,0,0.2)',
-	cardBackground:
-		Platform.OS === 'ios' ? 'rgba(255,255,255,0.5)' : 'rgba(255,255,255,0.95)',
-	cardFallback: 'white',
-	onPrimary: 'white'
+	primary: '#32404e'
 };
 
 const styles = StyleSheet.create({
-	backdrop: {
-		flex: 1,
-		justifyContent: 'center',
-		alignItems: 'center',
-		backgroundColor: COLORS.backdrop
-	},
-	card: {
-		backgroundColor: COLORS.cardBackground,
-		borderRadius: 14,
-		// Rogne le BlurView aux coins arrondis.
-		overflow: 'hidden',
-		padding: 20,
-		width: '80%',
-		// Pas de flou sur Android : une ombre détache la carte du fond.
-		elevation: 8
-	},
-	title: {
-		fontSize: 17,
-		fontWeight: 'bold',
-		marginBottom: 12,
-		textAlign: 'center',
-		color: COLORS.primary
-	},
-	message: {
-		marginBottom: 8,
-		textAlign: 'center',
-		color: COLORS.primary
-	},
 	columns: {
 		flexDirection: 'row',
 		justifyContent: 'center',
@@ -304,6 +226,7 @@ const styles = StyleSheet.create({
 		color: COLORS.primary,
 		textAlign: 'center'
 	},
+
 	picker: {
 		width: '100%',
 		height: PICKER_HEIGHT,
@@ -315,29 +238,8 @@ const styles = StyleSheet.create({
 		color: COLORS.primary,
 		textAlign: 'center'
 	},
-	actions: {
-		flexDirection: 'row',
-		justifyContent: 'center'
-	},
+	// Marge du haut déjà portée par les colonnes.
 	executeButton: {
-		paddingVertical: 12,
-		paddingHorizontal: 24,
-		borderRadius: 12,
-		backgroundColor: COLORS.primary,
-		flexDirection: 'row',
-		justifyContent: 'center',
-		alignItems: 'center',
-		gap: 8
-	},
-	executeButtonPressed: {
-		opacity: 0.85
-	},
-	executeButtonDisabled: {
-		opacity: 0.7
-	},
-	executeLabel: {
-		color: COLORS.onPrimary,
-		fontSize: 15,
-		fontWeight: 'bold'
+		marginTop: 0
 	}
 });

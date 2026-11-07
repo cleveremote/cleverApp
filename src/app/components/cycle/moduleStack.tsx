@@ -1,12 +1,17 @@
-import {ELEMENT_HEIGHT, ELEMENT_FONT_SIZE} from '../../styles/metrics';
+import {ELEMENT_HEIGHT} from '../../styles/metrics';
 import React from 'react';
-import {TextInput, TouchableOpacity, View} from 'react-native';
+import {StyleSheet, TextInput, TouchableOpacity, View} from 'react-native';
 import {Text} from 'react-native';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {IconDefinition, faCog} from '@fortawesome/free-solid-svg-icons';
 import {styles} from '../../styles/cycleStyles';
-import {InputStyle, inputText, placeholderColor} from '../../styles/components/common/Input';
+import {
+	InputStyle,
+	inputText,
+	placeholderColor,
+	stackLabelText
+} from '../../styles/components/common/Input';
 import {hapticOptions} from '../../data/cycleTypes';
 
 // When `numericInput` is provided (devices of a task cycle), the row also
@@ -16,7 +21,8 @@ import {hapticOptions} from '../../data/cycleTypes';
 // A null `icon` hides the main action; `numericInput.disabled` greys the field
 // out as read-only. `badge` is rendered before the label (e.g. a device's
 // connectivity dot). `warning` outlines the row in orange and shows its text
-// under the label (e.g. an unreachable device).
+// under the label (e.g. an unreachable device). The label uses the shared
+// stack text style (stackLabelText, Input.tsx).
 const WARNING_BORDER = '#fdba74';
 
 export function elementStack(
@@ -58,10 +64,7 @@ export function elementStack(
 					{/* 'left' = côté de début : RN l'inverse en RTL, alors que 'auto'
 					    suit le contenu et laisse un libellé latin à gauche en arabe. */}
 					<Text
-						style={[
-							styles.textSequence,
-							{textAlign: 'left', fontSize: ELEMENT_FONT_SIZE, fontWeight: 'bold'}
-						]}>
+						style={[localStyles.label, {textAlign: 'left'}]}>
 						{label}
 					</Text>
 					{warning ? (
@@ -143,3 +146,8 @@ export function elementStack(
 		</View>
 	);
 }
+
+const localStyles = StyleSheet.create({
+	// Texte des lignes : style centralisé (Input.tsx).
+	label: stackLabelText
+});

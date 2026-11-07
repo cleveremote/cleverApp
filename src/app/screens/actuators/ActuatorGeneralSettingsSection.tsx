@@ -2,9 +2,9 @@ import React from 'react';
 import {ScrollView, View} from 'react-native';
 import {connect} from 'react-redux';
 import {
-	InputForm,
-	TextAreaForm
-} from '../../components/common/FormComponents';
+	GeneralSettingsFields,
+	generalEmbeddedBoxStyle
+} from '../../components/common/GeneralSettingsFields';
 import {BoxFormStyle} from '../../styles/components/common/boxForm';
 import {updateActuator} from '../../../module/process/infrasctructure/store/actions/actuator';
 import {useActuatorSection} from './useActuatorSection';
@@ -25,23 +25,14 @@ export function ActuatorGeneralSettingsSection(props: any) {
 		: {automaticallyAdjustKeyboardInsets: true};
 
 	return (
-		<View style={BoxFormStyle.boxForm}>
+		<View style={[BoxFormStyle.boxForm, embedded && generalEmbeddedBoxStyle]}>
 			<Body {...bodyProps}>
-				<InputForm
+				<GeneralSettingsFields
 					control={control}
 					errors={errors}
-					name="name"
-					maxLength={25}
-					placeholder={i18n.t('common:form.name')}
-					rules={{required: i18n.t('common:form.nameRequired')}}
-					onChangeText={() => markDirty()}
-				/>
-				<TextAreaForm
-					control={control}
-					errors={errors}
-					name="description"
-					placeholder={i18n.t('common:form.description')}
-					onChangeText={() => markDirty()}
+					showErrors={props.showErrors}
+					nameMaxLength={25}
+					onEdit={() => markDirty()}
 				/>
 			</Body>
 		</View>

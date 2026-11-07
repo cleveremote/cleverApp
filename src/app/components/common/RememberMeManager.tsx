@@ -242,8 +242,9 @@ const saveSigninData = async (
 	rememberCredentials: boolean,
 	profile: string
 ): Promise<void> => {
+	// Appelé une fois l'authentification réussie : « se souvenir de moi » coché
+	// enregistre (ou renomme) le profil avec son login et son mot de passe.
 	if (rememberCredentials) {
-		const exists = await getAssociationProfileAccount(newProfile);
 		if (profile) {
 			await deleteProfile(profile);
 		}
@@ -255,6 +256,23 @@ const saveSigninData = async (
 			login
 		);
 		await setCredentials(account, login, password);
+		return;
+	}
+	// Décoché sur un profil existant : le profil et son login restent, seul le
+	// mot de passe quitte le trousseau. Sans profil, rien n'est enregistré.
+	if (profile) {
+		const existing = await getAssociationProfileAccount(profile);
+		if (!existing) return;
+		await clearCredentials(existing.account);
+		if (account && account !== existing.account) {
+			await clearCredentials(account);
+		}
+		await setAssociationProfileAccount(
+			profile,
+			existing.account,
+			false,
+			existing.login || login
+		);
 	}
 };
 

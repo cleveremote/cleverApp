@@ -17,19 +17,25 @@ export const INFO_COLORS = {
 /**
  * Bloc d'information : message sur fond bleu pâle, encadré de bleu.
  * `textStyle` remplace le style du message (ex. celui des libellés).
+ * `children` s'affichent après le message (ex. des lignes libellé / valeur).
  */
 export function InfoBox({
 	message,
 	style,
-	textStyle
+	textStyle,
+	children
 }: Readonly<{
-	message: string;
+	message?: string;
 	style?: StyleProp<ViewStyle>;
 	textStyle?: StyleProp<TextStyle>;
+	children?: React.ReactNode;
 }>) {
 	return (
 		<View style={[styles.wrap, style]}>
-			<Text style={[styles.text, textStyle]}>{message}</Text>
+			{message ? (
+				<Text style={[styles.text, textStyle]}>{message}</Text>
+			) : null}
+			{children}
 		</View>
 	);
 }

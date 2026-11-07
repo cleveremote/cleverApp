@@ -1,10 +1,10 @@
 import React from 'react';
-import {ScrollView, View} from 'react-native';
+import {ScrollView, StyleSheet, View} from 'react-native';
 import {connect} from 'react-redux';
 import {
-	InputForm,
-	TextAreaForm
-} from '../../../components/common/FormComponents';
+	GeneralSettingsFields,
+	generalEmbeddedBoxStyle
+} from '../../../components/common/GeneralSettingsFields';
 import {BoxFormStyle} from '../../../styles/components/common/boxForm';
 import {updateDevice} from '../../../../module/process/infrasctructure/store/actions/device';
 import {useDeviceSection} from '../useDeviceSection';
@@ -13,8 +13,9 @@ import {DeviceConnectivityStatus} from '../../../components/device/DeviceConnect
 import {isTempId} from '../../../../services/socket';
 import i18n from 'i18next';
 
-// Slave General: Name, Modbus unit id (`config.slaveId`, read-only) and
-// Description.
+// Slave General: connectivity banner, Name and Description (shown via the
+// info icon). The Modbus unit id (`config.slaveId`, read-only) is shown in the
+// Model section.
 // `type` = 'SLAVE' is a hidden field. `config.masterDeviceId` is a hidden,
 // non-editable field seeded on creation and carried through untouched.
 export function SlaveGeneralSettingsSection(props: any) {
@@ -39,39 +40,28 @@ export function SlaveGeneralSettingsSection(props: any) {
 		: {automaticallyAdjustKeyboardInsets: true};
 
 	return (
-		<View style={BoxFormStyle.boxForm}>
+		<View style={[BoxFormStyle.boxForm, embedded && generalEmbeddedBoxStyle]}>
 			<Body {...bodyProps}>
+				{/* Bannière d'état de connexion (fine) en première position. */}
 				{!isTempId(props.deviceData?.id) && (
-					<DeviceConnectivityStatus device={props.deviceData} />
+					<View style={styles.banner}>
+						<DeviceConnectivityStatus thin device={props.deviceData} />
+					</View>
 				)}
-				<InputForm
+				<GeneralSettingsFields
 					control={control}
 					errors={errors}
-					name="name"
-					maxLength={25}
-					placeholder={i18n.t('common:form.name')}
-					rules={{required: i18n.t('common:form.nameRequired')}}
-					onChangeText={() => markDirty()}
-				/>
-				<InputForm
-					control={control}
-					errors={errors}
-					name="config.slaveId"
-					placeholder={i18n.t('devices:slaveId')}
-					keyboardType="numeric"
-					rules={{required: i18n.t('devices:slaveIdRequired')}}
-					disabled
-				/>
-				<TextAreaForm
-					control={control}
-					errors={errors}
-					name="description"
-					placeholder={i18n.t('common:form.description')}
-					onChangeText={() => markDirty()}
+					showErrors={props.showErrors}
+					nameMaxLength={25}
+					onEdit={() => markDirty()}
 				/>
 			</Body>
 		</View>
 	);
 }
+
+const styles = StyleSheet.create({
+	banner: {marginTop: 4, marginBottom: 2}
+});
 
 export default connect(null, {updateDevice})(SlaveGeneralSettingsSection);

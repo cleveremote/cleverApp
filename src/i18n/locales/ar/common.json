@@ -70,10 +70,14 @@
 	"form": {
 		"name": "الاسم*",
 		"nameRequired": "الاسم مطلوب",
-		"description": "الوصف"
+		"description": "الوصف",
+		"noDescription": "لا يوجد وصف",
+		"editDescription": "تعديل الوصف",
+		"done": "تم"
 	},
 	"sections": {
 		"general": "عام",
+		"connectivity": "الاتصال",
 		"conditions": "الشروط",
 		"security": "الأمان",
 		"actuators": "المشغلات",

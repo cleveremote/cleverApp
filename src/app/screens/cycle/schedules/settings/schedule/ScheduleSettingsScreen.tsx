@@ -9,9 +9,10 @@ import {
 import {SettingsScrollView} from '../../../../../components/common/SettingsScrollView';
 import {
 	useSectionSettingsHeader,
-	isEmpty
+	isEmpty,
+	useEntityLoaded
 } from '../../../../../components/common/useSectionSettingsHeader';
-import {faGear, faCalendarPlus} from '@fortawesome/free-solid-svg-icons';
+import {faCalendarPlus} from '@fortawesome/free-solid-svg-icons';
 import {
 	loadSchedule,
 	saveSchedule,
@@ -20,12 +21,17 @@ import {
 import {saveCycle} from '../../../../../../module/process/infrasctructure/store/actions/cycle';
 import ScheduleGeneralSettingsSection from './ScheduleGeneralSettingsSection';
 import NewSchedulingSection from './NewSchedulingSection';
+import {generalContainerStyle} from '../../../../../components/common/GeneralSettingsFields';
 import i18n from 'i18next';
 
 export function ScheduleSettingsScreen(props: any) {
 	const isNew = !props.route.params.schedule?.id;
 	const scheduleRef = useRef(props.schedule);
 	scheduleRef.current = props.schedule;
+	const generalLoaded = useEntityLoaded(
+		props.schedule,
+		props.route.params.schedule?.id
+	);
 
 	const schedulesRef = useRef(props.schedules);
 	schedulesRef.current = props.schedules;
@@ -50,6 +56,8 @@ export function ScheduleSettingsScreen(props: any) {
 		navigation: props.navigation,
 		entity: props.schedule,
 		isNew,
+		// Section General toujours visible : pas de rouge à l'entrée en création.
+		deferNewValidation: true,
 		hasChanges: () => !!scheduleRef.current?.isModified,
 		save: onDone => props.saveSchedule(scheduleRef.current, true, onDone),
 		validate: () => ({
@@ -65,32 +73,37 @@ export function ScheduleSettingsScreen(props: any) {
 
 	return (
 		<SettingsScrollView>
-			<MenuGroup style={styles.card}>
-				<MenuAccordion
-					key={21}
-					name={i18n.t('common:sections.general')}
-					icon={faGear}
-					invalid={invalidSections.general}
-					onPress={() => {}}>
+			{/* Général sorti du menu : sans carte blanche, en première position, montée
+			    une fois l'entité chargée (le formulaire lit ses valeurs au montage). */}
+			{generalLoaded ? (
+				<View style={generalContainerStyle}>
 					<ScheduleGeneralSettingsSection
 						embedded
 						scheduleData={props.schedule}
 						showErrors={invalidSections.general}
 						navigation={props.navigation}
 					/>
-				</MenuAccordion>
+				</View>
+			) : null}
+			<MenuGroup style={styles.card}>
 				<MenuAccordion
 					key={41}
 					name={i18n.t('cycle:schedules.newScheduling')}
 					icon={faCalendarPlus}
+					defaultExpanded
 					invalid={invalidSections.execution}
 					onPress={() => {}}>
-					<NewSchedulingSection
-						embedded
-						scheduleData={props.schedule}
-						showErrors={invalidSections.execution}
-						navigation={props.navigation}
-					/>
+					{/* Dépliée par défaut : son formulaire lit ses valeurs au montage,
+					    on attend que l'entité soit chargée. */}
+					{generalLoaded ? (
+						<NewSchedulingSection
+							embedded
+							editInModal
+							scheduleData={props.schedule}
+							showErrors={invalidSections.execution}
+							navigation={props.navigation}
+						/>
+					) : null}
 				</MenuAccordion>
 				<DeleteItemMenu key={61} OnConfirm={_deleteItem} />
 			</MenuGroup>

@@ -1,13 +1,12 @@
 import React, {useEffect} from 'react';
-import {ScrollView, Text, View} from 'react-native';
+import {View} from 'react-native';
 import {navigationHeader} from '../../../components/common/navigationHeaders';
 import {useForm} from 'react-hook-form';
 import {BoxFormStyle} from '../../../styles/components/common/boxForm';
 import {
-	InputForm,
-	SelectColor,
-	TextAreaForm
-} from '../../../components/common/FormComponents';
+	GeneralSettingsFields,
+	generalEmbeddedBoxStyle
+} from '../../../components/common/GeneralSettingsFields';
 import {connect} from 'react-redux';
 import {
 	useValidateOnOpen,
@@ -91,56 +90,21 @@ export function SensorGeneralSettingsSection(props: any) {
 		});
 	}, [saveUnchangedData]);
 
-	const Body: any = embedded ? View : ScrollView;
-	const bodyProps: any = embedded
-		? {}
-		: {automaticallyAdjustKeyboardInsets: true};
 	return (
-		<View style={BoxFormStyle.boxForm}>
-			<Text
-				style={{
-					color: '#32404e',
-					fontSize: 15,
-					fontWeight: 'bold',
-					marginTop: 5,
-					marginBottom: 5
-				}}>
-				{i18n.t('cycle:settings.theme')}
-			</Text>
-			<SelectColor
+		<View style={[BoxFormStyle.boxForm, embedded && generalEmbeddedBoxStyle]}>
+			<GeneralSettingsFields
 				control={control}
 				errors={errors}
-				name="style"
-				placeholder={i18n.t('sensor:theme')}
-				rules={{required: i18n.t('cycle:settings.themeRequired')}}
-				style={{...sensorData?.style}}
-				onChangeText={value => {
+				showErrors={props.showErrors}
+				themeStyle={{...sensorData?.style}}
+				themePlaceholder={i18n.t('sensor:theme')}
+				nameMaxLength={250}
+				onThemeChange={value => {
 					setSensorData({...sensorData, style: JSON.parse(value)});
 					setSaveUnchangedData(true);
 				}}
+				onEdit={() => setSaveUnchangedData(true)}
 			/>
-			<Body {...bodyProps}>
-				<InputForm
-					control={control}
-					errors={errors}
-					name="name"
-					maxLength={250}
-					placeholder={i18n.t('common:form.name')}
-					rules={{required: i18n.t('common:form.nameRequired')}}
-					onChangeText={value => {
-						setSaveUnchangedData(true);
-					}}
-				/>
-				<TextAreaForm
-					control={control}
-					errors={errors}
-					name="description"
-					placeholder={i18n.t('common:form.description')}
-					onChangeText={value => {
-						setSaveUnchangedData(true);
-					}}
-				/>
-			</Body>
 		</View>
 	);
 }

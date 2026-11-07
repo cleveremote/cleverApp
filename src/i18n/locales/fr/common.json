@@ -70,10 +70,14 @@
 	"form": {
 		"name": "Nom*",
 		"nameRequired": "Le nom est obligatoire",
-		"description": "Description"
+		"description": "Description",
+		"noDescription": "Aucune description",
+		"editDescription": "Modifier la description",
+		"done": "Valider"
 	},
 	"sections": {
 		"general": "Général",
+		"connectivity": "Connectivité",
 		"conditions": "Conditions",
 		"security": "Sécurité",
 		"actuators": "Actionneurs",

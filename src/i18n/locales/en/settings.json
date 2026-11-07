@@ -29,7 +29,7 @@
 		"timeZone": "Time zone",
 		"timeZoneHint": "Derived by the box from its coordinates. Schedule times are expressed in this time zone.",
 		"modePriority": "Mode priority",
-		"modePriorityHint": "Long press and drag a mode to change its priority.",
+		"modePriorityHint": "Long press and drag a mode.",
 		"modePriorityRequired": "Mode priority is required",
 		"box": "Box",
 		"version": "Version"

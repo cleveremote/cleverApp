@@ -1,3 +1,4 @@
+import {fieldLabelColor} from '../../../styles/components/common/Input';
 import React from 'react';
 import {Alert, I18nManager, Pressable, Text, View} from 'react-native';
 import {connect} from 'react-redux';
@@ -15,7 +16,8 @@ import i18n from 'i18next';
 import {directionalIcon} from '../../../../i18n/rtl';
 
 const textColor = '#32404e';
-const mutedColor = '#8a96a3';
+// Couleur des libellés : source unique (Input.tsx).
+const mutedColor = fieldLabelColor;
 // Même couleur que les icônes des sections (MenuAccordion).
 const accentColor = '#32404e';
 

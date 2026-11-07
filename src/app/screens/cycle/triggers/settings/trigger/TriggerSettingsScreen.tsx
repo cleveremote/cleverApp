@@ -9,9 +9,10 @@ import {
 } from '../../../../../components/common/cycleMenu';
 import {
 	useSectionSettingsHeader,
-	isEmpty
+	isEmpty,
+	useEntityLoaded
 } from '../../../../../components/common/useSectionSettingsHeader';
-import {faBolt, faCheckDouble, faGear} from '@fortawesome/free-solid-svg-icons';
+import {faBolt, faCheckDouble} from '@fortawesome/free-solid-svg-icons';
 import {
 	loadTrigger,
 	saveTrigger,
@@ -23,12 +24,17 @@ import ConditionBuilderSection, {
 } from '../../../conditions/ConditionBuilderSection';
 import TriggerGeneralSettingsSection from './TriggerGeneralSettingsSection';
 import TriggerExecutionSettingsSection from './TriggerExecutionSettingsSection';
+import {generalContainerStyle} from '../../../../../components/common/GeneralSettingsFields';
 import i18n from 'i18next';
 
 export function TriggerSettingsScreen(props: any) {
 	const isNew = !props.route.params.trigger?.id;
 	const triggerRef = useRef(props.trigger);
 	triggerRef.current = props.trigger;
+	const generalLoaded = useEntityLoaded(
+		props.trigger,
+		props.route.params.trigger?.id
+	);
 
 	const triggersRef = useRef(props.triggers);
 	triggersRef.current = props.triggers;
@@ -53,6 +59,8 @@ export function TriggerSettingsScreen(props: any) {
 		navigation: props.navigation,
 		entity: props.trigger,
 		isNew,
+		// Section General toujours visible : pas de rouge à l'entrée en création.
+		deferNewValidation: true,
 		hasChanges: () =>
 			triggerRef.current?.isModified ||
 			triggerRef.current?.conditions?.some(
@@ -76,32 +84,36 @@ export function TriggerSettingsScreen(props: any) {
 		<KeyboardAwareScrollView
 			style={styles.scroll}
 			contentContainerStyle={styles.scrollContent}>
-			<MenuGroup style={styles.card}>
-				<MenuAccordion
-					key={21}
-					name={i18n.t('common:sections.general')}
-					icon={faGear}
-					invalid={invalidSections.general}
-					onPress={() => {}}>
+			{/* Général sorti du menu : sans carte blanche, en première position, montée
+			    une fois l'entité chargée (le formulaire lit ses valeurs au montage). */}
+			{generalLoaded ? (
+				<View style={generalContainerStyle}>
 					<TriggerGeneralSettingsSection
 						embedded
 						triggerData={triggerRef.current}
 						showErrors={invalidSections.general}
 						navigation={props.navigation}
 					/>
-				</MenuAccordion>
+				</View>
+			) : null}
+			<MenuGroup style={styles.card}>
 				<MenuAccordion
 					key={41}
 					name={i18n.t('common:sections.execution')}
 					icon={faBolt}
+					defaultExpanded
 					invalid={invalidSections.execution}
 					onPress={() => {}}>
-					<TriggerExecutionSettingsSection
-						embedded
-						triggerData={triggerRef.current}
-						showErrors={invalidSections.execution}
-						navigation={props.navigation}
-					/>
+					{/* Dépliée par défaut : son formulaire lit ses valeurs au montage,
+					    on attend que l'entité soit chargée. */}
+					{generalLoaded ? (
+						<TriggerExecutionSettingsSection
+							embedded
+							triggerData={triggerRef.current}
+							showErrors={invalidSections.execution}
+							navigation={props.navigation}
+						/>
+					) : null}
 				</MenuAccordion>
 				<MenuAccordion
 					key={51}

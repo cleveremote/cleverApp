@@ -1,3 +1,4 @@
+import {fieldLabelColor} from '../../styles/components/common/Input';
 import React, {useEffect} from 'react';
 import {StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome5';
@@ -110,7 +111,7 @@ export function ActuatorsScreen(props: any) {
 
 const COLORS = {
 	primary: '#32404e',
-	muted: '#8a96a3',
+	muted: fieldLabelColor,
 	shadow: '#000',
 	cardBackground: 'white'
 };

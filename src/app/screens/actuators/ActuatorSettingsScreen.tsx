@@ -2,7 +2,7 @@ import React, {useEffect, useRef} from 'react';
 import {StyleSheet, View} from 'react-native';
 import {connect} from 'react-redux';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
-import {faGaugeHigh, faGear, faSliders} from '@fortawesome/free-solid-svg-icons';
+import {faGaugeHigh, faSliders} from '@fortawesome/free-solid-svg-icons';
 import {
 	DeleteItemMenu,
 	MenuAccordion,
@@ -31,6 +31,7 @@ import {
 import ActuatorGeneralSettingsSection from './ActuatorGeneralSettingsSection';
 import ActuatorConfigurationSettingsSection from './ActuatorConfigurationSettingsSection';
 import ActuatorRegulationSettingsSection from './ActuatorRegulationSettingsSection';
+import {generalContainerStyle} from '../../components/common/GeneralSettingsFields';
 import i18n from 'i18next';
 
 // La section Configuration est « not valid » tant que les champs requis du type
@@ -141,6 +142,8 @@ export function ActuatorSettingsScreen(props: any) {
 		navigation: props.navigation,
 		entity: props.actuator,
 		isNew: isCreateFlow,
+		// Section General toujours visible : pas de rouge à l'entrée en création.
+		deferNewValidation: true,
 		hasChanges: () =>
 			!!actuatorRef.current?.isModified || !!loopRef.current?.isModified,
 		save: onDone => {
@@ -176,23 +179,20 @@ export function ActuatorSettingsScreen(props: any) {
 
 	return (
 		<SettingsScrollView>
+			{/* Général sorti du menu : sans carte blanche, en première position, montée
+			    une fois l'entité chargée (le formulaire lit ses valeurs au montage). */}
+			{ready ? (
+				<View style={generalContainerStyle}>
+					<ActuatorGeneralSettingsSection
+						key={actuatorRef.current.id}
+						embedded
+						actuatorData={actuatorRef.current}
+						showErrors={invalidSections.general}
+						navigation={props.navigation}
+					/>
+				</View>
+			) : null}
 			<MenuGroup style={styles.card}>
-				<MenuAccordion
-					key={1}
-					name={i18n.t('common:sections.general')}
-					icon={faGear}
-					invalid={invalidSections.general}
-					onPress={() => {}}>
-					{ready && (
-						<ActuatorGeneralSettingsSection
-							key={actuatorRef.current.id}
-							embedded
-							actuatorData={actuatorRef.current}
-							showErrors={invalidSections.general}
-							navigation={props.navigation}
-						/>
-					)}
-				</MenuAccordion>
 				<MenuAccordion
 					key={2}
 					name={i18n.t('common:sections.configuration')}

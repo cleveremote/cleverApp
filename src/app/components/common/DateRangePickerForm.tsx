@@ -162,7 +162,7 @@ export function DateRangePickerForm({
 
 	return (
 		<View>
-			<Text style={[InputStyle.textInput, {color: ACCENT}]}>{placeholder}</Text>
+			<Text style={InputStyle.textInput}>{placeholder}</Text>
 			<Pressable onPress={open}>
 				<TextInput
 					style={[InputStyle.input, localStyles.field]}

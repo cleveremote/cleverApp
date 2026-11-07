@@ -3,9 +3,9 @@ import {ScrollView, View} from 'react-native';
 import {navigationHeader} from '../../../../components/common/navigationHeaders';
 import {BoxFormStyle} from '../../../../styles/components/common/boxForm';
 import {
-	InputForm,
-	TextAreaForm
-} from '../../../../components/common/FormComponents';
+	GeneralSettingsFields,
+	generalEmbeddedBoxStyle
+} from '../../../../components/common/GeneralSettingsFields';
 import {connect} from 'react-redux';
 import {useForm} from 'react-hook-form';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
@@ -102,26 +102,13 @@ export function SequenceGeneralSettingsSection(props: any) {
 
 	return (
 		<Body {...bodyProps}>
-			<View style={BoxFormStyle.boxForm}>
-				<InputForm
+			<View style={[BoxFormStyle.boxForm, embedded && generalEmbeddedBoxStyle]}>
+				<GeneralSettingsFields
 					control={control}
 					errors={errors}
-					name="name"
-					maxLength={25}
-					placeholder={i18n.t('common:form.name')}
-					rules={{required: i18n.t('common:form.nameRequired')}}
-					onChangeText={value => {
-						setSaveUnchangedData(true);
-					}}
-				/>
-				<TextAreaForm
-					control={control}
-					errors={errors}
-					name="description"
-					placeholder={i18n.t('common:form.description')}
-					onChangeText={value => {
-						setSaveUnchangedData(true);
-					}}
+					showErrors={props.showErrors}
+					nameMaxLength={25}
+					onEdit={() => setSaveUnchangedData(true)}
 				/>
 			</View>
 		</Body>

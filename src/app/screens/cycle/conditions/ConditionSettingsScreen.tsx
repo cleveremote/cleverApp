@@ -8,8 +8,9 @@ import {
 	MenuGroup
 } from '../../../components/common/cycleMenu';
 import {SettingsScrollView} from '../../../components/common/SettingsScrollView';
+import {useEntityLoaded} from '../../../components/common/useSectionSettingsHeader';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
-import {faBolt, faGear} from '@fortawesome/free-solid-svg-icons';
+import {faBolt} from '@fortawesome/free-solid-svg-icons';
 import {hapticOptions} from '../../../data/cycleTypes';
 import {
 	loadCondition,
@@ -17,6 +18,7 @@ import {
 } from '../../../../module/process/infrasctructure/store/actions/condition';
 import ConditionGeneralSettingsSection from './ConditionGeneralSettingsSection';
 import ConditionParamSettingsSection from './ConditionParamSettingsSection';
+import {generalContainerStyle} from '../../../components/common/GeneralSettingsFields';
 import i18n from 'i18next';
 
 function ConditionSettingsScreen(props: any) {
@@ -27,6 +29,10 @@ function ConditionSettingsScreen(props: any) {
 
 	const conditionRef = useRef(props.condition);
 	conditionRef.current = props.condition;
+	const generalLoaded = useEntityLoaded(
+		props.condition,
+		props.route.params.condition?.id
+	);
 
 	// Intention de sortie déclenchée par les boutons d'entête (voir plus bas).
 	const leaveIntentRef = useRef<'save' | 'cancel' | null>(null);
@@ -55,7 +61,10 @@ function ConditionSettingsScreen(props: any) {
 	// Validation dès l'accès au screen : on met en évidence les champs invalides
 	// immédiatement (au chargement de la condition) puis à chaque édition (retour
 	// d'un sous-écran) pour lever le cadre dès correction.
+	// En création, la section General (toujours visible) est vide à l'entrée :
+	// pas de rouge avant la première tentative de save.
 	useEffect(() => {
+		if (isNew && !attemptedSaveRef.current) return;
 		attemptedSaveRef.current = true;
 		setInvalidSections(computeInvalidSections(conditionRef.current));
 	}, [props.condition]);
@@ -208,20 +217,19 @@ function ConditionSettingsScreen(props: any) {
 
 	return (
 		<SettingsScrollView>
-			<MenuGroup style={styles.card}>
-				<MenuAccordion
-					key={21}
-					name={i18n.t('common:sections.general')}
-					icon={faGear}
-					invalid={invalidSections.general}
-					onPress={() => {}}>
+			{/* Général sorti du menu : sans carte blanche, en première position, montée
+			    une fois l'entité chargée (le formulaire lit ses valeurs au montage). */}
+			{generalLoaded ? (
+				<View style={generalContainerStyle}>
 					<ConditionGeneralSettingsSection
 						embedded
 						conditionData={conditionRef.current}
 						showErrors={invalidSections.general}
 						navigation={props.navigation}
 					/>
-				</MenuAccordion>
+				</View>
+			) : null}
+			<MenuGroup style={styles.card}>
 				<MenuAccordion
 					key={41}
 					name={i18n.t('common:sections.execution')}

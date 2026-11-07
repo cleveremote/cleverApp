@@ -21,6 +21,7 @@ import {
 } from '../../../data/conditionTypes';
 import {AppSwitch} from '../../../components/common/AppSwitch';
 import {BoxFormStyle} from '../../../styles/components/common/boxForm';
+import {InputStyle} from '../../../styles/components/common/Input';
 import i18n from 'i18next';
 
 export function ConditionParamSettingsSection(props: any) {
@@ -181,12 +182,7 @@ export function ConditionParamSettingsSection(props: any) {
 						alignItems: 'center',
 						marginBottom: 8
 					}}>
-					<Text
-						style={{
-							color: '#32404e',
-							fontSize: 15,
-							fontWeight: 'bold'
-						}}>
+					<Text style={InputStyle.switchLabel}>
 						{i18n.t('common:sections.cycles')}
 					</Text>
 					<AppSwitch

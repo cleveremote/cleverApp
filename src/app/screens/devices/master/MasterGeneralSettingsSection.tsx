@@ -1,10 +1,10 @@
 import React from 'react';
-import {ScrollView, View} from 'react-native';
+import {ScrollView, StyleSheet, View} from 'react-native';
 import {connect} from 'react-redux';
 import {
-	InputForm,
-	TextAreaForm
-} from '../../../components/common/FormComponents';
+	GeneralSettingsFields,
+	generalEmbeddedBoxStyle
+} from '../../../components/common/GeneralSettingsFields';
 import {BoxFormStyle} from '../../../styles/components/common/boxForm';
 import {updateDevice} from '../../../../module/process/infrasctructure/store/actions/device';
 import {useDeviceSection} from '../useDeviceSection';
@@ -12,10 +12,10 @@ import {DeviceConnectivityStatus} from '../../../components/device/DeviceConnect
 import {isTempId} from '../../../../services/socket';
 import i18n from 'i18next';
 
-// Master General: Name, IP address + port (`config.ipAddress` / `config.port`,
-// read-only) and Description. `type` = 'MASTER' is a hidden field — seeded via
-// defaultValues (route.params.deviceData) and never rendered. `config` is not
-// an owned field: the read-only connection values are never staged.
+// Master General: connectivity banner, Name and Description (shown via the
+// info icon). `type` = 'MASTER' is a hidden field — seeded via defaultValues
+// (route.params.deviceData) and never rendered. IP address and port live in the
+// Connectivity section (MasterConnectivitySection).
 export function MasterGeneralSettingsSection(props: any) {
 	const embedded = !!props.embedded;
 	const {control, errors, markDirty} = useDeviceSection(props, undefined, [
@@ -29,51 +29,28 @@ export function MasterGeneralSettingsSection(props: any) {
 		: {automaticallyAdjustKeyboardInsets: true};
 
 	return (
-		<View style={BoxFormStyle.boxForm}>
+		<View style={[BoxFormStyle.boxForm, embedded && generalEmbeddedBoxStyle]}>
 			<Body {...bodyProps}>
+				{/* Bannière d'état de connexion (fine) en première position. */}
 				{!isTempId(props.deviceData?.id) && (
-					<DeviceConnectivityStatus device={props.deviceData} />
+					<View style={styles.banner}>
+						<DeviceConnectivityStatus thin device={props.deviceData} />
+					</View>
 				)}
-				<InputForm
+				<GeneralSettingsFields
 					control={control}
 					errors={errors}
-					name="name"
-					maxLength={25}
-					placeholder={i18n.t('common:form.name')}
-					rules={{required: i18n.t('common:form.nameRequired')}}
-					onChangeText={() => markDirty()}
-				/>
-				<View style={{flexDirection: 'row', gap: 10}}>
-					<View style={{flex: 2}}>
-						<InputForm
-							control={control}
-							errors={errors}
-							name="config.ipAddress"
-							placeholder={i18n.t('devices:ipAddress')}
-							disabled
-						/>
-					</View>
-					<View style={{flex: 1}}>
-						<InputForm
-							control={control}
-							errors={errors}
-							name="config.port"
-							placeholder={i18n.t('devices:port')}
-							keyboardType="numeric"
-							disabled
-						/>
-					</View>
-				</View>
-				<TextAreaForm
-					control={control}
-					errors={errors}
-					name="description"
-					placeholder={i18n.t('common:form.description')}
-					onChangeText={() => markDirty()}
+					showErrors={props.showErrors}
+					nameMaxLength={25}
+					onEdit={() => markDirty()}
 				/>
 			</Body>
 		</View>
 	);
 }
+
+const styles = StyleSheet.create({
+	banner: {marginTop: 4, marginBottom: 2}
+});
 
 export default connect(null, {updateDevice})(MasterGeneralSettingsSection);

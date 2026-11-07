@@ -1,18 +1,15 @@
 import React from 'react';
 import {StyleSheet, Text, View} from 'react-native';
-import {ELEMENT_FONT_SIZE, ELEMENT_HEIGHT} from '../../../styles/metrics';
-import {inputText} from '../../../styles/components/common/Input';
+import {ELEMENT_HEIGHT} from '../../../styles/metrics';
+import {fieldLabelText,inputText} from '../../../styles/components/common/Input';
 import {COLORS} from '../../access/accessUi';
 import {AppSwitch} from '../../../components/common/AppSwitch';
 
 const INPUT_BORDER = '#CBD5E0';
 
 // Libellé standard de l'application (comme ceux des formulaires de cycle).
-const labelText = {
-	color: COLORS.primary,
-	fontSize: ELEMENT_FONT_SIZE,
-	fontWeight: 'bold' as const
-};
+// Libellés au format commun de l'application (fieldLabelText).
+const labelText = fieldLabelText;
 
 /** Carte des réglages utilisateur ; ses lignes se séparent par `RowDivider`. */
 export const UserCard = ({children}: {children: React.ReactNode}) => (
@@ -118,8 +115,10 @@ export const userStyles = StyleSheet.create({
 		gap: 2
 	},
 	// Un peu d'air entre le libellé et la valeur (ex. l'email masqué).
+	// Valeur sous le libellé (ex. email masqué) : un peu d'air autour.
 	detail: {
-		marginTop: 6,
+		marginTop: 10,
+		marginBottom: 6,
 		color: COLORS.primary,
 		fontSize: 15,
 		fontWeight: 'bold'

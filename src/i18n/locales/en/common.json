@@ -70,10 +70,14 @@
 	"form": {
 		"name": "Name*",
 		"nameRequired": "Name is required",
-		"description": "Description"
+		"description": "Description",
+		"noDescription": "No description",
+		"editDescription": "Edit description",
+		"done": "Done"
 	},
 	"sections": {
 		"general": "General",
+		"connectivity": "Connectivity",
 		"conditions": "Conditions",
 		"security": "Security",
 		"actuators": "Actuators",

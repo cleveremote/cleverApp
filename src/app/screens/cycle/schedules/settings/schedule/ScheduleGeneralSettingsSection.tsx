@@ -3,9 +3,9 @@ import {Alert, ScrollView, View} from 'react-native';
 import type {EventArg, NavigationAction} from '@react-navigation/core';
 import {navigationHeader} from '../../../../../components/common/navigationHeaders';
 import {
-	InputForm,
-	TextAreaForm
-} from '../../../../../components/common/FormComponents';
+	GeneralSettingsFields,
+	generalEmbeddedBoxStyle
+} from '../../../../../components/common/GeneralSettingsFields';
 import {BoxFormStyle} from '../../../../../styles/components/common/boxForm';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import {hapticOptions} from '../../../../../data/cycleTypes';
@@ -175,26 +175,13 @@ export function ScheduleGeneralSettingsSection(props: any) {
 
 	return (
 		<Body {...bodyProps}>
-			<View style={BoxFormStyle.boxForm}>
-				<InputForm
+			<View style={[BoxFormStyle.boxForm, embedded && generalEmbeddedBoxStyle]}>
+				<GeneralSettingsFields
 					control={control}
 					errors={errors}
-					name="name"
-					maxLength={25}
-					placeholder={i18n.t('common:form.name')}
-					rules={{required: i18n.t('common:form.nameRequired')}}
-					onChangeText={() => {
-						setSaveUnchangedData(true);
-					}}
-				/>
-				<TextAreaForm
-					control={control}
-					errors={errors}
-					name="description"
-					placeholder={i18n.t('common:form.description')}
-					onChangeText={value => {
-						setSaveUnchangedData(true);
-					}}
+					showErrors={props.showErrors}
+					nameMaxLength={25}
+					onEdit={() => setSaveUnchangedData(true)}
 				/>
 			</View>
 		</Body>
