@@ -39,6 +39,10 @@ export const formatValueSpec = (spec: any): string | undefined => {
 	return [spec.type, range].filter(Boolean).join(' · ') || undefined;
 };
 
+// Chemin bloc / opération d'une commande, ex. « outputs/read ».
+export const commandPath = (command: any) =>
+	[command?.blockId, command?.operationId].filter(Boolean).join('/');
+
 // Sens d'une commande : d'abord ses `types` (`read…`/`get…`, `write…`/`set…`, puis
 // `…INPUT`/`…OUTPUT`), sinon ses params (une valeur à envoyer = écriture, un
 // `result` seul = lecture).

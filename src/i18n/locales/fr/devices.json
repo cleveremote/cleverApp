@@ -73,10 +73,13 @@
 		"commands": "Commandes",
 		"noCommand": "Aucune commande pour ce modèle.",
 		"measures": "Mesures",
+		"all": "Tout",
 		"read": "Lecture",
 		"write": "Écriture",
 		"confirm": "Confirmation",
-		"noMatch": "Aucune commande ne correspond aux filtres."
+		"noMatch": "Aucune commande ne correspond aux filtres ou à la recherche.",
+		"search": "Rechercher par nom ou chemin",
+		"clearSearch": "Effacer la recherche"
 	},
 	"command": {
 		"failed": "Échec de la commande",

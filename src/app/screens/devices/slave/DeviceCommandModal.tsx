@@ -9,6 +9,7 @@ import {
 	Chip,
 	Row,
 	commandAccess,
+	commandPath,
 	enumLabel,
 	formatRange,
 	formatValueSpec,
@@ -56,9 +57,7 @@ function CommandContent({
 	const access = commandAccess(command);
 	const params = command.params ?? {};
 	const valueSpec = params.value;
-	const operation = [command.blockId, command.operationId]
-		.filter(Boolean)
-		.join('/');
+	const operation = commandPath(command);
 	// `channel` / `value` posés sur la commande = valeurs par défaut envoyées.
 	const defaults = [
 		command.channel != null && params.channel

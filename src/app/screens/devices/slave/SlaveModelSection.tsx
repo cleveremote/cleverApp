@@ -1,7 +1,8 @@
 import {fieldLabelColor} from '../../../styles/components/common/Input';
 import React from 'react';
 import i18n from 'i18next';
-import {Pressable, StyleSheet, Text, View} from 'react-native';
+import {Pressable, StyleSheet, Text, TextInput, View} from 'react-native';
+import Icon from 'react-native-vector-icons/FontAwesome5';
 import {connect} from 'react-redux';
 import {ELEMENT_FONT_SIZE} from '../../../styles/metrics';
 import DeviceCommandModal from './DeviceCommandModal';
@@ -12,6 +13,7 @@ import {
 	CommandAccess,
 	Row,
 	commandAccess,
+	commandPath,
 	formatRange
 } from './commandUi';
 
@@ -39,33 +41,95 @@ const COLORS = {
 	transparent: 'transparent'
 };
 
-type CommandFilter = CommandAccess | 'confirm';
+type CommandFilter = 'all' | CommandAccess | 'confirm';
 
-// Filtres : pastilles grises « lecture / écriture / à confirmer », chacune
-// précédée d'un petit cercle à la couleur de l'icône des commandes.
+// Filtres : pastilles grises « tout / lecture / écriture / à confirmer »,
+// chacune précédée d'un petit cercle à la couleur de l'icône des commandes.
 const FILTERS: {key: CommandFilter; color: string}[] = [
+	{key: 'all', color: textColor},
 	{key: 'read', color: ACCESS_STYLE.read.color},
 	{key: 'write', color: ACCESS_STYLE.write.color},
 	{key: 'confirm', color: CONFIRM_STYLE.color}
 ];
 
-const matchesFilters = (command: any, filters: CommandFilter[]) => {
-	const access = filters.filter(f => f !== 'confirm');
-	if (access.length && !access.includes(commandAccess(command))) return false;
-	return !filters.includes('confirm') || !!command.params?.isConfirmRequired;
+// `access` : lecture ou écriture (exclusifs, aucun = les deux) ; `confirm`
+// se combine avec. « Tout » = ni l'un ni l'autre.
+type Filters = {access?: CommandAccess; confirm: boolean};
+const NO_FILTER: Filters = {confirm: false};
+
+const isActive = (filters: Filters, key: CommandFilter) =>
+	key === 'all'
+		? !filters.access && !filters.confirm
+		: key === 'confirm'
+		? filters.confirm
+		: filters.access === key;
+
+const toggleFilter = (filters: Filters, key: CommandFilter): Filters => {
+	if (key === 'all') return NO_FILTER;
+	if (key === 'confirm') return {...filters, confirm: !filters.confirm};
+	return {...filters, access: filters.access === key ? undefined : key};
 };
+
+// Minuscules sans accents : « écriture » trouve « Ecriture ».
+const normalize = (text: string) =>
+	text
+		.normalize('NFD')
+		.replace(/[\u0300-\u036f]/g, '')
+		.toLowerCase();
+
+const matchesFilters = (command: any, filters: Filters, query: string) => {
+	if (filters.access && commandAccess(command) !== filters.access) {
+		return false;
+	}
+	if (filters.confirm && !command.params?.isConfirmRequired) return false;
+	if (!query) return true;
+	// Recherche sur le nom / libellé et le chemin (ex. « outputs/read »).
+	return [command.name, command.label, commandPath(command)].some(
+		text => text && normalize(`${text}`).includes(query)
+	);
+};
+
+function CommandSearch({
+	value,
+	onChange
+}: Readonly<{value: string; onChange: (text: string) => void}>) {
+	return (
+		<View style={styles.search}>
+			<Icon name="search" size={14} color={mutedColor} />
+			<TextInput
+				value={value}
+				onChangeText={onChange}
+				placeholder={i18n.t('devices:model.search')}
+				placeholderTextColor={mutedColor}
+				autoCapitalize="none"
+				autoCorrect={false}
+				returnKeyType="search"
+				style={styles.searchInput}
+			/>
+			{value ? (
+				<Pressable
+					onPress={() => onChange('')}
+					hitSlop={10}
+					accessibilityLabel={i18n.t('devices:model.clearSearch')}
+				>
+					<Icon name="times-circle" solid size={16} color={mutedColor} />
+				</Pressable>
+			) : null}
+		</View>
+	);
+}
 
 function FilterChips({
 	selected,
 	onToggle
 }: Readonly<{
-	selected: CommandFilter[];
+	selected: Filters;
 	onToggle: (key: CommandFilter) => void;
 }>) {
 	return (
 		<View style={styles.filters}>
 			{FILTERS.map(({key, color}) => {
-				const active = selected.includes(key);
+				const active = isActive(selected, key);
 				return (
 					<Pressable
 						key={key}
@@ -98,17 +162,26 @@ function FilterChips({
 	);
 }
 
+// `showPath` : pendant une recherche, le chemin s'affiche sous le nom pour
+// qu'on voie pourquoi la commande correspond.
 function CommandRow({
 	command,
+	showPath,
 	onOpen
-}: Readonly<{command: any; onOpen: () => void}>) {
+}: Readonly<{command: any; showPath?: boolean; onOpen: () => void}>) {
 	const access = commandAccess(command);
+	const path = showPath ? commandPath(command) : '';
 	return (
 		<View style={styles.command}>
 			<View style={{flex: 1}}>
-				<Text style={styles.commandName} numberOfLines={2}>
+				<Text style={styles.commandName} numberOfLines={path ? 1 : 2}>
 					{command.name ?? command.label}
 				</Text>
+				{path ? (
+					<Text style={styles.commandPath} numberOfLines={1}>
+						{path}
+					</Text>
+				) : null}
 			</View>
 			<Pressable
 				onPress={onOpen}
@@ -129,11 +202,11 @@ function CommandRow({
 export function SlaveModelSection(props: any) {
 	const model = findModel(props.models, props.device);
 	const [opened, setOpened] = React.useState<any>();
-	const [filters, setFilters] = React.useState<CommandFilter[]>([]);
-	const toggleFilter = (key: CommandFilter) =>
-		setFilters(prev =>
-			prev.includes(key) ? prev.filter(f => f !== key) : [...prev, key]
-		);
+	const [filters, setFilters] = React.useState<Filters>(NO_FILTER);
+	const [search, setSearch] = React.useState('');
+	const query = normalize(search.trim());
+	const onToggleFilter = (key: CommandFilter) =>
+		setFilters(prev => toggleFilter(prev, key));
 
 	// Unit id Modbus du slave (`config.slaveId`), en lecture seule.
 	const slaveId = props.device?.config?.slaveId;
@@ -173,7 +246,7 @@ export function SlaveModelSection(props: any) {
 			(commandAccess(a) === 'read' ? 0 : 1) -
 			(commandAccess(b) === 'read' ? 0 : 1)
 	);
-	const commands = allCommands.filter(c => matchesFilters(c, filters));
+	const commands = allCommands.filter(c => matchesFilters(c, filters, query));
 
 	return (
 		<View style={styles.embeddedCard}>
@@ -202,7 +275,10 @@ export function SlaveModelSection(props: any) {
 			) : null}
 			<Text style={styles.subTitle}>{i18n.t('devices:model.commands')}</Text>
 			{allCommands.length ? (
-				<FilterChips selected={filters} onToggle={toggleFilter} />
+				<>
+					<CommandSearch value={search} onChange={setSearch} />
+					<FilterChips selected={filters} onToggle={onToggleFilter} />
+				</>
 			) : null}
 			{commands.length === 0 ? (
 				<Text style={styles.empty}>
@@ -217,6 +293,7 @@ export function SlaveModelSection(props: any) {
 					<CommandRow
 						key={c.id ?? c.name}
 						command={c}
+						showPath={!!query}
 						onOpen={() => setOpened(c)}
 					/>
 				))
@@ -271,6 +348,25 @@ const styles = StyleSheet.create({
 		shadowOpacity: 0.22,
 		shadowRadius: 2.22
 	},
+	// Champ de recherche : même gris que les pastilles, juste au-dessus.
+	search: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		gap: 8,
+		backgroundColor: COLORS.chip,
+		borderRadius: 18,
+		paddingHorizontal: 12,
+		marginTop: 4,
+		marginHorizontal: -10,
+		height: 38
+	},
+	searchInput: {
+		flex: 1,
+		textAlign: 'left',
+		color: textColor,
+		fontSize: 14,
+		paddingVertical: 0
+	},
 	// Les pastilles se partagent toute la largeur, contenu centré.
 	filters: {
 		flexDirection: 'row',
@@ -305,6 +401,12 @@ const styles = StyleSheet.create({
 		fontSize: ELEMENT_FONT_SIZE,
 		lineHeight: COMMAND_LINE_HEIGHT,
 		fontWeight: 'bold'
+	},
+	commandPath: {
+		textAlign: 'left',
+		color: mutedColor,
+		fontSize: 12,
+		lineHeight: 16
 	},
 	empty: {color: mutedColor, paddingVertical: 8}
 });

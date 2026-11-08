@@ -73,10 +73,13 @@
 		"commands": "Commands",
 		"noCommand": "No command for this model.",
 		"measures": "Measures",
+		"all": "All",
 		"read": "Read",
 		"write": "Set",
 		"confirm": "Confirmation",
-		"noMatch": "No command matches the filters."
+		"noMatch": "No command matches the filters or the search.",
+		"search": "Search by name or path",
+		"clearSearch": "Clear search"
 	},
 	"command": {
 		"failed": "Command failed",
