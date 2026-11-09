@@ -60,7 +60,7 @@ type Phase =
 	| 'manual'
 	/** The native camera code is missing from this binary. */
 	| 'unavailable'
-	/** Manual check that a plain HTTPS call to the box goes through. */
+	/** Manual check that a plain HTTPS call to the box goes through (dev builds only). */
 	| 'test'
 	| 'error';
 
@@ -230,9 +230,11 @@ export function ScanBoxScreen(props: any) {
 					label={t('common:back')}
 					onPress={() => props.navigation.goBack()}
 				/>
-				<TouchableOpacity onPress={() => setPhase('test')}>
-					<Text style={styles.link}>{t('scan.networkTest')}</Text>
-				</TouchableOpacity>
+				{__DEV__ ? (
+					<TouchableOpacity onPress={() => setPhase('test')}>
+						<Text style={styles.link}>{t('scan.networkTest')}</Text>
+					</TouchableOpacity>
+				) : null}
 			</Centered>
 		);
 	}
@@ -340,9 +342,11 @@ export function ScanBoxScreen(props: any) {
 					label={t('openWifiSettings')}
 					onPress={openWifiSettings}
 				/>
-				<TouchableOpacity onPress={() => setPhase('test')}>
-					<Text style={styles.link}>{t('scan.networkTest')}</Text>
-				</TouchableOpacity>
+				{__DEV__ ? (
+					<TouchableOpacity onPress={() => setPhase('test')}>
+						<Text style={styles.link}>{t('scan.networkTest')}</Text>
+					</TouchableOpacity>
+				) : null}
 			</Centered>
 		);
 	}
@@ -363,11 +367,13 @@ export function ScanBoxScreen(props: any) {
 					onScanned={pair}
 				/>
 			) : null}
-			<TouchableOpacity
-				style={styles.testLink}
-				onPress={() => setPhase('test')}>
-				<Text style={styles.testLinkText}>{t('scan.networkTest')}</Text>
-			</TouchableOpacity>
+			{__DEV__ ? (
+				<TouchableOpacity
+					style={styles.testLink}
+					onPress={() => setPhase('test')}>
+					<Text style={styles.testLinkText}>{t('scan.networkTest')}</Text>
+				</TouchableOpacity>
+			) : null}
 		</View>
 	);
 }

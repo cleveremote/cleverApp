@@ -260,7 +260,13 @@ export function BoxConfiguration(props: any) {
 		const localCoordinates = await coordinatesRef.current?.take(
 			COORDINATES_GRACE_MS
 		);
-		const url = await boxUrl(CONFIGURE_PATH, deviceId);
+		let url: string;
+		try {
+			url = await boxUrl(CONFIGURE_PATH, deviceId);
+		} catch (e) {
+			console.warn('[BoxConfiguration] boxUrl:', e);
+			return fail(t('boxConfig.noResponse'));
+		}
 
 		// Seul un refus explicite retient ici : la box a répondu, elle a dit non,
 		// et son point d'accès tient toujours — la saisie peut être corrigée et

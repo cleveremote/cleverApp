@@ -16,7 +16,7 @@
 		"testTimeout": "Timed out after {{seconds}} s — no response from {{url}}",
 		"testNeedsQr": "Scan the box QR code first: its deviceId gives the address to test.",
 		"cameraUnavailable": "Camera unavailable",
-		"cameraModuleMissing": "The native camera module is missing from this build of the app. Rebuild the app (react-native run-android / run-ios): a Metro reload is not enough.",
+		"cameraModuleMissing": "The camera can't be used in this version of the app. Please update the app and try again.",
 		"networkTest": "Network test",
 		"testRunning": "Test running ...",
 		"runTest": "Run test",

@@ -1,6 +1,5 @@
 import {NativeModules, Platform} from 'react-native';
 import {initSSL} from '../socket/SSLConfig';
-import {WEBSITE_URL_LOCAL} from '../../../config/websocket';
 import {getBoxEndpoint} from '../hotspot';
 
 const {SSLCAModule} = NativeModules;
@@ -14,10 +13,11 @@ export type BoxResponse = {
  * Absolute URL of a box route, built from the endpoint scanned at pairing time
  * for the box `deviceId`.
  *
- * Falls back to WEBSITE_URL_LOCAL when nothing was scanned — a dev phone that
- * is already on the same LAN as the box then keeps working. The port is only
- * spelled out when it is not the default one: the box certificate is issued for
- * `DNS:<host>`, and a needless `:443` only makes the logs harder to read.
+ * When nothing was scanned for that box, falls back to its mDNS name
+ * `<deviceId>.local`. Without a `deviceId` at all there is no box to reach, so
+ * it throws. The port is only spelled out when it is not the default one: the
+ * box certificate is issued for `DNS:<host>`, and a needless `:443` only makes
+ * the logs harder to read.
  */
 export async function boxUrl(
 	path: string,
@@ -25,7 +25,14 @@ export async function boxUrl(
 ): Promise<string> {
 	const suffix = path.startsWith('/') ? path : `/${path}`;
 	const endpoint = await getBoxEndpoint(deviceId);
-	if (!endpoint) return `${WEBSITE_URL_LOCAL}${suffix}`;
+	if (!endpoint) {
+		const name = deviceId
+			?.trim()
+			.replace(/\.local$/i, '')
+			.toLowerCase();
+		if (name) return `https://${name}.local${suffix}`;
+		throw new Error('No box to reach: missing deviceId');
+	}
 
 	const authority =
 		endpoint.port === 443
