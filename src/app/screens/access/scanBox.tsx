@@ -33,8 +33,16 @@ import {
 	openWifiSettings
 } from './accessUi';
 
-/** Route de la box interrogée par l'écran de test réseau. */
-const TEST_URL = 'https://pi-dev-1.local/updater/getNetworksList';
+/**
+ * Route de la box interrogée par l'écran de test réseau, construite sur le
+ * `deviceId` du QR scanné. Celui-ci porte parfois déjà `.local` : on le
+ * retire avant de le remettre, comme le fait `boxEndpoint`.
+ */
+const testUrlFor = (deviceId: string) =>
+	`https://${deviceId
+		.trim()
+		.replace(/\.local$/i, '')
+		.toLowerCase()}.local/updater/getNetworksList`;
 
 /** Au-delà, une box injoignable ferait patienter indéfiniment. */
 const TEST_TIMEOUT_MS = 10000;
@@ -128,13 +136,16 @@ export function ScanBoxScreen(props: any) {
 	 * elle-même. La réponse — ou l'erreur — est affichée telle quelle, c'est ce
 	 * qui permet de distinguer les trois cas.
 	 */
+	const testUrl = payload ? testUrlFor(payload.deviceId) : null;
+
 	const runNetworksListTest = useCallback(async () => {
+		if (!testUrl) return;
 		ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
 		setTestRunning(true);
 		setTestResult('');
 
 		try {
-			const {status, body: raw} = await boxGet(TEST_URL, TEST_TIMEOUT_MS);
+			const {status, body: raw} = await boxGet(testUrl, TEST_TIMEOUT_MS);
 
 			let body = raw;
 			try {
@@ -149,13 +160,13 @@ export function ScanBoxScreen(props: any) {
 			const err = e instanceof Error ? e : new Error(String(e));
 			setTestResult(
 				err.name === 'AbortError'
-					? t('scan.testTimeout', {seconds: TEST_TIMEOUT_MS / 1000, url: TEST_URL})
+					? t('scan.testTimeout', {seconds: TEST_TIMEOUT_MS / 1000, url: testUrl})
 					: `${err.name}: ${err.message}`
 			);
 		} finally {
 			setTestRunning(false);
 		}
-	}, [t]);
+	}, [t, testUrl]);
 
 	const pair = useCallback(
 		async (raw: string) => {
@@ -233,13 +244,13 @@ export function ScanBoxScreen(props: any) {
 				contentContainerStyle={styles.testContent}>
 				<Text style={styles.title}>{t('scan.networkTest')}</Text>
 				<Text style={styles.body} selectable>
-					{TEST_URL}
+					{testUrl ?? t('scan.testNeedsQr')}
 				</Text>
 
 				<PrimaryButton
 					label={testRunning ? t('scan.testRunning') : t('scan.runTest')}
 					onPress={runNetworksListTest}
-					disabled={testRunning}
+					disabled={testRunning || !testUrl}
 				/>
 
 				{testRunning ? (

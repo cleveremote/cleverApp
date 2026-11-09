@@ -14,6 +14,7 @@
 	},
 	"scan": {
 		"testTimeout": "Timeout après {{seconds}} s — aucune réponse de {{url}}",
+		"testNeedsQr": "Scannez d'abord le QR code de la box : son deviceId donne l'adresse à tester.",
 		"cameraUnavailable": "Caméra non disponible",
 		"cameraModuleMissing": "Le module natif de la caméra n'est pas présent dans cette version de l'application. Reconstruisez l'app (react-native run-android / run-ios) : un rechargement de Metro ne suffit pas.",
 		"networkTest": "Test réseau",
