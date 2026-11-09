@@ -80,3 +80,4 @@ yarn-error.log
 *.map
 
 *.bundle
+android/app/debug.keystore
