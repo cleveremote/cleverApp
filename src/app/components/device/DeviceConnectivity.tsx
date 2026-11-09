@@ -124,15 +124,6 @@ const useDependencyIds = (item: any, kind: ExecutableKind) => {
 			actuators,
 			modbusTasks
 		});
-		// TEMP diagnostic: sensor COM dont le slave n'est pas résolu.
-		if (__DEV__ && kind === 'SENSOR' && item?.type === 'COM' && !ids.length) {
-			console.log('[connectivity] sensor without device', item?.name, {
-				parentId: item?.parentId,
-				deviceId: item?.deviceId,
-				config: item?.config,
-				deviceCommand: item?.deviceCommand && Object.keys(item.deviceCommand)
-			});
-		}
 		return ids;
 	}, [item, kind, cycles, sensors, actuators, modbusTasks]);
 };

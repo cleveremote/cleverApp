@@ -25,7 +25,6 @@ import {toNumber} from '../devices/deviceFieldUtils';
 import {findModel} from '../devices/slave/SlaveModelSection';
 import {hasActuatorsSection} from '../devices/slave/SlaveActuatorsSection';
 import {useActuatorSection} from './useActuatorSection';
-import {IS_EXPERT} from '../../../../config/env';
 
 // Les champs numériques de chaque config : react-hook-form stocke les saisies en
 // chaînes, on les recoerce avant de stager l'entité.
@@ -69,9 +68,6 @@ export function ActuatorConfigurationSettingsSection(props: any) {
 	const isRpi = type === ActuatorType.RPI;
 	const isCtrl = type === ActuatorType.CTRL;
 	const comBased = isComBased(type);
-	// Hors mode expert, l'action d'un COM / CTRL est en lecture seule (la
-	// régulation d'un CTRL reste éditable).
-	const readOnly = !IS_EXPERT;
 
 	const transform = (data: any) => {
 		const config = {...data.config};
@@ -146,7 +142,7 @@ export function ActuatorConfigurationSettingsSection(props: any) {
 	};
 
 	// Un actuator COM / CTRL ne pilote qu'une seule device command.
-	const canAddAction = !readOnly && actions.length === 0;
+	const canAddAction = actions.length === 0;
 
 	const addAction = (value: any) => {
 		if (!value || !canAddAction) return;
@@ -171,12 +167,6 @@ export function ActuatorConfigurationSettingsSection(props: any) {
 		);
 
 	const isNew = isTempId(source?.id);
-	// Hors mode expert, on ne peut pas créer d'actuator COM / CTRL.
-	const typeOptions = IS_EXPERT
-		? actuatorTypeOptions
-		: actuatorTypeOptions.filter(
-				o => o.value === type || !isComBased(o.value)
-		  );
 
 	const onTypeChange = (value: string) => {
 		markDirty();
@@ -199,7 +189,7 @@ export function ActuatorConfigurationSettingsSection(props: any) {
 				{/* Un COM / CTRL garde toujours son type : le champ est masqué. */}
 				{!comBased && (
 					<SelectForm
-						lstData={typeOptions}
+						lstData={actuatorTypeOptions}
 						control={control}
 						errors={errors}
 						name="type"
@@ -274,13 +264,12 @@ export function ActuatorConfigurationSettingsSection(props: any) {
 								{id: action.commandId},
 								() => removeAction(action.commandId),
 								labelOfAction(action.commandId),
-								readOnly ? null : {name: faMinus, color: 'red'},
+								{name: faMinus, color: 'red'},
 								{
 									value: action.channel,
 									onChangeValue: (text: string) =>
 										setChannel(action.commandId, text),
-									placeholder: i18n.t('actuators:channel'),
-									disabled: readOnly
+									placeholder: i18n.t('actuators:channel')
 								}
 							)
 						)}

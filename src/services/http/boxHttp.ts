@@ -11,16 +11,20 @@ export type BoxResponse = {
 };
 
 /**
- * Absolute URL of a box route, built from the endpoint scanned at pairing time.
+ * Absolute URL of a box route, built from the endpoint scanned at pairing time
+ * for the box `deviceId`.
  *
  * Falls back to WEBSITE_URL_LOCAL when nothing was scanned — a dev phone that
  * is already on the same LAN as the box then keeps working. The port is only
  * spelled out when it is not the default one: the box certificate is issued for
  * `DNS:<host>`, and a needless `:443` only makes the logs harder to read.
  */
-export async function boxUrl(path: string): Promise<string> {
+export async function boxUrl(
+	path: string,
+	deviceId: string | undefined
+): Promise<string> {
 	const suffix = path.startsWith('/') ? path : `/${path}`;
-	const endpoint = await getBoxEndpoint();
+	const endpoint = await getBoxEndpoint(deviceId);
 	if (!endpoint) return `${WEBSITE_URL_LOCAL}${suffix}`;
 
 	const authority =
@@ -70,7 +74,7 @@ export async function boxGet(
 }
 
 /**
- * Logs how long a box call took, whether it answered or blew up.
+ * Logs how long a failed box call took before it blew up.
  *
  * Worth the noise on this transport specifically: the box is reached over mDNS
  * on a link the phone is in the middle of switching, so a call that looks like
@@ -85,13 +89,7 @@ async function timed(
 ): Promise<BoxResponse> {
 	const startedAt = Date.now();
 	try {
-		const response = await run();
-		console.log(
-			`[boxHttp] ${method} ${url} → ${response.status} in ${
-				Date.now() - startedAt
-			}ms`
-		);
-		return response;
+		return await run();
 	} catch (e) {
 		console.warn(
 			`[boxHttp] ${method} ${url} → failed after ${

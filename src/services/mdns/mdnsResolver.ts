@@ -103,7 +103,7 @@ class MdnsResolver {
 			// Emitted for *any* service on the network that fails to resolve, not
 			// just ours — logging only, the timeout decides when to give up.
 			zc.on('error', (err: any) => {
-				console.log('mDNS scan error:', err?.message ?? err);
+				console.warn('mDNS scan error:', err?.message ?? err);
 			});
 
 			try {

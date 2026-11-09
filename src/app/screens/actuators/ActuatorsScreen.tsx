@@ -18,12 +18,11 @@ import {
 } from '../../data/actuatorTypes';
 import {loadActuators} from '../../../module/process/infrasctructure/store/actions/actuator';
 import {loadDevices} from '../../../module/process/infrasctructure/store/actions/device';
-import {IS_EXPERT} from '../../../../config/env';
 import i18n from 'i18next';
 
 // Settings → My RPI : section « Actuators » listant les actuators RPI (GPIO du
 // Raspberry), triés par libellé. Chaque ligne ouvre le menu de réglages
-// de l'actuator ; le « + » (mode expert uniquement) en crée un nouveau. Les
+// de l'actuator ; le « + » en crée un nouveau. Les
 // COM / CTRL, rattachés à un slave, se gèrent depuis la section « Actuators »
 // de ce slave.
 export function ActuatorsScreen(props: any) {
@@ -66,9 +65,6 @@ export function ActuatorsScreen(props: any) {
 					defaultExpanded
 					onPress={() => {}}>
 					<View style={styles.embeddedCard}>
-						{actuators.length === 0 && !IS_EXPERT ? (
-							<Text style={styles.empty}>{i18n.t('actuators:empty')}</Text>
-						) : null}
 						{actuators.map((actuator: any) =>
 							elementStack(
 								actuator,
@@ -77,31 +73,29 @@ export function ActuatorsScreen(props: any) {
 								{name: faCog, color: styles.icon.color}
 							)
 						)}
-						{IS_EXPERT && (
-							<View style={styles.addRow}>
-								<TouchableOpacity
-									style={styles.addButton}
-									onPress={() => {
-										ReactNativeHapticFeedback.trigger(
-											'impactMedium',
-											hapticOptions
-										);
-										openSettings({
-											defaults: {
-												type: ActuatorType.RPI,
-												config: emptyActuatorConfig(
-													ActuatorType.RPI
-												)
-											}
-										});
-									}}>
-									<Icon name="times-circle" style={styles.icon} />
-								</TouchableOpacity>
-								<Text style={styles.addLabel}>
-									{i18n.t('actuators:add')}
-								</Text>
-							</View>
-						)}
+						<View style={styles.addRow}>
+							<TouchableOpacity
+								style={styles.addButton}
+								onPress={() => {
+									ReactNativeHapticFeedback.trigger(
+										'impactMedium',
+										hapticOptions
+									);
+									openSettings({
+										defaults: {
+											type: ActuatorType.RPI,
+											config: emptyActuatorConfig(
+												ActuatorType.RPI
+											)
+										}
+									});
+								}}>
+								<Icon name="times-circle" style={styles.icon} />
+							</TouchableOpacity>
+							<Text style={styles.addLabel}>
+								{i18n.t('actuators:add')}
+							</Text>
+						</View>
 					</View>
 				</MenuAccordion>
 			</MenuGroup>
@@ -136,11 +130,6 @@ const styles = StyleSheet.create({
 		backgroundColor: COLORS.cardBackground,
 		padding: 8,
 		paddingBottom: 16
-	},
-	empty: {
-		color: COLORS.muted,
-		paddingVertical: 8,
-		paddingHorizontal: 8
 	},
 	addRow: {
 		justifyContent: 'center',

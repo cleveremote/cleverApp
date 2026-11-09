@@ -2,6 +2,7 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 import {Alert, Platform} from 'react-native';
 import * as Keychain from 'react-native-keychain';
 import i18n from 'i18next';
+import {clearBoxEndpoint} from '../../../services/hotspot/boxEndpoint';
 
 // Face ID / Touch ID, avec repli sur le code du téléphone : sans biométrie
 // enrôlée (ou refusée à l'app), le code suffit au lieu de bloquer l'accès.
@@ -224,7 +225,7 @@ const findProfileByLogin = async (
 	return undefined;
 };
 
-const deleteProfile = async (profile: string) => {
+const removeProfileEntry = async (profile: string) => {
 	//remove assocition profile acount.
 	await AsyncStorage.removeItem(profile);
 	//remove profile from profiles list
@@ -232,6 +233,22 @@ const deleteProfile = async (profile: string) => {
 	const index = profilesLst.findIndex(x => x === profile);
 	if (index >= 0) profilesLst.splice(index, 1);
 	await AsyncStorage.setItem('profiles', profilesLst.join(','));
+};
+
+/**
+ * Supprime le profil et l'endpoint de sa box : l'account est le `deviceId` du
+ * QR scanné, sous lequel `saveBoxEndpoint` l'a rangé.
+ */
+const deleteProfile = async (profile: string) => {
+	const data = await getAssociationProfileAccount(profile);
+	await removeProfileEntry(profile);
+	if (data?.account) {
+		try {
+			await clearBoxEndpoint(data.account);
+		} catch (error) {
+			console.error('Error clearBoxEndpoint:', error);
+		}
+	}
 };
 
 const saveSigninData = async (
@@ -245,8 +262,9 @@ const saveSigninData = async (
 	// Appelé une fois l'authentification réussie : « se souvenir de moi » coché
 	// enregistre (ou renomme) le profil avec son login et son mot de passe.
 	if (rememberCredentials) {
+		// Renommage : l'endpoint de la box reste, seul le profil est remplacé.
 		if (profile) {
-			await deleteProfile(profile);
+			await removeProfileEntry(profile);
 		}
 		await setProfiles(newProfile);
 		await setAssociationProfileAccount(

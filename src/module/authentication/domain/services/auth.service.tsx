@@ -4,11 +4,7 @@ import {jwtDecode} from 'jwt-decode';
 import {EventEmitter} from 'events';
 import i18n from 'i18next';
 import {socketService} from '../../../../services/socket';
-import {
-	DEV_MODE,
-	WEBSITE_URL,
-	WEBSITE_URL_LOCAL
-} from '../../../../../config/websocket';
+import {WEBSITE_URL} from '../../../../../config/websocket';
 import {
 	RESET_STORE,
 	SET_BOX_CONNECTED,
@@ -87,9 +83,6 @@ const parseLockedUntil = (value: unknown): number | undefined => {
  */
 const parseBoxLoginResponse = (...args: unknown[]): BoxLoginResult => {
 	const response = pickResult(args);
-	if (__DEV__) {
-		console.log('[front/box/login] ack', JSON.stringify(args));
-	}
 	const status: string | undefined =
 		typeof response?.status === 'string' ? response.status : undefined;
 	const explicitSuccess = response?.success === true || response?.res === true;
@@ -372,13 +365,11 @@ class AuthenticationService {
 			return this.resolvedLocalService;
 		}
 
-		console.log('Resolving local server via mDNS:', boxId);
 		const service = await mdnsResolver.resolveService(boxId);
 		if (!service) {
-			console.log('mDNS resolution failed for', boxId);
+			console.warn('mDNS resolution failed for', boxId);
 			return undefined;
 		}
-		console.log('Resolved', boxId, '->', service.hostname, service.ip);
 		this.resolvedLocalService = service;
 		return service;
 	}
@@ -392,12 +383,9 @@ class AuthenticationService {
 		// A box paired by QR code told us its hostname and port outright, so
 		// there is nothing to discover. The URL keeps the same `.local` shape as
 		// the mDNS branch below, which is what keeps the certificate valid.
-		const endpoint = await getBoxEndpoint();
+		const endpoint = await getBoxEndpoint(boxId);
 		if (endpoint) {
 			return `https://${endpoint.host}:${endpoint.port}`;
-		}
-		if(DEV_MODE) {
-          return WEBSITE_URL_LOCAL;
 		}
 		const service = await this.scanAndCacheLocalService(boxId);
 		if (!service) return undefined;
@@ -426,13 +414,12 @@ class AuthenticationService {
 		const extraHeaders = {
 			boxId
 		};
-        console.log('Connecting to server at', server, 'with boxId', boxId)
 		await socketService.init(server, token, extraHeaders);
 
 		const connectResult = (): Promise<{res: boolean; error?: string; retry?: boolean}> => {
 			return new Promise((resolve, _reject) => {
 				socketService.on('connect_error', async (_error: any) => {
-					console.log(
+					console.warn(
 						'connect_error on', server, '->',
 						_error?.message ?? _error,
 						'| native:', _error?.description?.message ?? '(aucun)',

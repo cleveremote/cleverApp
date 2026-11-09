@@ -17,7 +17,6 @@ import {hapticOptions} from '../../data/cycleTypes';
 import {ActuatorType, isComBased} from '../../data/actuatorTypes';
 import {isFollowLoop, loopOf} from '../../data/controlLoopTypes';
 import {isTempId} from '../../../services/socket';
-import {IS_EXPERT} from '../../../../config/env';
 import {
 	loadActuator,
 	saveActuator,
@@ -231,7 +230,7 @@ export function ActuatorSettingsScreen(props: any) {
 						)}
 					</MenuAccordion>
 				)}
-				{IS_EXPERT && <DeleteItemMenu key={4} OnConfirm={deleteItem} />}
+				<DeleteItemMenu key={4} OnConfirm={deleteItem} />
 			</MenuGroup>
 		</SettingsScrollView>
 	);

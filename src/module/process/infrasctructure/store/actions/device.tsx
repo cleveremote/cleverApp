@@ -52,11 +52,6 @@ export const loadDevices =
 			{},
 			(response: any) => {
 				const devices = JSON.parse(response.config).devices;
-				// TEMP diagnostic: which reload blanks the masters list.
-				console.log(
-					'[devices] loadDevices',
-					(devices || []).filter((d: any) => d.type === 'MASTER').length
-				);
 				dispatch({
 					type: ROOT_DEVICES_LOAD,
 					payload: normalizeIds(devices)
@@ -119,11 +114,6 @@ export const saveDeviceTree =
 					return;
 				}
 				const config = JSON.parse(response.config);
-				// TEMP diagnostic: which reload blanks the masters list.
-				console.log(
-					'[devices] saveDeviceTree',
-					(config.devices || []).filter((d: any) => d.type === 'MASTER').length
-				);
 				dispatch({
 					type: ROOT_DEVICES_LOAD,
 					payload: normalizeIds(config.devices)

@@ -1,7 +1,5 @@
-import {HOTSPOT_MOCK_ENABLED, USE_LOCAL_API} from './env';
+import {HOTSPOT_MOCK_ENABLED} from './env';
 
-// Driven by APP_ENV (see config/env.ts and .env.<mode>).
-export const DEV_MODE = USE_LOCAL_API;
 export const WEBSITE_URL = 'https://api.cleversystech.com';
 export const WEBSITE_URL_LOCAL = 'https://pi-dev-1.local';
 

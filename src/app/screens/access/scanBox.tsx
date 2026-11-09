@@ -183,7 +183,9 @@ export function ScanBoxScreen(props: any) {
 				setPhase('done');
 				// Le téléphone est sur le hotspot : la box est joignable en
 				// HTTPS, c'est là que le formulaire de configuration se remplit.
-				props.navigation.navigate('BoxConfiguration');
+				props.navigation.navigate('BoxConfiguration', {
+					deviceId: decoded.deviceId
+				});
 			} catch (e) {
 				const hotspotError =
 					e instanceof HotspotError
@@ -303,7 +305,9 @@ export function ScanBoxScreen(props: any) {
 							'impactMedium',
 							hapticOptions
 						);
-						props.navigation.navigate('BoxConfiguration');
+						props.navigation.navigate('BoxConfiguration', {
+							deviceId: payload.deviceId
+						});
 					}}
 				/>
 			</Centered>

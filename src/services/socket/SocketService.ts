@@ -30,7 +30,7 @@ class SocketService {
 			} catch (e) {
 				// Without the CA anchor every TLS handshake to the box will fail —
 				// surface it here rather than letting it look like a network error.
-				console.log('initSSL failed:', (e as Error)?.message ?? e);
+				console.error('initSSL failed:', (e as Error)?.message ?? e);
 				throw e;
 			}
 			this.sslReady = true;
@@ -40,7 +40,6 @@ class SocketService {
 		if (this.socket?.connected) {
 			this.socket.disconnect();
 		}
-    console.log('extraHeaders', extraHeaders);
 		this.socket = io(url, {
 			forceNew: false,
 			transports: ['websocket'],

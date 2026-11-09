@@ -546,9 +546,7 @@ class BLEServiceInstance {
 		console.error('error,', error);
 	};
 
-	showSuccessToast = (info: string) => {
-		console.debug(info);
-	};
+	showSuccessToast = (_info: string) => {};
 }
 
 export const BLEService = new BLEServiceInstance();

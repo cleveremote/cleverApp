@@ -118,9 +118,7 @@ export function SignIn(props: any) {
 						setMessage(t('signIn.credentialsCancelled'));
 					} else if (sd.credentialsError === 'unavailable') {
 						setMessage(t('signIn.credentialsUnavailable'));
-					} else if (sd.login && sd.password && sd.profile) {
-						//await onLogin(sd);
-					} else {
+					} else if (!(sd.login && sd.password && sd.profile)) {
 						setMessage(t('signIn.missingInfo'));
 					}
 				}

@@ -97,6 +97,7 @@ export function BoxHandover(props: any) {
 	const ssid: string = props.route?.params?.ssid ?? '';
 	// Identifiant choisi à la configuration : la connexion l'affiche figé.
 	const login: string = props.route?.params?.login ?? '';
+	const deviceId: string | undefined = props.route?.params?.deviceId;
 
 	const [phase, setPhase] = useState<Phase>('waiting');
 	const [elapsed, setElapsed] = useState(0);
@@ -242,6 +243,7 @@ export function BoxHandover(props: any) {
 
 		const fromLan = await waitForWifiStatus({
 			ssid,
+			deviceId,
 			timeoutMs: SEARCH_TIMEOUT_MS,
 			shouldContinue: alive
 		});
@@ -252,7 +254,7 @@ export function BoxHandover(props: any) {
 			phone: 'done',
 			box: outcome === 'confirmed' ? 'done' : 'failed'
 		});
-	}, [ssid, waitForPhoneOnNetwork]);
+	}, [ssid, deviceId, waitForPhoneOnNetwork]);
 
 	useEffect(() => {
 		mounted.current = true;

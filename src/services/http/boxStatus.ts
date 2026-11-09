@@ -50,9 +50,10 @@ const CONNECTED_DEVICE_STATES = new Set(['activated', 'connected']);
  * passerelle du réseau courant). C'est un essai de plus, pas un incident.
  */
 export async function getWifiStatus(
+	deviceId: string | undefined,
 	timeoutMs = PROBE_TIMEOUT_MS
 ): Promise<WifiStatus | null> {
-	const url = await boxUrl(STATUS_PATH);
+	const url = await boxUrl(STATUS_PATH, deviceId);
 	const {status, body} = await boxGet(url, timeoutMs);
 
 	// Une box qui répond une erreur, ou autre chose qu'un état, disparaîtrait
@@ -100,6 +101,8 @@ export function isAuthFailure(status: WifiStatus | null): boolean {
 export type WaitForWifiStatusOptions = PollOptions & {
 	/** SSID que la box doit avoir rejoint. */
 	ssid: string;
+	/** `deviceId` de la box, celui du QR scanné. */
+	deviceId: string | undefined;
 	/** Budget d'une sonde. */
 	requestTimeoutMs?: number;
 };
@@ -120,30 +123,17 @@ export type WaitForWifiStatusOptions = PollOptions & {
 export async function waitForWifiStatus(
 	options: WaitForWifiStatusOptions
 ): Promise<WifiStatus | null> {
-	const {ssid, requestTimeoutMs = PROBE_TIMEOUT_MS} = options;
+	const {ssid, deviceId, requestTimeoutMs = PROBE_TIMEOUT_MS} = options;
 
 	// Le dernier état atteint survit à l'expiration du budget : c'est lui qui
 	// distingue « jamais jointe » de « jointe, mais pas sur le bon réseau ».
 	let seen: WifiStatus | null = null;
 
 	const joined = await pollUntil(async () => {
-		const status = await getWifiStatus(requestTimeoutMs);
+		const status = await getWifiStatus(deviceId, requestTimeoutMs);
 		if (status) seen = status;
 
 		const verdict = hasJoined(status, ssid);
-		if (status) {
-			// Les trois champs qui décident, et le SSID attendu en face : c'est
-			// tout ce qu'il faut pour savoir pourquoi la box a été acceptée ou
-			// non, sans avoir à rejouer la scène.
-			console.log(
-				`[boxStatus] attendu="${ssid}" — mode=${status.mode} ssid="${
-					status.ssid ?? ''
-				}" deviceState=${status.deviceState} → ${
-					verdict ? 'confirmée' : 'pas encore'
-				}`
-			);
-		}
-
 		return verdict || isAuthFailure(status) ? status : undefined;
 	}, options);
 

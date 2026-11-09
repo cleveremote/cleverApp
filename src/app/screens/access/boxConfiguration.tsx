@@ -77,6 +77,8 @@ type NetworkOption = {
  * qui n'exposent pas de point d'accès.
  */
 export function BoxConfiguration(props: any) {
+	// `deviceId` du QR scanné : c'est sous lui que l'endpoint de la box est rangé.
+	const deviceId: string | undefined = props.route?.params?.deviceId;
 	// Repris du brouillon quand on revient ici après un échec de bascule :
 	// refaire saisir six champs pour corriger une clé Wi-Fi serait une punition.
 	// Fusionné aux valeurs par défaut : un brouillon d'une version antérieure du
@@ -135,7 +137,7 @@ export function BoxConfiguration(props: any) {
 		setBusyMessage(t('boxConfig.searchingNetworks'));
 		setError('');
 		try {
-			const url = await boxUrl(NETWORKS_PATH);
+			const url = await boxUrl(NETWORKS_PATH, deviceId);
 			const {status, body} = await boxGet(url, REQUEST_TIMEOUT_MS);
 			if (status < 200 || status >= 300) {
 				throw new Error(`HTTP ${status}`);
@@ -152,7 +154,7 @@ export function BoxConfiguration(props: any) {
 		} finally {
 			setIsLoading(false);
 		}
-	}, [t]);
+	}, [t, deviceId]);
 
 	useEffect(() => {
 		loadNetworks();
@@ -163,7 +165,7 @@ export function BoxConfiguration(props: any) {
 	// un brouillon, qui pourrait venir d'une autre box.
 	useEffect(() => {
 		let cancelled = false;
-		getBoxEndpoint().then(endpoint => {
+		getBoxEndpoint(deviceId).then(endpoint => {
 			// Un endpoint enregistré avant l'ajout de `deviceId` n'en a pas.
 			if (cancelled || !endpoint?.deviceId) return;
 			const boxIdentifier = endpoint.deviceId.replace(/\.local$/i, '');
@@ -172,7 +174,7 @@ export function BoxConfiguration(props: any) {
 		return () => {
 			cancelled = true;
 		};
-	}, []);
+	}, [deviceId]);
 
 	// Position demandée dès l'affichage plutôt qu'au moment d'envoyer : voir
 	// `startLocalCoordinates`. Ici le retard se paierait doublement, puisqu'il
@@ -258,7 +260,7 @@ export function BoxConfiguration(props: any) {
 		const localCoordinates = await coordinatesRef.current?.take(
 			COORDINATES_GRACE_MS
 		);
-		const url = await boxUrl(CONFIGURE_PATH);
+		const url = await boxUrl(CONFIGURE_PATH, deviceId);
 
 		// Seul un refus explicite retient ici : la box a répondu, elle a dit non,
 		// et son point d'accès tient toujours — la saisie peut être corrigée et
@@ -326,7 +328,7 @@ export function BoxConfiguration(props: any) {
 				{name: 'Profiles'},
 				{
 					name: 'BoxHandover',
-					params: {deviceName, ssid: form.ssid, login}
+					params: {deviceName, ssid: form.ssid, login, deviceId}
 				}
 			]
 		});

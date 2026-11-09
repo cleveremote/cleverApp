@@ -1,6 +1,5 @@
 import React, { useEffect, useRef } from 'react';
 import {useTranslation} from 'react-i18next';
-import messaging from '@react-native-firebase/messaging';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
 import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import {
@@ -127,12 +126,6 @@ export function AppStack(props: any) {
 				}
 			}
 		);
-		//// FCM google
-		const devices = async () => {
-			await messaging().registerDeviceForRemoteMessages();
-			const token = await messaging().getToken();
-		};
-		devices();
 		return () => {
 			subscription.remove();
 			if (reconnectTimer) {

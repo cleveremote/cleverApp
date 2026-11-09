@@ -1,10 +1,9 @@
-import React, {useEffect} from 'react';
+import React from 'react';
 import {useTranslation} from 'react-i18next';
 import {createStackNavigator} from '@react-navigation/stack';
 import {ProfilesScreen} from '../screens/access/loading';
 import {DeviceSettings} from '../screens/access/deviceSettings';
 import SignIn from '../screens/access/SignIn';
-import messaging from '@react-native-firebase/messaging';
 import {DeviceScreen} from '../screens/access/device';
 import {ScanBoxScreen} from '../screens/access/scanBox';
 import {BoxConfiguration} from '../screens/access/boxConfiguration';
@@ -12,15 +11,6 @@ import {BoxHandover} from '../screens/access/boxHandover';
 import {ForgotPassword} from '../screens/access/forgotPassword';
 export function AccessStack() {
 	const {t} = useTranslation('navigation');
-	useEffect(() => {
-		const devices = async () => {
-			//// FCM google
-			await messaging().registerDeviceForRemoteMessages();
-			const token = await messaging().getToken();
-		};
-		devices();
-	}, []);
-
 	const Stack = createStackNavigator();
 	return (
 		<>

@@ -137,7 +137,12 @@ export const loadPlan =
 				'front/box/fetch/configuration',
 				{plan: 123},
 				async (response: any) => {
-					await AsyncStorage.setItem('test_plan', response.config);
+					// AsyncStorage n'accepte que des strings : un objet fait planter
+					// le module natif en Release.
+					await AsyncStorage.setItem(
+						'test_plan',
+						JSON.stringify(response.config)
+					);
 					dispatch({
 						type: PLAN_LOAD,
 						payload: response.config
@@ -147,7 +152,7 @@ export const loadPlan =
 		} else {
 			dispatch({
 				type: PLAN_LOAD,
-				payload: plan
+				payload: JSON.parse(plan)
 			});
 		}
 	};
@@ -213,11 +218,6 @@ export const loadConfiguration =
 					payload: config.modbusTasks
 				});
 
-				// TEMP diagnostic: which reload blanks the masters list.
-				console.log(
-					'[devices] loadConfiguration',
-					(config.devices || []).filter((d: any) => d.type === 'MASTER').length
-				);
 				dispatch({
 					type: ROOT_DEVICES_LOAD,
 					payload: config.devices

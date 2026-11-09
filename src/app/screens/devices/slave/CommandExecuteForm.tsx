@@ -561,7 +561,6 @@ export function CommandExecuteForm(props: any) {
 		commandId: string;
 		params: Record<string, any>;
 	}) => {
-		console.log('[executeDeviceCommand]', JSON.stringify(payload));
 		setOpen(false);
 		setResultOpen(true);
 		setRunning(true);
