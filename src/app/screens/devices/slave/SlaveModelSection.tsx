@@ -31,6 +31,8 @@ export const modelKind = (model: any): string | undefined =>
 const textColor = '#32404e';
 // Ligne du nom d'une commande (au plus 2 lignes, tronqué au-delà).
 const COMMAND_LINE_HEIGHT = 20;
+// Commandes affichées d'abord, puis par tranche via « Afficher plus ».
+const PAGE_SIZE = 50;
 // Couleur des libellés : source unique (Input.tsx).
 const mutedColor = fieldLabelColor;
 const COLORS = {
@@ -205,6 +207,9 @@ export function SlaveModelSection(props: any) {
 	const [filters, setFilters] = React.useState<Filters>(NO_FILTER);
 	const [search, setSearch] = React.useState('');
 	const query = normalize(search.trim());
+	const [limit, setLimit] = React.useState(PAGE_SIZE);
+	// Nouveaux filtres ou nouvelle recherche : on repart des 50 premières.
+	React.useEffect(() => setLimit(PAGE_SIZE), [filters, query]);
 	const onToggleFilter = (key: CommandFilter) =>
 		setFilters(prev => toggleFilter(prev, key));
 
@@ -289,7 +294,7 @@ export function SlaveModelSection(props: any) {
 					)}
 				</Text>
 			) : (
-				commands.map((c: any) => (
+				commands.slice(0, limit).map((c: any) => (
 					<CommandRow
 						key={c.id ?? c.name}
 						command={c}
@@ -298,6 +303,21 @@ export function SlaveModelSection(props: any) {
 					/>
 				))
 			)}
+			{commands.length > limit ? (
+				<Pressable
+					onPress={() => setLimit(l => l + PAGE_SIZE)}
+					style={({pressed}) => [
+						styles.more,
+						{opacity: pressed ? 0.6 : 1}
+					]}
+				>
+					<Text style={styles.moreText}>
+						{i18n.t('devices:model.showMore', {
+							count: commands.length - limit
+						})}
+					</Text>
+				</Pressable>
+			) : null}
 			<DeviceCommandModal
 				command={opened}
 				deviceId={props.device?.id}
@@ -408,6 +428,15 @@ const styles = StyleSheet.create({
 		fontSize: 12,
 		lineHeight: 16
 	},
+	more: {
+		alignSelf: 'center',
+		backgroundColor: COLORS.chip,
+		borderRadius: 18,
+		paddingHorizontal: 16,
+		paddingVertical: 8,
+		marginTop: 8
+	},
+	moreText: {color: textColor, fontSize: 13, fontWeight: '600'},
 	empty: {color: mutedColor, paddingVertical: 8}
 });
 

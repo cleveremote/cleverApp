@@ -86,7 +86,19 @@
 		"security": "sécurité*",
 		"securityRequired": "La sécurité est obligatoire",
 		"vfdSpeed": "Vitesse VFD* → {{value}} %",
-		"vfdRequired": "La vitesse VFD est obligatoire"
+		"vfdRequired": "La vitesse VFD est obligatoire",
+		"inverter": {
+			"title": "Variateurs",
+			"select": "Piloter un variateur",
+			"none": "Aucun variateur disponible.",
+			"unknown": "Variateur inconnu",
+			"mode": "Mode*",
+			"modeRequired": "Le mode est obligatoire",
+			"frequency": "Fréquence (Hz)*",
+			"frequencyRequired": "La fréquence est obligatoire en mode RS485",
+			"pidSetpoint": "Consigne PID",
+			"invalidNumber": "Doit être un nombre"
+		}
 	},
 	"create": {
 		"cycle": "Créer un cycle",

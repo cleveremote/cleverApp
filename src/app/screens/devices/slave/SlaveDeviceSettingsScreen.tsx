@@ -2,6 +2,7 @@ import React from 'react';
 import {StyleSheet, View} from 'react-native';
 import {connect} from 'react-redux';
 import {
+	faBolt,
 	faGauge,
 	faMicrochip,
 	faPlug
@@ -25,6 +26,9 @@ import SlaveActuatorsSection, {
 	hasActuatorsSection
 } from './SlaveActuatorsSection';
 import SlaveSensorsSection, {hasSensorsSection} from './SlaveSensorsSection';
+import SlaveInverterSection, {
+	hasInverterSection
+} from './SlaveInverterSection';
 import {generalContainerStyle} from '../../../components/common/GeneralSettingsFields';
 import i18n from 'i18next';
 
@@ -85,7 +89,21 @@ export function SlaveDeviceSettingsScreen(props: any) {
 						/>
 					</MenuAccordion>
 				)}
-				<DeleteItemMenu key={5} OnConfirm={deleteItem} />
+				{ready &&
+					hasInverterSection(
+						props.models,
+						deviceRef.current,
+						props.inverters
+					) && (
+						<MenuAccordion
+							key={5}
+							name={i18n.t('devices:inverter.title')}
+							icon={faBolt}
+							onPress={() => {}}>
+							<SlaveInverterSection device={deviceRef.current} />
+						</MenuAccordion>
+					)}
+				<DeleteItemMenu key={6} OnConfirm={deleteItem} />
 			</MenuGroup>
 		</SettingsScrollView>
 	);
@@ -117,7 +135,8 @@ const styles = StyleSheet.create({
 const mapStateToProps = (state: any) => ({
 	device: state.root_device.device,
 	devices: state.root_device.devices,
-	models: state.root_device_model.models
+	models: state.root_device_model.models,
+	inverters: state.root_inverter.inverters
 });
 
 export default connect(mapStateToProps, {

@@ -86,7 +86,19 @@
 		"security": "security*",
 		"securityRequired": "Security is required",
 		"vfdSpeed": "VFD speed* → {{value}} %",
-		"vfdRequired": "VFD speed is required"
+		"vfdRequired": "VFD speed is required",
+		"inverter": {
+			"title": "Inverters",
+			"select": "Drive an inverter",
+			"none": "No inverter available.",
+			"unknown": "Unknown inverter",
+			"mode": "Mode*",
+			"modeRequired": "Mode is required",
+			"frequency": "Frequency (Hz)*",
+			"frequencyRequired": "Frequency is required in RS485 mode",
+			"pidSetpoint": "PID setpoint",
+			"invalidNumber": "Must be a number"
+		}
 	},
 	"create": {
 		"cycle": "Create cycle",

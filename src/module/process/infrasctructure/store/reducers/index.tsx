@@ -11,6 +11,7 @@ import modbusConnection from './modbus-connection';
 import modbusTask from './modbus-task';
 import device from './device';
 import deviceModel from './device-model';
+import inverter from './inverter';
 import actuator from './actuator';
 import controlLoop from './control-loop';
 import settings from './settings';
@@ -22,6 +23,7 @@ export default combineReducers({
 	root_modbus_task: modbusTask,
 	root_device: device,
 	root_device_model: deviceModel,
+	root_inverter: inverter,
 	root_actuator: actuator,
 	root_control_loop: controlLoop,
 	root_sensor: sensor,

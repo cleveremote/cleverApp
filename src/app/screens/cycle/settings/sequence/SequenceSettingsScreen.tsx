@@ -10,7 +10,9 @@ import {
 import {isEmpty, useEntityLoaded} from '../../../../components/common/useSectionSettingsHeader';
 import {SettingsScrollView} from '../../../../components/common/SettingsScrollView';
 import SequenceGeneralSettingsSection from './SequenceGeneralSettingsSection';
-import SequenceSecuritySettingsSection from './SequenceSecuritySettingsSection';
+import SequenceSecuritySettingsSection, {
+	isInverterDirectiveInvalid
+} from './SequenceSecuritySettingsSection';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import {
 	faCheckDouble,
@@ -59,7 +61,9 @@ function SequenceSettingsScreen(props: any) {
 	const attemptedSaveRef = useRef(false);
 	const computeInvalidSections = (s: any) => ({
 		general: isEmpty(s?.name),
-		security: isEmpty(s?.securityConfig?.maxDuration),
+		security:
+			isEmpty(s?.securityConfig?.maxDuration) ||
+			!!s?.inverterDirectives?.some(isInverterDirectiveInvalid),
 		conditions: !!s?.conditions?.some(
 			(x: any) => !x.delete && isConditionIncomplete(x)
 		)

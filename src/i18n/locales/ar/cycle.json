@@ -86,7 +86,19 @@
 		"security": "الأمان*",
 		"securityRequired": "الأمان مطلوب",
 		"vfdSpeed": "سرعة VFD* ← {{value}} %",
-		"vfdRequired": "سرعة VFD مطلوبة"
+		"vfdRequired": "سرعة VFD مطلوبة",
+		"inverter": {
+			"title": "المغيرات",
+			"select": "التحكم في مغير",
+			"none": "لا يوجد مغير متاح.",
+			"unknown": "مغير غير معروف",
+			"mode": "الوضع*",
+			"modeRequired": "الوضع مطلوب",
+			"frequency": "التردد (هرتز)*",
+			"frequencyRequired": "التردد مطلوب في وضع RS485",
+			"pidSetpoint": "قيمة PID المرجعية",
+			"invalidNumber": "يجب أن يكون رقمًا"
+		}
 	},
 	"create": {
 		"cycle": "إنشاء دورة",

@@ -79,7 +79,9 @@
 		"confirm": "Confirmation",
 		"noMatch": "No command matches the filters or the search.",
 		"search": "Search by name or path",
-		"clearSearch": "Clear search"
+		"clearSearch": "Clear search",
+		"showMore_one": "Show more ({{count}} left)",
+		"showMore_other": "Show more ({{count}} left)"
 	},
 	"command": {
 		"failed": "Command failed",
@@ -102,5 +104,21 @@
 		"raw": "raw {{value}}",
 		"test": "Test",
 		"result": "Result"
+	},
+	"inverter": {
+		"title": "Inverter",
+		"name": "Name",
+		"profile": "Profile",
+		"defaultMode": "Default mode",
+		"releaseGrace": "Release delay",
+		"manualSensor": "Manual sensor",
+		"commands": "Commands",
+		"noCommand": "No command for this inverter.",
+		"unknownCommand": "Command not found in the model",
+		"parameters": "Parameters",
+		"noParameter": "No parameter for this inverter.",
+		"persistent": "persistent",
+		"value": "Value",
+		"none": "No inverter linked to this device."
 	}
 }

@@ -79,7 +79,9 @@
 		"confirm": "Confirmation",
 		"noMatch": "Aucune commande ne correspond aux filtres ou à la recherche.",
 		"search": "Rechercher par nom ou chemin",
-		"clearSearch": "Effacer la recherche"
+		"clearSearch": "Effacer la recherche",
+		"showMore_one": "Afficher plus ({{count}} restante)",
+		"showMore_other": "Afficher plus ({{count}} restantes)"
 	},
 	"command": {
 		"failed": "Échec de la commande",
@@ -102,5 +104,21 @@
 		"raw": "brut {{value}}",
 		"test": "Test",
 		"result": "Résultat"
+	},
+	"inverter": {
+		"title": "Variateur",
+		"name": "Nom",
+		"profile": "Profil",
+		"defaultMode": "Mode par défaut",
+		"releaseGrace": "Délai de relâche",
+		"manualSensor": "Capteur manuel",
+		"commands": "Commandes",
+		"noCommand": "Aucune commande pour ce variateur.",
+		"unknownCommand": "Commande introuvable dans le modèle",
+		"parameters": "Paramètres",
+		"noParameter": "Aucun paramètre pour ce variateur.",
+		"persistent": "persistant",
+		"value": "Valeur",
+		"none": "Aucun variateur lié à cet équipement."
 	}
 }

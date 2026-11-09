@@ -83,7 +83,13 @@
 		"confirm": "تأكيد",
 		"noMatch": "لا يوجد أمر يطابق عوامل التصفية أو البحث.",
 		"search": "البحث بالاسم أو المسار",
-		"clearSearch": "مسح البحث"
+		"clearSearch": "مسح البحث",
+		"showMore_zero": "عرض المزيد ({{count}} متبقية)",
+		"showMore_one": "عرض المزيد ({{count}} متبقية)",
+		"showMore_two": "عرض المزيد ({{count}} متبقية)",
+		"showMore_few": "عرض المزيد ({{count}} متبقية)",
+		"showMore_many": "عرض المزيد ({{count}} متبقية)",
+		"showMore_other": "عرض المزيد ({{count}} متبقية)"
 	},
 	"command": {
 		"failed": "فشل الأمر",
@@ -106,5 +112,21 @@
 		"raw": "خام {{value}}",
 		"test": "اختبار",
 		"result": "النتيجة"
+	},
+	"inverter": {
+		"title": "المغيّر",
+		"name": "الاسم",
+		"profile": "الملف التعريفي",
+		"defaultMode": "الوضع الافتراضي",
+		"releaseGrace": "مهلة التحرير",
+		"manualSensor": "المستشعر اليدوي",
+		"commands": "الأوامر",
+		"noCommand": "لا توجد أوامر لهذا المغيّر.",
+		"unknownCommand": "الأمر غير موجود في الطراز",
+		"parameters": "المعاملات",
+		"noParameter": "لا توجد معاملات لهذا المغيّر.",
+		"persistent": "دائم",
+		"value": "القيمة",
+		"none": "لا يوجد مغيّر مرتبط بهذا الجهاز."
 	}
 }

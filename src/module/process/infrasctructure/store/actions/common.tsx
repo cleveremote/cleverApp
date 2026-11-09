@@ -14,6 +14,7 @@ import {
 	ROOT_DEVICES_LOAD,
 	GROUPS_LOAD,
 	DEVICE_MODELS_LOAD,
+	INVERTERS_LOAD,
 	CONTROL_LOOPS_LOAD,
 	DEVICE_CONNECTIVITY_UPDATE,
 	ACTUATORS_LOAD,
@@ -246,6 +247,16 @@ export const loadConfiguration =
 					type: DEVICE_MODELS_LOAD,
 					payload: config.models
 				});
+
+				// Variateurs (`config.inverters`) : profil, commandes et paramètres
+				// d'un slave de type INVERTER, relié par `deviceId`. Clé absente
+				// (box plus ancienne) : on garde la liste déjà connue.
+				if (Array.isArray(config.inverters)) {
+					dispatch({
+						type: INVERTERS_LOAD,
+						payload: config.inverters
+					});
+				}
 
 				dispatch({
 					type: SENSOR_STATUS,
