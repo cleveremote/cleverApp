@@ -1,4 +1,4 @@
-package com.cleverApp
+package com.cleveremote.hydrophytoapp
 
 import android.app.Application
 import com.facebook.react.PackageList

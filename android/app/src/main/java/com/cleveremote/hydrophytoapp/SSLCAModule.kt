@@ -1,4 +1,4 @@
-package com.cleverApp
+package com.cleveremote.hydrophytoapp
 
 import com.facebook.react.bridge.ReactApplicationContext
 import com.facebook.react.bridge.ReactContextBaseJavaModule

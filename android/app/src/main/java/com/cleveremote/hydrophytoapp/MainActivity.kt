@@ -1,4 +1,4 @@
-package com.cleverApp
+package com.cleveremote.hydrophytoapp
 
 import android.os.Build
 import android.view.View
