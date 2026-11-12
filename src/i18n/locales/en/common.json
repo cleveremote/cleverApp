@@ -78,8 +78,10 @@
 	"sections": {
 		"general": "General",
 		"connectivity": "Connectivity",
-		"conditions": "Conditions",
-		"security": "Security",
+		"triggerConditions": "Trigger Conditions",
+		"actions": "Actions",
+		"preconditions": "Preconditions",
+		"security": "Safety Limits",
 		"actuators": "Actuators",
 		"sensors": "Sensors",
 		"configuration": "Configuration",

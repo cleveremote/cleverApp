@@ -12,6 +12,7 @@ import {
 	Modal,
 	Pressable,
 	StyleProp,
+	StyleSheet,
 	Text,
 	TextInput,
 	TextStyle,
@@ -27,10 +28,10 @@ import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {
 	faBan,
 	faCog,
-	faChevronDown,
-	faTriangleExclamation
+	faChevronDown
 } from '@fortawesome/free-solid-svg-icons';
 import Slider from '@react-native-community/slider';
+import {ErrorBox} from './ErrorBox';
 import {fromPickerDate, toPickerDate} from '../../../services/time';
 
 // Resolve a field error by name, supporting dotted paths (e.g.
@@ -44,6 +45,33 @@ const getFieldError = (errors: FieldErrors<any>, name: string): any =>
 			(acc: any, key: string) => (acc == null ? acc : acc[key]),
 			errors as any
 		);
+
+/**
+ * Message de validation sous un champ, dans un encadré d'erreur (fond rouge
+ * pâle, sans icône). Rien quand le champ est valide.
+ */
+export function FieldError({error}: Readonly<{error?: any}>) {
+	if (!error) return null;
+	return (
+		<ErrorBox
+			hideIcon
+			message={(error.message as string) || i18n.t('common:unknownError')}
+			style={fieldErrorStyle.box}
+			textStyle={fieldErrorStyle.text}
+		/>
+	);
+}
+// Version fine d'ErrorBox : peu de marge intérieure, texte 13.
+const fieldErrorStyle = StyleSheet.create({
+	box: {
+		marginTop: 4,
+		marginBottom: 4,
+		paddingVertical: 3,
+		paddingHorizontal: 8,
+		borderRadius: 8
+	},
+	text: {fontSize: 13, lineHeight: 17}
+});
 
 export function DropdownSelect<T extends {iconColor?: {base: string}}>({
 	items,
@@ -344,17 +372,7 @@ export function DateTimePickerForm({
 				)}
 				name={name}
 			/>
-			{getFieldError(errors, name) && (
-				<View style={{flexDirection: 'row', alignItems: 'center'}}>
-					<FontAwesomeIcon
-						icon={faTriangleExclamation}
-						style={InputStyle.iconInputError}
-					/>
-					<Text style={InputStyle.textInputError}>
-						{(getFieldError(errors, name)?.message as string) || i18n.t('common:unknownError')}
-					</Text>
-				</View>
-			)}
+			<FieldError error={getFieldError(errors, name)} />
 		</>
 	);
 }
@@ -409,17 +427,7 @@ export function SliderForm({
 				)}
 				name={name}
 			/>
-			{getFieldError(errors, name) && (
-				<View style={{flexDirection: 'row', alignItems: 'center'}}>
-					<FontAwesomeIcon
-						icon={faTriangleExclamation}
-						style={InputStyle.iconInputError}
-					/>
-					<Text style={InputStyle.textInputError}>
-						{(getFieldError(errors, name)?.message as string) || i18n.t('common:unknownError')}
-					</Text>
-				</View>
-			)}
+			<FieldError error={getFieldError(errors, name)} />
 		</>
 	);
 }
@@ -501,17 +509,7 @@ export function InputForm({
 				)}
 				name={name}
 			/>
-			{getFieldError(errors, name) && (
-				<View style={{flexDirection: 'row', alignItems: 'center'}}>
-					<FontAwesomeIcon
-						icon={faTriangleExclamation}
-						style={InputStyle.iconInputError}
-					/>
-					<Text style={InputStyle.textInputError}>
-						{(getFieldError(errors, name)?.message as string) || i18n.t('common:unknownError')}
-					</Text>
-				</View>
-			)}
+			<FieldError error={getFieldError(errors, name)} />
 		</>
 	);
 }
@@ -565,17 +563,7 @@ export function SwitchForm({
 				)}
 				name={name}
 			/>
-			{getFieldError(errors, name) && (
-				<View style={{flexDirection: 'row', alignItems: 'center'}}>
-					<FontAwesomeIcon
-						icon={faTriangleExclamation}
-						style={InputStyle.iconInputError}
-					/>
-					<Text style={InputStyle.textInputError}>
-						{(getFieldError(errors, name)?.message as string) || i18n.t('common:unknownError')}
-					</Text>
-				</View>
-			)}
+			<FieldError error={getFieldError(errors, name)} />
 		</>
 	);
 }
@@ -645,17 +633,7 @@ export function SelectColor({
 				}}
 				name={name}
 			/>
-			{getFieldError(errors, name) && (
-				<View style={{flexDirection: 'row', alignItems: 'center'}}>
-					<FontAwesomeIcon
-						icon={faTriangleExclamation}
-						style={InputStyle.iconInputError}
-					/>
-					<Text style={InputStyle.textInputError}>
-						{(getFieldError(errors, name)?.message as string) || i18n.t('common:unknownError')}
-					</Text>
-				</View>
-			)}
+			<FieldError error={getFieldError(errors, name)} />
 		</View>
 	);
 }
@@ -759,17 +737,7 @@ export function TextAreaForm({
 				)}
 				name={name}
 			/>
-			{getFieldError(errors, name) && (
-				<View style={{flexDirection: 'row', alignItems: 'center'}}>
-					<FontAwesomeIcon
-						icon={faTriangleExclamation}
-						style={InputStyle.iconInputError}
-					/>
-					<Text style={InputStyle.textInputError}>
-						{(getFieldError(errors, name)?.message as string) || i18n.t('common:unknownError')}
-					</Text>
-				</View>
-			)}
+			<FieldError error={getFieldError(errors, name)} />
 		</>
 	);
 }
@@ -908,17 +876,7 @@ export function DragableForm({
 				)}
 				name={name}
 			/>
-			{getFieldError(errors, name) && (
-				<View style={{flexDirection: 'row', alignItems: 'center'}}>
-					<FontAwesomeIcon
-						icon={faTriangleExclamation}
-						style={InputStyle.iconInputError}
-					/>
-					<Text style={InputStyle.textInputError}>
-						{(getFieldError(errors, name)?.message as string) || i18n.t('common:unknownError')}
-					</Text>
-				</View>
-			)}
+			<FieldError error={getFieldError(errors, name)} />
 		</>
 	);
 }
@@ -973,17 +931,7 @@ export function SelectForm({
 				)}
 				name={name}
 			/>
-			{getFieldError(errors, name) && (
-				<View style={{flexDirection: 'row', alignItems: 'center'}}>
-					<FontAwesomeIcon
-						icon={faTriangleExclamation}
-						style={InputStyle.iconInputError}
-					/>
-					<Text style={InputStyle.textInputError}>
-						{(getFieldError(errors, name)?.message as string) || i18n.t('common:unknownError')}
-					</Text>
-				</View>
-			)}
+			<FieldError error={getFieldError(errors, name)} />
 		</>
 	);
 }

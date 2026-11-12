@@ -1,5 +1,5 @@
 import React, {useEffect, useRef, useState} from 'react';
-import {Alert, View} from 'react-native';
+import {Alert, StyleSheet, View} from 'react-native';
 import {connect} from 'react-redux';
 import {navigationHeader} from '../../../../components/common/navigationHeaders';
 import {
@@ -9,6 +9,7 @@ import {
 } from '../../../../components/common/cycleMenu';
 import {isEmpty, useEntityLoaded} from '../../../../components/common/useSectionSettingsHeader';
 import {SettingsScrollView} from '../../../../components/common/SettingsScrollView';
+import {DescBox} from '../../../../components/common/DescBox';
 import SequenceGeneralSettingsSection from './SequenceGeneralSettingsSection';
 import SequenceSecuritySettingsSection, {
 	isInverterDirectiveInvalid
@@ -273,10 +274,14 @@ function SequenceSettingsScreen(props: any) {
 
 						<MenuAccordion
 							key={55}
-							name={i18n.t('common:sections.conditions')}
+							name={i18n.t('common:sections.preconditions')}
 							icon={faCheckDouble}
 							invalid={invalidSections.conditions}
 							onPress={() => {}}>
+							<DescBox
+								message={i18n.t('cycle:conditions.sequenceDescription')}
+								style={styles.sectionDesc}
+							/>
 							<ConditionBuilderSection
 								conditions={props.sequence?.conditions}
 								parentId={props.sequence?.id}
@@ -322,6 +327,11 @@ function SequenceSettingsScreen(props: any) {
 		</SettingsScrollView>
 	);
 }
+
+const styles = StyleSheet.create({
+	// Aligné sur les marges latérales du constructeur de conditions.
+	sectionDesc: {marginHorizontal: 10, marginTop: 6}
+});
 
 const mapStateToProps = (state: any) => ({
 	sequence: state.cycle_sequence.sequence,

@@ -16,6 +16,7 @@ import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import {InputStyle, placeholderColor, inputText} from '../../styles/components/common/Input';
 import { hapticOptions } from '../../data/cycleTypes';
 import { navigationHeader } from '../../components/common/navigationHeaders';
+import { updateRememberedPassword } from '../../components/common/RememberMeManager';
 import {
 	authenticationService,
 	BoxLoginResult
@@ -55,6 +56,9 @@ type Step = 'code' | 'password';
 export function ForgotPassword(props: any) {
 	const { t } = useTranslation(['access', 'common']);
 	const login: string = props.route.params?.login ?? '';
+	// Écran à rejoindre une fois le mot de passe changé : la connexion par
+	// défaut, ou le formulaire de reconnexion de la box qui l'a demandé.
+	const returnTo: string = props.route.params?.returnTo ?? 'Signin';
 	const [step, setStep] = React.useState<Step>('code');
 	const [code, setCode] = React.useState('');
 	const [password, setPassword] = React.useState('');
@@ -209,11 +213,20 @@ export function ForgotPassword(props: any) {
 			code.trim(),
 			password
 		);
+		if (res.res) {
+			// Hors du chemin d'erreur : la box a déjà changé le mot de passe, un
+			// trousseau indisponible ne doit pas le faire passer pour un échec.
+			try {
+				await updateRememberedPassword(login, password);
+			} catch (e) {
+				console.warn('[ForgotPassword] updateRememberedPassword:', e);
+			}
+		}
 		setBusy(false);
 		if (res.res) {
-			// Retour direct à la connexion, le nouveau mot de passe déjà saisi.
+			// Retour direct à l'écran appelant, le nouveau mot de passe déjà saisi.
 			props.navigation.popTo(
-				'Signin',
+				returnTo,
 				{ resetPassword: password },
 				{ merge: true }
 			);

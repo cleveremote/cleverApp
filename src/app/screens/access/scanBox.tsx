@@ -1,19 +1,24 @@
 import React, {useCallback, useEffect, useState} from 'react';
 import {
-	ActivityIndicator,
-	ScrollView,
 	StyleSheet,
 	Text,
 	TouchableOpacity,
 	View
 } from 'react-native';
-import Spinner from 'react-native-loading-spinner-overlay';
 import i18n from 'i18next';
 import {useTranslation} from 'react-i18next';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import Icon from 'react-native-vector-icons/FontAwesome5';
+import {
+	faArrowLeft,
+	faCheck,
+	faRotateRight,
+	faUsers
+} from '@fortawesome/free-solid-svg-icons';
 import {useIsFocused, useNavigation} from '@react-navigation/native';
 import {navigationHeader} from '../../components/common/navigationHeaders';
+import {findProfileByLogin} from '../../components/common/RememberMeManager';
+import {ErrorBox} from '../../components/common/ErrorBox';
 import {hapticOptions} from '../../data/cycleTypes';
 import type {QrScannerProps} from './qrScanner';
 import {
@@ -23,29 +28,16 @@ import {
 	hotspotService,
 	parseCleverBoxQr
 } from '../../../services/hotspot';
-import {boxGet} from '../../../services/http';
 import {
+	BusyOverlay,
 	COLORS,
 	Centered,
 	LinkButton,
-	PrimaryButton,
+	OutlineButton,
+	WarningBox,
 	accessStyles,
-	openWifiSettings
+	WifiSettingsLink
 } from './accessUi';
-
-/**
- * Route de la box interrogée par l'écran de test réseau, construite sur le
- * `deviceId` du QR scanné. Celui-ci porte parfois déjà `.local` : on le
- * retire avant de le remettre, comme le fait `boxEndpoint`.
- */
-const testUrlFor = (deviceId: string) =>
-	`https://${deviceId
-		.trim()
-		.replace(/\.local$/i, '')
-		.toLowerCase()}.local/updater/getNetworksList`;
-
-/** Au-delà, une box injoignable ferait patienter indéfiniment. */
-const TEST_TIMEOUT_MS = 10000;
 
 type Phase =
 	/** Pulling in the camera module. */
@@ -60,8 +52,8 @@ type Phase =
 	| 'manual'
 	/** The native camera code is missing from this binary. */
 	| 'unavailable'
-	/** Manual check that a plain HTTPS call to the box goes through (dev builds only). */
-	| 'test'
+	/** A profile already uses this box's identifier. */
+	| 'duplicate'
 	| 'error';
 
 /** Every failure the flow can surface, phrased for the person holding the phone. */
@@ -77,10 +69,10 @@ export function ScanBoxScreen(props: any) {
 
 	const [phase, setPhase] = useState<Phase>('loading');
 	const [error, setError] = useState<string>('');
+	// Profil qui porte déjà l'identifiant de la box scannée.
+	const [duplicateProfile, setDuplicateProfile] = useState<string>('');
 	const [payload, setPayload] = useState<CleverBoxQrPayload | null>(null);
 	const [Scanner, setScanner] = useState<ScannerComponent | null>(null);
-	const [testRunning, setTestRunning] = useState(false);
-	const [testResult, setTestResult] = useState<string>('');
 
 	useEffect(() => {
 		nav.setOptions({
@@ -130,43 +122,44 @@ export function ScanBoxScreen(props: any) {
 		);
 	}, [isFocused]);
 
-	/**
-	 * Appel HTTPS brut vers la box, en dehors du socket : il vérifie d'un coup la
-	 * résolution du nom `.local`, la confiance dans la CA privée et la route
-	 * elle-même. La réponse — ou l'erreur — est affichée telle quelle, c'est ce
-	 * qui permet de distinguer les trois cas.
-	 */
-	const testUrl = payload ? testUrlFor(payload.deviceId) : null;
-
-	const runNetworksListTest = useCallback(async () => {
-		if (!testUrl) return;
-		ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
-		setTestRunning(true);
-		setTestResult('');
-
-		try {
-			const {status, body: raw} = await boxGet(testUrl, TEST_TIMEOUT_MS);
-
-			let body = raw;
+	/** Rejoint le hotspot de la box, puis ouvre sa configuration. */
+	const joinBox = useCallback(
+		async (decoded: CleverBoxQrPayload) => {
+			setPhase('connecting');
 			try {
-				body = JSON.stringify(JSON.parse(raw), null, 2);
-			} catch {
-				// Pas du JSON : le corps brut reste la meilleure information.
-			}
+				await hotspotService.join(decoded);
+				setPhase('done');
+				// Le téléphone est sur le hotspot : la box est joignable en
+				// HTTPS, c'est là que le formulaire de configuration se remplit.
+				props.navigation.navigate('BoxConfiguration', {
+					deviceId: decoded.deviceId
+				});
+			} catch (e) {
+				const hotspotError =
+					e instanceof HotspotError
+						? e
+						: new HotspotError('UNKNOWN', String(e));
 
-			setTestResult(`HTTP ${status}\n\n${body}`);
-		} catch (e) {
-			console.warn('[ScanBox] test getNetworksList:', e);
-			const err = e instanceof Error ? e : new Error(String(e));
-			setTestResult(
-				err.name === 'AbortError'
-					? t('scan.testTimeout', {seconds: TEST_TIMEOUT_MS / 1000, url: testUrl})
-					: `${err.name}: ${err.message}`
-			);
-		} finally {
-			setTestRunning(false);
-		}
-	}, [t, testUrl]);
+				// Une demande de réseau restée en suspens — fenêtre système
+				// fermée par le verrouillage du téléphone, par exemple — ferait
+				// guetter ce SSID à Android au lieu de rendre la main au Wi-Fi
+				// enregistré.
+				await hotspotService.disconnect();
+
+				// The endpoint is already saved by now, so on a platform that
+				// cannot join a network itself the flow still completes — the
+				// user just joins the hotspot by hand.
+				if (hotspotError.code === 'NOT_IMPLEMENTED') {
+					setPhase('manual');
+					return;
+				}
+
+				setError(errorHint(hotspotError.code) || hotspotError.message);
+				setPhase('error');
+			}
+		},
+		[props.navigation]
+	);
 
 	const pair = useCallback(
 		async (raw: string) => {
@@ -189,33 +182,21 @@ export function ScanBoxScreen(props: any) {
 				return;
 			}
 
-			try {
-				await hotspotService.join(decoded);
-				setPhase('done');
-				// Le téléphone est sur le hotspot : la box est joignable en
-				// HTTPS, c'est là que le formulaire de configuration se remplit.
-				props.navigation.navigate('BoxConfiguration', {
-					deviceId: decoded.deviceId
-				});
-			} catch (e) {
-				const hotspotError =
-					e instanceof HotspotError
-						? e
-						: new HotspotError('UNKNOWN', String(e));
-
-				// The endpoint is already saved by now, so on a platform that
-				// cannot join a network itself the flow still completes — the
-				// user just joins the hotspot by hand.
-				if (hotspotError.code === 'NOT_IMPLEMENTED') {
-					setPhase('manual');
-					return;
-				}
-
-				setError(errorHint(hotspotError.code) || hotspotError.message);
-				setPhase('error');
+			// Premier contrôle, avant même le hotspot : un profil porte déjà
+			// l'identifiant de cette box. Lu sans le trousseau, donc sans
+			// demande de Face ID.
+			const login = decoded.deviceId.trim().replace(/\.local$/i, '');
+			const existing = await findProfileByLogin(login);
+			if (existing) {
+				ReactNativeHapticFeedback.trigger('notificationWarning', hapticOptions);
+				setDuplicateProfile(existing);
+				setPhase('duplicate');
+				return;
 			}
+
+			await joinBox(decoded);
 		},
-		[props.navigation]
+		[joinBox]
 	);
 
 	// ------------------------------------------------------------------ render
@@ -226,54 +207,12 @@ export function ScanBoxScreen(props: any) {
 				<Icon name="camera" size={40} color={COLORS.danger} />
 				<Text style={styles.title}>{t('scan.cameraUnavailable')}</Text>
 				<Text style={styles.body}>{t('scan.cameraModuleMissing')}</Text>
-				<PrimaryButton
+				<OutlineButton
 					label={t('common:back')}
+					icon={faArrowLeft}
 					onPress={() => props.navigation.goBack()}
 				/>
-				{__DEV__ ? (
-					<TouchableOpacity onPress={() => setPhase('test')}>
-						<Text style={styles.link}>{t('scan.networkTest')}</Text>
-					</TouchableOpacity>
-				) : null}
 			</Centered>
-		);
-	}
-
-	if (phase === 'test') {
-		return (
-			<ScrollView
-				style={styles.testScroll}
-				contentContainerStyle={styles.testContent}>
-				<Text style={styles.title}>{t('scan.networkTest')}</Text>
-				<Text style={styles.body} selectable>
-					{testUrl ?? t('scan.testNeedsQr')}
-				</Text>
-
-				<PrimaryButton
-					label={testRunning ? t('scan.testRunning') : t('scan.runTest')}
-					onPress={runNetworksListTest}
-					disabled={testRunning || !testUrl}
-				/>
-
-				{testRunning ? (
-					<ActivityIndicator
-						style={styles.testSpinner}
-						color={COLORS.primary}
-					/>
-				) : null}
-
-				{testResult ? (
-					<View style={styles.card}>
-						<Text style={styles.result} selectable>
-							{testResult}
-						</Text>
-					</View>
-				) : null}
-
-				<TouchableOpacity onPress={restart}>
-					<Text style={styles.link}>{t('scan.backToScan')}</Text>
-				</TouchableOpacity>
-			</ScrollView>
 		);
 	}
 
@@ -306,13 +245,11 @@ export function ScanBoxScreen(props: any) {
 					<Text style={styles.link}>{t('scan.copyPassword')}</Text>
 				</TouchableOpacity>
 
-				<LinkButton
-					label={t('openWifiSettings')}
-					onPress={openWifiSettings}
-				/>
+				<WifiSettingsLink />
 
-				<PrimaryButton
+				<OutlineButton
 					label={t('scan.joinedNetwork')}
+					icon={faCheck}
 					onPress={() => {
 						ReactNativeHapticFeedback.trigger(
 							'impactMedium',
@@ -327,38 +264,66 @@ export function ScanBoxScreen(props: any) {
 		);
 	}
 
+	if (phase === 'duplicate' && payload) {
+		return (
+			<Centered>
+				<View style={styles.titleRow}>
+					<Icon
+						name="exclamation-circle"
+						size={22}
+						color={COLORS.warning}
+					/>
+					<Text style={[styles.title, styles.titleInRow]}>
+						{t('scan.duplicateTitle')}
+					</Text>
+				</View>
+				<View style={styles.errorBox}>
+					<ErrorBox
+						hideIcon={true}
+						message={t('scan.duplicateBody', {profile: duplicateProfile})}
+					/>
+				</View>
+				<OutlineButton
+					label={t('scan.goToProfiles')}
+					icon={faUsers}
+					onPress={() => props.navigation.navigate('Profiles')}
+				/>
+				<LinkButton
+					label={t('scan.changeWifiOnly')}
+					onPress={() => joinBox(payload)}
+				/>
+			</Centered>
+		);
+	}
+
 	if (phase === 'error') {
 		return (
 			<Centered>
-				<Icon
-					name="exclamation-triangle"
-					size={40}
-					color={COLORS.danger}
+				<View style={styles.titleRow}>
+					<Icon
+						name="exclamation-circle"
+						size={22}
+						color={COLORS.warning}
+					/>
+					<Text style={[styles.title, styles.titleInRow]}>
+						{t('scan.pairingFailed')}
+					</Text>
+				</View>
+				<View style={styles.errorBox}>
+					<WarningBox message={error} />
+				</View>
+				<OutlineButton
+					label={t('common:retry')}
+					icon={faRotateRight}
+					onPress={restart}
 				/>
-				<Text style={styles.title}>{t('scan.pairingFailed')}</Text>
-				<Text style={styles.body}>{error}</Text>
-				<PrimaryButton label={t('common:retry')} onPress={restart} />
-				<LinkButton
-					label={t('openWifiSettings')}
-					onPress={openWifiSettings}
-				/>
-				{__DEV__ ? (
-					<TouchableOpacity onPress={() => setPhase('test')}>
-						<Text style={styles.link}>{t('scan.networkTest')}</Text>
-					</TouchableOpacity>
-				) : null}
+				<WifiSettingsLink />
 			</Centered>
 		);
 	}
 
 	return (
 		<View style={styles.fill}>
-			<Spinner
-				visible={phase === 'connecting'}
-				color={COLORS.primary}
-				textContent={t('scan.connecting')}
-				textStyle={styles.spinnerText}
-			/>
 			{Scanner ? (
 				// Le focus conditionne aussi `isActive` : sinon VisionCamera garde
 				// la session caméra ouverte pendant qu'un autre écran est affiché.
@@ -367,13 +332,10 @@ export function ScanBoxScreen(props: any) {
 					onScanned={pair}
 				/>
 			) : null}
-			{__DEV__ ? (
-				<TouchableOpacity
-					style={styles.testLink}
-					onPress={() => setPhase('test')}>
-					<Text style={styles.testLinkText}>{t('scan.networkTest')}</Text>
-				</TouchableOpacity>
-			) : null}
+			<BusyOverlay
+				visible={phase === 'connecting'}
+				message={t('scan.connecting')}
+			/>
 		</View>
 	);
 }
@@ -394,32 +356,16 @@ function copyToClipboard(value: string): void {
 }
 
 // Les styles partagés avec les autres écrans d'appairage viennent de
-// `accessUi` ; seuls ceux propres au scanner (viseur, écran de test) sont ici.
+// `accessUi` ; seuls ceux propres au scanner (le viseur) sont ici.
 // La règle ne sait pas suivre la fusion et croit la feuille inutilisée.
 /* eslint-disable react-native/no-unused-styles */
 const styles = {
 	...accessStyles,
 	...StyleSheet.create({
 		fill: {flex: 1, backgroundColor: COLORS.viewfinder},
-		spinnerText: {color: COLORS.light, fontSize: 15},
-		testScroll: {flex: 1},
-		testContent: {
-			alignItems: 'center',
-			paddingHorizontal: 30,
-			paddingVertical: 40
-		},
-		testSpinner: {marginTop: 20},
-		result: {
-			color: COLORS.primary,
-			fontSize: 12,
-			lineHeight: 17
-		},
-		testLink: {position: 'absolute', bottom: 40, alignSelf: 'center'},
-		testLinkText: {
-			color: COLORS.light,
-			fontSize: 15,
-			textDecorationLine: 'underline'
-		}
+		titleRow: {flexDirection: 'row', alignItems: 'center', gap: 8},
+		titleInRow: {marginTop: 0},
+		errorBox: {alignSelf: 'stretch', marginTop: 15}
 	})
 };
 

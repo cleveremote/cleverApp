@@ -7,3 +7,16 @@ export {
 	waitForWifiStatus
 } from './boxStatus';
 export type { WifiStatus, WaitForWifiStatusOptions } from './boxStatus';
+export {
+	checkBoxPassword,
+	getBoxMode,
+	isTransientMode,
+	waitForStableMode
+} from './boxMode';
+export type {
+	BoxMode,
+	BoxModeName,
+	PasswordVerdict,
+	RecoveryReason,
+	WaitForStableModeOptions
+} from './boxMode';

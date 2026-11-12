@@ -78,8 +78,10 @@
 	"sections": {
 		"general": "عام",
 		"connectivity": "الاتصال",
-		"conditions": "الشروط",
-		"security": "الأمان",
+		"triggerConditions": "شروط التشغيل",
+		"actions": "الإجراءات",
+		"preconditions": "الشروط المسبقة",
+		"security": "حدود الأمان",
 		"actuators": "المشغلات",
 		"sensors": "المستشعرات",
 		"configuration": "التهيئة",

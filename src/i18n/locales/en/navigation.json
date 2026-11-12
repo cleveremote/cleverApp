@@ -18,7 +18,7 @@
 	"actuator": "Actuator",
 	"settings": "Settings",
 	"userSettings": "Account settings",
-	"displayManager": "Display manager",
+	"displayManager": "Device visibility",
 	"globalSettings": "Global settings",
 	"masterDevice": "Master device",
 	"slaveDevices": "Slave devices",
@@ -43,6 +43,6 @@
 	"triggers": "Triggers",
 	"comRequest": "COM request",
 	"scheduleSettings": "Schedule",
-	"triggerSettings": "Trigger",
+	"triggerSettings": "Trigger Settings",
 	"forgotPassword": "Forgot password"
 }

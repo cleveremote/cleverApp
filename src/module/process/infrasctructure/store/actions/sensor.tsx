@@ -56,7 +56,7 @@ export const saveSensor =
 	(data: any): ThunkAction<void, RootState, unknown, AnyAction> =>
 	async dispatch => {
 		// Un sensor (parent ou enfant) est toujours affiché à sa création ; il
-		// ne peut être masqué qu'ensuite, depuis le gestionnaire d'affichage.
+		// ne peut être masqué qu'ensuite, depuis la visibilité des appareils.
 		const isNew = data.id == null || isTempId(data.id);
 		socketService.emit(
 			'front/box/sync/sensor',

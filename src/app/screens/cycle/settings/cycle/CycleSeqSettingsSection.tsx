@@ -1,9 +1,10 @@
-import {StyleSheet, Text, TouchableOpacity, View} from 'react-native';
+import {StyleSheet, Text, View} from 'react-native';
 import React, {useEffect, useRef} from 'react';
 import {navigationHeader} from '../../../../components/common/navigationHeaders';
 import {hapticOptions} from '../../../../data/cycleTypes';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
-import Icon from 'react-native-vector-icons/FontAwesome5';
+import {faPlus} from '@fortawesome/free-solid-svg-icons';
+import {OutlineButton} from '../../../access/accessUi';
 import {connect} from 'react-redux';
 import {useForm} from 'react-hook-form';
 import {DragableForm} from '../../../../components/common/FormComponents';
@@ -172,29 +173,25 @@ export function SeqSettingsSec(props: any) {
 					onDragEnd={() => handleSubmit(save)()}
 				/>
 				{canAddSequence && (
-					<View style={styles.addButtonWrapper}>
-						<TouchableOpacity
-							style={styles.addButton}
-							onPress={() => {
-								ReactNativeHapticFeedback.trigger(
-									'impactMedium',
-									hapticOptions
-								);
-								props.navigation.navigate('SequenceSettingsStack', {
-									screen: 'SequenceSettingsMenu',
-									params: {
-										cycleId: cycleParamRef.current.id
-									}
-								});
-							}}>
-							<Icon
-								name="times-circle"
-								size={30}
-								color={colors.dark}
-							/>
-						</TouchableOpacity>
-						<Text style={styles.addLabel}>{i18n.t('cycle:settings.addSequence')}</Text>
-					</View>
+					// Même bouton que « + Condition » des préconditions.
+					<OutlineButton
+						label={i18n.t('cycle:settings.addSequence')}
+						icon={faPlus}
+						color={colors.dark}
+						onPress={() => {
+							ReactNativeHapticFeedback.trigger(
+								'impactMedium',
+								hapticOptions
+							);
+							props.navigation.navigate('SequenceSettingsStack', {
+								screen: 'SequenceSettingsMenu',
+								params: {
+									cycleId: cycleParamRef.current.id
+								}
+							});
+						}}
+						style={styles.addButton}
+					/>
 				)}
 		</View>
 	);
@@ -229,17 +226,10 @@ const styles = StyleSheet.create({
 		fontSize: 12,
 		textAlign: 'center'
 	},
-	addButtonWrapper: {
-		justifyContent: 'center',
-		alignItems: 'center'
-	},
+	// Largeur du contenu, centré horizontalement.
 	addButton: {
-		marginTop: 20,
-		transform: [{rotate: '135deg'}]
-	},
-	addLabel: {
-		color: colors.dark,
-		fontSize: 15
+		marginTop: 8,
+		alignSelf: 'center'
 	}
 });
 

@@ -129,6 +129,13 @@ export const CodeInput = ({
 				caretHidden={Platform.OS === 'ios'}
 				cursorColor={TRANSPARENT}
 				selectionColor={TRANSPARENT}
+				// Android dessine encore, malgré le texte transparent, ce qu'iOS
+				// n'affiche pas : poignées de sélection, soulignement du mot en
+				// cours de frappe par le clavier, trait de l'EditText. Rien de
+				// tout cela ne doit transparaître sur les cases.
+				selectionHandleColor={TRANSPARENT}
+				underlineColorAndroid={TRANSPARENT}
+				spellCheck={false}
 				contextMenuHidden={false}
 				returnKeyType={'done'}
 				onFocus={() => setFocused(true)}
@@ -186,7 +193,12 @@ const styles = StyleSheet.create({
 	codeHiddenInput: {
 		...StyleSheet.absoluteFillObject,
 		color: TRANSPARENT,
-		backgroundColor: TRANSPARENT
+		backgroundColor: TRANSPARENT,
+		// Texte minuscule : ce qu'Android y superpose encore (surlignage du
+		// remplissage automatique, soulignement de composition) reste
+		// invisible, sans réduire la zone qui reçoit l'appui long « Coller ».
+		fontSize: 1,
+		padding: 0
 	},
 	countdown: {
 		alignItems: 'center',

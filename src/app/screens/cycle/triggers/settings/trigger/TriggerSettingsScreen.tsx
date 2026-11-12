@@ -98,26 +98,8 @@ export function TriggerSettingsScreen(props: any) {
 			) : null}
 			<MenuGroup style={styles.card}>
 				<MenuAccordion
-					key={41}
-					name={i18n.t('common:sections.execution')}
-					icon={faBolt}
-					defaultExpanded
-					invalid={invalidSections.execution}
-					onPress={() => {}}>
-					{/* Dépliée par défaut : son formulaire lit ses valeurs au montage,
-					    on attend que l'entité soit chargée. */}
-					{generalLoaded ? (
-						<TriggerExecutionSettingsSection
-							embedded
-							triggerData={triggerRef.current}
-							showErrors={invalidSections.execution}
-							navigation={props.navigation}
-						/>
-					) : null}
-				</MenuAccordion>
-				<MenuAccordion
 					key={51}
-					name={i18n.t('common:sections.conditions')}
+					name={i18n.t('common:sections.triggerConditions')}
 					icon={faCheckDouble}
 					invalid={invalidSections.conditions}
 					onPress={() => {}}>
@@ -134,6 +116,24 @@ export function TriggerSettingsScreen(props: any) {
 							})
 						}
 					/>
+				</MenuAccordion>
+				<MenuAccordion
+					key={41}
+					name={i18n.t('common:sections.actions')}
+					icon={faBolt}
+					defaultExpanded
+					invalid={invalidSections.execution}
+					onPress={() => {}}>
+					{/* Dépliée par défaut : son formulaire lit ses valeurs au montage,
+					    on attend que l'entité soit chargée. */}
+					{generalLoaded ? (
+						<TriggerExecutionSettingsSection
+							embedded
+							triggerData={triggerRef.current}
+							showErrors={invalidSections.execution}
+							navigation={props.navigation}
+						/>
+					) : null}
 				</MenuAccordion>
 				<DeleteItemMenu key={61} OnConfirm={_deleteItem} />
 			</MenuGroup>

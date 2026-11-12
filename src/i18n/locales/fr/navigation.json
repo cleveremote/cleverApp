@@ -18,7 +18,7 @@
 	"actuator": "Actionneur",
 	"settings": "Réglages",
 	"userSettings": "Compte utilisateur",
-	"displayManager": "Affichage",
+	"displayManager": "Visibilité des appareils",
 	"globalSettings": "Réglages généraux",
 	"masterDevice": "Équipement maître",
 	"slaveDevices": "Équipements esclaves",
@@ -43,6 +43,6 @@
 	"triggers": "Déclencheurs",
 	"comRequest": "Requête COM",
 	"scheduleSettings": "Planification",
-	"triggerSettings": "Déclencheur",
+	"triggerSettings": "Déclenchement",
 	"forgotPassword": "Mot de passe oublié"
 }

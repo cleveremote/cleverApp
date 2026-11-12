@@ -1414,11 +1414,12 @@ export function NewSchedulingSection(props: any) {
 			style={props.editInModal ? styles.flagsBoxFirst : styles.flagsBox}>
 			<View style={styles.flagRow}>
 				<Text style={styles.switchLabel}>
-					{i18n.t('cycle:schedules.setPaused')}
+					{i18n.t('cycle:schedules.enabled')}
 				</Text>
+				{/* « Activé » = inverse de `isPaused` (absent = activé). */}
 				<AppSwitch
-					value={!!props.scheduleData?.isPaused}
-					onValueChange={v => stageFlag('isPaused', v)}
+					value={!props.scheduleData?.isPaused}
+					onValueChange={v => stageFlag('isPaused', !v)}
 				/>
 			</View>
 			<View style={styles.flagRow}>

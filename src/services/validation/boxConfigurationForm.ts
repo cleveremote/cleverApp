@@ -24,13 +24,56 @@ export type BoxConfigurationForm = {
 	/** Email de récupération du compte créé sur la box. Facultatif. */
 	email: string;
 	/**
-	 * Garder le mot de passe par défaut de la box plutôt qu'en créer un.
-	 * `password` et `confirmPassword` sont alors ignorés.
+	 * Mot de passe que la box accepte aujourd'hui, demandé comme preuve de
+	 * possession : celui de l'étiquette en mode `setup`, celui choisi par
+	 * l'utilisateur en mode `recovery`.
 	 */
-	useDefaultPassword: boolean;
+	currentPassword: string;
+	/** Nouveau mot de passe, obligatoire en mode `setup`. */
 	password: string;
 	confirmPassword: string;
 };
+
+/**
+ * Les deux modes de la box où elle accepte une configuration (`getMode`).
+ *
+ * - `setup` : box neuve ou réinitialisée — tout est à renseigner, et le mot de
+ *   passe de l'étiquette doit être remplacé.
+ * - `recovery` : box déjà configurée qui a perdu son Wi-Fi — seul le réseau
+ *   est à refaire.
+ */
+export type BoxConfigurationMode = 'setup' | 'recovery';
+
+/**
+ * Étapes de l'assistant, dans l'ordre. Le mode `recovery` n'en a qu'une, qui
+ * réunit le Wi-Fi et le mot de passe actuel.
+ */
+export type BoxConfigurationStep = 'ownership' | 'wifi' | 'account';
+
+export const BOX_CONFIGURATION_STEPS: Record<
+	BoxConfigurationMode,
+	BoxConfigurationStep[]
+> = {
+	setup: ['ownership', 'wifi', 'account'],
+	recovery: ['wifi']
+};
+
+/** Champs saisis à chaque étape, selon le mode. */
+export function fieldsOfStep(
+	mode: BoxConfigurationMode,
+	step: BoxConfigurationStep
+): (keyof BoxConfigurationForm)[] {
+	switch (step) {
+		case 'ownership':
+			return ['boxIdentifier', 'currentPassword'];
+		case 'wifi':
+			return mode === 'recovery'
+				? ['boxIdentifier', 'ssid', 'psk', 'currentPassword']
+				: ['ssid', 'psk'];
+		case 'account':
+			return ['deviceName', 'email', 'password', 'confirmPassword'];
+	}
+}
 
 /**
  * Motif d'un refus, sous forme de code : le texte affiché est traduit par
@@ -47,7 +90,10 @@ export type BoxConfigurationIssue =
 	| 'ssidRequired'
 	| 'pskRequired'
 	| 'confirmRequired'
-	| 'passwordMismatch';
+	| 'passwordMismatch'
+	| 'currentPasswordRequired'
+	| 'currentPasswordWrong'
+	| 'passwordSameAsCurrent';
 
 export type BoxConfigurationErrors = Partial<
 	Record<keyof BoxConfigurationForm, BoxConfigurationIssue>
@@ -91,20 +137,25 @@ export function passwordIssue(value: string): BoxConfigurationIssue | '' {
  * Erreurs du formulaire, champ par champ. Un champ absent du résultat est
  * valide ; un objet vide veut dire que le formulaire est envoyable.
  *
- * Tous les champs sont obligatoires, sauf l'email, et les mots de passe quand
- * celui par défaut de la box est conservé.
+ * En `setup`, tout est obligatoire sauf l'email, y compris le nouveau mot de
+ * passe. En `recovery`, seuls le réseau et le mot de passe actuel le sont.
  */
 export function validateBoxConfiguration(
-	form: BoxConfigurationForm
+	form: BoxConfigurationForm,
+	mode: BoxConfigurationMode
 ): BoxConfigurationErrors {
 	const errors: BoxConfigurationErrors = {};
 
-	if (!form.deviceName.trim()) errors.deviceName = 'deviceNameRequired';
 	if (!form.ssid) errors.ssid = 'ssidRequired';
 	if (!form.psk) errors.psk = 'pskRequired';
-
 	if (!form.boxIdentifier.trim())
 		errors.boxIdentifier = 'boxIdentifierRequired';
+	if (!form.currentPassword)
+		errors.currentPassword = 'currentPasswordRequired';
+
+	if (mode === 'recovery') return errors;
+
+	if (!form.deviceName.trim()) errors.deviceName = 'deviceNameRequired';
 
 	// Facultatif : vérifié seulement s'il est renseigné.
 	if (form.email.trim()) {
@@ -112,9 +163,11 @@ export function validateBoxConfiguration(
 		if (email) errors.email = email;
 	}
 
-	if (form.useDefaultPassword) return errors;
-
-	const password = passwordIssue(form.password);
+	// Garder celui de l'étiquette reviendrait à laisser la box ouverte à
+	// quiconque l'a eue en main.
+	const password =
+		passwordIssue(form.password) ||
+		(form.password === form.currentPassword ? 'passwordSameAsCurrent' : '');
 	if (password) {
 		errors.password = password;
 	}
@@ -128,6 +181,19 @@ export function validateBoxConfiguration(
 	}
 
 	return errors;
+}
+
+/** Erreurs restreintes aux champs d'une étape. */
+export function stepErrors(
+	errors: BoxConfigurationErrors,
+	mode: BoxConfigurationMode,
+	step: BoxConfigurationStep
+): BoxConfigurationErrors {
+	const result: BoxConfigurationErrors = {};
+	for (const field of fieldsOfStep(mode, step)) {
+		if (errors[field]) result[field] = errors[field];
+	}
+	return result;
 }
 
 /** Vrai quand {@link validateBoxConfiguration} n'a rien trouvé à redire. */

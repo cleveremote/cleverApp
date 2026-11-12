@@ -5,13 +5,22 @@ import Icon from 'react-native-vector-icons/FontAwesome5';
 import i18n from 'i18next';
 import {useTranslation} from 'react-i18next';
 import {useNavigation} from '@react-navigation/native';
+import {
+	faQrcode,
+	faRightToBracket,
+	faRotateRight,
+	faWifi
+} from '@fortawesome/free-solid-svg-icons';
 import {hapticOptions} from '../../data/cycleTypes';
 import {
 	brandLogo,
 	navigationHeader
 } from '../../components/common/navigationHeaders';
 import {hotspotService} from '../../../services/hotspot';
-import {clearBoxConfigurationDraft} from './boxConfigurationDraft';
+import {
+	clearBoxConfigurationDraft,
+	settlePendingConfiguration
+} from './boxConfigurationDraft';
 import {
 	WifiStatus,
 	hasJoined,
@@ -23,9 +32,10 @@ import {
 	COLORS,
 	Centered,
 	LinkButton,
-	PrimaryButton,
+	OutlineButton,
 	accessStyles,
-	openWifiSettings
+	openWifiSettings,
+	WifiSettingsLink
 } from './accessUi';
 
 /**
@@ -225,6 +235,10 @@ export function BoxHandover(props: any) {
 		// et Android ne rendrait pas la main au réseau enregistré.
 		setProgress({phone: 'running', box: 'pending'});
 		setPhoneSsid(null);
+		// `configure` part en même temps que l'ouverture de cet écran : le
+		// hotspot reste tenu tant qu'elle n'est pas arrivée à la box.
+		await settlePendingConfiguration();
+		if (!alive()) return;
 		await hotspotService.disconnect();
 		if (!alive()) return;
 
@@ -283,18 +297,22 @@ export function BoxHandover(props: any) {
 	const actions = () => {
 		switch (phase) {
 			case 'confirmed':
-				return <PrimaryButton label={t('handover.signIn')} onPress={goToSignin} />;
+				return (
+					<OutlineButton
+						label={t('handover.signIn')}
+						icon={faRightToBracket}
+						onPress={goToSignin}
+					/>
+				);
 			case 'rejected':
 				return (
 					<>
-						<PrimaryButton
+						<OutlineButton
 							label={t('handover.rescan')}
+							icon={faQrcode}
 							onPress={goToScan}
 						/>
-						<LinkButton
-							label={t('openWifiSettings')}
-							onPress={openWifiSettings}
-						/>
+						<WifiSettingsLink />
 						<LinkButton
 							label={t('handover.retryCheck')}
 							onPress={() => verify()}
@@ -304,8 +322,9 @@ export function BoxHandover(props: any) {
 			case 'offNetwork':
 				return (
 					<>
-						<PrimaryButton
+						<OutlineButton
 							label={t('openWifiSettings')}
+							icon={faWifi}
 							onPress={openWifiSettings}
 						/>
 						<LinkButton
@@ -321,14 +340,12 @@ export function BoxHandover(props: any) {
 			case 'unconfirmed':
 				return (
 					<>
-						<PrimaryButton
+						<OutlineButton
 							label={t('handover.retryCheck')}
+							icon={faRotateRight}
 							onPress={() => verify()}
 						/>
-						<LinkButton
-							label={t('openWifiSettings')}
-							onPress={openWifiSettings}
-						/>
+						<WifiSettingsLink />
 						<LinkButton
 							label={t('handover.rescan')}
 							onPress={goToScan}
@@ -342,10 +359,7 @@ export function BoxHandover(props: any) {
 			default:
 				return (
 					<>
-						<LinkButton
-							label={t('openWifiSettings')}
-							onPress={openWifiSettings}
-						/>
+						<WifiSettingsLink />
 						<LinkButton
 							label={t('handover.continueNow')}
 							onPress={goToSignin}

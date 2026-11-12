@@ -67,6 +67,7 @@
 	},
 	"sequence": {
 		"expectedEnd": "الانتهاء المتوقع خلال {{time}}",
+		"duration": "المدة {{time}}",
 		"removeTitle": "حذف التسلسل",
 		"removeMessage": "هل تريد بالتأكيد إزالة هذا التسلسل من القائمة؟",
 		"selectActuator": "اختر مشغل {{type}}",
@@ -83,20 +84,22 @@
 		"runRegulation": "تشغيل التنظيم",
 		"opening": "الفتح",
 		"openingRange": "الفتح (%) · {{min}}–{{max}}",
-		"security": "الأمان*",
-		"securityRequired": "الأمان مطلوب",
+		"security": "أقصى مدة للتنفيذ*",
+		"securityRequired": "أقصى مدة للتنفيذ مطلوبة",
 		"vfdSpeed": "سرعة VFD* ← {{value}} %",
 		"vfdRequired": "سرعة VFD مطلوبة",
 		"inverter": {
-			"title": "المغيرات",
+			"title": "إعدادات التنظيم",
 			"select": "التحكم في مغير",
+			"inverterRequired": "المغير مطلوب",
 			"none": "لا يوجد مغير متاح.",
 			"unknown": "مغير غير معروف",
 			"mode": "الوضع*",
 			"modeRequired": "الوضع مطلوب",
 			"frequency": "التردد (هرتز)*",
 			"frequencyRequired": "التردد مطلوب في وضع RS485",
-			"pidSetpoint": "قيمة PID المرجعية",
+			"pidSetpoint": "قيمة PID المرجعية*",
+			"pidSetpointRequired": "قيمة PID المرجعية مطلوبة في وضع PID",
 			"invalidNumber": "يجب أن يكون رقمًا"
 		}
 	},
@@ -126,15 +129,16 @@
 		"themeRequired": "السمة مطلوبة",
 		"executionMode": "التنفيذ (تسلسلي/متوازٍ)",
 		"addCycle": "إضافة دورة ...",
-		"addSequence": "إضافة تسلسل ...",
+		"addSequence": "تسلسل",
 		"sequenceOrderHint": "اضغط مطولاً ثم اسحب لتغيير ترتيب التنفيذ."
 	},
 	"conditions": {
+		"cycleDescription": "حدّد الشروط التي يجب التحقق منها عند بدء الدورة. لا تُؤخذ في الاعتبار بعد بدء الدورة.",
+		"sequenceDescription": "حدّد الشروط التي يجب التحقق منها عند بدء التسلسل. لا تُؤخذ في الاعتبار بعد بدء التسلسل.",
 		"removeTitle": "حذف الشرط",
 		"removeMessage": "هل تريد بالتأكيد إزالة هذا الشرط من القائمة؟",
 		"item": "الشرط {{name}}",
 		"add": "إضافة شرط ...",
-		"addGroup": "إضافة مجموعة ...",
 		"builderHint": "تلميح: اضغط على و / أو لتبديل الرابط. المجموعة الواحدة = قوس واحد.",
 		"connector": {
 			"ET": "و",
@@ -178,7 +182,7 @@
 		"item": "{{name}}",
 		"add": "إضافة جدول زمني ...",
 		"newScheduling": "جدول زمني",
-		"setPaused": "إيقاف مؤقت",
+		"enabled": "مفعّل",
 		"needConfirmation": "يتطلب تأكيداً"
 	},
 	"cron": {

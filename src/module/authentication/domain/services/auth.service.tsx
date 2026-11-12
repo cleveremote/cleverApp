@@ -23,6 +23,20 @@ const USER_NAME_KEY = 'userName';
 /** Attente maximale de la réponse de la box à une action sur le compte. */
 const ACCOUNT_ACTION_TIMEOUT_MS = 15000;
 
+/**
+ * Temps laissé à chaque serveur pour accepter le socket de récupération.
+ * socket.io relance seul ses tentatives pendant ce temps : un premier échec
+ * — fréquent juste après la bascule du téléphone sur le hotspot — n'est pas
+ * une réponse.
+ */
+const RECOVERY_CONNECT_TIMEOUT_MS = 10000;
+
+/**
+ * Au-delà, la réponse de la box à une étape de récupération est tenue pour
+ * perdue. Large : la demande de code attend l'envoi de l'email.
+ */
+const RECOVERY_RESPONSE_TIMEOUT_MS = 30000;
+
 /** Résultat d'un appel `front/box/login` (connexion ou récupération). */
 export type BoxLoginResult = {
 	res: boolean;
@@ -138,6 +152,9 @@ class AuthenticationService {
 	// login, et profil qui le mémorise s'il y en a un. Lue une seule fois par
 	// l'écran des profils.
 	private pendingSignin: PendingSignin | null = null;
+	// Connexion de récupération en cours : deux étapes lancées coup sur coup
+	// attendent la même, au lieu d'ouvrir chacune un socket.
+	private recoveryConnection: Promise<boolean> | null = null;
 	/**
 	 * Blocages de compte en cours (`ACCOUNT_LOCKED`), par identifiant de box :
 	 * conservés hors des écrans pour que le blocage survive à une navigation.
@@ -523,24 +540,86 @@ class AuthenticationService {
 		code?: string;
 		newPassword?: string;
 	}): Promise<BoxLoginResult> {
+		const noServer = {res: false, error: i18n.t('common:errors.noServer')};
 		if (!socketService.connected) {
-			this.resolvedLocalService = null;
-			await this.setSocketServer(true, payload.login);
-		}
-		return new Promise(resolve => {
-			if (!socketService.connected) {
-				resolve({res: false, error: i18n.t('common:errors.noServer')});
-				return;
+			if (!this.recoveryConnection) {
+				this.recoveryConnection = this.connectForRecovery(
+					payload.login
+				).finally(() => {
+					this.recoveryConnection = null;
+				});
 			}
+			if (!(await this.recoveryConnection)) return noServer;
+		}
+
+		// Toujours une issue : la réponse, la coupure du socket — socket.io
+		// abandonne alors l'ack sans jamais l'appeler — ou l'expiration du délai.
+		// Sans elle, l'écran resterait occupé, et le renvoi du code inactif.
+		return new Promise(resolve => {
+			let settled = false;
+			const finish = (result: BoxLoginResult) => {
+				if (settled) return;
+				settled = true;
+				clearTimeout(timer);
+				socketService.off('disconnect', onDisconnect);
+				resolve(result);
+			};
+			const onDisconnect = () => finish(noServer);
+			const timer = setTimeout(
+				() => finish(noServer),
+				RECOVERY_RESPONSE_TIMEOUT_MS
+			);
+			socketService.on('disconnect', onDisconnect);
 			socketService.emit(
 				'front/box/login',
 				{...payload, isRecovery: true},
 				(...ackArgs: unknown[]) => {
 					const result = parseBoxLoginResponse(...ackArgs);
 					this.recordAccountLock(payload.login, result);
-					resolve(result);
+					finish(result);
 				}
 			);
+		});
+	}
+
+	/**
+	 * Ouvre le socket de récupération : la box en local d'abord — c'est le seul
+	 * chemin depuis son hotspot, qui n'a pas internet — puis le serveur
+	 * distant. Sans session : ni statut serveur ni déconnexion globale ne sont
+	 * touchés, contrairement à `setSocketServer`.
+	 */
+	private async connectForRecovery(login: string): Promise<boolean> {
+		await AsyncStorage.setItem('boxId', login);
+		this.resolvedLocalService = null;
+		const local = await this.resolveLocalServer(login);
+		const servers = local ? [local, WEBSITE_URL] : [WEBSITE_URL];
+		for (const server of servers) {
+			if (await this.openRecoverySocket(server, login)) return true;
+		}
+		return false;
+	}
+
+	private async openRecoverySocket(
+		server: string,
+		boxId: string
+	): Promise<boolean> {
+		const token = await tokenStorage.getAccessToken();
+		await socketService.init(server, token, {boxId});
+		return new Promise(resolve => {
+			const done = (connected: boolean) => {
+				clearTimeout(timer);
+				socketService.off('connect', onConnect);
+				if (!connected) socketService.disconnect();
+				resolve(connected);
+			};
+			const onConnect = () => done(true);
+			// `connect_error` n'est pas écouté : socket.io réessaie de lui-même,
+			// et seule l'échéance tranche.
+			const timer = setTimeout(() => {
+				console.warn('[recovery] pas de connexion à', server);
+				done(false);
+			}, RECOVERY_CONNECT_TIMEOUT_MS);
+			socketService.on('connect', onConnect);
 		});
 	}
 

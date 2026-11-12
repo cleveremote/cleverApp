@@ -67,6 +67,7 @@
 	},
 	"sequence": {
 		"expectedEnd": "fin prévue dans {{time}}",
+		"duration": "durée {{time}}",
 		"removeTitle": "Supprimer la séquence",
 		"removeMessage": "Voulez-vous vraiment retirer cette séquence de la liste ?",
 		"selectActuator": "Choisir un actionneur {{type}}",
@@ -83,20 +84,22 @@
 		"runRegulation": "Lancer la régulation",
 		"opening": "Ouverture",
 		"openingRange": "Ouverture (%) · {{min}}–{{max}}",
-		"security": "sécurité*",
-		"securityRequired": "La sécurité est obligatoire",
+		"security": "Durée maximale d'exécution*",
+		"securityRequired": "La durée maximale d'exécution est obligatoire",
 		"vfdSpeed": "Vitesse VFD* → {{value}} %",
 		"vfdRequired": "La vitesse VFD est obligatoire",
 		"inverter": {
-			"title": "Variateurs",
+			"title": "Paramètres de régulation",
 			"select": "Piloter un variateur",
+			"inverterRequired": "Le variateur est obligatoire",
 			"none": "Aucun variateur disponible.",
 			"unknown": "Variateur inconnu",
 			"mode": "Mode*",
 			"modeRequired": "Le mode est obligatoire",
 			"frequency": "Fréquence (Hz)*",
 			"frequencyRequired": "La fréquence est obligatoire en mode RS485",
-			"pidSetpoint": "Consigne PID",
+			"pidSetpoint": "Consigne PID*",
+			"pidSetpointRequired": "La consigne PID est obligatoire en mode PID",
 			"invalidNumber": "Doit être un nombre"
 		}
 	},
@@ -126,15 +129,16 @@
 		"themeRequired": "Le thème est obligatoire",
 		"executionMode": "Exécution (séquentielle/parallèle)",
 		"addCycle": "Ajouter un cycle ...",
-		"addSequence": "Ajouter une séquence ...",
+		"addSequence": "Séquence",
 		"sequenceOrderHint": "Appui long puis glisser pour changer l'ordre d'exécution."
 	},
 	"conditions": {
+		"cycleDescription": "Définissez les conditions à vérifier au démarrage du cycle. Elles ne sont plus prises en compte une fois le cycle démarré.",
+		"sequenceDescription": "Définissez les conditions à vérifier au démarrage de la séquence. Elles ne sont plus prises en compte une fois la séquence démarrée.",
 		"removeTitle": "Supprimer la condition",
 		"removeMessage": "Voulez-vous vraiment retirer cette condition de la liste ?",
 		"item": "condition {{name}}",
 		"add": "Ajouter une condition ...",
-		"addGroup": "Ajouter un groupe ...",
 		"builderHint": "Astuce : touchez ET / OU pour inverser le connecteur. Un groupe = une parenthèse.",
 		"connector": {
 			"ET": "ET",
@@ -178,7 +182,7 @@
 		"item": "{{name}}",
 		"add": "Ajouter une planification ...",
 		"newScheduling": "Planification",
-		"setPaused": "Mettre en pause",
+		"enabled": "Activé",
 		"needConfirmation": "Demander confirmation"
 	},
 	"cron": {

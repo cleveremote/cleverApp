@@ -294,6 +294,23 @@ const saveSigninData = async (
 	}
 };
 
+/**
+ * Mot de passe changé hors de l'écran de connexion (« mot de passe oublié ») :
+ * le profil qui retient ce login avec « se souvenir de moi » garde sinon
+ * l'ancien, et le proposerait à la prochaine connexion. Un profil qui ne
+ * retient pas ses identifiants n'a rien à mettre à jour.
+ */
+const updateRememberedPassword = async (
+	login: string,
+	password: string
+): Promise<void> => {
+	const profile = await findProfileByLogin(login);
+	if (!profile) return;
+	const data = await getAssociationProfileAccount(profile);
+	if (!data?.rememberCredentials) return;
+	await setCredentials(data.account, data.login || login, password);
+};
+
 export {
 	getSigninData,
 	clearCredentials,
@@ -307,5 +324,6 @@ export {
 	setProfiles,
 	saveSigninData,
 	deleteProfile,
-	findProfileByLogin
+	findProfileByLogin,
+	updateRememberedPassword
 };

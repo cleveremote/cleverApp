@@ -52,21 +52,5 @@ export const InputStyle = StyleSheet.create({
 		backgroundColor: '#EDF2F7',
 		color: '#A0AEC0',
 		borderColor: '#E2E8F0'
-	},
-	textInputError: {
-		color: 'red',
-		fontSize: 15,
-		fontWeight: 'bold',
-		marginBottom: 5,
-		marginTop: 5,
-		marginRight: 5
-	},
-	iconInputError: {
-		color: 'red',
-		fontSize: 15,
-		fontWeight: 'bold',
-		marginBottom: 5,
-		marginTop: 7,
-		marginRight: 5
 	}
 });

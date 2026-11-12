@@ -1,5 +1,12 @@
 import React from 'react';
-import {StyleProp, StyleSheet, Text, View, ViewStyle} from 'react-native';
+import {
+	StyleProp,
+	StyleSheet,
+	Text,
+	TextStyle,
+	View,
+	ViewStyle
+} from 'react-native';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {faCircleExclamation} from '@fortawesome/free-solid-svg-icons';
 
@@ -11,16 +18,18 @@ export const ERROR_COLORS = {
 
 /**
  * Bloc d'erreur : message sur fond rouge pâle, encadré de rouge, précédé
- * d'une icône sauf si `hideIcon`.
+ * d'une icône sauf si `hideIcon`. `textStyle` complète le style du message.
  */
 export function ErrorBox({
 	message,
 	hideIcon = false,
-	style
+	style,
+	textStyle
 }: Readonly<{
 	message: React.ReactNode;
 	hideIcon?: boolean;
 	style?: StyleProp<ViewStyle>;
+	textStyle?: StyleProp<TextStyle>;
 }>) {
 	return (
 		<View style={[styles.wrap, style]}>
@@ -32,7 +41,7 @@ export function ErrorBox({
 					style={styles.icon}
 				/>
 			)}
-			<Text style={styles.text}>{message}</Text>
+			<Text style={[styles.text, textStyle]}>{message}</Text>
 		</View>
 	);
 }

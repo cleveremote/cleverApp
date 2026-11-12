@@ -8,14 +8,13 @@ import {
 	TouchableOpacity,
 	View
 } from 'react-native';
-import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {
 	faLayerGroup,
 	faPlus,
 	faTrash,
 	faXmark
 } from '@fortawesome/free-solid-svg-icons';
-import Icon from 'react-native-vector-icons/FontAwesome5';
+import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {connect} from 'react-redux';
 import {isTempId, newTempId} from '../../../../services/socket';
 import {DropdownSelect} from '../../../components/common/FormComponents';
@@ -118,13 +117,6 @@ function findAndRemove(node: BuilderNode, id: number): boolean {
 		if (findAndRemove(c, id)) return true;
 	}
 	return false;
-}
-
-// Nombre total de groupes dans l'arbre (racine incluse). Sert à interdire la
-// suppression du dernier groupe restant.
-function countGroups(node: BuilderNode): number {
-	if (node.type !== 'group') return 0;
-	return node.children.reduce((s, c) => s + countGroups(c), 1);
 }
 
 // --- Mapping arbre <-> liste plate persistée ---------------------------------
@@ -247,6 +239,12 @@ export const isConditionIncomplete = (c: any) =>
 	c?.value === '' ||
 	(c?.elementType === 'SENSOR' && !/^-?\d+(\.\d+)?$/.test(String(c.value)));
 
+// Au moins une condition incomplète dans l'arbre (sous-groupes compris).
+const hasIncompleteCondition = (node: BuilderNode): boolean =>
+	node.type === 'condition'
+		? isConditionIncomplete(node)
+		: node.children.some(hasIncompleteCondition);
+
 // --- Composant principal ---------------------------------------------------
 export function ConditionBuilderSection(props: any) {
 	// Listes métier issues du store (comme la section Execution).
@@ -293,8 +291,9 @@ export function ConditionBuilderSection(props: any) {
 	) {
 		seededFromRef.current = conditions;
 		persistedRef.current = conditions.filter(c => c?.id && !isTempId(c.id));
-		rootRef.current =
-			conditionsToTree(conditions, genId) ?? newGroup([newCondition()]);
+		// Rien de pré-construit : sans condition, la racine est vide et seul le
+		// bouton « + Condition » s'affiche.
+		rootRef.current = conditionsToTree(conditions, genId) ?? newGroup([]);
 	}
 	const root = rootRef.current;
 
@@ -314,26 +313,14 @@ export function ConditionBuilderSection(props: any) {
 		props.onChange?.(next);
 	};
 
-	// Un groupe peut toujours être supprimé, sauf le dernier restant.
-	const canDeleteGroup = countGroups(root) > 1;
+	// Tant qu'une condition est incomplète, on n'en ajoute pas d'autre : on
+	// termine d'abord celle en cours.
+	const addConditionDisabled = hasIncompleteCondition(root);
 
+	// Supprimer la racine la vide : on revient au seul bouton « + Condition ».
 	const remove = (id: number) => {
-		if (id === root.id) {
-			// Suppression de la racine = on « désencapsule » : le premier
-			// sous-groupe direct devient la nouvelle racine (inverse de
-			// « Add new group »). Garanti d'exister tant que canDeleteGroup.
-			const promoted = root.children.find(
-				(c): c is GroupNode => c.type === 'group'
-			);
-			if (promoted) rootRef.current = promoted;
-		} else {
-			findAndRemove(root, id);
-		}
-		notify();
-	};
-
-	const wrapInGroup = () => {
-		rootRef.current = newGroup([root, newCondition()]);
+		if (id === root.id) root.children = [];
+		else findAndRemove(root, id);
 		notify();
 	};
 
@@ -342,7 +329,7 @@ export function ConditionBuilderSection(props: any) {
 			<GroupView
 				group={root}
 				depth={0}
-				canDelete={canDeleteGroup}
+				addConditionDisabled={addConditionDisabled}
 				cycles={cycles}
 				sensors={sensors}
 				showErrors={!!props.showErrors}
@@ -358,14 +345,6 @@ export function ConditionBuilderSection(props: any) {
 				onRemove={remove}
 			/>
 
-			{/* Groupe englobant — même bouton que « Add new sequence » (+). */}
-			<View style={styles.addButtonWrapper}>
-				<TouchableOpacity style={styles.addButton} onPress={wrapInGroup}>
-					<Icon name="times-circle" size={30} color={C.accent} />
-				</TouchableOpacity>
-				<Text style={styles.addLabel}>{i18n.t('cycle:conditions.addGroup')}</Text>
-			</View>
-
 			<Text style={styles.hint}>
 				{i18n.t('cycle:conditions.builderHint')}
 			</Text>
@@ -377,7 +356,7 @@ export function ConditionBuilderSection(props: any) {
 function GroupView({
 	group,
 	depth,
-	canDelete,
+	addConditionDisabled,
 	cycles,
 	sensors,
 	showErrors,
@@ -388,8 +367,7 @@ function GroupView({
 }: {
 	group: GroupNode;
 	depth: number;
-	// Faux uniquement pour le dernier groupe restant (non supprimable).
-	canDelete: boolean;
+	addConditionDisabled: boolean;
 	cycles: any[];
 	sensors: any[];
 	showErrors: boolean;
@@ -398,6 +376,11 @@ function GroupView({
 	onAddSubGroup: (g: GroupNode) => void;
 	onRemove: (id: number) => void;
 }) {
+	// Le sous-groupe ne se propose qu'une fois la première condition du groupe
+	// complète : tant qu'elle ne l'est pas, il n'y a rien à regrouper.
+	const first = group.children[0];
+	const canAddSubGroup =
+		!!first && (first.type === 'group' || !isConditionIncomplete(first));
 	return (
 		<View
 			style={[styles.group, depth > 0 ? styles.groupNested : null]}>
@@ -432,6 +415,9 @@ function GroupView({
 					{child.type === 'condition' ? (
 						<ConditionRow
 							cond={child}
+							// Seule condition du groupe : la corbeille du groupe
+							// suffit, pas de croix en double.
+							removable={group.children.length > 1}
 							cycles={cycles}
 							sensors={sensors}
 							showErrors={showErrors}
@@ -442,7 +428,7 @@ function GroupView({
 						<GroupView
 							group={child}
 							depth={depth + 1}
-							canDelete={canDelete}
+							addConditionDisabled={addConditionDisabled}
 							cycles={cycles}
 							sensors={sensors}
 							showErrors={showErrors}
@@ -460,17 +446,20 @@ function GroupView({
 					label={i18n.t('cycle:conditions.condition')}
 					icon={faPlus}
 					color={C.accent}
+					disabled={addConditionDisabled}
 					onPress={() => onAddCondition(group)}
 					style={styles.actionBtn}
 				/>
-				<OutlineButton
-					label={i18n.t('cycle:conditions.subGroup')}
-					icon={faLayerGroup}
-					color={C.accent}
-					onPress={() => onAddSubGroup(group)}
-					style={styles.actionBtn}
-				/>
-				{canDelete ? (
+				{canAddSubGroup ? (
+					<OutlineButton
+						label={i18n.t('cycle:conditions.subGroup')}
+						icon={faLayerGroup}
+						color={C.accent}
+						onPress={() => onAddSubGroup(group)}
+						style={styles.actionBtn}
+					/>
+				) : null}
+				{depth > 0 || group.children.length ? (
 					<OutlineButton
 						icon={faTrash}
 						color={C.danger}
@@ -490,6 +479,7 @@ function GroupView({
 // l'opérateur est choisi et la valeur est strictement numérique.
 function ConditionRow({
 	cond,
+	removable,
 	cycles,
 	sensors,
 	showErrors,
@@ -497,6 +487,7 @@ function ConditionRow({
 	onRemove
 }: {
 	cond: ConditionNode;
+	removable: boolean;
 	cycles: any[];
 	sensors: any[];
 	showErrors: boolean;
@@ -504,6 +495,17 @@ function ConditionRow({
 	onRemove: (id: number) => void;
 }) {
 	const isSensor = cond.elementType === 'SENSOR';
+	// Suppression en fin de seconde ligne, à côté de la valeur.
+	const deleteButton = removable ? (
+		<Pressable
+			onPress={() => onRemove(cond.id)}
+			hitSlop={6}
+			accessibilityRole="button"
+			accessibilityLabel={i18n.t('cycle:conditions.removeTitle')}
+			style={styles.condDelete}>
+			<FontAwesomeIcon icon={faXmark} size={16} color={C.danger} />
+		</Pressable>
+	) : null;
 	const elementError = showErrors && !cond.elementId;
 	const operatorError = showErrors && !cond.operator;
 	const valueError =
@@ -527,8 +529,8 @@ function ConditionRow({
 
 	return (
 		<View style={styles.condition}>
-			{/* Bouton type (Cycle/Sensor) + liste de l'élément + suppression,
-			    sur une même ligne. Le bouton reprend le style du bouton ET/OU. */}
+			{/* Bouton type (Cycle/Sensor) + liste de l'élément sur une même
+			    ligne. Le bouton reprend le style du bouton ET/OU. */}
 			<View style={styles.condTopRow}>
 				<TouchableOpacity onPress={toggleType} style={styles.typeBtn}>
 					<Text style={styles.typeBtnTxt}>
@@ -550,11 +552,6 @@ function ConditionRow({
 						hasError={elementError}
 					/>
 				</View>
-				<Pressable
-					onPress={() => onRemove(cond.id)}
-					style={styles.condDelete}>
-					<FontAwesomeIcon icon={faXmark} size={14} color={C.danger} />
-				</Pressable>
 			</View>
 
 			{isSensor ? (
@@ -593,20 +590,26 @@ function ConditionRow({
 							onChange();
 						}}
 					/>
+					{deleteButton}
 				</View>
 			) : (
 				// Cycle : opérateur `=` implicite (masqué), valeur ON/OFF.
-				<DropdownSelect<SelectItem>
-					items={CYCLE_VALUES}
-					value={cond.value}
-					getLabel={item => item.label}
-					getValue={item => item.value}
-					onChange={val => {
-						cond.value = val;
-						onChange();
-					}}
-					hasError={valueError}
-				/>
+				<View style={styles.condBottomRow}>
+					<View style={{flex: 1}}>
+						<DropdownSelect<SelectItem>
+							items={CYCLE_VALUES}
+							value={cond.value}
+							getLabel={item => item.label}
+							getValue={item => item.value}
+							onChange={val => {
+								cond.value = val;
+								onChange();
+							}}
+							hasError={valueError}
+						/>
+					</View>
+					{deleteButton}
+				</View>
 			)}
 		</View>
 	);
@@ -616,11 +619,6 @@ const styles = StyleSheet.create({
 	// Contenu calé sous l'icône de l'en-tête (marginLeft: 10 du MenuAccordion).
 	wrap: {paddingLeft: 10, paddingRight: 10, paddingTop: 6, paddingBottom: 14},
 	title: {fontSize: 15, color: C.text, fontWeight: 'bold', marginBottom: 10},
-	// Bouton d'ajout de groupe aligné sur « Add new sequence » : icône
-	// FontAwesome5 « times-circle » tournée à 135° (= un +) + libellé.
-	addButtonWrapper: {justifyContent: 'center', alignItems: 'center'},
-	addButton: {marginTop: 20, transform: [{rotate: '135deg'}]},
-	addLabel: {color: C.accent, fontSize: 15},
 	// Boutons d'action du groupe : OutlineButton (cf. accessUi), même hauteur
 	// que les inputs (ELEMENT_HEIGHT) ; on neutralise sa marge/centrage par défaut.
 	actionBtn: {flex: 1, marginTop: 0, alignSelf: 'auto', justifyContent: 'center'},
@@ -686,10 +684,11 @@ const styles = StyleSheet.create({
 	},
 	typeBtnTxt: {fontSize: 15, color: '#ffffff', fontWeight: 'bold'},
 	condBottomRow: {flexDirection: 'row', alignItems: 'center', gap: 6},
+	// Croix seule, sans cadre, centrée sur la hauteur du dropdown voisin.
 	condDelete: {
-		width: 32,
-		height: 32,
-		borderRadius: 8,
+		width: 28,
+		height: ELEMENT_HEIGHT,
+		marginVertical: 4,
 		alignItems: 'center',
 		justifyContent: 'center'
 	},

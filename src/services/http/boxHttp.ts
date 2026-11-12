@@ -42,6 +42,15 @@ export async function boxUrl(
 }
 
 /**
+ * Pas de connexion gardée ouverte vers la box (Android). Sur le hotspot, une
+ * connexion inactive pendant la saisie peut être morte sans que le téléphone
+ * le sache : la requête suivante y est écrite et l'appel attend jusqu'à son
+ * délai, alors que la box est là. Une connexion par appel coûte une poignée
+ * de main TLS, négligeable au rythme de ces écrans.
+ */
+const FRESH_CONNECTION = {Connection: 'close'};
+
+/**
  * GET on the box over HTTPS, trusting the bundled private CA.
  *
  * The two platforms get there differently, which is why this helper exists:
@@ -71,6 +80,7 @@ export async function boxGet(
 		try {
 			const res = await fetch(url, {
 				method: 'GET',
+				headers: FRESH_CONNECTION,
 				signal: controller.signal
 			});
 			return {status: res.status, body: await res.text()};
@@ -177,7 +187,7 @@ export async function boxPost(
 		try {
 			const res = await fetch(url, {
 				method: 'POST',
-				headers: {'Content-Type': 'application/json'},
+				headers: {'Content-Type': 'application/json', ...FRESH_CONNECTION},
 				body: payload,
 				signal: controller.signal
 			});

@@ -1,16 +1,26 @@
 import React, { useEffect } from 'react';
-import { Pressable, ScrollView, StyleSheet, Text, View } from 'react-native';
-import { fieldLabelColor } from '../../../../styles/components/common/Input';
+import {
+	ScrollView,
+	StyleSheet,
+	Text,
+	TextInput,
+	TouchableOpacity,
+	View
+} from 'react-native';
+import {
+	InputStyle,
+	inputText,
+	placeholderColor
+} from '../../../../styles/components/common/Input';
+import { ELEMENT_FONT_SIZE, ELEMENT_HEIGHT } from '../../../../styles/metrics';
 import { navigationHeader } from '../../../../components/common/navigationHeaders';
-import { useFieldArray, useForm } from 'react-hook-form';
-import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
-import { faBolt, faTrash } from '@fortawesome/free-solid-svg-icons';
+import { Controller, useFieldArray, useForm } from 'react-hook-form';
 import {
 	DateTimePickerForm,
-	InputForm,
-	SelectForm
+	DropdownSelect,
+	FieldError
 } from '../../../../components/common/FormComponents';
-import { CollapsibleSection } from '../../../../components/common/CollapsibleSection';
+import { AppSwitch } from '../../../../components/common/AppSwitch';
 import { BoxFormStyle } from '../../../../styles/components/common/boxForm';
 import { connect } from 'react-redux';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
@@ -30,7 +40,7 @@ import {
 // Pilotage d'un variateur par la séquence (`inverterDirectives`, DTO
 // SequenceInverterDirectiveSync) :
 //  - PID   : PID interne du variateur (capteur AI1), consigne F11.01
-//            (`pidSetpoint`, optionnelle) ;
+//            (`pidSetpoint`, obligatoire) ;
 //  - RS485 : consigne de fréquence écrite par la box (0x2000), `frequency`
 //            obligatoire.
 export enum InverterMode {
@@ -38,10 +48,13 @@ export enum InverterMode {
 	RS485 = 'RS485'
 }
 
-const INVERTER_MODES = [
-	{ label: 'PID', value: InverterMode.PID },
-	{ label: 'RS485', value: InverterMode.RS485 }
-];
+// Élément de la liste des variateurs. `iconColor` satisfait la contrainte
+// générique de DropdownSelect (cf. ConditionBuilderSection).
+interface InverterItem {
+	label: string;
+	value: string;
+	iconColor?: { base: string };
+}
 
 const isInverterMode = (mode: any) =>
 	Object.values(InverterMode).includes(mode);
@@ -62,26 +75,23 @@ const numberRule = (value: any) =>
 // Directives du formulaire → forme attendue par la box : seuls les champs du
 // mode choisi sont envoyés.
 export const toInverterDirectives = (directives: any[]) =>
-	(directives ?? []).map((d: any) => {
-		const pidSetpoint = toNumber(d.pidSetpoint);
-		return {
-			inverterId: `${d.inverterId}`,
-			mode: d.mode,
-			...(d.mode === InverterMode.RS485
-				? { frequency: toNumber(d.frequency) }
-				: {}),
-			...(d.mode === InverterMode.PID && pidSetpoint !== undefined
-				? { pidSetpoint }
-				: {})
-		};
-	});
+	(directives ?? []).map((d: any) => ({
+		inverterId: `${d.inverterId}`,
+		mode: d.mode,
+		...(d.mode === InverterMode.RS485
+			? { frequency: toNumber(d.frequency) }
+			: {}),
+		...(d.mode === InverterMode.PID
+			? { pidSetpoint: toNumber(d.pidSetpoint) }
+			: {})
+	}));
 
 // Directive non conforme au DTO (section Security en rouge au save).
 export const isInverterDirectiveInvalid = (d: any) =>
 	isEmpty(d?.inverterId) ||
 	!isInverterMode(d?.mode) ||
 	(d.mode === InverterMode.RS485 && typeof d.frequency !== 'number') ||
-	(d.pidSetpoint !== undefined && typeof d.pidSetpoint !== 'number');
+	(d.mode === InverterMode.PID && typeof d.pidSetpoint !== 'number');
 
 export function SequenceSecuritySettingsSection(props: any) {
 	const embedded = !!props.embedded;
@@ -185,26 +195,50 @@ export function SequenceSecuritySettingsSection(props: any) {
 		return () => listenerUnsubscribe();
 	}, [saveUnchangedData]);
 
-	const inverterOf = (inverterId: any) =>
-		(props.inverters ?? []).find((i: any) => `${i.id}` === `${inverterId}`);
+	// Un seul variateur piloté. L'interrupteur « Paramètres de régulation »
+	// crée ou retire la directive ; changer de variateur repart de son mode par
+	// défaut.
+	const directive = directives[0];
+	const directiveErrors: any = (errors as any).inverterDirectives?.[0];
+	const isRs485 = directive?.mode === InverterMode.RS485;
+	const inverterItems: InverterItem[] = (props.inverters ?? [])
+		.filter((i: any) => !i.deletedAt)
+		.map((i: any) => ({ label: i.name ?? `${i.id}`, value: `${i.id}` }));
 
-	// Variateurs pas encore pilotés par la séquence (un seul ordre par variateur).
-	const availableInverters = () => {
-		const usedIds = directives.map((d: any) => `${d.inverterId}`);
-		return (props.inverters ?? [])
-			.filter((i: any) => !i.deletedAt && !usedIds.includes(`${i.id}`))
-			.map((i: any) => ({ label: i.name ?? `${i.id}`, value: i.id }));
+	// La section est déjà validée (showErrors) quand le champ de valeur change
+	// (bascule PID / RS485, autre variateur, régulation activée) : le nouveau
+	// champ monte après cette validation, sa règle « obligatoire » ne serait
+	// vérifiée qu'à la première saisie. On revalide une fois qu'il est monté.
+	useEffect(() => {
+		if (props.showErrors && directive) trigger('inverterDirectives');
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [props.showErrors, directive?.mode, directive?.inverterId, directiveFields.length]);
+
+	const toggleRegulation = (on: boolean) => {
+		if (on) appendDirective({ inverterId: '', mode: InverterMode.RS485 });
+		else removeDirective(0);
+		setSaveUnchangedData(true);
 	};
 
-	const addDirective = (inverterId: any) => {
-		const inverter = inverterOf(inverterId);
-		if (!inverter) return;
-		appendDirective({
-			inverterId: `${inverter.id}`,
-			mode: isInverterMode(inverter.defaultMode)
+	// Le Controller pose l'id ; le mode repart de celui du variateur et la
+	// valeur saisie est vidée. (Pas de `update()` du field array : il remonte
+	// les champs et le Controller garderait l'ancienne valeur.)
+	const selectInverter = (
+		inverterId: string,
+		onChange: (value: string) => void
+	) => {
+		const inverter = (props.inverters ?? []).find(
+			(i: any) => `${i.id}` === inverterId
+		);
+		onChange(inverterId);
+		setValue(
+			'inverterDirectives.0.mode',
+			isInverterMode(inverter?.defaultMode)
 				? inverter.defaultMode
 				: InverterMode.RS485
-		});
+		);
+		setValue('inverterDirectives.0.frequency', undefined);
+		setValue('inverterDirectives.0.pidSetpoint', undefined);
 		setSaveUnchangedData(true);
 	};
 
@@ -215,7 +249,7 @@ export function SequenceSecuritySettingsSection(props: any) {
 
 	return (
 		<Body {...bodyProps}>
-			<View style={BoxFormStyle.boxForm}>
+			<View style={[BoxFormStyle.boxForm, styles.card]}>
 				<DateTimePickerForm
 					mode={'time'}
 					control={control}
@@ -227,95 +261,125 @@ export function SequenceSecuritySettingsSection(props: any) {
 						setSaveUnchangedData(true);
 					}}
 				/>
-			</View>
-			<View style={BoxFormStyle.boxForm}>
-				<CollapsibleSection
-					title={i18n.t('cycle:sequence.inverter.title')}
-					icon={faBolt}
-					badge={directiveFields.length}
-					initiallyExpanded={directiveFields.length > 0}>
-					{directiveFields.map((field: any, index: number) => {
-						const directive = directives[index] ?? {};
-						const name = `inverterDirectives.${index}`;
-						return (
-							<View key={field.id} style={styles.directive}>
-								<View style={styles.directiveHeader}>
-									<Text style={styles.directiveName} numberOfLines={1}>
-										{inverterOf(directive.inverterId)?.name ??
-											i18n.t('cycle:sequence.inverter.unknown')}
-									</Text>
-									<Pressable
-										hitSlop={8}
-										onPress={() => {
-											removeDirective(index);
-											setSaveUnchangedData(true);
-										}}>
-										<FontAwesomeIcon icon={faTrash} color="#E53E3E" />
-									</Pressable>
-								</View>
-								<SelectForm
-									lstData={INVERTER_MODES}
-									control={control}
-									errors={errors}
-									name={`${name}.mode`}
-									placeholder={i18n.t('cycle:sequence.inverter.mode')}
-									rules={{
-										required: i18n.t('cycle:sequence.inverter.modeRequired')
-									}}
-									onValueChange={() => setSaveUnchangedData(true)}
-								/>
-								{directive.mode === InverterMode.RS485 ? (
-									<InputForm
-										key={`${field.id}-frequency`}
-										control={control}
-										errors={errors}
-										name={`${name}.frequency`}
-										placeholder={i18n.t('cycle:sequence.inverter.frequency')}
-										keyboardType="decimal-pad"
-										rules={{
-											required: i18n.t(
-												'cycle:sequence.inverter.frequencyRequired'
-											),
-											validate: numberRule
-										}}
-										onChangeText={() => setSaveUnchangedData(true)}
-									/>
-								) : null}
-								{directive.mode === InverterMode.PID ? (
-									<InputForm
-										key={`${field.id}-pidSetpoint`}
-										control={control}
-										errors={errors}
-										name={`${name}.pidSetpoint`}
-										placeholder={i18n.t('cycle:sequence.inverter.pidSetpoint')}
-										keyboardType="decimal-pad"
-										rules={{ validate: numberRule }}
-										onChangeText={() => setSaveUnchangedData(true)}
-									/>
-								) : null}
-							</View>
-						);
-					})}
-					{availableInverters().length > 0 ? (
-						<SelectForm
-							lstData={availableInverters()}
-							control={control}
-							errors={errors}
-							name="inverterToAdd"
-							placeholder={i18n.t('cycle:sequence.inverter.select')}
-							rules={{ required: false }}
-							onValueChange={value => {
-								addDirective(value);
-								// Vide le sélecteur : le variateur ajouté n'y reste pas affiché.
-								setValue('inverterToAdd', null);
-							}}
-						/>
-					) : directiveFields.length === 0 ? (
-						<Text style={styles.empty}>
-							{i18n.t('cycle:sequence.inverter.none')}
+				{/* Régulation dans la même carte, juste sous la durée maximale. */}
+				<View style={[styles.switchRow, !directive && styles.switchRowLast]}>
+					<Text style={InputStyle.switchLabel}>
+						{i18n.t('cycle:sequence.inverter.title')}
+					</Text>
+					<AppSwitch value={!!directive} onValueChange={toggleRegulation} />
+				</View>
+				{directive ? (
+					// Variateur, mode et consigne regroupés dans un cadre arrondi,
+					// au même trait qu'un input.
+					<View style={styles.frame}>
+						<Text style={InputStyle.textInput}>
+							{i18n.t('cycle:sequence.inverter.select')}
 						</Text>
-					) : null}
-				</CollapsibleSection>
+						<Controller
+							control={control}
+							name="inverterDirectives.0.inverterId"
+							rules={{
+								required: i18n.t('cycle:sequence.inverter.inverterRequired')
+							}}
+							render={({ field: { value, onChange } }) => (
+								<DropdownSelect<InverterItem>
+									items={inverterItems}
+									value={value ? `${value}` : ''}
+									getLabel={item => item.label}
+									getValue={item => item.value}
+									onChange={id => selectInverter(`${id}`, onChange)}
+									hasError={!!directiveErrors?.inverterId}
+								/>
+							)}
+						/>
+						<FieldError error={directiveErrors?.inverterId} />
+
+						{/* Mode (bouton à bascule, comme Cycle / Sensor des
+						    conditions) et sa valeur sur la même ligne. */}
+						<View style={styles.modeRow}>
+							<Controller
+								control={control}
+								name="inverterDirectives.0.mode"
+								rules={{
+									required: i18n.t('cycle:sequence.inverter.modeRequired')
+								}}
+								render={({ field: { value, onChange } }) => (
+									<TouchableOpacity
+										accessibilityRole="button"
+										accessibilityLabel={i18n.t('cycle:sequence.inverter.mode')}
+										onPress={() => {
+											ReactNativeHapticFeedback.trigger(
+												'impactMedium',
+												hapticOptions
+											);
+											onChange(
+												value === InverterMode.RS485
+													? InverterMode.PID
+													: InverterMode.RS485
+											);
+											setSaveUnchangedData(true);
+										}}
+										style={styles.modeBtn}>
+										<Text style={styles.modeBtnTxt}>{value}</Text>
+									</TouchableOpacity>
+								)}
+							/>
+							<Controller
+								key={`${directiveFields[0]?.id}-${directive.mode}`}
+								control={control}
+								name={
+									isRs485
+										? 'inverterDirectives.0.frequency'
+										: 'inverterDirectives.0.pidSetpoint'
+								}
+								rules={
+									isRs485
+										? {
+												required: i18n.t(
+													'cycle:sequence.inverter.frequencyRequired'
+												),
+												validate: numberRule
+										  }
+										: {
+												required: i18n.t(
+													'cycle:sequence.inverter.pidSetpointRequired'
+												),
+												validate: numberRule
+										  }
+								}
+								render={({ field: { value, onChange, onBlur } }) => (
+									<TextInput
+										style={[
+											styles.valueInput,
+											(isRs485
+												? directiveErrors?.frequency
+												: directiveErrors?.pidSetpoint) &&
+												styles.valueInputError
+										]}
+										placeholder={i18n.t(
+											isRs485
+												? 'cycle:sequence.inverter.frequency'
+												: 'cycle:sequence.inverter.pidSetpoint'
+										)}
+										placeholderTextColor={placeholderColor}
+										keyboardType="decimal-pad"
+										value={value === undefined || value === null ? '' : `${value}`}
+										onBlur={onBlur}
+										onChangeText={text => {
+											onChange(text);
+											setSaveUnchangedData(true);
+										}}
+									/>
+								)}
+							/>
+						</View>
+						<FieldError
+							error={
+								isRs485 ? directiveErrors?.frequency : directiveErrors?.pidSetpoint
+							}
+						/>
+					</View>
+				) : null}
 			</View>
 		</Body>
 	);
@@ -323,28 +387,63 @@ export function SequenceSecuritySettingsSection(props: any) {
 
 const COLORS = {
 	text: '#32404e',
-	border: '#e5e7eb'
+	// Bordure des inputs (cf. DropdownSelect).
+	border: '#CBD5E0',
+	errorBorder: '#FC8181',
+	shadow: '#000000',
+	white: '#ffffff'
 };
 
 const styles = StyleSheet.create({
-	directive: {
-		marginVertical: 6,
-		paddingTop: 8,
-		borderTopWidth: 1,
-		borderTopColor: COLORS.border
+	frame: {
+		borderWidth: 1,
+		borderColor: COLORS.border,
+		borderRadius: 12,
+		paddingHorizontal: 10,
+		paddingBottom: 10
 	},
-	directiveHeader: {
+	// Carte collée à la section suivante (Préconditions).
+	card: { marginBottom: 0, paddingBottom: 0 },
+	// Dernière ligne de la carte (régulation désactivée) : pas d'espace dessous.
+	switchRowLast: { marginBottom: 0 },
+	// Sous l'input de durée : petit écart haut, comme entre deux champs.
+	switchRow: {
 		flexDirection: 'row',
 		alignItems: 'center',
 		justifyContent: 'space-between',
-		gap: 10
+		marginTop: 8,
+		marginBottom: 8
 	},
-	directiveName: {
-		flexShrink: 1,
-		color: COLORS.text,
-		fontWeight: 'bold'
+	modeRow: { flexDirection: 'row', alignItems: 'center', gap: 6, marginTop: 6 },
+	// Bouton à bascule PID / RS485 : même rendu que le bouton Cycle / Sensor
+	// des conditions (fond slate, texte blanc, hauteur d'un input).
+	modeBtn: {
+		height: ELEMENT_HEIGHT,
+		minWidth: 80,
+		paddingHorizontal: 14,
+		borderRadius: 12,
+		borderWidth: 1,
+		borderColor: COLORS.text,
+		backgroundColor: COLORS.text,
+		alignItems: 'center',
+		justifyContent: 'center',
+		elevation: 2,
+		shadowColor: COLORS.shadow,
+		shadowOffset: { width: 0, height: 1 },
+		shadowOpacity: 0.18,
+		shadowRadius: 2
 	},
-	empty: { color: fieldLabelColor, paddingVertical: 8 }
+	modeBtnTxt: { fontSize: ELEMENT_FONT_SIZE, color: COLORS.white, fontWeight: 'bold' },
+	valueInput: {
+		flex: 1,
+		height: ELEMENT_HEIGHT,
+		borderWidth: 1,
+		borderColor: COLORS.border,
+		borderRadius: 12,
+		paddingHorizontal: 12,
+		...inputText
+	},
+	valueInputError: { borderWidth: 2, borderColor: COLORS.errorBorder }
 });
 
 const mapStateToProps = (state: any) => ({

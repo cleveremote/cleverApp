@@ -67,6 +67,7 @@
 	},
 	"sequence": {
 		"expectedEnd": "expected end in {{time}}",
+		"duration": "duration {{time}}",
 		"removeTitle": "Remove sequence",
 		"removeMessage": "Are you sure you want to remove this sequence from the list?",
 		"selectActuator": "Select {{type}} actuator",
@@ -83,20 +84,22 @@
 		"runRegulation": "Run regulation",
 		"opening": "Opening",
 		"openingRange": "Opening (%) · {{min}}–{{max}}",
-		"security": "security*",
-		"securityRequired": "Security is required",
+		"security": "Maximum Execution Time*",
+		"securityRequired": "Maximum execution time is required",
 		"vfdSpeed": "VFD speed* → {{value}} %",
 		"vfdRequired": "VFD speed is required",
 		"inverter": {
-			"title": "Inverters",
+			"title": "Regulation Settings",
 			"select": "Drive an inverter",
+			"inverterRequired": "Inverter is required",
 			"none": "No inverter available.",
 			"unknown": "Unknown inverter",
 			"mode": "Mode*",
 			"modeRequired": "Mode is required",
 			"frequency": "Frequency (Hz)*",
 			"frequencyRequired": "Frequency is required in RS485 mode",
-			"pidSetpoint": "PID setpoint",
+			"pidSetpoint": "PID setpoint*",
+			"pidSetpointRequired": "PID setpoint is required in PID mode",
 			"invalidNumber": "Must be a number"
 		}
 	},
@@ -126,15 +129,16 @@
 		"themeRequired": "Theme is required",
 		"executionMode": "Execution (sequential/parallel)",
 		"addCycle": "Add new cycle ...",
-		"addSequence": "Add new sequence ...",
+		"addSequence": "Sequence",
 		"sequenceOrderHint": "Long press and drag to change the execution order."
 	},
 	"conditions": {
+		"cycleDescription": "Define the conditions to check when the cycle starts. They are no longer taken into account once the cycle has started.",
+		"sequenceDescription": "Define the conditions to check when the sequence starts. They are no longer taken into account once the sequence has started.",
 		"removeTitle": "Remove condition",
 		"removeMessage": "Are you sure you want to remove this condition from the list?",
 		"item": "condition {{name}}",
 		"add": "Add new condition ...",
-		"addGroup": "Add new group ...",
 		"builderHint": "Tip: tap AND / OR to switch the connector. One group = one parenthesis.",
 		"connector": {
 			"ET": "AND",
@@ -178,7 +182,7 @@
 		"item": "{{name}}",
 		"add": "Add new schedule ...",
 		"newScheduling": "Schedule",
-		"setPaused": "Set paused",
+		"enabled": "Enabled",
 		"needConfirmation": "Need confirmation"
 	},
 	"cron": {

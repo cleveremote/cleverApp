@@ -18,7 +18,7 @@
 	"actuator": "المشغل",
 	"settings": "الإعدادات",
 	"userSettings": "إعدادات المستخدم",
-	"displayManager": "إدارة العرض",
+	"displayManager": "ظهور الأجهزة",
 	"globalSettings": "الإعدادات العامة",
 	"masterDevice": "الجهاز الرئيسي",
 	"slaveDevices": "الأجهزة التابعة",
@@ -43,6 +43,6 @@
 	"triggers": "المشغِّلات الآلية",
 	"comRequest": "طلب COM",
 	"scheduleSettings": "الجدولة",
-	"triggerSettings": "المشغِّل الآلي",
+	"triggerSettings": "إعدادات المشغِّل الآلي",
 	"forgotPassword": "نسيت كلمة المرور"
 }

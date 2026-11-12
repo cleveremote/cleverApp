@@ -272,7 +272,7 @@ class HotspotModule(reactContext: ReactApplicationContext) :
     companion object {
         const val NAME = "HotspotModule"
 
-        private const val DEFAULT_TIMEOUT_MS = 30000
+        private const val DEFAULT_TIMEOUT_MS = 15000
         private const val UNKNOWN_SSID = "<unknown ssid>"
         private const val EVENT_LOST = "hotspot/lost"
 

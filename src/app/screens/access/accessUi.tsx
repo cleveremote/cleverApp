@@ -13,6 +13,12 @@ import {
 } from 'react-native';
 import {IconDefinition} from '@fortawesome/fontawesome-svg-core';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
+import {
+	faExclamationCircle,
+	faInfoCircle,
+	faWifi
+} from '@fortawesome/free-solid-svg-icons';
+import i18n from 'i18next';
 
 /**
  * Vocabulaire visuel commun aux écrans d'appairage (`scanBox`, `boxHandover`).
@@ -26,10 +32,23 @@ export const COLORS = {
 	primary: '#32404e',
 	accent: '#0082FC',
 	danger: '#d64545',
+	/** Fond et bordure de l'encadré d'erreur. */
+	dangerSoft: '#fdecec',
+	dangerBorder: '#f5c2c2',
+	info: '#2c5282',
+	/** Fond et bordure de l'encadré d'information. */
+	infoSoft: '#ebf4ff',
+	infoBorder: '#bee3f8',
+	warning: '#dd6b20',
+	/** Fond et bordure de l'encadré d'avertissement. */
+	warningSoft: '#fff4e5',
+	warningBorder: '#f6d3a8',
 	success: '#2f9e44',
 	light: '#ffffff',
 	shadow: '#000000',
-	viewfinder: '#000000'
+	viewfinder: '#000000',
+	/** Voile d'attente posé sur l'écran. */
+	scrim: 'rgba(0, 0, 0, 0.45)'
 };
 
 export const Centered = ({children}: {children: React.ReactNode}) => (
@@ -120,6 +139,66 @@ export const useLockedUntil = (until: number | null): boolean => {
 	return locked;
 };
 
+/**
+ * Voile d'attente posé par-dessus l'écran, qui en bloque les appuis.
+ *
+ * Dessiné dans l'arbre de l'écran plutôt que dans un `Modal` natif, comme le
+ * fait `react-native-loading-spinner-overlay` : un `Modal` retiré pendant que
+ * l'app est en arrière-plan — téléphone verrouillé pendant un appairage — peut
+ * rester affiché, invisible, au retour, et rendre tout l'écran inerte. Une
+ * simple vue, elle, disparaît avec le rendu qui l'a produite.
+ */
+export const BusyOverlay = ({
+	visible,
+	message
+}: {
+	visible: boolean;
+	message?: string;
+}) =>
+	visible ? (
+		<View style={accessStyles.overlay} accessibilityViewIsModal>
+			<ActivityIndicator size="large" color={COLORS.light} />
+			{message ? (
+				<Text style={accessStyles.overlayText}>{message}</Text>
+			) : null}
+		</View>
+	) : null;
+
+/**
+ * Encadré d'erreur : icône et message sur fond rouge pâle, pour qu'un refus ne
+ * passe pas pour une simple ligne de texte. `null` sans message — la place
+ * n'est pas réservée.
+ */
+export const DangerBox = ({message}: {message?: string}) =>
+	message ? (
+		<View style={accessStyles.dangerBox} accessibilityRole="alert">
+			<FontAwesomeIcon icon={faExclamationCircle} size={18} color={COLORS.danger} />
+			<Text style={accessStyles.dangerText}>{message}</Text>
+		</View>
+	) : null;
+
+/** Encadré d'information : icône et message sur fond bleu pâle. */
+export const InfoBox = ({message}: {message: string}) => (
+	<View style={accessStyles.infoBox}>
+		<FontAwesomeIcon icon={faInfoCircle} size={18} color={COLORS.info} />
+		<Text style={accessStyles.infoText}>{message}</Text>
+	</View>
+);
+
+/**
+ * Encadré d'avertissement, sans icône : le message seul sur fond orange pâle.
+ * Pour les écrans dont le titre porte déjà l'icône. `null` sans message.
+ */
+export const WarningBox = ({message}: {message?: string}) =>
+	message ? (
+		<View style={accessStyles.warningBox} accessibilityRole="alert">
+			<Text style={accessStyles.warningText}>{message}</Text>
+		</View>
+	) : null;
+
+/** Encadré descriptif gris : partagé avec les autres écrans. */
+export {DescBox} from '../../components/common/DescBox';
+
 /** Action secondaire : même poids visuel qu'un lien, pas qu'un bouton. */
 export const LinkButton = ({
 	label,
@@ -130,6 +209,22 @@ export const LinkButton = ({
 }) => (
 	<TouchableOpacity onPress={onPress}>
 		<Text style={accessStyles.link}>{label}</Text>
+	</TouchableOpacity>
+);
+
+/**
+ * Lien vers les réglages Wi-Fi du téléphone : icône Wi-Fi et couleur des
+ * libellés, pour le distinguer des actions qui restent dans l'app.
+ */
+export const WifiSettingsLink = () => (
+	<TouchableOpacity
+		style={accessStyles.settingsLink}
+		onPress={openWifiSettings}
+		accessibilityRole="link">
+		<FontAwesomeIcon icon={faWifi} size={14} color={COLORS.primary} />
+		<Text style={accessStyles.settingsLinkText}>
+			{i18n.t('access:openWifiSettings')}
+		</Text>
 	</TouchableOpacity>
 );
 
@@ -229,6 +324,82 @@ export const accessStyles = StyleSheet.create({
 		paddingVertical: 12,
 		paddingHorizontal: 25,
 		marginTop: 25
+	},
+	overlay: {
+		...StyleSheet.absoluteFillObject,
+		zIndex: 10,
+		elevation: 10,
+		justifyContent: 'center',
+		alignItems: 'center',
+		paddingHorizontal: 30,
+		backgroundColor: COLORS.scrim
+	},
+	overlayText: {
+		color: COLORS.light,
+		fontSize: 15,
+		marginTop: 15,
+		textAlign: 'center'
+	},
+	dangerBox: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		alignSelf: 'stretch',
+		gap: 10,
+		padding: 12,
+		borderRadius: 12,
+		borderWidth: 1,
+		borderColor: COLORS.dangerBorder,
+		backgroundColor: COLORS.dangerSoft
+	},
+	dangerText: {
+		flex: 1,
+		color: COLORS.danger,
+		fontSize: 14,
+		lineHeight: 19
+	},
+	infoBox: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		alignSelf: 'stretch',
+		gap: 10,
+		marginTop: 14,
+		padding: 12,
+		borderRadius: 12,
+		borderWidth: 1,
+		borderColor: COLORS.infoBorder,
+		backgroundColor: COLORS.infoSoft
+	},
+	infoText: {
+		flex: 1,
+		color: COLORS.info,
+		fontSize: 14,
+		lineHeight: 19
+	},
+	warningBox: {
+		alignSelf: 'stretch',
+		padding: 12,
+		borderRadius: 12,
+		borderWidth: 1,
+		borderColor: COLORS.warningBorder,
+		backgroundColor: COLORS.warningSoft
+	},
+	warningText: {
+		color: COLORS.warning,
+		fontSize: 14,
+		lineHeight: 19,
+		textAlign: 'center'
+	},
+	settingsLink: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		gap: 8,
+		marginTop: 15,
+		paddingVertical: 4
+	},
+	settingsLinkText: {
+		color: COLORS.primary,
+		fontSize: 15,
+		fontWeight: 'bold'
 	},
 	buttonDisabled: {opacity: 0.5},
 	buttonText: {color: COLORS.light, fontSize: 15, fontWeight: 'bold'}

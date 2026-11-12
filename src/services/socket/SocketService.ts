@@ -36,8 +36,11 @@ class SocketService {
 			this.sslReady = true;
 		}
 
-		// Disconnect any existing connection
-		if (this.socket?.connected) {
+		// Tear down any previous socket, connected or not: one still trying to
+		// connect keeps reconnecting on its own, and ends up connected beside
+		// the new one — with nobody listening to it.
+		if (this.socket) {
+			this.socket.removeAllListeners();
 			this.socket.disconnect();
 		}
 		this.socket = io(url, {

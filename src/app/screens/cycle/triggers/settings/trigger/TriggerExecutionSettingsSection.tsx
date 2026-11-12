@@ -14,9 +14,9 @@ import {navigationHeader} from '../../../../../components/common/navigationHeade
 import {BoxFormStyle} from '../../../../../styles/components/common/boxForm';
 import {
 	DateTimePickerForm,
+	FieldError,
 	SwitchForm
 } from '../../../../../components/common/FormComponents';
-import {InputStyle} from '../../../../../styles/components/common/Input';
 import {ELEMENT_HEIGHT} from '../../../../../styles/metrics';
 import {OutlineButton} from '../../../../access/accessUi';
 import {faPowerOff} from '@fortawesome/free-solid-svg-icons';
@@ -57,7 +57,8 @@ export function TriggerExecutionSettingsSection(props: any) {
 		sunState: defValues.trigger?.sunBehavior?.sunState,
 		timeDirection: defaultTimeDirection(defValues.trigger?.sunBehavior),
 		time: durationToPickerDate(defValues.trigger?.sunBehavior?.time),
-		isPaused: defValues.isPaused,
+		// Le formulaire affiche « Activé » : inverse de `isPaused` (absent = activé).
+		isEnabled: !defValues.isPaused,
 		shouldConfirmation: defValues.shouldConfirmation
 	};
 
@@ -112,7 +113,7 @@ export function TriggerExecutionSettingsSection(props: any) {
 		const result = {...defValues};
 		result.delay = pickerDateToDuration(data.delay);
 		result.action = data.action;
-		result.isPaused = data.isPaused;
+		result.isPaused = !data.isEnabled;
 		result.shouldConfirmation = data.shouldConfirmation;
 		if (sunStateRef.current) {
 			result.trigger = {
@@ -312,11 +313,7 @@ export function TriggerExecutionSettingsSection(props: any) {
 						</View>
 					)}
 				/>
-				{errors.action ? (
-					<Text style={InputStyle.textInputError}>
-						{errors.action.message as string}
-					</Text>
-				) : null}
+				<FieldError error={errors.action} />
 				{sunState ? (
 					<View style={styles.solarBox}>
 						{/* Critères solaires dans une box, comme dans la planification. */}
@@ -369,8 +366,8 @@ export function TriggerExecutionSettingsSection(props: any) {
 					<SwitchForm
 						control={control}
 						errors={errors}
-						name="isPaused"
-						placeholder={i18n.t('cycle:schedules.setPaused')}
+						name="isEnabled"
+						placeholder={i18n.t('cycle:schedules.enabled')}
 						rules={{required: false}}
 						onChangeText={() => {
 							saveUnchangedData.current = true;

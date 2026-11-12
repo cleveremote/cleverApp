@@ -28,3 +28,27 @@ export function readBoxConfigurationDraft(): BoxConfigurationForm | null {
 export function clearBoxConfigurationDraft(): void {
 	draft = null;
 }
+
+/**
+ * Envoi de `configure` encore en vol quand l'écran d'état s'ouvre : il part
+ * en même temps que la navigation, et `BoxHandover` doit l'attendre avant de
+ * relâcher le hotspot — sur Android, le relâcher coupe une requête qui n'a pas
+ * fini de partir.
+ */
+let pendingConfiguration: Promise<unknown> | null = null;
+
+export function setPendingConfiguration(request: Promise<unknown>): void {
+	const settled = request.then(
+		() => undefined,
+		() => undefined
+	);
+	pendingConfiguration = settled;
+	settled.then(() => {
+		if (pendingConfiguration === settled) pendingConfiguration = null;
+	});
+}
+
+/** Attend la fin de l'envoi en cours, s'il y en a un. Ne rejette jamais. */
+export async function settlePendingConfiguration(): Promise<void> {
+	await pendingConfiguration;
+}

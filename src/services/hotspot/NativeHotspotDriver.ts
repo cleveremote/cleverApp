@@ -9,7 +9,7 @@ import {
 
 const {HotspotModule} = NativeModules;
 
-const DEFAULT_TIMEOUT_MS = 30000;
+const DEFAULT_TIMEOUT_MS = 15000;
 
 /** Native reject codes → the platform-agnostic error codes the screen renders. */
 const NATIVE_CODE_MAP: Record<string, HotspotErrorCode> = {

@@ -157,14 +157,12 @@ export function ProfilesScreen(props: any) {
 			<View
 				style={{
 					flexDirection: 'row',
-					marginLeft: 40,
-					marginRight: 40,
 					marginBottom: 20,
 					alignSelf: 'center',
 					alignItems: 'flex-start',
 					justifyContent: 'center'
 				}}>
-				<View style={{alignItems: 'center', marginHorizontal: 25}}>
+				<View style={{alignItems: 'center'}}>
 					<TouchableOpacity
 						onPress={() => {
 							ReactNativeHapticFeedback.trigger(
@@ -177,22 +175,6 @@ export function ProfilesScreen(props: any) {
 					</TouchableOpacity>
 					<Text style={{color: '#32404e', fontSize: 15}}>
 						{t('profiles.scanBox')}
-					</Text>
-				</View>
-
-				<View style={{alignItems: 'center', marginHorizontal: 25}}>
-					<TouchableOpacity
-						onPress={() => {
-							ReactNativeHapticFeedback.trigger(
-								'impactMedium',
-								hapticOptions
-							);
-							props.navigation.navigate('Device');
-						}}>
-						<Icon name="wifi" size={25} color="#32404e" />
-					</TouchableOpacity>
-					<Text style={{color: '#32404e', fontSize: 15}}>
-						{t('profiles.connectivity')}
 					</Text>
 				</View>
 			</View>

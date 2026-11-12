@@ -4,6 +4,7 @@ import {connect} from 'react-redux';
 import {navigationHeader} from '../../../../components/common/navigationHeaders';
 import {isEmpty} from '../../../../components/common/useSectionSettingsHeader';
 import {SettingsScrollView} from '../../../../components/common/SettingsScrollView';
+import {DescBox} from '../../../../components/common/DescBox';
 import {
 	DeleteItemMenu,
 	MenuAccordion,
@@ -423,10 +424,14 @@ export function CycleSett(props: any) {
 			<MenuGroup style={styles.card}>
 				<MenuAccordion
 					key={31}
-					name={i18n.t('common:sections.conditions')}
+					name={i18n.t('common:sections.preconditions')}
 					icon={faCheckDouble}
 					invalid={invalidSections.conditions}
 					onPress={() => {}}>
+					<DescBox
+						message={i18n.t('cycle:conditions.cycleDescription')}
+						style={styles.sectionDesc}
+					/>
 					<ConditionBuilderSection
 						conditions={cycleRef.current?.conditions}
 						parentId={cycleRef.current?.id}
@@ -499,7 +504,9 @@ const styles = StyleSheet.create({
 		shadowOffset: {width: 0, height: 1},
 		shadowOpacity: 0.22,
 		shadowRadius: 2.22
-	}
+	},
+	// Aligné sur les marges latérales du constructeur de conditions.
+	sectionDesc: {marginHorizontal: 10, marginTop: 6}
 });
 
 const mapStateToProps = (state: any) => ({
