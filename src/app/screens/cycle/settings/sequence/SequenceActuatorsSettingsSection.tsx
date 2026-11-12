@@ -176,9 +176,13 @@ export function SequenceActuatorsSettingsSection(props: any) {
 		!(props.moduleConfigs || []).some((a: any) => !a.delete);
 	// MODULE with its actuator defined: only that actuator's section is shown
 	// (e.g. a COM one hides RPI and CTRL).
+	// PROPORTIONAL: only a CTRL valve can take a value from the slider.
+	const allowedSections = props.isProportional
+		? ACTUATOR_SECTIONS.filter(section => section.type === 'CTRL')
+		: ACTUATOR_SECTIONS;
 	const visibleSections = canAddActuator
-		? ACTUATOR_SECTIONS
-		: ACTUATOR_SECTIONS.filter(
+		? allowedSections
+		: allowedSections.filter(
 				section => selectedOfType(section.type).length > 0
 		  );
 

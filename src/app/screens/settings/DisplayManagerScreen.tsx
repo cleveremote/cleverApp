@@ -13,7 +13,7 @@ import {
 import { connect } from 'react-redux';
 import { navigationHeader } from '../../components/common/navigationHeaders';
 import { AppSwitch } from '../../components/common/AppSwitch';
-import { hapticOptions } from '../../data/cycleTypes';
+import { hapticOptions, isModuleType } from '../../data/cycleTypes';
 import {
 	saveCycle,
 	saveGroup
@@ -48,9 +48,9 @@ function DisplayManagerScreen(props: any) {
 
 		const cycleItems = cycles.filter(
 			(x: any) =>
-				!x.parentCycleId && x.type !== 'MODULE' && x.type !== 'GROUP'
+				!x.parentCycleId && !isModuleType(x.type) && x.type !== 'GROUP'
 		);
-		const moduleItems = cycles.filter((x: any) => x.type === 'MODULE');
+		const moduleItems = cycles.filter((x: any) => isModuleType(x.type));
 
 		return [
 			...cycleItems.map((x: any) => ({

@@ -4,6 +4,14 @@ export const hapticOptions = {
 	enableVibrateFallback: false,
 	ignoreAndroidSystemSettings: true
 };
+
+// Cycles listés dans l'onglet « Modules » : un MODULE pilote son actuator en
+// tout-ou-rien (toggle), un PROPORTIONAL en fixe la valeur (slider).
+export const MODULE = 'MODULE';
+export const PROPORTIONAL = 'PROPORTIONAL';
+export const isModuleType = (type?: string) =>
+	type === MODULE || type === PROPORTIONAL;
+
 export type CyclesStackParamList = {
 	Cycles: undefined;
 	Settings: undefined;

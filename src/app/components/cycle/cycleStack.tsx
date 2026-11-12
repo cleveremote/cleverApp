@@ -7,11 +7,16 @@ import Animated, { FadeInDown } from 'react-native-reanimated';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import { OrientationType } from 'react-native-orientation-locker';
-import { hapticOptions, navigationCycleType } from '../../data/cycleTypes';
+import {
+	hapticOptions,
+	navigationCycleType,
+	PROPORTIONAL
+} from '../../data/cycleTypes';
 import SequenceStack from './sequenceStack';
 import { ModalOverrideDuration } from '../common/modalOverrideDuration';
 import { connect } from 'react-redux';
 import SensorStatus from './CycleStatus';
+import ProportionalControl from './ProportionalControl';
 import SeqeuncesList from './SequencesList';
 import CycleNotification, {
 	useBelowCard,
@@ -118,14 +123,23 @@ export function CycleStack({
 							{cycleData.name}
 						</Text>
 					</View>
-					<SensorStatus
-						cycleData={cycleData}
-						iconColorSwitch={iconColorSwitch}
-						onSwitch={onSwitch}
-						closeSibillings={closeSibillings}
-						onSkip={onSkip}
-						navigation={navigation}
-					/>
+					{/* PROPORTIONAL : un slider fixe la valeur de l'actuator. */}
+					{cycleData.type === PROPORTIONAL ? (
+						<ProportionalControl
+							cycleData={cycleData}
+							iconColorSwitch={iconColorSwitch}
+							closeSibillings={closeSibillings}
+						/>
+					) : (
+						<SensorStatus
+							cycleData={cycleData}
+							iconColorSwitch={iconColorSwitch}
+							onSwitch={onSwitch}
+							closeSibillings={closeSibillings}
+							onSkip={onSkip}
+							navigation={navigation}
+						/>
+					)}
 				</View>
 			</Pressable>
 

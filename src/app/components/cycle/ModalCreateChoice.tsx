@@ -1,27 +1,36 @@
 import {ELEMENT_HEIGHT, ELEMENT_FONT_SIZE} from '../../styles/metrics';
 import React, {useRef} from 'react';
 import {useTranslation} from 'react-i18next';
-import {faLayerGroup, faSyncAlt, IconDefinition} from '@fortawesome/free-solid-svg-icons';
+import {
+	faLayerGroup,
+	faPowerOff,
+	faSliders,
+	faSyncAlt,
+	IconDefinition
+} from '@fortawesome/free-solid-svg-icons';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
 import {BlurView} from '@react-native-community/blur';
 import {Modal, Platform, Pressable, StyleSheet, Text, View} from 'react-native';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import {hapticOptions} from '../../data/cycleTypes';
 
-export type CreateChoice = {isGroup?: boolean};
+export type CreateChoice = {isGroup?: boolean; type?: string};
 
 /**
- * Choix du type de cycle à créer (classique / groupe), au style de la modale
+ * Choix du type de cycle à créer (classique / groupe, ou pour l'onglet Modules
+ * module on/off / proportionnel), au style de la modale
  * « Forcer la durée » : sans titre ni Annuler, un appui à l'extérieur ferme.
  */
 export function ModalCreateChoice({
 	isOpen,
 	onClose,
-	onChoose
+	onChoose,
+	variant = 'CYCLE'
 }: Readonly<{
 	isOpen: boolean;
 	onClose: () => void;
 	onChoose: (choice: CreateChoice) => void;
+	variant?: 'CYCLE' | 'MODULE';
 }>) {
 	const {t} = useTranslation('cycle');
 	// Choix exécuté une fois la modale réellement fermée : naviguer pendant
@@ -83,8 +92,19 @@ export function ModalCreateChoice({
 							reducedTransparencyFallbackColor={COLORS.cardFallback}
 						/>
 					)}
-					{option(t('create.classic'), faSyncAlt, {})}
-					{option(t('create.group'), faLayerGroup, {isGroup: true})}
+					{variant === 'MODULE' ? (
+						<>
+							{option(t('create.onOff'), faPowerOff, {type: 'MODULE'})}
+							{option(t('create.proportionalShort'), faSliders, {
+								type: 'PROPORTIONAL'
+							})}
+						</>
+					) : (
+						<>
+							{option(t('create.classic'), faSyncAlt, {})}
+							{option(t('create.group'), faLayerGroup, {isGroup: true})}
+						</>
+					)}
 				</View>
 			</View>
 		</Modal>

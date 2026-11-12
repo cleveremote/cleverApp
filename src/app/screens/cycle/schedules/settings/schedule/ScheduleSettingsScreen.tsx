@@ -65,9 +65,12 @@ export function ScheduleSettingsScreen(props: any) {
 			// Exécution valide dès qu'un mode est configuré : cron (pattern) OU
 			// une date planifiée.
 			execution:
-				isEmpty(scheduleRef.current?.cron?.pattern) &&
+				(isEmpty(scheduleRef.current?.cron?.pattern) &&
 				isEmpty(scheduleRef.current?.cron?.date) &&
-				!scheduleRef.current?.cron?.sunBehavior
+				!scheduleRef.current?.cron?.sunBehavior) ||
+				// Durée du cycle initial remplacée : une durée est requise.
+				(scheduleRef.current?.inheritedDuration === false &&
+					!scheduleRef.current?.duration)
 		})
 	});
 

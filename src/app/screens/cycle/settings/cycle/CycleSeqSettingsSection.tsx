@@ -1,7 +1,7 @@
 import {StyleSheet, Text, View} from 'react-native';
 import React, {useEffect, useRef} from 'react';
 import {navigationHeader} from '../../../../components/common/navigationHeaders';
-import {hapticOptions} from '../../../../data/cycleTypes';
+import {hapticOptions, isModuleType} from '../../../../data/cycleTypes';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import {faPlus} from '@fortawesome/free-solid-svg-icons';
 import {OutlineButton} from '../../../access/accessUi';
@@ -39,7 +39,7 @@ export function SeqSettingsSec(props: any) {
 	// Un MODULE porte une seule séquence : une fois définie, on ne peut plus en
 	// ajouter (le bouton reste disponible tant que le module n'en a aucune, sinon
 	// un module fraîchement créé serait inutilisable).
-	const isModule = cycleData?.type === 'MODULE';
+	const isModule = isModuleType(cycleData?.type);
 	const hasSequence =
 		props.sequencesParentId === cycleData?.id &&
 		!!(props.sequences || []).some((x: any) => !x.delete);

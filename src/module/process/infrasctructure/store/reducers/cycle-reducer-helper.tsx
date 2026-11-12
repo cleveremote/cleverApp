@@ -33,7 +33,7 @@ export const loadCycle = (
 		// passent par newGroup()).
 		const type = newType ?? 'CYCLE';
 		const label =
-			type === 'MODULE'
+			type === 'MODULE' || type === 'PROPORTIONAL'
 				? i18n.t('common:defaults.newModule')
 				: i18n.t('common:defaults.newCycle');
 		return {

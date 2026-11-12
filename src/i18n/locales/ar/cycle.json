@@ -108,7 +108,10 @@
 		"fertigation": "إنشاء تسميد بالري",
 		"module": "إنشاء وحدة",
 		"classic": "كلاسيكية",
-		"group": "مجموعة"
+		"group": "مجموعة",
+		"proportional": "إنشاء وحدة تناسبية",
+		"onOff": "تشغيل/إيقاف",
+		"proportionalShort": "تناسبي"
 	},
 	"events": {
 		"device": "الدورة",
@@ -183,7 +186,9 @@
 		"add": "إضافة جدول زمني ...",
 		"newScheduling": "جدول زمني",
 		"enabled": "مفعّل",
-		"needConfirmation": "يتطلب تأكيداً"
+		"needConfirmation": "يتطلب تأكيداً",
+		"overrideDefaultDuration": "تجاوز المدة الافتراضية",
+		"overrideDuration": "تجاوز المدة"
 	},
 	"cron": {
 		"field": {

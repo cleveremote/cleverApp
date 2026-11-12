@@ -5,6 +5,7 @@ import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import {
 	faFlask,
 	faPowerOff,
+	faSliders,
 	faSyncAlt
 } from '@fortawesome/free-solid-svg-icons';
 import {navigationHeader} from '../../components/common/navigationHeaders';
@@ -32,7 +33,7 @@ export function CycleMenuScreen(props: any) {
 
 	// All create entries open the shared cycle settings menu; the params tell
 	// it which kind of entity to instantiate (plain cycle, GROUP fertigation,
-	// or MODULE).
+	// MODULE or PROPORTIONAL).
 	const openCreate = (params: any) => {
 		props.navigation.navigate('Settings', {
 			screen: 'CycleSettingsMenu',
@@ -72,6 +73,12 @@ export function CycleMenuScreen(props: any) {
 					name={t('create.module')}
 					icon={faPowerOff}
 					onPress={() => openCreate({type: 'MODULE'})}
+				/>
+				<MenuAccordion
+					key={51}
+					name={t('create.proportional')}
+					icon={faSliders}
+					onPress={() => openCreate({type: 'PROPORTIONAL'})}
 				/>
 			</MenuGroup>
 		</View>

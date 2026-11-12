@@ -342,28 +342,21 @@ export const saveGroup =
 const isStart = (data: any) =>
 	data?.action === 'ON' && !['SKIP', 'IGNORE'].includes(data?.type);
 
-// Durée surchargée du dernier démarrage, par cycle. Le box ne la garde pas
-// quand il refuse le démarrage (conditions non vérifiées) ou le met en attente
-// de confirmation : « Forcer » / « Mettre en file » la renvoient.
-const overrideDurations = new Map<string, number>();
-
-const withOverrideDuration = (data: any) => {
-	if (data?.type === 'INIT') {
-		if (data.action === 'ON' && data.duration > 0) {
-			overrideDurations.set(data.id, data.duration);
-		} else {
-			overrideDurations.delete(data.id);
-		}
+// Le box ne garde pas la durée surchargée quand il refuse le démarrage
+// (conditions non vérifiées) ou le met en attente de confirmation : il la
+// renvoie dans le status (requestedDuration), et « Forcer » / « Mettre en
+// file » la réutilisent.
+const withRequestedDuration = (data: any, status: any[]) => {
+	if (
+		!['FORCE', 'QUEUED', 'IGNORE'].includes(data?.type) ||
+		data.action !== 'ON' ||
+		data.duration
+	) {
 		return data;
 	}
-	if (!['FORCE', 'QUEUED', 'IGNORE'].includes(data?.type)) {
-		return data;
-	}
-	const duration = overrideDurations.get(data.id);
-	overrideDurations.delete(data.id);
-	return data.action === 'ON' && !data.duration && duration
-		? {...data, duration}
-		: data;
+	const duration = (status || []).find((x: any) => x?.id === data.id)
+		?.requestedDuration;
+	return duration > 0 ? {...data, duration} : data;
 };
 
 export const executeCycle =
@@ -386,7 +379,10 @@ export const executeCycle =
 				return;
 			}
 		}
-		data = withOverrideDuration(data);
+		data = withRequestedDuration(
+			data,
+			(getState() as any).root_cycle.status
+		);
 		dispatch({type: CYCLE_EXECUTE, payload: true});
 		const requestedBy = await authenticationService.getCurrentUserName();
 		return new Promise((resolve, reject) => {

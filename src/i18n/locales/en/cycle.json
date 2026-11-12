@@ -108,7 +108,10 @@
 		"fertigation": "Create fertigation",
 		"module": "Create module",
 		"classic": "Classic",
-		"group": "Group"
+		"group": "Group",
+		"proportional": "Create proportional module",
+		"onOff": "On/Off",
+		"proportionalShort": "Proportional"
 	},
 	"events": {
 		"device": "Cycle",
@@ -183,7 +186,9 @@
 		"add": "Add new schedule ...",
 		"newScheduling": "Schedule",
 		"enabled": "Enabled",
-		"needConfirmation": "Need confirmation"
+		"needConfirmation": "Need confirmation",
+		"overrideDefaultDuration": "Override default duration",
+		"overrideDuration": "Override duration"
 	},
 	"cron": {
 		"field": {

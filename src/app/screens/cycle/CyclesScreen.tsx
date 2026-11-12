@@ -30,6 +30,8 @@ import {BoxFormStyle} from '../../styles/components/common/boxForm';
 import {endOfDayIn, startOfDayIn} from '../../../services/time';
 import {selectBoxTimeZone} from '../../../module/process/infrasctructure/store/models/boxSettings';
 import {CycleRun} from '../../../module/process/infrasctructure/store/models/cycleHistory';
+import {isModuleType} from '../../data/cycleTypes';
+import {loadActuators} from '../../../module/process/infrasctructure/store/actions/actuator';
 
 const IN_PROCESS = 'IN_PROCCESS';
 const ALL_DEVICES = 'ALL';
@@ -115,8 +117,8 @@ export function Cycle(props: any) {
 	}, []);
 
 	// The "+" header opens creation for the currently selected filter. Cycles
-	// and GROUPs share the 'CYCLE' segment, so the user picks the kind first;
-	// MODULE opens directly. Keyed on activeFilter so the handler always
+	// and GROUPs share the 'CYCLE' segment, MODULE and PROPORTIONAL the
+	// 'MODULE' one, so the user picks the kind first. Keyed on activeFilter so the handler always
 	// targets the visible segment.
 	const openCreate = (params: any) => {
 		props.navigation.navigate('Settings', {
@@ -137,6 +139,12 @@ export function Cycle(props: any) {
 	// Laisse le formulaire enregistrer la valeur avant de relancer la requête.
 	const reloadEvents = () => setTimeout(loadRecentEvents, 0);
 
+	// Les cartes PROPORTIONAL prennent les bornes de leur slider dans
+	// l'actuator (vanne CTRL) qu'elles pilotent.
+	useEffect(() => {
+		if (activeFilter === 'MODULE') props.loadActuators();
+	}, [activeFilter]);
+
 	// Le slice `events` est partagé avec l'écran d'historique d'un cycle : on
 	// recharge à chaque retour sur l'onglet pour ne pas afficher un seul cycle.
 	useEffect(() => {
@@ -150,13 +158,7 @@ export function Cycle(props: any) {
 			props.navigation.setOptions({headerRight: undefined});
 			return;
 		}
-		const onCreate = () => {
-			if (activeFilter === 'MODULE') {
-				openCreate({type: 'MODULE'});
-				return;
-			}
-			setCreateChoiceVisible(true);
-		};
+		const onCreate = () => setCreateChoiceVisible(true);
 		props.navigation.setOptions({
 			headerRight: () => navigationHeader(onCreate, 'times-circle', true)
 		});
@@ -300,11 +302,11 @@ export function Cycle(props: any) {
 		.filter((x: any) => !x.parentCycleId);
 
 	const cycleItems = topLevelCycles.filter(
-		(x: any) => x.type !== 'MODULE' && x.type !== 'GROUP'
+		(x: any) => !isModuleType(x.type) && x.type !== 'GROUP'
 	);
 	const moduleItems = cycles
 		.filter((x: any) => !x.delete && x.display !== false)
-		.filter((x: any) => x.type === 'MODULE');
+		.filter((x: any) => isModuleType(x.type));
 	const groupItems = groups.filter(
 		(x: any) => !x.delete && x.display !== false
 	);
@@ -440,6 +442,7 @@ export function Cycle(props: any) {
 				isOpen={createChoiceVisible}
 				onClose={() => setCreateChoiceVisible(false)}
 				onChoose={openCreate}
+				variant={activeFilter === 'MODULE' ? 'MODULE' : 'CYCLE'}
 			/>
 			<CycleFilterBar
 				active={activeFilter}
@@ -488,5 +491,6 @@ export default connect(mapStateToProps, {
 	loadCycles,
 	loadGroups,
 	loadEvents,
-	executeCycle
+	executeCycle,
+	loadActuators
 })(Cycle);

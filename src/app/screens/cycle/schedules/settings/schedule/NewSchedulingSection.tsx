@@ -35,7 +35,9 @@ import {
 	selectBoxTimeZone
 } from '../../../../../../module/process/infrasctructure/store/models/boxSettings';
 import {
+	durationToPickerDate,
 	fromPickerDate,
+	pickerDateToDuration,
 	toEpoch,
 	toPickerDate,
 	toUtcIso,
@@ -972,6 +974,13 @@ function ListNumInput({
 }
 
 // --- Composant principal ---------------------------------------------------
+// Durée (ms) -> « HH:MM ».
+const formatDuration = (ms?: number | null) => {
+	const total = Math.max(0, Math.round((Number(ms) || 0) / 60000));
+	const pad = (n: number) => `${n}`.padStart(2, '0');
+	return `${pad(Math.floor(total / 60))}:${pad(total % 60)}`;
+};
+
 export function NewSchedulingSection(props: any) {
 	// Fuseau et position de la box : les crons s'exécutent en heure de la box.
 	const tz: string = useSelector(selectBoxTimeZone);
@@ -1026,8 +1035,17 @@ export function NewSchedulingSection(props: any) {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, [state]);
 
-	const stageFlag = (key: 'isPaused' | 'shouldConfirmation', v: boolean) =>
+	const stageFlag = (
+		key: 'isPaused' | 'shouldConfirmation' | 'inheritedDuration',
+		v: boolean
+	) =>
 		props.updateSchedule?.({...parentRef.current, [key]: v, isModified: true});
+
+	// Durée du cycle initial (absent = héritée) ; sinon `duration` (ms) la
+	// remplace pour ce schedule.
+	const inheritedDuration = props.scheduleData?.inheritedDuration !== false;
+	const [durationPickerVisible, setDurationPickerVisible] =
+		React.useState(false);
 
 	const oneTimeEnabled = state.oneTime.enabled;
 	const [pickerVisible, setPickerVisible] = React.useState(false);
@@ -1431,6 +1449,50 @@ export function NewSchedulingSection(props: any) {
 					onValueChange={v => stageFlag('shouldConfirmation', v)}
 				/>
 			</View>
+			<View style={styles.flagRow}>
+				<Text style={styles.switchLabel}>
+					{i18n.t('cycle:schedules.overrideDefaultDuration')}
+				</Text>
+				{/* « Override default duration » = inverse de `inheritedDuration`. */}
+				<AppSwitch
+					value={!inheritedDuration}
+					onValueChange={v => stageFlag('inheritedDuration', !v)}
+				/>
+			</View>
+			{!inheritedDuration && (
+				<>
+					<Text style={styles.fieldLabel}>
+						{i18n.t('cycle:schedules.overrideDuration')}
+					</Text>
+					<TouchableOpacity
+						onPress={() => setDurationPickerVisible(true)}
+						style={styles.dateField}>
+						<Text style={styles.dateFieldTxt}>
+							{formatDuration(props.scheduleData?.duration)}
+						</Text>
+					</TouchableOpacity>
+					<DateTimePickerModal
+						isVisible={durationPickerVisible}
+						mode="time"
+						display="spinner"
+						themeVariant="light"
+						isDarkModeEnabled={false}
+						accentColor="#32404e"
+						buttonTextColorIOS="#32404e"
+						date={durationToPickerDate(props.scheduleData?.duration)}
+						onConfirm={d => {
+							setDurationPickerVisible(false);
+							props.updateSchedule?.({
+								...parentRef.current,
+								duration: pickerDateToDuration(d),
+								isModified: true
+							});
+						}}
+						onCancel={() => setDurationPickerVisible(false)}
+						{...pickerLocaleProps('time')}
+					/>
+				</>
+			)}
 		</WarningBox>
 	);
 

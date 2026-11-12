@@ -100,6 +100,7 @@
 		"between": "بين {{min}} و{{max}}",
 		"fromBeforeTo": "يجب أن تسبق «من» «إلى»",
 		"numberRequired": "الرقم مطلوب",
+		"notInList": "قيمة خارج القائمة",
 		"noAnswer": "لم يستجب الصندوق.",
 		"unknownDevice": "جهاز غير معروف",
 		"noId": "ليس لهذا الجهاز معرّف بعد.",

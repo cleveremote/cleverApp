@@ -305,8 +305,17 @@ const describeRequest = (request: any) =>
 
 type SelectOption = {label: string; value: any; iconColor?: {base: string}};
 
+// Au-delà de ce nombre d'options toutes numériques, la liste déroulante
+// devient une saisie.
+const MAX_NUMERIC_OPTIONS = 10;
+
+const isNumericLabel = (label: string) =>
+	label.trim() !== '' && !isNaN(Number(label));
+
 // Choix parmi des options : liste déroulante (la valeur reste typée, ex. un
-// nombre pour un index).
+// nombre pour un index). Plus de `MAX_NUMERIC_OPTIONS` options numériques :
+// saisie du libellé, ramené à la valeur de l'option correspondante
+// (undefined si aucune, le champ est alors invalide).
 function Select({
 	options,
 	value,
@@ -316,6 +325,27 @@ function Select({
 	value: any;
 	onChange: (value: any) => void;
 }>) {
+	if (
+		options.length > MAX_NUMERIC_OPTIONS &&
+		options.every(o => isNumericLabel(o.label))
+	) {
+		const current = options.find(o => o.value === value);
+		return (
+			<TextInput
+				style={styles.input}
+				keyboardType="numeric"
+				defaultValue={current ? current.label : ''}
+				onChangeText={text => {
+					const typed = Number(text);
+					const option =
+						text.trim() === ''
+							? undefined
+							: options.find(o => Number(o.label) === typed);
+					onChange(option?.value);
+				}}
+			/>
+		);
+	}
 	return (
 		<DropdownSelect
 			items={options}
@@ -351,6 +381,10 @@ const validate = (
 		return spec?.enum
 			? i18n.t('devices:command.unknownListNamed', {name: spec.enum})
 			: i18n.t('devices:command.unknownList');
+	}
+	// Saisie (voir `Select`) qui ne correspond à aucune entrée.
+	if (kind === 'enum' && !entries?.some(e => e.value === value)) {
+		return i18n.t('devices:command.notInList');
 	}
 	if (kind === 'enumArray') {
 		const chosen = (value ?? []).filter((v: any) => v !== undefined).length;

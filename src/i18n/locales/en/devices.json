@@ -92,6 +92,7 @@
 		"between": "Between {{min}} and {{max}}",
 		"fromBeforeTo": "\"From\" must be before \"To\"",
 		"numberRequired": "A number is required",
+		"notInList": "Value not in the list",
 		"noAnswer": "The box did not answer.",
 		"unknownDevice": "Unknown device",
 		"noId": "This device has no id yet.",

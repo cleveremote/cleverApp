@@ -92,6 +92,7 @@
 		"between": "Entre {{min}} et {{max}}",
 		"fromBeforeTo": "« De » doit précéder « À »",
 		"numberRequired": "Un nombre est obligatoire",
+		"notInList": "Valeur hors liste",
 		"noAnswer": "La box n'a pas répondu.",
 		"unknownDevice": "Équipement inconnu",
 		"noId": "Cet équipement n'a pas encore d'identifiant.",
