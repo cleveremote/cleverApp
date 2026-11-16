@@ -717,14 +717,17 @@ class AuthenticationService {
 
 	/**
 	 * Réinitialise sur la box les données (cycles, programmations…) et/ou le
-	 * compte ; l'appelant déconnecte ensuite si le compte est effacé.
+	 * compte ; le mot de passe actuel (`password`) confirme l'opération.
+	 * L'appelant déconnecte ensuite si le compte est effacé.
 	 */
 	public resetAccount(
 		login: string,
+		password: string,
 		scope: {data: boolean; account: boolean}
 	) {
 		return this.emitAccountAction('front/box/reset/account', {
 			login,
+			password,
 			...scope
 		});
 	}

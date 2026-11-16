@@ -1,6 +1,6 @@
 import React, {useEffect, useRef} from 'react';
 import {connect, useSelector} from 'react-redux';
-import {useForm} from 'react-hook-form';
+import {Controller, useForm} from 'react-hook-form';
 import CycleStack from '../../components/cycle/cycleStack';
 import GroupStack from '../../components/cycle/groupStack';
 import CycleFilterBar, {FilterKey} from '../../components/cycle/CycleFilterBar';
@@ -12,7 +12,7 @@ import {
 } from '../../components/common/navigationHeaders';
 import Spinner from 'react-native-loading-spinner-overlay';
 import {styles} from '../../styles/cycleStyles';
-import {AppState, Text, View} from 'react-native';
+import {ActivityIndicator, AppState, Text, View} from 'react-native';
 import {useTranslation} from 'react-i18next';
 import {
 	executeCycle,
@@ -21,16 +21,22 @@ import {
 	loadEvents,
 	loadGroups
 } from '../../../module/process/infrasctructure/store/actions/cycle';
-import {RunCard} from '../../components/cycle/RunCard';
+import {OUTCOMES, RunCard} from '../../components/cycle/RunCard';
 import {ModalCreateChoice} from '../../components/cycle/ModalCreateChoice';
-import {SelectForm} from '../../components/common/FormComponents';
+import {DropdownSelect} from '../../components/common/FormComponents';
 import {DateRangePickerForm} from '../../components/common/DateRangePickerForm';
 import {TimeZoneNotice} from '../../components/common/TimeZoneNotice';
-import {BoxFormStyle} from '../../styles/components/common/boxForm';
 import {endOfDayIn, startOfDayIn} from '../../../services/time';
 import {selectBoxTimeZone} from '../../../module/process/infrasctructure/store/models/boxSettings';
-import {CycleRun} from '../../../module/process/infrasctructure/store/models/cycleHistory';
-import {isModuleType} from '../../data/cycleTypes';
+import {CycleRun, RunOutcome} from '../../../module/process/infrasctructure/store/models/cycleHistory';
+import {isModuleType, MODULE, PROPORTIONAL} from '../../data/cycleTypes';
+import {
+	FilterChips,
+	SearchField,
+	PillButton,
+	normalizeSearch,
+	showsSearch
+} from '../../components/common/ListFilters';
 import {loadActuators} from '../../../module/process/infrasctructure/store/actions/actuator';
 
 const IN_PROCESS = 'IN_PROCCESS';
@@ -45,6 +51,33 @@ type EventCriteria = {
 const runDate = (run: CycleRun) =>
 	new Date(run.startedAt ?? run.requestedAt).getTime() || 0;
 
+// Filtre de type des modules : un seul à la fois, « tout » = aucun.
+type ModuleTypeFilter = 'all' | typeof MODULE | typeof PROPORTIONAL;
+const MODULE_TYPE_FILTERS = [
+	{key: 'all', label: 'cycle:moduleFilter.all'},
+	{key: MODULE, label: 'cycle:create.onOff'},
+	{key: PROPORTIONAL, label: 'cycle:create.proportionalShort'}
+] as const satisfies readonly {key: ModuleTypeFilter; label: string}[];
+const FILTER_COLOR = '#32404e';
+const EVENTS_TIMEOUT_MS = 15000;
+
+// Filtre d'état des événements : un seul à la fois, « tout » = aucun.
+type RunFilter = 'all' | 'active' | 'ended' | 'stopped';
+const RUN_FILTERS: {key: RunFilter; outcomes: RunOutcome[]; color: string}[] = [
+	{key: 'all', outcomes: [], color: FILTER_COLOR},
+	{
+		key: 'active',
+		outcomes: ['RUNNING', 'WAITING_CONFIRMATION', 'QUEUED'],
+		color: OUTCOMES.RUNNING.color
+	},
+	{key: 'ended', outcomes: ['ENDED'], color: OUTCOMES.ENDED.color},
+	{
+		key: 'stopped',
+		outcomes: ['CANCELLED', 'REFUSED'],
+		color: OUTCOMES.REFUSED.color
+	}
+];
+
 const filterFromTypeFilter = (typeFilter?: string): FilterKey => {
 	if (typeFilter === 'MODULE') {
 		return 'MODULE';
@@ -58,6 +91,15 @@ export function Cycle(props: any) {
 	const [activeFilter, setActiveFilter] = React.useState<FilterKey>(
 		filterFromTypeFilter(props.route?.params?.typeFilter)
 	);
+	const [moduleType, setModuleType] = React.useState<ModuleTypeFilter>('all');
+	const [moduleSearch, setModuleSearch] = React.useState('');
+	const [cycleSearch, setCycleSearch] = React.useState('');
+	const [runFilter, setRunFilter] = React.useState<RunFilter>('all');
+	const runFilterRef = useRef(runFilter);
+	runFilterRef.current = runFilter;
+	// Requête d'événements en cours : seule la dernière lancée arrête le loader.
+	const [eventsLoading, setEventsLoading] = React.useState(false);
+	const eventsRequestRef = useRef(0);
 	const [orientation, setOrientation] = React.useState<OrientationType>(
 		OrientationType.UNKNOWN
 	);
@@ -74,11 +116,7 @@ export function Cycle(props: any) {
 	// Critères de l'onglet événements, dates en heure de la box comme l'écran
 	// d'historique d'un cycle.
 	const tz: string = useSelector(selectBoxTimeZone);
-	const {
-		control,
-		formState: {errors},
-		getValues
-	} = useForm<any>({
+	const {control, getValues} = useForm<any>({
 		defaultValues: {
 			deviceId: ALL_DEVICES,
 			startDate: new Date(startOfDayIn(tz)),
@@ -130,11 +168,25 @@ export function Cycle(props: any) {
 	// Période + cycle (sans deviceId : tous les cycles).
 	const loadRecentEvents = () => {
 		const c = getValues() as EventCriteria;
-		props.loadEvents({
-			...(c.deviceId !== ALL_DEVICES && {deviceId: c.deviceId}),
-			startDate: c.startDate,
-			endDate: c.endDate
-		});
+		const outcomes = RUN_FILTERS.find(
+			f => f.key === runFilterRef.current
+		)?.outcomes;
+		const request = ++eventsRequestRef.current;
+		const done = () => {
+			if (eventsRequestRef.current === request) setEventsLoading(false);
+		};
+		setEventsLoading(true);
+		// Sans réponse de la box (déconnexion), le loader ne reste pas affiché.
+		setTimeout(done, EVENTS_TIMEOUT_MS);
+		props.loadEvents(
+			{
+				...(c.deviceId !== ALL_DEVICES && {deviceId: c.deviceId}),
+				startDate: c.startDate,
+				endDate: c.endDate,
+				...(outcomes?.length && {outcomes})
+			},
+			done
+		);
 	};
 	// Laisse le formulaire enregistrer la valeur avant de relancer la requête.
 	const reloadEvents = () => setTimeout(loadRecentEvents, 0);
@@ -307,8 +359,42 @@ export function Cycle(props: any) {
 	const moduleItems = cycles
 		.filter((x: any) => !x.delete && x.display !== false)
 		.filter((x: any) => isModuleType(x.type));
+	// Recherche sur le nom seul : la description n'est pas affichée sur les
+	// cartes (et garde souvent sa valeur par défaut « new cycle »).
+	const matchesQuery = (x: any, query: string) =>
+		!query || (!!x?.name && normalizeSearch(`${x.name}`).includes(query));
+	// Filtres masqués (peu d'éléments) : ils ne filtrent plus rien.
+	const moduleFiltersShown = showsSearch(moduleItems.length);
+	const moduleQuery = moduleFiltersShown
+		? normalizeSearch(moduleSearch.trim())
+		: '';
+	const filteredModuleItems = moduleItems.filter(
+		(x: any) =>
+			(!moduleFiltersShown ||
+				moduleType === 'all' ||
+				x.type === moduleType) &&
+			matchesQuery(x, moduleQuery)
+	);
 	const groupItems = groups.filter(
 		(x: any) => !x.delete && x.display !== false
+	);
+	const cycleSearchShown = showsSearch(groupItems.length + cycleItems.length);
+	const cycleQuery = cycleSearchShown
+		? normalizeSearch(cycleSearch.trim())
+		: '';
+	const filteredCycleItems = cycleItems.filter((x: any) =>
+		matchesQuery(x, cycleQuery)
+	);
+	// Un groupe reste affiché si son nom ou l'un de ses cycles correspond.
+	const filteredGroupItems = groupItems.filter(
+		(group: any) =>
+			matchesQuery(group, cycleQuery) ||
+			(group.childCycles ?? []).some((child: any) =>
+				matchesQuery(
+					cycles.find((c: any) => c.id === child.cycleId),
+					cycleQuery
+				)
+			)
 	);
 
 	const counts = {
@@ -321,7 +407,7 @@ export function Cycle(props: any) {
 	};
 
 	const renderGroups = () =>
-		groupItems.map((group: any) => (
+		filteredGroupItems.map((group: any) => (
 			<GroupStack
 				key={group.id}
 				groupData={group}
@@ -340,6 +426,10 @@ export function Cycle(props: any) {
 
 	const runs: CycleRun[] = props.events ?? [];
 	const recentRuns = [...runs].sort((a, b) => runDate(b) - runDate(a));
+	const runOutcomes = RUN_FILTERS.find(f => f.key === runFilter)?.outcomes;
+	const filteredRuns = runOutcomes?.length
+		? recentRuns.filter(run => runOutcomes.includes(run.outcome))
+		: recentRuns;
 
 	const deviceOptions = [
 		{label: t('cycle:events.allDevices'), value: ALL_DEVICES},
@@ -349,17 +439,34 @@ export function Cycle(props: any) {
 		}))
 	];
 
+	// Même style que la recherche des cycles / modules : champs gris arrondis.
 	const renderEventCriteria = () => (
-		<View style={BoxFormStyle.boxForm}>
-			<SelectForm
-				lstData={deviceOptions}
+		<View style={{paddingHorizontal: 14}}>
+			<Controller
 				control={control}
-				errors={errors}
 				name="deviceId"
-				placeholder={t('cycle:events.device')}
-				onValueChange={reloadEvents}
+				render={({field: {onChange, value}}) => (
+					<DropdownSelect<{label: string; value: string; iconColor?: {base: string}}>
+						items={deviceOptions}
+						value={value}
+						getLabel={item => `${item.label}`}
+						getValue={item => `${item.value}`}
+						hasError={false}
+						onChange={val => {
+							onChange(val);
+							reloadEvents();
+						}}
+						renderTrigger={(label, open) => (
+							<PillButton
+								icon="filter"
+								label={label}
+								placeholder={t('cycle:events.device')}
+								onPress={open}
+							/>
+						)}
+					/>
+				)}
 			/>
-			<TimeZoneNotice kind="box" />
 			<DateRangePickerForm
 				control={control}
 				startName="startDate"
@@ -367,7 +474,44 @@ export function Cycle(props: any) {
 				timeZone={tz}
 				placeholder={t('cycle:events.period')}
 				onChange={reloadEvents}
+				renderTrigger={(label, open) => (
+					<PillButton
+						icon="calendar-alt"
+						label={label}
+						placeholder={t('cycle:events.period')}
+						onPress={open}
+					/>
+				)}
 			/>
+			<FilterChips
+				chips={RUN_FILTERS.map(({key, color}) => ({
+					key,
+					color,
+					label: t(`cycle:events.filter.${key}`)
+				}))}
+				isActive={key => runFilter === key}
+				// Re-toucher le filtre actif revient à « tout ».
+				onToggle={key => {
+					runFilterRef.current = runFilter === key ? 'all' : key;
+					setRunFilter(runFilterRef.current);
+					reloadEvents();
+				}}
+			/>
+			{/* Nombre d'événements affichés, à la couleur du filtre actif ; masqué
+			    pendant la requête (loader sur la liste). */}
+			<View style={{alignSelf: 'flex-end', minHeight: 18, justifyContent: 'center'}}>
+				{eventsLoading ? null : (
+					<Text
+						style={{
+							color: RUN_FILTERS.find(f => f.key === runFilter)?.color,
+							fontSize: 13,
+							fontWeight: '600'
+						}}>
+						{t('cycle:events.count', {count: filteredRuns.length})}
+					</Text>
+				)}
+			</View>
+			<TimeZoneNotice kind="box" style={{marginTop: 4, marginHorizontal: -10}} />
 		</View>
 	);
 
@@ -382,14 +526,28 @@ export function Cycle(props: any) {
 	};
 
 	const renderRecentEvents = () => {
-		if (!recentRuns.length) {
+		if (eventsLoading) {
+			return (
+				<ActivityIndicator
+					key="eventsLoader"
+					size="large"
+					color={RUN_FILTERS.find(f => f.key === runFilter)?.color}
+					style={{marginTop: 32}}
+				/>
+			);
+		}
+		if (!filteredRuns.length) {
 			return props.isLoading ? null : (
 				<Text style={{color: '#777', textAlign: 'center', marginTop: 24}}>
-					{t('cycle:events.noRun')}
+					{t(
+						recentRuns.length
+							? 'cycle:events.noMatch'
+							: 'cycle:events.noRun'
+					)}
 				</Text>
 			);
 		}
-		return recentRuns.map(run => {
+		return filteredRuns.map(run => {
 			const expanded = expandedRunId === run.runId;
 			return (
 				<RunCard
@@ -403,16 +561,67 @@ export function Cycle(props: any) {
 		});
 	};
 
+	const renderModuleFilters = () =>
+		moduleFiltersShown ? (
+			<View key="moduleFilters" style={{paddingHorizontal: 14}}>
+				<SearchField
+					value={moduleSearch}
+					onChange={setModuleSearch}
+					placeholder={t('cycle:moduleFilter.search')}
+					clearLabel={t('cycle:moduleFilter.clearSearch')}
+				/>
+				<FilterChips
+					chips={MODULE_TYPE_FILTERS.map(({key, label}) => ({
+						key,
+						label: t(label),
+						color: FILTER_COLOR
+					}))}
+					isActive={key => moduleType === key}
+					// Re-toucher le filtre actif revient à « tout ».
+					onToggle={key =>
+						setModuleType(prev => (prev === key ? 'all' : key))
+					}
+				/>
+			</View>
+		) : null;
+
+	const renderCycleSearch = () =>
+		cycleSearchShown ? (
+			<View key="cycleSearch" style={{paddingHorizontal: 14}}>
+				<SearchField
+					value={cycleSearch}
+					onChange={setCycleSearch}
+					placeholder={t('cycle:cycleFilter.search')}
+					clearLabel={t('cycle:moduleFilter.clearSearch')}
+				/>
+			</View>
+		) : null;
+
+	// Bloc recherche / filtres de l'onglet, figé au-dessus de la liste (seule
+	// la liste défile).
+	const renderFixedFilters = () => {
+		if (activeFilter === 'EVENTS') return renderEventCriteria();
+		return activeFilter === 'MODULE'
+			? renderModuleFilters()
+			: renderCycleSearch();
+	};
+
+	const noMatch = (key: string) => (
+		<Text
+			key="noMatch"
+			style={{color: '#777', textAlign: 'center', marginTop: 24}}>
+			{t(key as never)}
+		</Text>
+	);
+
 	const renderList = () => {
 		if (activeFilter === 'EVENTS') {
 			return (
-				<>
-					{renderEventCriteria()}
-					{renderRecentEvents()}
-				</>
+				<>{renderRecentEvents()}</>
 			);
 		}
-		const list = activeFilter === 'MODULE' ? moduleItems : cycleItems;
+		const list =
+			activeFilter === 'MODULE' ? filteredModuleItems : filteredCycleItems;
 		const cycleCards = list.map((cycle: any) => (
 			<CycleStack
 				key={cycle.id}
@@ -431,9 +640,15 @@ export function Cycle(props: any) {
 			/>
 		));
 		// Groups first: they orchestrate the classic cycles listed below.
-		return activeFilter === 'MODULE'
-			? cycleCards
-			: [...renderGroups(), ...cycleCards];
+		if (activeFilter === 'MODULE') {
+			return moduleFiltersShown && !filteredModuleItems.length
+				? noMatch('cycle:moduleFilter.noMatch')
+				: cycleCards;
+		}
+		const groupCards = renderGroups();
+		return cycleSearchShown && !groupCards.length && !cycleCards.length
+			? noMatch('cycle:cycleFilter.noMatch')
+			: [...groupCards, ...cycleCards];
 	};
 
 	return (
@@ -446,9 +661,17 @@ export function Cycle(props: any) {
 			/>
 			<CycleFilterBar
 				active={activeFilter}
-				onChange={setActiveFilter}
+				onChange={key => {
+					// Arrivée sur les événements : loader tout de suite, la liste
+					// (lourde) n'est rendue qu'à la réponse de la box.
+					if (key === 'EVENTS' && activeFilter !== 'EVENTS') {
+						setEventsLoading(true);
+					}
+					setActiveFilter(key);
+				}}
 				counts={counts}
 			/>
+			<View style={{paddingBottom: 4}}>{renderFixedFilters()}</View>
 			<ScrollView
 				scrollEnabled={true}
 				contentContainerStyle={{paddingBottom: 16}}

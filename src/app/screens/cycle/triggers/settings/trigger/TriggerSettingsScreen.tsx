@@ -61,6 +61,18 @@ export function TriggerSettingsScreen(props: any) {
 		isNew,
 		// Section General toujours visible : pas de rouge à l'entrée en création.
 		deferNewValidation: true,
+		// En modification, valider n'apparaît qu'après un changement.
+		backWhenPristine: true,
+		// Abandon : remet dans le slice l'élément d'origine (celui de la liste),
+		// sinon sa réouverture repartirait des modifications abandonnées.
+		discard: () => {
+			if (props.route.params.trigger?.id) {
+				props.loadTrigger(
+					props.route.params.trigger.id,
+					props.route.params.trigger.cycleId || props.route.params.cycle.id
+				);
+			}
+		},
 		hasChanges: () =>
 			triggerRef.current?.isModified ||
 			triggerRef.current?.conditions?.some(
@@ -101,6 +113,7 @@ export function TriggerSettingsScreen(props: any) {
 					key={51}
 					name={i18n.t('common:sections.triggerConditions')}
 					icon={faCheckDouble}
+					defaultExpanded
 					invalid={invalidSections.conditions}
 					onPress={() => {}}>
 					<ConditionBuilderSection
@@ -121,11 +134,10 @@ export function TriggerSettingsScreen(props: any) {
 					key={41}
 					name={i18n.t('common:sections.actions')}
 					icon={faBolt}
-					defaultExpanded
 					invalid={invalidSections.execution}
 					onPress={() => {}}>
-					{/* Dépliée par défaut : son formulaire lit ses valeurs au montage,
-					    on attend que l'entité soit chargée. */}
+					{/* Son formulaire lit ses valeurs au montage : on attend que
+					    l'entité soit chargée. */}
 					{generalLoaded ? (
 						<TriggerExecutionSettingsSection
 							embedded

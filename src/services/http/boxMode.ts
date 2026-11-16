@@ -9,7 +9,7 @@ const CHECK_PASSWORD_PATH = '/updater/checkPassword';
  * répond en moins d'une seconde : au-delà de quelques secondes, l'appel est
  * perdu, pas lent.
  */
-const CHECK_ATTEMPT_TIMEOUT_MS = 6000;
+const CHECK_ATTEMPT_TIMEOUT_MS = 10000;
 const CHECK_ATTEMPTS = 2;
 
 /** Budget d'une sonde. Court : elle sera relancée. */

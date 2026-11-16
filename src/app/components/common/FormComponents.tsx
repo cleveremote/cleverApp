@@ -82,7 +82,8 @@ export function DropdownSelect<T extends {iconColor?: {base: string}}>({
 	onChange,
 	hasError,
 	disabled = false,
-	hideChevron = false
+	hideChevron = false,
+	renderTrigger
 }: Readonly<{
 	items: T[];
 	value: any;
@@ -94,6 +95,8 @@ export function DropdownSelect<T extends {iconColor?: {base: string}}>({
 	disabled?: boolean;
 	// Masque la flèche d'ouverture à droite du champ.
 	hideChevron?: boolean;
+	// Remplace le champ d'ouverture (ex. PillButton) ; la liste reste la même.
+	renderTrigger?: (label: string | undefined, open: () => void) => React.ReactNode;
 }>) {
 	const [isOpen, setIsOpen] = useState(false);
 	const selectedItem = items.find(item => {
@@ -103,6 +106,12 @@ export function DropdownSelect<T extends {iconColor?: {base: string}}>({
 
 	return (
 		<>
+			{renderTrigger ? (
+				renderTrigger(
+					selectedItem ? getLabel(selectedItem) : undefined,
+					() => setIsOpen(true)
+				)
+			) : (
 			<Pressable
 				disabled={disabled}
 				onPress={() => setIsOpen(true)}
@@ -147,6 +156,7 @@ export function DropdownSelect<T extends {iconColor?: {base: string}}>({
 					/>
 				)}
 			</Pressable>
+			)}
 			<Modal visible={isOpen} transparent animationType="fade">
 				<Pressable
 					style={{

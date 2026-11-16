@@ -172,7 +172,7 @@ export async function pollUntil<T>(
 export async function boxPost(
 	url: string,
 	body: unknown,
-	timeoutMs = 10000
+	timeoutMs = 20000
 ): Promise<BoxResponse> {
 	const payload = JSON.stringify(body ?? {});
 

@@ -23,7 +23,7 @@ const SLATE = '#475569';
 const TEXT = '#444';
 const MUTED = '#777';
 
-const OUTCOMES: Record<RunOutcome, {color: string}> = {
+export const OUTCOMES: Record<RunOutcome, {color: string}> = {
 	RUNNING: {color: BLUE},
 	WAITING_CONFIRMATION: {color: ORANGE},
 	QUEUED: {color: PURPLE},

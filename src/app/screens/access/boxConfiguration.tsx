@@ -30,10 +30,7 @@ import {
 	brandLogo,
 	navigationHeader
 } from '../../components/common/navigationHeaders';
-import {
-	findProfileByLogin,
-	saveSigninData
-} from '../../components/common/RememberMeManager';
+import {findProfileByLogin} from '../../components/common/RememberMeManager';
 import {getBoxEndpoint, hotspotService} from '../../../services/hotspot';
 import {
 	BoxMode,
@@ -62,7 +59,8 @@ import {
 import {
 	readBoxConfigurationDraft,
 	saveBoxConfigurationDraft,
-	setPendingConfiguration
+	setPendingConfiguration,
+	setPendingProfile
 } from './boxConfigurationDraft';
 import {
 	BusyOverlay,
@@ -459,42 +457,53 @@ export function BoxConfiguration(props: any) {
 		return false;
 	};
 
+	// Un seul envoi à la fois : le bouton n'est grisé qu'au rendu suivant, et
+	// la touche « Terminé » du clavier ne l'est jamais. Sans ce verrou, un appui
+	// pendant la vérification relançait `checkPassword` puis `configure`.
+	const submittingRef = useRef(false);
+
 	const next = async () => {
-		ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
+		if (submittingRef.current) return;
+		submittingRef.current = true;
+		try {
+			ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
 
-		// Le bouton reste pressable même grisé : c'est ici qu'une étape
-		// invalide montre enfin ce qui bloque, y compris sur les champs jamais
-		// touchés.
-		if (!isStepValid) {
-			touchAll(fieldsOfStep(mode, step));
-			return;
-		}
+			// Le bouton reste pressable même grisé : c'est ici qu'une étape
+			// invalide montre enfin ce qui bloque, y compris sur les champs jamais
+			// touchés.
+			if (!isStepValid) {
+				touchAll(fieldsOfStep(mode, step));
+				return;
+			}
 
-		// Dit à chaque étape, et pas seulement à la première : un bouton qui ne
-		// fait que vibrer passerait pour un écran figé.
-		if (duplicateProfile) {
-			ReactNativeHapticFeedback.trigger('notificationError', hapticOptions);
-			setError(duplicateMessage);
-			return;
-		}
+			// Dit à chaque étape, et pas seulement à la première : un bouton qui ne
+			// fait que vibrer passerait pour un écran figé.
+			if (duplicateProfile) {
+				ReactNativeHapticFeedback.trigger('notificationError', hapticOptions);
+				setError(duplicateMessage);
+				return;
+			}
 
-		if (isLastStep) return configure();
+			if (isLastStep) return await configure();
 
-		// La preuve de possession est vérifiée là où elle est saisie : la
-		// découvrir refusée au bout de l'assistant ferait tout reprendre.
-		if (step === 'ownership') {
-			setIsLoading(true);
-			setBusyMessage(t('boxConfig.checkingPassword'));
+			// La preuve de possession est vérifiée là où elle est saisie : la
+			// découvrir refusée au bout de l'assistant ferait tout reprendre.
+			if (step === 'ownership') {
+				setIsLoading(true);
+				setBusyMessage(t('boxConfig.checkingPassword'));
+				setError('');
+				const accepted = await verifyCurrentPassword();
+				if (!accepted) return;
+				setIsLoading(false);
+			}
+
 			setError('');
-			const accepted = await verifyCurrentPassword();
-			if (!accepted) return;
-			setIsLoading(false);
+			setConfigureFailed(false);
+			setDropdownOpen(false);
+			setStepIndex(index => index + 1);
+		} finally {
+			submittingRef.current = false;
 		}
-
-		setError('');
-		setConfigureFailed(false);
-		setDropdownOpen(false);
-		setStepIndex(index => index + 1);
 	};
 
 	/**
@@ -618,6 +627,22 @@ export function BoxConfiguration(props: any) {
 			)
 		);
 
+		// Le nom de la box sert aussi de nom de profil. En `recovery`, un profil
+		// existant est déjà juste ; une box réparée depuis un téléphone qui ne
+		// la connaissait pas y gagne un profil. Il n'est pas créé ici mais par
+		// `BoxHandover`, une fois la box confirmée sur le réseau : une bascule
+		// qui échoue ne laisse ainsi aucun profil derrière elle.
+		setPendingProfile(
+			mode === 'setup' || !savedProfile
+				? {
+						deviceName,
+						login,
+						password:
+							mode === 'setup' ? form.password : form.currentPassword
+				  }
+				: null
+		);
+
 		setIsLoading(false);
 		console.log('[BoxConfiguration] configure envoyée, ouverture de l\'état');
 
@@ -635,20 +660,6 @@ export function BoxConfiguration(props: any) {
 				}
 			]
 		});
-
-		// Après la navigation, et sans l'attendre : le trousseau peut demander
-		// une authentification (biométrie Android) ou afficher une alerte (iOS
-		// sans code), et rien de cela ne doit retenir l'écran d'état. Son échec
-		// n'est pas non plus un refus de la box. Le nom de la box sert aussi de
-		// nom de profil. En `recovery`, un profil existant est déjà juste ; une
-		// box réparée depuis un téléphone qui ne la connaissait pas y gagne un
-		// profil.
-		if (mode === 'setup' || !savedProfile) {
-			const password = mode === 'setup' ? form.password : form.currentPassword;
-			saveSigninData(deviceName, login, login, password, true, '').catch(e =>
-				console.warn('[BoxConfiguration] saveSigninData:', e)
-			);
-		}
 	};
 
 	if (phase === 'detecting') {

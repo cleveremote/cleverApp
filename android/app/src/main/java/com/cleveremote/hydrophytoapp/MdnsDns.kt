@@ -76,13 +76,18 @@ class MdnsDns(
             return resolved
         }
 
-        // Not cached: the gateway is a property of the network currently joined,
-        // and reusing a stale one after a network switch would send the request
-        // to the wrong host.
-        return listOf(
+        // Cached like an answer, hence dropped with the rest on a network switch:
+        // the gateway is a property of the link it was read on. Without it, every
+        // call on the hotspot — one connection each, see CustomOkHttpClientFactory
+        // — would first wait out a query the box never answers there.
+        val fallback = listOf(
             gatewayAddress()
                 ?: throw UnknownHostException("mDNS resolution failed for $hostname")
         )
+        synchronized(cache) {
+            cache[hostname] = Entry(fallback, System.currentTimeMillis() + CACHE_TTL_MS)
+        }
+        return fallback
     }
 
     /**

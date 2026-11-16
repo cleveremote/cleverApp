@@ -23,7 +23,11 @@ import {
 	newTempId
 } from '../../../../../services/socket';
 import {cleanCycleModuleConfigs} from '../models/sequenceModule';
-import {toCycleRuns} from '../models/cycleHistory';
+import {CycleRun, RunOutcome, toCycleRuns} from '../models/cycleHistory';
+import {
+	dismissNotification,
+	pruneDismissedNotifications
+} from '../models/dismissedNotifications';
 import {currentLanguage} from '../../../../../i18n/language';
 import {Alert} from 'react-native';
 import i18n from 'i18next';
@@ -44,6 +48,32 @@ export const listenerEvents =
 		});
 	};
 
+// Au fetch, le détail à afficher (bandeau) est porté par le dernier
+// événement du cycle (`lastEvent`), comme dans le payload WebSocket :
+//  - attente de confirmation : ses conflits et son texte ;
+//  - démarrage refusé (conditions non vérifiées) : notification + texte.
+const fromLastEvent = (item: any) => {
+	const event = item?.lastEvent;
+	if (!event) return {};
+	if (item.status === 'WAITTING_CONFIRMATION') {
+		return {
+			confirmation: event.confirmation ?? item.confirmation,
+			message: event.message ?? item.message,
+			runId: event.runId
+		};
+	}
+	// Déjà ignoré : écarté par le reducer (cf. dismissedNotifications).
+	if (event.kind === 'START_REFUSED') {
+		return {
+			notification: 'CONDITIONS_NOT_VERIFIED',
+			message: event.message,
+			runId: event.runId,
+			eventDate: event.date
+		};
+	}
+	return {};
+};
+
 // Le box renvoie le status d'exécution directement sur les cycles/séquences de
 // `front/box/fetch/configuration` (getConfigurationWithStatus). On le remet à
 // plat dans la forme attendue par la tranche `root_cycle.status`.
@@ -61,13 +91,33 @@ export const statusFromConfiguration = (cycles: any[] = []) => {
 			// cours ; les consommateurs retombent sur leurs propres valeurs par
 			// défaut sinon.
 			startedAt: item.progression?.startedAt,
-			duration: item.progression?.duration
+			duration: item.progression?.duration,
+			// Détail d'une attente de confirmation (démarrage planifié ou
+			// conflit) : sans lui, le bandeau retombe sur le message de conflit.
+			confirmation: item.confirmation,
+			message: item.message,
+			notification: item.notification,
+			causes: item.causes,
+			...fromLastEvent(item)
 		});
 	};
 	(cycles || []).forEach((cycle: any) => {
 		push(cycle, 'CYCLE');
 		(cycle.sequences || []).forEach((seq: any) => push(seq, 'SEQUENCE'));
 	});
+	// Configuration complète : on en profite pour oublier les ignores des
+	// cycles / séquences supprimés depuis. Liste vide (erreur, réponse
+	// partielle) : on ne touche à rien plutôt que de tout effacer.
+	if (cycles?.length) {
+		pruneDismissedNotifications(
+			cycles
+				.flatMap((cycle: any) => [
+					cycle?.id,
+					...(cycle?.sequences || []).map((seq: any) => seq?.id)
+				])
+				.filter(Boolean)
+		);
+	}
 	return entries;
 };
 
@@ -116,7 +166,7 @@ export const loadValues =
 					}
 					dispatch({
 						type: CYCLE_STATUS,
-						payload: statuses,
+						payload: statuses.map((x: any) => ({...x, ...fromLastEvent(x)})),
 						// Snapshot complet renvoyé par le box : il remplace la
 						// tranche au lieu de s'y superposer.
 						replace: true
@@ -138,8 +188,13 @@ export const loadEvents =
 		deviceId?: string;
 		startDate?: any;
 		endDate?: any;
+		// Filtre d'état ; absent = tous.
+		outcomes?: RunOutcome[];
 		limit?: number;
-	}): ThunkAction<void, RootState, unknown, AnyAction> =>
+	},
+	// Appelé à la réponse de la box (fin de chargement).
+	onDone?: () => void
+	): ThunkAction<void, RootState, unknown, AnyAction> =>
 	async dispatch => {
 		socketService.emit(
 			'front/box/fetch/events',
@@ -149,9 +204,48 @@ export const loadEvents =
 					type: EVENTS_LOAD,
 					payload: toCycleRuns(normalizeIds(response?.config))
 				});
+				onDone?.();
 			}
 		);
 	};
+
+/**
+ * Dernier run d'un cycle dans l'un des états `outcomes` (ex. refusé / annulé,
+ * en attente de confirmation), pour le bandeau de la carte — `runId` le
+ * désigne quand il est connu. Requête à part : passer par `loadEvents`
+ * écraserait la liste de l'onglet Événements. Le filtre d'état est aussi
+ * appliqué ici, tant que le box ne gère pas `outcomes`.
+ */
+export const fetchLastRun = (
+	cycleId: string,
+	outcomes: RunOutcome[],
+	runId?: string
+): Promise<CycleRun | undefined> =>
+	new Promise(resolve => {
+		if (!socketService.connected) {
+			resolve(undefined);
+			return;
+		}
+		socketService.emit(
+			'front/box/fetch/events',
+			{
+				...denormalizeIds({deviceId: cycleId}),
+				outcomes,
+				lang: currentLanguage()
+			},
+			(response: any) => {
+				const runs = toCycleRuns(normalizeIds(response?.config));
+				const time = (run: CycleRun) =>
+					new Date(run.startedAt ?? run.requestedAt).getTime() || 0;
+				resolve(
+					(runId && runs.find(run => run.runId === runId)) ||
+						runs
+							.filter(run => outcomes.includes(run.outcome))
+							.sort((a, b) => time(b) - time(a))[0]
+				);
+			}
+		);
+	});
 
 // Re-run on every focus: global loader only while the list is still empty.
 export const loadCycles =
@@ -412,6 +506,7 @@ export const dismissCycleNotification =
 		if (!entry) {
 			return;
 		}
-		const {notification, causes, ...rest} = entry;
-		dispatch({type: CYCLE_STATUS, payload: rest});
+		dismissNotification(entry);
+		const {notification, causes, message, runId, eventDate, ...rest} = entry;
+		dispatch({type: CYCLE_STATUS, payload: rest, dismissed: true});
 	};

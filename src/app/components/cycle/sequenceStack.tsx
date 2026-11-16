@@ -15,7 +15,8 @@ export function SequenceStack({
 	cycleId,
 	onSkip,
 	stackParent,
-	statusIn
+	statusIn,
+	plannedDuration
 }: {
 	navigation: any;
 	isActive: boolean;
@@ -24,6 +25,9 @@ export function SequenceStack({
 	onSkip: (sequenceId: string) => void;
 	stackParent?: boolean;
 	statusIn?: any;
+	// Durée prévue tant que la séquence n'a pas démarré : la sienne, ou celle
+	// forcée pour le cycle. Absente : durée propre de la séquence.
+	plannedDuration?: number;
 }) {
 	const [progression, setProgression] = React.useState(0);
 	const [miliseconds, setMiliseconds] = React.useState(0);
@@ -271,7 +275,8 @@ export function SequenceStack({
 							  })
 							: i18n.t('cycle:sequence.duration', {
 									time: getEndTime(
-										item.securityConfig.maxDuration
+										plannedDuration ??
+											item.securityConfig?.maxDuration
 									)
 							  })}
 					</Text>

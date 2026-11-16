@@ -56,6 +56,16 @@
 		"events": "الأحداث",
 		"inProcess": "الدورة قيد التنفيذ!\nللوصول إلى الإعدادات يرجى إيقاف العملية"
 	},
+	"cycleFilter": {
+		"search": "البحث عن دورة أو مجموعة",
+		"noMatch": "لا توجد دورة تطابق البحث."
+	},
+	"moduleFilter": {
+		"all": "الكل",
+		"search": "البحث عن وحدة",
+		"clearSearch": "مسح البحث",
+		"noMatch": "لا توجد وحدة تطابق عوامل التصفية أو البحث."
+	},
 	"filter": {
 		"CYCLE": "الدورات",
 		"MODULE": "الوحدات",
@@ -114,6 +124,19 @@
 		"proportionalShort": "تناسبي"
 	},
 	"events": {
+		"count_zero": "لا أحداث",
+		"count_one": "حدث واحد",
+		"count_two": "حدثان",
+		"count_few": "{{count}} أحداث",
+		"count_many": "{{count}} حدثًا",
+		"count_other": "{{count}} حدث",
+		"filter": {
+			"all": "الكل",
+			"active": "قيد التشغيل",
+			"ended": "منتهية",
+			"stopped": "متوقفة"
+		},
+		"noMatch": "لا يوجد حدث يطابق عامل التصفية.",
 		"device": "الدورة",
 		"period": "الفترة",
 		"allDevices": "كل الدورات",

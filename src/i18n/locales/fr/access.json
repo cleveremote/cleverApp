@@ -175,6 +175,9 @@
 	"profiles": {
 		"add": "Ajouter un profil ...",
 		"deleteHint": "(appui long sur un profil pour le supprimer)",
+		"deleteTitle": "Supprimer le profil",
+		"deleteMessage": "Le profil « {{profile}} » sera supprimé de cet appareil, ainsi que toutes les données enregistrées localement pour accéder à sa box : adresse de la box, identifiant et mot de passe mémorisés.\n\nLes données de la box ne sont pas touchées. Pour vous y reconnecter, munissez-vous de l'identifiant de la box et de votre mot de passe afin de créer un nouveau profil.",
+		"deleteConfirm": "Supprimer",
 		"scanBox": "Scanner une box"
 	},
 	"noConnection": {

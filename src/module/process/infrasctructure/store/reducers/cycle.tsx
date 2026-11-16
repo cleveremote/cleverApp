@@ -17,8 +17,11 @@ import {
 	loadCycle,
 	loadCycles,
 	updateCycle,
-	updateStatus
+	updateStatus,
+	keepPendingNotifications,
+	stampNotified
 } from './cycle-reducer-helper';
+import {withoutDismissedNotification} from '../models/dismissedNotifications';
 
 const initialState = {
 	cycles: [],
@@ -98,9 +101,21 @@ export default (state = initialState, action: any) => {
 		}
 
 		case CYCLE_STATUS: {
-			const data = Array.isArray(action.payload)
+			const payload = Array.isArray(action.payload)
 				? action.payload
 				: [action.payload];
+			// Réponse de l'utilisateur (dismiss) : l'entrée sans notification
+			// s'applique telle quelle ; sinon la notification en attente reste.
+			// Une notification déjà ignorée (même refus revenu au fetch) est
+			// écartée, d'où qu'elle vienne.
+			const data = action.dismissed
+				? payload
+				: stampNotified(
+						state.status,
+						keepPendingNotifications(state.status, payload).map(
+							withoutDismissedNotification
+						)
+				  );
 			return {
 				...state,
 				// Un fetch renvoie l'état complet : on remplace pour purger les

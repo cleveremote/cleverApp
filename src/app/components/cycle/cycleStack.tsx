@@ -168,12 +168,15 @@ export function CycleStack({
 				onIgnore={() => onSwitch(false, 'IGNORE')}
 				onQueue={() => onQueueCycle(cycleData.id)}
 			/>
-			<SeqeuncesList
-				cycleData={cycleData}
-				onSkip={onSkip}
-				onForceSequence={onForceSequence}
-				navigation={navigation}
-			/>
+			{/* PROPORTIONAL : le slider suffit, pas de progression de séquence. */}
+			{cycleData.type !== PROPORTIONAL && (
+				<SeqeuncesList
+					cycleData={cycleData}
+					onSkip={onSkip}
+					onForceSequence={onForceSequence}
+					navigation={navigation}
+				/>
+			)}
 		</View>
 	);
 }
@@ -216,7 +219,7 @@ export function MenuCycle({
 		setIsOpened(prev => !prev);
 	};
 
-	const menuItems = [
+	const allMenuItems = [
 		{
 			name: 'cog',
 			label: i18n.t('cycle:menu.settings'),
@@ -291,6 +294,12 @@ export function MenuCycle({
 			}
 		}
 	];
+	// PROPORTIONAL : piloté par son slider, sans durée ni planification ni
+	// déclencheur → seuls réglages et événements.
+	const menuItems =
+		cycleData.type === PROPORTIONAL
+			? allMenuItems.filter(x => x.name === 'cog' || x.name === 'tasks')
+			: allMenuItems;
 
 	return (
 		<View>
@@ -301,7 +310,12 @@ export function MenuCycle({
 							'impactMedium',
 							hapticOptions
 						);
-						if (status !== 'IN_PROCCESS') {
+						// PROPORTIONAL : lancé sans durée, il reste en cours ;
+						// son menu doit rester ouvrable pour le paramétrage.
+						if (
+							status !== 'IN_PROCCESS' ||
+							cycleData.type === PROPORTIONAL
+						) {
 							if (closeSibillings) {
 								closeSibillings(!isOpen, cycleData.name);
 							}

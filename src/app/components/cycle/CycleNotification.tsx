@@ -5,7 +5,16 @@ import Icon from 'react-native-vector-icons/FontAwesome5';
 import { connect } from 'react-redux';
 import i18n from 'i18next';
 import { hapticOptions } from '../../data/cycleTypes';
-import { dismissCycleNotification } from '../../../module/process/infrasctructure/store/actions/cycle';
+import {
+	dismissCycleNotification,
+	fetchLastRun
+} from '../../../module/process/infrasctructure/store/actions/cycle';
+import {
+	CycleRun,
+	RunOutcome
+} from '../../../module/process/infrasctructure/store/models/cycleHistory';
+import { RunCard } from './RunCard';
+import { isNotificationDismissed } from '../../../module/process/infrasctructure/store/models/dismissedNotifications';
 
 const BACKGROUND = '#fff7ed';
 const BORDER = '#fdba74';
@@ -54,7 +63,7 @@ const MESSAGES: Record<string, 'notification.conditionsNotVerified' | 'notificat
 };
 
 const CONFIRMATION_MESSAGES = {
-	CONFLICT: 'notification.conflict',
+	CONFLICT: 'notification.waitingConfirmation',
 	SCHEDULED: 'notification.scheduled'
 } as const;
 
@@ -70,6 +79,9 @@ type ConfirmationConflict = {
 	mode: string;
 	// true : confirmer stoppera ce cycle ; false : rang égal ou plus grand.
 	isWinning: boolean;
+	// Cycle PROPORTIONAL en cours : le box demande une confirmation même
+	// quand il est battu, pour ne pas reprendre sa vanne sans prévenir.
+	isProportionalOverride?: boolean;
 };
 
 type ConfirmationKind = keyof typeof CONFIRMATION_MESSAGES;
@@ -105,8 +117,8 @@ const legacyConflictActive = (entry: any, statusList: any[]) => {
 };
 
 // Origine de l'attente de confirmation : conflit perdu (un cycle de rang égal
-// ou supérieur tourne) ou schedule/trigger avec shouldConfirmation. undefined
-// si plus rien n'est à confirmer.
+// ou supérieur tourne), cycle PROPORTIONAL à reprendre, ou schedule/trigger
+// avec shouldConfirmation. undefined si plus rien n'est à confirmer.
 const confirmationKind = (
 	entry: any,
 	statusList: any[]
@@ -117,7 +129,11 @@ const confirmationKind = (
 	if (!entry.confirmation) {
 		return legacyConflictActive(entry, statusList) ? 'CONFLICT' : undefined;
 	}
-	if (activeConflicts(entry, statusList).some(c => !c.isWinning)) {
+	if (
+		activeConflicts(entry, statusList).some(
+			c => !c.isWinning || c.isProportionalOverride
+		)
+	) {
 		return 'CONFLICT';
 	}
 	return entry.confirmation.isRequested ? 'SCHEDULED' : undefined;
@@ -198,6 +214,84 @@ const describeCause = (
 	);
 };
 
+// États du dernier événement affiché selon le bandeau.
+const INTERRUPTED: RunOutcome[] = ['CANCELLED', 'REFUSED'];
+const WAITING: RunOutcome[] = ['WAITING_CONFIRMATION'];
+
+// Notification poussée sans runId : le run peut ne pas être encore enregistré
+// côté box. On réessaie quelques fois, et l'on n'accepte qu'un run récent par
+// rapport à l'arrivée de la notification (marge pour l'écart d'horloge
+// box / téléphone).
+const RETRY_DELAYS_MS = [1000, 2000, 4000];
+const CLOCK_SLACK_MS = 2 * 60 * 1000;
+const runTime = (run: CycleRun) =>
+	new Date(run.startedAt ?? run.requestedAt).getTime() || 0;
+
+// Contenu du dernier événement du cycle (carte de l'onglet Événements,
+// repliée) : remplace le texte brut du box. Rechargé quand le bandeau change
+// (autre run, autre texte, autres conflits). Introuvable : `fallback`.
+function LastRun({
+	cycleId,
+	outcomes,
+	runId,
+	notifiedAt,
+	refreshKey,
+	nameOf,
+	fallback
+}: Readonly<{
+	cycleId: string;
+	outcomes: RunOutcome[];
+	runId?: string;
+	notifiedAt?: number;
+	refreshKey: string;
+	nameOf: (id: string) => string;
+	fallback?: React.ReactNode;
+}>) {
+	const [run, setRun] = useState<CycleRun>();
+	const [done, setDone] = useState(false);
+	const [expanded, setExpanded] = useState(false);
+	React.useEffect(() => {
+		let active = true;
+		let timer: ReturnType<typeof setTimeout> | undefined;
+		setRun(undefined);
+		setDone(false);
+		const matches = (found?: CycleRun) =>
+			!!found &&
+			(runId
+				? found.runId === runId
+				: !notifiedAt || runTime(found) >= notifiedAt - CLOCK_SLACK_MS);
+		const attempt = (index: number) =>
+			fetchLastRun(cycleId, outcomes, runId).then(found => {
+				if (!active) return;
+				if (matches(found)) {
+					setRun(found);
+					setDone(true);
+				} else if (index < RETRY_DELAYS_MS.length) {
+					timer = setTimeout(() => attempt(index + 1), RETRY_DELAYS_MS[index]);
+				} else {
+					setDone(true);
+				}
+			});
+		attempt(0);
+		return () => {
+			active = false;
+			if (timer) clearTimeout(timer);
+		};
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [cycleId, outcomes.join(), runId, notifiedAt, refreshKey]);
+	if (!run) return done ? <>{fallback}</> : null;
+	return (
+		<View style={{ marginHorizontal: -4 }}>
+			<RunCard
+				run={run}
+				expanded={expanded}
+				onToggle={() => setExpanded(e => !e)}
+				nameOf={nameOf}
+			/>
+		</View>
+	);
+}
+
 export function CycleNotification(
 	props: Readonly<{
 		// Cycle ou séquence : l'entrée de status est retrouvée par son id.
@@ -225,7 +319,9 @@ export function CycleNotification(
 	);
 	const isConflict =
 		entry?.status === CONFLICT && !!props.onIgnore && !!props.onQueue;
-	const message = notificationMessage(entry, isConflict, props.status);
+	const message = isNotificationDismissed(entry)
+		? undefined
+		: notificationMessage(entry, isConflict, props.status);
 	if (!message) {
 		return null;
 	}
@@ -257,6 +353,16 @@ export function CycleNotification(
 					props.sensors || []
 				)
 		  );
+	const lineViews = lines.map((line, index) => (
+		<Text
+			key={'line_' + index}
+			style={{ color: TEXT, fontSize: 13, marginLeft: 24 }}
+			numberOfLines={2}
+			ellipsizeMode="middle"
+		>
+			{'• ' + line}
+		</Text>
+	));
 	const hint =
 		kind === 'CONFLICT' && conflicts.length
 			? i18n.t('cycle:notification.forceWillStop', { names: quoted(conflicts) })
@@ -344,16 +450,38 @@ export function CycleNotification(
 					</Text>
 				</View>
 
-				{lines.map((line, index) => (
-					<Text
-						key={'line_' + index}
-						style={{ color: TEXT, fontSize: 13, marginLeft: 24 }}
-						numberOfLines={2}
-						ellipsizeMode="middle"
-					>
-						{'• ' + line}
-					</Text>
-				))}
+				{/* Dernier événement du cycle, à la place du texte du box : le run
+				    en attente pour une confirmation (les cycles en conflit restent
+				    listés dessous), le dernier interrompu pour des conditions non
+				    vérifiées (à la place du détail des causes, affiché seulement
+				    si l'événement est introuvable). */}
+				{entry.type === 'CYCLE' ? (
+					<LastRun
+						cycleId={props.item.id}
+						outcomes={isConflict ? WAITING : INTERRUPTED}
+						runId={entry.runId}
+						notifiedAt={entry.notifiedAt}
+						refreshKey={[
+							entry.status,
+							entry.eventDate,
+							entry.message,
+							(entry.confirmation?.conflicts || [])
+								.map((c: ConfirmationConflict) => c.cycleId)
+								.join()
+						].join('|')}
+						nameOf={(id: string) =>
+							[
+								...(props.cycles || []),
+								...(props.cycles || []).flatMap(
+									(c: any) => c.sequences || []
+								)
+							].find((x: any) => x?.id === id)?.name ?? id
+						}
+						fallback={isConflict ? null : lineViews}
+					/>
+				) : null}
+
+				{isConflict || entry.type !== 'CYCLE' ? lineViews : null}
 
 				{hint ? (
 					<Text

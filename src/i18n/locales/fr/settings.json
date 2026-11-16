@@ -69,7 +69,8 @@
 			"logoutNotice": "Vous serez déconnecté.",
 			"typeLogin": "Saisissez « {{login}} » pour confirmer",
 			"success": "Les données ont été réinitialisées.",
-			"failed": "La réinitialisation a échoué."
+			"failed": "La réinitialisation a échoué.",
+			"confirmMessage": "Saisissez votre mot de passe actuel pour confirmer la réinitialisation."
 		}
 	}
 }

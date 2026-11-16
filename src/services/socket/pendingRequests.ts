@@ -16,7 +16,9 @@ const REQUEST_TIMEOUT_MS = 20000;
 const SILENT_EVENTS = new Set([
 	'front/box/refreshtoken',
 	'front/box/login',
-	'front/box/execute/process'
+	'front/box/execute/process',
+	// L'onglet Événements affiche son loader sur la liste.
+	'front/box/fetch/events'
 ]);
 
 let pending = 0;

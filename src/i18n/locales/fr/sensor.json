@@ -1,4 +1,9 @@
 {
+	"search": {
+		"placeholder": "Rechercher un capteur",
+		"clear": "Effacer la recherche",
+		"noMatch": "Aucun capteur ne correspond à la recherche."
+	},
 	"create": "Créer un capteur",
 	"theme": "Thème du capteur*",
 	"every": {

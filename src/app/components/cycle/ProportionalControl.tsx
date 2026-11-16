@@ -10,6 +10,12 @@ import {
 } from '../../../module/process/infrasctructure/store/actions/cycle';
 import {notificationMessage} from './CycleNotification';
 import {useUnreachableDevices} from '../device/DeviceConnectivity';
+import {
+	enabledLoopOf,
+	isFollowLoop,
+	sensorUnit
+} from '../../data/controlLoopTypes';
+import {controlLoopBadge} from './controlLoopBadge';
 
 const IN_PROCESS = 'IN_PROCCESS';
 
@@ -23,6 +29,53 @@ const moduleRefOf = (cycleData: any) => {
 
 const clamp = (value: number, min: number, max: number) =>
 	Math.min(max, Math.max(min, value));
+
+const toFinite = (value: any) => {
+	const n = Number(value);
+	return value == null || value === '' || isNaN(n) ? undefined : n;
+};
+
+// Vanne pilotée par sa boucle (FOLLOW / REGULATION) : le slider n'est plus une
+// commande, il reflète ce que la box applique. En FOLLOW, l'entrée analogique
+// (`follow.inputMin..inputMax`) recopiée en ouverture % ; en REGULATION, la
+// consigne placée sur l'échelle du capteur de retour.
+const loopDisplay = (
+	loop: any,
+	sensor: any,
+	live: number | undefined,
+	min: number,
+	max: number
+) => {
+	if (isFollowLoop(loop)) {
+		const inMin = Number(loop.follow?.inputMin ?? 0);
+		const inMax = Number(loop.follow?.inputMax ?? 100);
+		const pct =
+			live == null || inMax === inMin
+				? undefined
+				: ((live - inMin) / (inMax - inMin)) * 100;
+		const value =
+			pct == null ? undefined : clamp(Math.round(pct), min, max);
+		return {
+			min,
+			max,
+			value: value ?? min,
+			label: value == null ? '–' : `${value}%`
+		};
+	}
+	const setpoint = toFinite(loop.setpoint);
+	const scaling = sensor?.config?.scaling;
+	const lo = toFinite(scaling?.outputMin) ?? 0;
+	const hi = toFinite(scaling?.outputMax) ?? Math.max(100, setpoint ?? 0);
+	const sMin = Math.min(lo, hi);
+	const sMax = Math.max(sMin + 1, lo, hi);
+	const unit = sensorUnit(sensor);
+	return {
+		min: sMin,
+		max: sMax,
+		value: clamp(setpoint ?? sMin, sMin, sMax),
+		label: setpoint == null ? '–' : `${setpoint}${unit ? ` ${unit}` : ''}`
+	};
+};
 
 // Remplace le toggle des cartes PROPORTIONAL : le slider fixe la valeur de
 // l'actuator dans les bornes de sa vanne CTRL (minOpening / maxOpening). Au
@@ -55,8 +108,25 @@ export function ProportionalControl(props: any) {
 	// affiché, ou device requis injoignable alors que le cycle est arrêté.
 	const hasNotification = !!notificationMessage(entry, true, props.status);
 	const unreachable = useUnreachableDevices(cycleData, 'CYCLE');
+	// Boucle activée sur la vanne : slider désactivé, il suit la boucle.
+	const loop = enabledLoopOf(props.controlLoops, actuator?.id);
+	const loopSensor = (props.sensors || []).find(
+		(x: any) => `${x.id}` === `${loop?.sensorId}`
+	);
+	const loopLive = toFinite(
+		(props.sensorValues || []).find(
+			(x: any) =>
+				loopSensor &&
+				(`${x.id}` === `${loopSensor.id}` ||
+					`${x.deviceId}` === `${loopSensor.id}`)
+		)?.value
+	);
+	const shown = loop
+		? loopDisplay(loop, loopSensor, loopLive, min, max)
+		: {min, max, value, label: `${value}%`};
 	const locked =
 		!ref ||
+		!!loop ||
 		hasNotification ||
 		(!!unreachable.length && !running);
 
@@ -96,16 +166,20 @@ export function ProportionalControl(props: any) {
 			style={{
 				flex: 2,
 				flexDirection: 'row',
-				alignItems: 'center',
-				opacity: locked ? 0.4 : 1
+				alignItems: 'center'
 			}}>
+			{loop ? (
+				<View style={{marginRight: 6}}>
+					{controlLoopBadge(loop, cycleData.style?.fontColor)}
+				</View>
+			) : null}
 			<Slider
-				style={{flex: 1}}
+				style={{flex: 1, opacity: locked && !loop ? 0.4 : 1}}
 				disabled={locked}
-				minimumValue={min}
-				maximumValue={max}
-				step={1}
-				value={value}
+				minimumValue={shown.min}
+				maximumValue={shown.max}
+				step={loop ? 0 : 1}
+				value={shown.value}
 				minimumTrackTintColor={iconColorSwitch}
 				maximumTrackTintColor="#d1d1d6"
 				onValueChange={setValue}
@@ -113,13 +187,15 @@ export function ProportionalControl(props: any) {
 				accessibilityLabel={cycleData.name}
 			/>
 			<Text
+				numberOfLines={1}
 				style={{
 					minWidth: 44,
+					opacity: locked && !loop ? 0.4 : 1,
 					textAlign: 'right',
 					fontWeight: 'bold',
 					color: cycleData.style?.fontColor
 				}}>
-				{`${value}%`}
+				{shown.label}
 			</Text>
 		</View>
 	);
@@ -127,7 +203,10 @@ export function ProportionalControl(props: any) {
 
 const mapStateToProps = (state: any) => ({
 	status: state.root_cycle.status,
-	actuators: state.root_actuator.actuators
+	actuators: state.root_actuator.actuators,
+	controlLoops: state.root_control_loop.loops,
+	sensors: state.root_sensor.sensors,
+	sensorValues: state.root_sensor.values
 });
 
 export default connect(mapStateToProps, {saveCycle, executeCycle})(

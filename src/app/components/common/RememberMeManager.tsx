@@ -236,13 +236,15 @@ const removeProfileEntry = async (profile: string) => {
 };
 
 /**
- * Supprime le profil et l'endpoint de sa box : l'account est le `deviceId` du
- * QR scanné, sous lequel `saveBoxEndpoint` l'a rangé.
+ * Supprime le profil, ses identifiants mémorisés et l'endpoint de sa box :
+ * l'account est le `deviceId` du QR scanné, sous lequel `saveBoxEndpoint`
+ * (et le trousseau) l'ont rangé.
  */
 const deleteProfile = async (profile: string) => {
 	const data = await getAssociationProfileAccount(profile);
 	await removeProfileEntry(profile);
 	if (data?.account) {
+		await clearCredentials(data.account);
 		try {
 			await clearBoxEndpoint(data.account);
 		} catch (error) {

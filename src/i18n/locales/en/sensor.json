@@ -1,4 +1,9 @@
 {
+	"search": {
+		"placeholder": "Search a sensor",
+		"clear": "Clear search",
+		"noMatch": "No sensor matches the search."
+	},
 	"create": "Create sensor",
 	"theme": "Sensor theme*",
 	"every": {

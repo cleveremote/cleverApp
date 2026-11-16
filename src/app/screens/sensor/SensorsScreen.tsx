@@ -1,5 +1,5 @@
 import React, {useEffect, useRef} from 'react';
-import {LayoutChangeEvent, View} from 'react-native';
+import {LayoutChangeEvent, StyleSheet, Text, View} from 'react-native';
 import {connect} from 'react-redux';
 import {ScrollView, RefreshControl} from 'react-native-gesture-handler';
 import Orientation, {OrientationType} from 'react-native-orientation-locker';
@@ -10,6 +10,12 @@ import {
 import {SensorStack} from '../../components/sensor/SensorStack';
 import {loadSensors} from '../../../module/process/infrasctructure/store/actions/sensor';
 import {useSensorsConnectivity} from '../../components/device/DeviceConnectivity';
+import {
+	SearchField,
+	normalizeSearch,
+	showsSearch
+} from '../../components/common/ListFilters';
+import i18n from 'i18next';
 // Bouton d'ajout masqué : la navigation et les formulaires de création
 // restent en place, il suffit de repasser ce flag à true pour le réafficher.
 const SHOW_ADD_SENSOR = false;
@@ -21,6 +27,7 @@ export function Sensor(props: any) {
 	);
 	const [refreshing, setRefreshing] = React.useState<boolean>(false);
 	const [collapsed, setCollapsed] = React.useState<string[]>([]);
+	const [search, setSearch] = React.useState('');
 	const scrollRef = useRef<any>(null);
 	const scrollY = useRef(0);
 	const viewportHeight = useRef(0);
@@ -145,6 +152,23 @@ export function Sensor(props: any) {
 				isNestedChild(x) && `${getParentId(x)}` === `${parent.id}`
 		);
 
+	// Recherche sur le nom, affichée au-delà de 10 capteurs. Un parent reste
+	// affiché si lui ou l'un de ses enfants correspond ; s'il ne correspond pas
+	// lui-même, seuls ses enfants correspondants sont listés (dépliés).
+	const searchShown = showsSearch(visibleSensors.length);
+	const query = searchShown ? normalizeSearch(search.trim()) : '';
+	const matches = (sensor: any) =>
+		!!sensor?.name && normalizeSearch(`${sensor.name}`).includes(query);
+	const shownChildren = (parent: any) => {
+		const children = getChildren(parent);
+		return !query || matches(parent) ? children : children.filter(matches);
+	};
+	const shownRootSensors = query
+		? rootSensors.filter(
+				(x: any) => matches(x) || shownChildren(x).length > 0
+		  )
+		: rootSensors;
+
 	// Un parent dont le device est déconnecté replie ses enfants (leurs mesures
 	// ne sont plus lues) ; il les redéplie quand le device redevient joignable.
 	// On ne réagit qu'aux changements d'état : l'utilisateur garde la main entre
@@ -176,86 +200,109 @@ export function Sensor(props: any) {
 	}, [parentStates]);
 
 	return (
-		<ScrollView
-			ref={scrollRef}
-			scrollEnabled={true}
-			scrollEventThrottle={16}
-			onScroll={e => {
-				scrollY.current = e.nativeEvent.contentOffset.y;
-			}}
-			onLayout={e => {
-				viewportHeight.current = e.nativeEvent.layout.height;
-			}}
-			refreshControl={
-				<RefreshControl
-					refreshing={refreshing}
-					onRefresh={onRefresh}
-					style={{
-						alignItems: 'flex-start',
-						justifyContent: 'flex-start',
-						alignSelf: 'flex-start'
-					}}
-				/>
-			}>
-			<View
-				style={{gap: 8, marginVertical: 4, alignSelf: 'stretch'}}
+		<View style={{flex: 1}}>
+			{/* Recherche figée : seule la liste défile. */}
+			{searchShown ? (
+				<View style={{paddingHorizontal: 14, paddingTop: 4, paddingBottom: 4}}>
+					<SearchField
+						value={search}
+						onChange={setSearch}
+						placeholder={i18n.t('sensor:search.placeholder')}
+						clearLabel={i18n.t('sensor:search.clear')}
+					/>
+				</View>
+			) : null}
+			<ScrollView
+				ref={scrollRef}
+				scrollEnabled={true}
+				scrollEventThrottle={16}
+				onScroll={e => {
+					scrollY.current = e.nativeEvent.contentOffset.y;
+				}}
 				onLayout={e => {
-					listY.current = e.nativeEvent.layout.y;
-				}}>
-				{rootSensors.map((sensor: any) => {
-					const children = getChildren(sensor);
-					const isExpanded = !collapsed.includes(`${sensor.id}`);
-					return (
-						<View
-							key={'sensor_' + sensor.id}
-							onLayout={e => onGroupLayout(`${sensor.id}`, e)}>
+					viewportHeight.current = e.nativeEvent.layout.height;
+				}}
+				refreshControl={
+					<RefreshControl
+						refreshing={refreshing}
+						onRefresh={onRefresh}
+						style={{
+							alignItems: 'flex-start',
+							justifyContent: 'flex-start',
+							alignSelf: 'flex-start'
+						}}
+					/>
+				}>
+				<View
+					style={{gap: 8, marginVertical: 4, alignSelf: 'stretch'}}
+					onLayout={e => {
+						listY.current = e.nativeEvent.layout.y;
+					}}>
+					{searchShown && shownRootSensors.length === 0 ? (
+						<Text style={styles.noMatch}>
+							{i18n.t('sensor:search.noMatch')}
+						</Text>
+					) : null}
+					{shownRootSensors.map((sensor: any) => {
+						const children = shownChildren(sensor);
+						const isExpanded =
+							!!query || !collapsed.includes(`${sensor.id}`);
+						return (
 							<View
-								onLayout={e =>
-									onSensorLayout(
-										`${sensor.id}`,
-										`${sensor.id}`,
-										e
-									)
-								}>
-								<SensorStack
-									cycleData={sensor}
-									navigation={props.navigation}
-									current={activeMenu}
-									closeSibillings={closeSibillings}
-									isParent={children.length > 0}
-									isExpanded={isExpanded}
-									onToggleExpand={() =>
-										toggleCollapsed(`${sensor.id}`)
-									}
-								/>
+								key={'sensor_' + sensor.id}
+								onLayout={e => onGroupLayout(`${sensor.id}`, e)}>
+								<View
+									onLayout={e =>
+										onSensorLayout(
+											`${sensor.id}`,
+											`${sensor.id}`,
+											e
+										)
+									}>
+									<SensorStack
+										cycleData={sensor}
+										navigation={props.navigation}
+										current={activeMenu}
+										closeSibillings={closeSibillings}
+										isParent={children.length > 0}
+										isExpanded={isExpanded}
+										onToggleExpand={() =>
+											toggleCollapsed(`${sensor.id}`)
+										}
+									/>
+								</View>
+								{isExpanded &&
+									children.map((child: any) => (
+										<View
+											key={'sensor_' + child.id}
+											style={{marginLeft: 20, marginTop: 8}}
+											onLayout={e =>
+												onSensorLayout(
+													`${child.id}`,
+													`${sensor.id}`,
+													e
+												)
+											}>
+											<SensorStack
+												cycleData={child}
+												navigation={props.navigation}
+												current={activeMenu}
+												closeSibillings={closeSibillings}
+											/>
+										</View>
+									))}
 							</View>
-							{isExpanded &&
-								children.map((child: any) => (
-									<View
-										key={'sensor_' + child.id}
-										style={{marginLeft: 20, marginTop: 8}}
-										onLayout={e =>
-											onSensorLayout(
-												`${child.id}`,
-												`${sensor.id}`,
-												e
-											)
-										}>
-										<SensorStack
-											cycleData={child}
-											navigation={props.navigation}
-											current={activeMenu}
-											closeSibillings={closeSibillings}
-										/>
-									</View>
-								))}
-						</View>
-					);
-				})}
-			</View>
-		</ScrollView>
+						);
+					})}
+				</View>
+			</ScrollView>
+		</View>
 	);
 }
+
+const styles = StyleSheet.create({
+	noMatch: {color: '#777', textAlign: 'center', marginTop: 24}
+});
 
 const mapStateToProps = (state: any) => ({
 	sensors: state.root_sensor.sensors,

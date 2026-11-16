@@ -1,4 +1,4 @@
-import {Platform, ScrollView, Text, TouchableOpacity, View} from 'react-native';
+import {Alert, Platform, ScrollView, Text, TouchableOpacity, View} from 'react-native';
 import React, {useCallback} from 'react';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import Icon from 'react-native-vector-icons/FontAwesome5';
@@ -22,7 +22,7 @@ const hapticTriggerType: string = Platform.select({
 }) as string;
 
 export function ProfilesScreen(props: any) {
-	const {t} = useTranslation('access');
+	const {t} = useTranslation(['access', 'common']);
 	const [profiles, setProfiles] = React.useState<string[]>([]);
 	// Déconnexion après changement de mot de passe : on passe directement à
 	// la connexion de ce login et de son profil, le nouveau mot de passe
@@ -85,15 +85,37 @@ export function ProfilesScreen(props: any) {
 									marginBottom: 20
 								}}>
 								<TouchableOpacity
-									onLongPress={async () => {
+									onLongPress={() => {
 										ReactNativeHapticFeedback.trigger(
 											'impactMedium',
 											hapticOptions
 										);
-										await deleteProfile(profile);
-										const profiles1 =
-											await getAllProfiles();
-										setProfiles(profiles1);
+										Alert.alert(
+											t('profiles.deleteTitle'),
+											t('profiles.deleteMessage', {
+												profile
+											}),
+											[
+												{
+													text: t('common:cancel'),
+													style: 'cancel'
+												},
+												{
+													text: t(
+														'profiles.deleteConfirm'
+													),
+													style: 'destructive',
+													onPress: async () => {
+														await deleteProfile(
+															profile
+														);
+														const profiles1 =
+															await getAllProfiles();
+														setProfiles(profiles1);
+													}
+												}
+											]
+										);
 									}}
 									onPress={async () => {
 										ReactNativeHapticFeedback.trigger(

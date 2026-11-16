@@ -86,7 +86,8 @@ export function DateRangePickerForm({
 	endName,
 	timeZone,
 	maximumDate = new Date(),
-	onChange = noop
+	onChange = noop,
+	renderTrigger
 }: Readonly<{
 	control: Control<any, any>;
 	placeholder: string;
@@ -95,6 +96,8 @@ export function DateRangePickerForm({
 	timeZone: string;
 	maximumDate?: Date;
 	onChange?: (range: {startDate: Date; endDate: Date}) => void;
+	// Remplace le libellé et le champ d'ouverture (ex. PillButton).
+	renderTrigger?: (label: string, open: () => void) => React.ReactNode;
 }>) {
 	const start = useController({control, name: startName});
 	const end = useController({control, name: endName});
@@ -162,17 +165,23 @@ export function DateRangePickerForm({
 
 	return (
 		<View>
-			<Text style={InputStyle.textInput}>{placeholder}</Text>
-			<Pressable onPress={open}>
-				<TextInput
-					style={[InputStyle.input, localStyles.field]}
-					placeholder={placeholder}
-					placeholderTextColor={placeholderColor}
-					editable={false}
-					value={label}
-					pointerEvents="none"
-				/>
-			</Pressable>
+			{renderTrigger ? (
+				renderTrigger(label, open)
+			) : (
+				<>
+					<Text style={InputStyle.textInput}>{placeholder}</Text>
+					<Pressable onPress={open}>
+						<TextInput
+							style={[InputStyle.input, localStyles.field]}
+							placeholder={placeholder}
+							placeholderTextColor={placeholderColor}
+							editable={false}
+							value={label}
+							pointerEvents="none"
+						/>
+					</Pressable>
+				</>
+			)}
 			<Modal
 				visible={visible}
 				transparent

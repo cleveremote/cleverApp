@@ -56,6 +56,16 @@
 		"events": "Events",
 		"inProcess": "Cycle in process!\nTo access settings please stop the process"
 	},
+	"cycleFilter": {
+		"search": "Search a cycle or a group",
+		"noMatch": "No cycle matches the search."
+	},
+	"moduleFilter": {
+		"all": "All",
+		"search": "Search a module",
+		"clearSearch": "Clear search",
+		"noMatch": "No module matches the filters or the search."
+	},
 	"filter": {
 		"CYCLE": "Cycles",
 		"MODULE": "Modules",
@@ -114,6 +124,15 @@
 		"proportionalShort": "Proportional"
 	},
 	"events": {
+		"count_one": "{{count}} event",
+		"count_other": "{{count}} events",
+		"filter": {
+			"all": "All",
+			"active": "Running",
+			"ended": "Ended",
+			"stopped": "Stopped"
+		},
+		"noMatch": "No event matches the filter.",
 		"device": "Cycle",
 		"period": "Period",
 		"allDevices": "All cycles",

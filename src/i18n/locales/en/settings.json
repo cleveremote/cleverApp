@@ -69,7 +69,8 @@
 			"logoutNotice": "You will be logged out.",
 			"typeLogin": "Type “{{login}}” to confirm",
 			"success": "The data has been reset.",
-			"failed": "The reset failed."
+			"failed": "The reset failed.",
+			"confirmMessage": "Enter your current password to confirm the reset."
 		}
 	}
 }

@@ -471,7 +471,9 @@ export function CycleSett(props: any) {
 						/>
 					</MenuAccordion>
 				)}
-				{!isCreateFlow && (
+				{/* Créé automatiquement par la box (`autoCreated`) : non supprimable. */}
+				{!isCreateFlow &&
+					!(props.route.params?.autoCreated || props.cycle?.autoCreated) && (
 					<DeleteItemMenu
 						key={61}
 						OnConfirm={() => {

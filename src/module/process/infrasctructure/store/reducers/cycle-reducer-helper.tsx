@@ -124,6 +124,60 @@ export const updateCycle = (prevCycles: any, cycle: any, tempId?: string) => {
 //     return cycles;
 // }
 
+// Le box n'envoie « conditions non vérifiées » qu'une fois : les status
+// suivants (refresh, push) ne la portent plus. On la garde, avec ses causes,
+// jusqu'à ce que l'utilisateur y réponde (Ignorer / Forcer → dismiss) ou que
+// l'exécutable démarre. Une nouvelle notification du box remplace l'ancienne.
+const PERSISTENT_NOTIFICATION = 'CONDITIONS_NOT_VERIFIED';
+const WAITING_CONFIRMATION = 'WAITTING_CONFIRMATION';
+export const keepPendingNotifications = (prevStatus: any[], nextStatus: any[]) =>
+	nextStatus.map((next: any) => {
+		const prev = prevStatus.find((x: any) => x?.id === next?.id);
+		// Un snapshot (fetch de configuration au retour dans l'app) peut ne pas
+		// porter `confirmation` : on garde celle reçue par socket tant que
+		// l'attente de confirmation dure, pour ne pas basculer d'un « démarrage
+		// planifié » vers le message de conflit.
+		if (
+			next?.status === WAITING_CONFIRMATION &&
+			!next.confirmation &&
+			prev?.status === WAITING_CONFIRMATION &&
+			prev.confirmation
+		) {
+			next = {...next, confirmation: prev.confirmation};
+		}
+		if (
+			prev?.notification !== PERSISTENT_NOTIFICATION ||
+			next?.notification ||
+			next?.status === 'IN_PROCCESS'
+		) {
+			return next;
+		}
+		return {
+			...next,
+			notification: prev.notification,
+			causes: prev.causes,
+			message: prev.message,
+			runId: prev.runId,
+			eventDate: prev.eventDate
+		};
+	});
+
+// Heure (téléphone) d'arrivée d'une notification ou d'une attente de
+// confirmation : sans runId (push WebSocket), le bandeau s'en sert pour
+// n'afficher que l'événement correspondant, pas le précédent.
+const WAITING = 'WAITTING_CONFIRMATION';
+export const stampNotified = (prevStatus: any[], nextStatus: any[]) =>
+	nextStatus.map((next: any) => {
+		const prev = prevStatus.find((x: any) => x?.id === next?.id);
+		const isNew =
+			(next?.notification && next.notification !== prev?.notification) ||
+			(next?.status === WAITING && prev?.status !== WAITING);
+		if (isNew) return {...next, notifiedAt: Date.now()};
+		return prev?.notifiedAt && (next?.notification || next?.status === WAITING)
+			? {...next, notifiedAt: prev.notifiedAt}
+			: next;
+	});
+
 export const updateStatus = (prevSatus: any, status: any) => {
 	const values = [...prevSatus];
 	status.forEach((element: any) => {

@@ -8,12 +8,11 @@ import {placeholderColor} from '../../../styles/components/common/Input';
 import {hapticOptions} from '../../../data/cycleTypes';
 import {authenticationService} from '../../../../module/authentication/domain/services/auth.service';
 import {
-	clearCredentials,
 	deleteProfile,
-	findProfileByLogin,
-	getAssociationProfileAccount
+	findProfileByLogin
 } from '../../../components/common/RememberMeManager';
 import {ErrorBox} from '../../../components/common/ErrorBox';
+import {ModalPasswordConfirm} from '../../../components/common/ModalPasswordConfirm';
 import {InfoBox} from '../../../components/common/InfoBox';
 import {
 	WARNING_COLORS,
@@ -31,17 +30,15 @@ export type ResetAccountSectionHandle = {submit: () => void};
 /** Oublie le profil mémorisé (et son mot de passe) de ce login. */
 const forgetProfile = async (login: string) => {
 	const profile = await findProfileByLogin(login);
-	if (!profile) return;
-	const data = await getAssociationProfileAccount(profile);
-	if (data?.account) await clearCredentials(data.account);
-	await deleteProfile(profile);
+	if (profile) await deleteProfile(profile);
 };
 
 /**
  * Contenu de la section Réinitialisation : on active ce qu'on efface (données
  * de la box et/ou compte), ce qui déplie un champ où recopier le login ; dès
  * que la saisie correspond, valider apparaît en haut à droite (signalé par
- * `onDirtyChange`) et envoie `front/box/reset/account`. Si le compte est
+ * `onDirtyChange`) et demande le mot de passe actuel dans une popup, qui
+ * confirme l'envoi de `front/box/reset/account`. Si le compte est
  * effacé, la session est fermée et le profil mémorisé de ce login supprimé.
  * Toute modification d'un toggle vide la confirmation.
  */
@@ -55,6 +52,7 @@ export const ResetAccountSection = React.forwardRef<
 	const [busy, setBusy] = React.useState(false);
 	const [error, setError] = React.useState('');
 	const [done, setDone] = React.useState(false);
+	const [confirming, setConfirming] = React.useState(false);
 	const hasScope = scope.data || scope.account;
 
 	// Au moins un toggle et le login recopié : valider apparaît dans l'en-tête.
@@ -72,32 +70,41 @@ export const ResetAccountSection = React.forwardRef<
 		setError('');
 	};
 
-	const reset = async () => {
+	// Renvoie l'erreur à afficher dans la popup (mot de passe refusé…), rien
+	// en cas de succès.
+	const reset = async (password: string) => {
 		ReactNativeHapticFeedback.trigger('impactHeavy', hapticOptions);
 		setBusy(true);
 		setError('');
-		const res = await authenticationService.resetAccount(login, scope);
+		const res = await authenticationService.resetAccount(
+			login,
+			password,
+			scope
+		);
 		if (res.res && scope.account) {
 			// Compte effacé : son profil mémorisé ne sert plus, on l'oublie
 			// avant que l'écran de connexion ne relise la liste des profils.
 			await forgetProfile(login);
 			await authenticationService.signout();
-			return;
+			return undefined;
 		}
 		setBusy(false);
-		setTyped('');
 		if (res.res) {
+			setConfirming(false);
+			setTyped('');
 			setScope(NO_SCOPE);
 			setDone(true);
-			return;
+			return undefined;
 		}
 		ReactNativeHapticFeedback.trigger('notificationError', hapticOptions);
-		setError(res.error || t('user.reset.failed'));
+		return res.error || t('user.reset.failed');
 	};
 
 	React.useImperativeHandle(ref, () => ({
 		submit: () => {
-			if (dirty) reset();
+			if (!dirty) return;
+			ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
+			setConfirming(true);
 		}
 	}));
 
@@ -152,6 +159,13 @@ export const ResetAccountSection = React.forwardRef<
 				{error ? <ErrorBox message={error} /> : null}
 				{done ? <InfoBox message={t('user.reset.success')} /> : null}
 			</View>
+			<ModalPasswordConfirm
+				isOpen={confirming}
+				title={t('user.reset.title')}
+				message={t('user.reset.confirmMessage')}
+				onClose={() => setConfirming(false)}
+				onConfirm={reset}
+			/>
 		</View>
 	);
 });

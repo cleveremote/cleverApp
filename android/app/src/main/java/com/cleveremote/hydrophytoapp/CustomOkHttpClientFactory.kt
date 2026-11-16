@@ -7,8 +7,12 @@ import com.facebook.react.modules.network.OkHttpClientProvider
 import okhttp3.Call
 import okhttp3.ConnectionPool
 import okhttp3.EventListener
+import okhttp3.Interceptor
+import okhttp3.MediaType
 import okhttp3.OkHttpClient
 import okhttp3.Protocol
+import okhttp3.RequestBody
+import okio.BufferedSink
 import java.io.IOException
 import java.net.InetSocketAddress
 import java.net.Proxy
@@ -53,6 +57,14 @@ class CustomOkHttpClientFactory(private val context: Context) : OkHttpClientFact
             ConnectionPool(MAX_IDLE_CONNECTIONS, IDLE_KEEP_ALIVE_S, TimeUnit.SECONDS)
         )
 
+        // HTTP/1.1 only. The box's Caddy offers h2, and over h2 every call to the
+        // box is multiplexed onto one shared connection: the `Connection: close`
+        // boxHttp.ts sends is a connection-specific header h2 drops. Once that
+        // connection stalls on the hotspot, every later call — retries included —
+        // is queued onto it and times out while the box is right there. Over
+        // HTTP/1.1 the header does what it says: one connection per call.
+        builder.protocols(listOf(Protocol.HTTP_1_1))
+
         try {
             val certInputStream = context.resources.openRawResource(
                 context.resources.getIdentifier("ca", "raw", context.packageName)
@@ -93,9 +105,39 @@ class CustomOkHttpClientFactory(private val context: Context) : OkHttpClientFact
             e.printStackTrace()
         }
 
+        // A request OkHttp has started sending is never sent again. By default a
+        // connection that drops before the response makes OkHttp replay the call
+        // on a fresh one — invisible from JS. `configure` is exactly that case: the
+        // box leaves its access point as soon as it has the request, the socket
+        // dies unanswered, and the box got the configuration twice, ~400 ms apart.
+        // Marking the body one-shot keeps the retries that matter here — a failed
+        // connect still moves on to the next mDNS address — and drops only the
+        // replay of a call the box may already have acted on.
+        builder.addInterceptor(NoReplayOfSentRequests)
+
         builder.eventListener(FailureLogger)
 
         return builder.build()
+    }
+
+    private object NoReplayOfSentRequests : Interceptor {
+        private val IDEMPOTENT = setOf("GET", "HEAD", "OPTIONS", "TRACE")
+
+        override fun intercept(chain: Interceptor.Chain): okhttp3.Response {
+            val request = chain.request()
+            val body = request.body
+            if (body == null || body.isOneShot() || request.method in IDEMPOTENT) {
+                return chain.proceed(request)
+            }
+            return chain.proceed(request.newBuilder().method(request.method, OneShot(body)).build())
+        }
+
+        private class OneShot(private val delegate: RequestBody) : RequestBody() {
+            override fun contentType(): MediaType? = delegate.contentType()
+            override fun contentLength(): Long = delegate.contentLength()
+            override fun writeTo(sink: BufferedSink) = delegate.writeTo(sink)
+            override fun isOneShot(): Boolean = true
+        }
     }
 
     /**

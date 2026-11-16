@@ -52,3 +52,30 @@ export function setPendingConfiguration(request: Promise<unknown>): void {
 export async function settlePendingConfiguration(): Promise<void> {
 	await pendingConfiguration;
 }
+
+/**
+ * Profil à créer pour la box qui vient d'être configurée.
+ *
+ * Il n'est enregistré qu'une fois la box confirmée sur le réseau demandé : une
+ * bascule qui échoue ne doit pas laisser derrière elle un profil pointant vers
+ * une box injoignable. En mémoire seulement, pour la même raison que le
+ * brouillon : il porte le mot de passe du compte.
+ */
+export type PendingProfile = {
+	deviceName: string;
+	login: string;
+	password: string;
+};
+
+let pendingProfile: PendingProfile | null = null;
+
+export function setPendingProfile(profile: PendingProfile | null): void {
+	pendingProfile = profile ? {...profile} : null;
+}
+
+/** Rend le profil en attente et l'oublie : il ne sert qu'une fois. */
+export function takePendingProfile(): PendingProfile | null {
+	const profile = pendingProfile;
+	pendingProfile = null;
+	return profile;
+}

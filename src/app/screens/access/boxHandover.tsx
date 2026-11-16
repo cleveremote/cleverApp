@@ -17,9 +17,11 @@ import {
 	navigationHeader
 } from '../../components/common/navigationHeaders';
 import {hotspotService} from '../../../services/hotspot';
+import {saveSigninData} from '../../components/common/RememberMeManager';
 import {
 	clearBoxConfigurationDraft,
-	settlePendingConfiguration
+	settlePendingConfiguration,
+	takePendingProfile
 } from './boxConfigurationDraft';
 import {
 	WifiStatus,
@@ -102,6 +104,24 @@ type PhoneOutcome =
  * réponde. Une box retombée sur un réseau connu répondrait tout aussi bien, et
  * serait annoncée configurée sans l'être.
  */
+/**
+ * Crée le profil de la box, maintenant qu'elle est confirmée sur le réseau.
+ *
+ * Seulement à ce moment-là : une bascule qui échoue ne doit laisser aucun
+ * profil derrière elle. Sans l'attendre : le trousseau peut demander une
+ * authentification (biométrie Android) ou afficher une alerte (iOS sans code),
+ * et rien de cela ne doit retenir l'écran. Son échec n'est pas non plus un
+ * échec de la box.
+ */
+function saveConfirmedProfile(): void {
+	const profile = takePendingProfile();
+	if (!profile) return;
+	const {deviceName, login, password} = profile;
+	saveSigninData(deviceName, login, login, password, true, '').catch(e =>
+		console.warn('[BoxHandover] saveSigninData:', e)
+	);
+}
+
 export function BoxHandover(props: any) {
 	const deviceName: string = props.route?.params?.deviceName ?? '';
 	const ssid: string = props.route?.params?.ssid ?? '';
@@ -221,7 +241,10 @@ export function BoxHandover(props: any) {
 			setPhase(outcome);
 			// Confirmée, la saisie n'a plus à être retenue — et elle porte la clé
 			// Wi-Fi et le mot de passe du compte.
-			if (outcome === 'confirmed') clearBoxConfigurationDraft();
+			if (outcome === 'confirmed') {
+				clearBoxConfigurationDraft();
+				saveConfirmedProfile();
+			}
 			ReactNativeHapticFeedback.trigger(
 				outcome === 'confirmed'
 					? 'notificationSuccess'

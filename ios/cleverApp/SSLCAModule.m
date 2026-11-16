@@ -165,11 +165,26 @@ RCT_EXPORT_METHOD(post:(NSString *)urlString
 
 #pragma mark - Private
 
+/**
+ * Each box call runs on a session of its own, hence on a fresh connection.
+ *
+ * On the box access point, a pooled connection left idle while the user types
+ * can be dead without the phone knowing. NSURLSession silently retries an idle
+ * connection failure for a GET, but not for a POST: `checkPassword` is written
+ * to the dead socket and waits out its whole timeout while the box is right
+ * there. `Connection: close` cannot be set on NSURLSession, so the pool is
+ * avoided instead — same policy as Android (see boxHttp.ts). One TLS handshake
+ * per call is negligible at the pace of these screens.
+ */
 - (void)runRequest:(NSURLRequest *)request
           resolver:(RCTPromiseResolveBlock)resolve
           rejecter:(RCTPromiseRejectBlock)reject
 {
-  NSURLSessionDataTask *task = [_trustedSession
+  NSURLSession *session =
+      [NSURLSession sessionWithConfiguration:_trustedSession.configuration
+                                    delegate:[[SSLCAModule alloc] init]
+                               delegateQueue:nil];
+  NSURLSessionDataTask *task = [session
       dataTaskWithRequest:request
         completionHandler:^(NSData *data, NSURLResponse *response, NSError *error) {
           if (error) {
@@ -190,6 +205,8 @@ RCT_EXPORT_METHOD(post:(NSString *)urlString
           });
         }];
   [task resume];
+  // Releases the session (and its delegate) once the task is done.
+  [session finishTasksAndInvalidate];
 }
 
 #pragma mark - NSURLSessionDelegate

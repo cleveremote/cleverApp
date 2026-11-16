@@ -1,11 +1,15 @@
 import {fieldLabelColor} from '../../../styles/components/common/Input';
 import React from 'react';
 import i18n from 'i18next';
-import {Pressable, StyleSheet, Text, TextInput, View} from 'react-native';
-import Icon from 'react-native-vector-icons/FontAwesome5';
+import {Pressable, StyleSheet, Text, View} from 'react-native';
 import {connect} from 'react-redux';
 import {ELEMENT_FONT_SIZE} from '../../../styles/metrics';
 import DeviceCommandModal from './DeviceCommandModal';
+import {
+	FilterChips,
+	SearchField,
+	normalizeSearch as normalize
+} from '../../../components/common/ListFilters';
 import {
 	ACCESS_STYLE,
 	AccessBadge,
@@ -39,8 +43,7 @@ const COLORS = {
 	cardBackground: 'white',
 	border: '#e5e7eb',
 	chip: '#eef1f4',
-	shadow: '#000',
-	transparent: 'transparent'
+	shadow: '#000'
 };
 
 type CommandFilter = 'all' | CommandAccess | 'confirm';
@@ -72,13 +75,6 @@ const toggleFilter = (filters: Filters, key: CommandFilter): Filters => {
 	return {...filters, access: filters.access === key ? undefined : key};
 };
 
-// Minuscules sans accents : « écriture » trouve « Ecriture ».
-const normalize = (text: string) =>
-	text
-		.normalize('NFD')
-		.replace(/[\u0300-\u036f]/g, '')
-		.toLowerCase();
-
 const matchesFilters = (command: any, filters: Filters, query: string) => {
 	if (filters.access && commandAccess(command) !== filters.access) {
 		return false;
@@ -90,79 +86,6 @@ const matchesFilters = (command: any, filters: Filters, query: string) => {
 		text => text && normalize(`${text}`).includes(query)
 	);
 };
-
-function CommandSearch({
-	value,
-	onChange
-}: Readonly<{value: string; onChange: (text: string) => void}>) {
-	return (
-		<View style={styles.search}>
-			<Icon name="search" size={14} color={mutedColor} />
-			<TextInput
-				value={value}
-				onChangeText={onChange}
-				placeholder={i18n.t('devices:model.search')}
-				placeholderTextColor={mutedColor}
-				autoCapitalize="none"
-				autoCorrect={false}
-				returnKeyType="search"
-				style={styles.searchInput}
-			/>
-			{value ? (
-				<Pressable
-					onPress={() => onChange('')}
-					hitSlop={10}
-					accessibilityLabel={i18n.t('devices:model.clearSearch')}
-				>
-					<Icon name="times-circle" solid size={16} color={mutedColor} />
-				</Pressable>
-			) : null}
-		</View>
-	);
-}
-
-function FilterChips({
-	selected,
-	onToggle
-}: Readonly<{
-	selected: Filters;
-	onToggle: (key: CommandFilter) => void;
-}>) {
-	return (
-		<View style={styles.filters}>
-			{FILTERS.map(({key, color}) => {
-				const active = isActive(selected, key);
-				return (
-					<Pressable
-						key={key}
-						onPress={() => onToggle(key)}
-						accessibilityState={{selected: active}}
-						style={[styles.filter, active && {borderColor: color}]}
-					>
-						<View
-							style={[
-								styles.filterDot,
-								{borderColor: color},
-								active && {backgroundColor: color}
-							]}
-						/>
-						<Text
-							numberOfLines={1}
-							adjustsFontSizeToFit
-							minimumFontScale={0.8}
-							style={[
-								styles.filterText,
-								active && styles.filterTextActive
-							]}
-						>
-							{i18n.t(`devices:model.${key}`)}
-						</Text>
-					</Pressable>
-				);
-			})}
-		</View>
-	);
-}
 
 // `showPath` : pendant une recherche, le chemin s'affiche sous le nom pour
 // qu'on voie pourquoi la commande correspond.
@@ -281,8 +204,21 @@ export function SlaveModelSection(props: any) {
 			<Text style={styles.subTitle}>{i18n.t('devices:model.commands')}</Text>
 			{allCommands.length ? (
 				<>
-					<CommandSearch value={search} onChange={setSearch} />
-					<FilterChips selected={filters} onToggle={onToggleFilter} />
+					<SearchField
+						value={search}
+						onChange={setSearch}
+						placeholder={i18n.t('devices:model.search')}
+						clearLabel={i18n.t('devices:model.clearSearch')}
+					/>
+					<FilterChips
+						chips={FILTERS.map(({key, color}) => ({
+							key,
+							color,
+							label: i18n.t(`devices:model.${key}`)
+						}))}
+						isActive={key => isActive(filters, key)}
+						onToggle={onToggleFilter}
+					/>
 				</>
 			) : null}
 			{commands.length === 0 ? (
@@ -368,53 +304,6 @@ const styles = StyleSheet.create({
 		shadowOpacity: 0.22,
 		shadowRadius: 2.22
 	},
-	// Champ de recherche : même gris que les pastilles, juste au-dessus.
-	search: {
-		flexDirection: 'row',
-		alignItems: 'center',
-		gap: 8,
-		backgroundColor: COLORS.chip,
-		borderRadius: 18,
-		paddingHorizontal: 12,
-		marginTop: 4,
-		marginHorizontal: -10,
-		height: 38
-	},
-	searchInput: {
-		flex: 1,
-		textAlign: 'left',
-		color: textColor,
-		fontSize: 14,
-		paddingVertical: 0
-	},
-	// Les pastilles se partagent toute la largeur, contenu centré.
-	filters: {
-		flexDirection: 'row',
-		alignItems: 'center',
-		gap: 6,
-		marginTop: 4,
-		marginBottom: 4,
-		// Mord sur le padding de la carte (16) pour laisser plus de largeur.
-		marginHorizontal: -10
-	},
-	filter: {
-		flex: 1,
-		flexDirection: 'row',
-		alignItems: 'center',
-		justifyContent: 'center',
-		gap: 4,
-		backgroundColor: COLORS.chip,
-		borderRadius: 18,
-		// Cadre toujours présent (transparent au repos) pour que la sélection
-		// ne décale rien ; il prend la couleur du filtre une fois actif.
-		borderWidth: 2,
-		borderColor: COLORS.transparent,
-		paddingHorizontal: 4,
-		paddingVertical: 8
-	},
-	filterDot: {width: 16, height: 16, borderRadius: 8, borderWidth: 2},
-	filterText: {flexShrink: 1, color: textColor, fontSize: 12},
-	filterTextActive: {fontWeight: '600'},
 	commandName: {
 		textAlign: 'left',
 		color: textColor,

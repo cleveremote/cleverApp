@@ -145,12 +145,15 @@ function SensorSettingsScreen(props: any) {
 						/>
 					</MenuAccordion>
 				) : null}
-				<DeleteItemMenu
-					key={61}
-					OnConfirm={() => {
-						_deleteItem();
-					}}
-				/>
+				{/* Créé automatiquement par la box (`autoCreated`) : non supprimable. */}
+				{props.sensor?.autoCreated ? null : (
+					<DeleteItemMenu
+						key={61}
+						OnConfirm={() => {
+							_deleteItem();
+						}}
+					/>
+				)}
 			</MenuGroup>
 		</SettingsScrollView>
 	);

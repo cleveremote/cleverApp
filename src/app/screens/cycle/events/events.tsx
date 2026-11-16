@@ -48,12 +48,25 @@ function EventsScreen(props: any) {
 
 	const [expandedId, setExpandedId] = useState<string | null>(null);
 
+	// Requête des événements exclue du loader global : loader propre à
+	// l'écran, levé à la réponse (ou au bout de 15 s sans réponse).
+	const [loading, setLoading] = useState(false);
+	const requestRef = React.useRef(0);
 	const onSubmit = (data: any) => {
-		props.loadEvents({
-			deviceId: props.route.params.cycle.id,
-			startDate: data.startDate,
-			endDate: data.endDate
-		});
+		const request = ++requestRef.current;
+		const done = () => {
+			if (requestRef.current === request) setLoading(false);
+		};
+		setLoading(true);
+		setTimeout(done, 15000);
+		props.loadEvents(
+			{
+				deviceId: props.route.params.cycle.id,
+				startDate: data.startDate,
+				endDate: data.endDate
+			},
+			done
+		);
 	};
 
 	const [refreshing, setRefreshing] = useState<boolean>(false);
@@ -157,7 +170,7 @@ function EventsScreen(props: any) {
 				/>
 			</View>
 			<Spinner
-				visible={props.isLoading}
+				visible={props.isLoading || loading}
 				color="#32404e"
 				textStyle={styles.spinnerTextStyle}
 				animation="fade"

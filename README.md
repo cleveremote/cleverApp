@@ -44,3 +44,7 @@ cd ..
 
 
 {"type":"cleverbox","ssid":"cleveremote-setup","password":"Nya0113?","security":"WPA2","host":"ZJzzA6Di","port":443,"deviceId":"ZJzzA6Di"}
+
+
+
+{"type":"cleverbox","ssid":"cleveremote-setup","password":"Nya0113?","security":"WPA2","host":"zc080obf","port":443,"deviceId":"zc080obf"}

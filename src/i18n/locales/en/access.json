@@ -175,6 +175,9 @@
 	"profiles": {
 		"add": "Add new profile ...",
 		"deleteHint": "(long press a profile to delete it)",
+		"deleteTitle": "Delete profile",
+		"deleteMessage": "The profile \"{{profile}}\" will be removed from this device, along with all data saved locally to access its box: box address, and remembered login and password.\n\nThe data on the box itself is not affected. To reconnect, you will need the box ID and your password to create a new profile.",
+		"deleteConfirm": "Delete",
 		"scanBox": "Scan a box"
 	},
 	"noConnection": {

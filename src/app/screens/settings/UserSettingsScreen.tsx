@@ -1,5 +1,4 @@
 import {
-	Button,
 	Keyboard,
 	Pressable,
 	StyleSheet,
@@ -16,8 +15,6 @@ import {
 	faUser
 } from '@fortawesome/free-solid-svg-icons';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
-import {pick, types, isErrorWithCode} from '@react-native-documents/picker';
-import RNFS from 'react-native-fs';
 import {ELEMENT_HEIGHT} from '../../styles/metrics';
 import {navigationHeader} from '../../components/common/navigationHeaders';
 import {KeyboardAwareScrollView} from '../../components/common/KeyboardAwareScrollView';
@@ -36,8 +33,7 @@ import {
 // User account: a user icon and the box id in a white box, then, laid out like the cycle
 // settings, one card of collapsible sections — Authentication & Security
 // (recovery email and password, a toggle opens each edit form) and Reset
-// (data/account erase) — then logout. The SVG debug picker
-// (relocated from the former settings.tsx) only shows in dev builds.
+// (data/account erase) — then logout.
 // Les sections se déplient sur place : rien à faire au toucher.
 const expandInline = () => undefined;
 
@@ -57,48 +53,6 @@ export function UserSettingsScreen(props: any) {
 	useEffect(() => {
 		authenticationService.getCurrentUserName().then(name => setLogin(name ?? ''));
 	}, []);
-
-	const uploadSvgAndParseText = async (): Promise<string | null> => {
-		try {
-			// 1️⃣ Sélection du fichier SVG
-			const res = await pick({
-				type: [types.allFiles] // tu peux filtrer sur 'image/svg+xml' aussi
-			});
-
-			// 2️⃣ Lecture du contenu du fichier
-			const fileUri = res[0].uri;
-
-			// ⚠️ Différence Android / iOS
-			let path = fileUri;
-			if (fileUri.startsWith('content://')) {
-				const destPath = `${RNFS.TemporaryDirectoryPath}/${res[0].name}`;
-				await RNFS.copyFile(fileUri, destPath);
-				path = destPath;
-			}
-
-			const svgText = await RNFS.readFile(path, 'utf8');
-
-			// 3️⃣ Retour du contenu texte du SVG
-			return svgText;
-		} catch (err) {
-			if (
-				err instanceof Error &&
-				isErrorWithCode(err) &&
-				err.code === 'DOCUMENT_PICKER_CANCELED'
-			) {
-			} else {
-				console.error('Erreur :', err);
-			}
-			return null;
-		}
-	};
-
-	const [svgText, setSvgText] = useState('');
-
-	const handleUpload = async () => {
-		const text = await uploadSvgAndParseText();
-		if (text) setSvgText(text);
-	};
 
 	useEffect(() => {
 		props.navigation.setOptions({
@@ -207,12 +161,6 @@ export function UserSettingsScreen(props: any) {
 						}}
 					/>
 				</View>
-				{__DEV__ ? (
-					<>
-						<Button title={t('chooseSvg')} onPress={handleUpload} />
-						{svgText ? <Text selectable>{svgText}</Text> : null}
-					</>
-				) : null}
 			</Pressable>
 		</KeyboardAwareScrollView>
 	);

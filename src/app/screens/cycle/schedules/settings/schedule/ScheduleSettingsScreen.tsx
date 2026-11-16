@@ -58,6 +58,18 @@ export function ScheduleSettingsScreen(props: any) {
 		isNew,
 		// Section General toujours visible : pas de rouge à l'entrée en création.
 		deferNewValidation: true,
+		// En modification, valider n'apparaît qu'après un changement.
+		backWhenPristine: true,
+		// Abandon : remet dans le slice l'élément d'origine (celui de la liste),
+		// sinon sa réouverture repartirait des modifications abandonnées.
+		discard: () => {
+			if (props.route.params.schedule?.id) {
+				props.loadSchedule(
+					props.route.params.schedule.id,
+					props.route.params.schedule.cycleId || props.route.params.cycle.id
+				);
+			}
+		},
 		hasChanges: () => !!scheduleRef.current?.isModified,
 		save: onDone => props.saveSchedule(scheduleRef.current, true, onDone),
 		validate: () => ({

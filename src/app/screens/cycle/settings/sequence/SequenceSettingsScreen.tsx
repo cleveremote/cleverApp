@@ -218,6 +218,15 @@ function SequenceSettingsScreen(props: any) {
 								text: i18n.t('common:discard.confirm'),
 								style: 'destructive',
 								onPress: () => {
+									// Remet dans le slice la séquence d'origine
+									// (celle de la liste du cycle) : sinon, à la
+									// réouverture, le formulaire repartirait des
+									// modifications abandonnées.
+									if (props.route.params.item?.id) {
+										props.loadSequence(
+											props.route.params.item.id
+										);
+									}
 									listenerUnsubscribe();
 									props.navigation.dispatch(e.data.action);
 								}
