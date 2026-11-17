@@ -11,6 +11,21 @@ const IPV4 = /^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$/;
 const LABEL = /^[a-z0-9]([a-z0-9-]*[a-z0-9])?$/;
 const LOCAL_SUFFIX = '.local';
 
+/**
+ * Schéma et hôte du lien d'appairage : `cleverapp://box?ssid=…&password=…`.
+ *
+ * Un QR code qui porte du JSON n'est que du texte pour l'appareil photo du
+ * téléphone. Sous forme de lien, il ouvre l'application — le schéma est déclaré
+ * dans AndroidManifest.xml et Info.plist, à garder identiques à cette valeur.
+ */
+export const BOX_LINK_SCHEME = 'cleverapp';
+export const BOX_LINK_HOST = 'box';
+
+const BOX_LINK = new RegExp(
+	`^${BOX_LINK_SCHEME}://${BOX_LINK_HOST}/?(?:\\?([^#]*))?(?:#.*)?$`,
+	'i'
+);
+
 const invalid = (message: string): never => {
 	throw new HotspotError('INVALID_QR', message);
 };
@@ -88,18 +103,55 @@ function normalizeSecurity(value: unknown): WifiSecurity {
 	return security as WifiSecurity;
 }
 
+/** Vrai pour un lien d'appairage, quel que soit son contenu. */
+export function isCleverBoxLink(raw: string): boolean {
+	return BOX_LINK.test(raw.trim());
+}
+
 /**
- * Parses the raw string carried by a CleverBox QR code.
+ * Lit les champs d'un lien d'appairage, ou rend `null` si ce n'en est pas un.
+ *
+ * Les champs sont ceux du JSON, passés en paramètres encodés. Un `+` vaut une
+ * espace, comme dans un formulaire : `encodeURIComponent` comme `urlencode`
+ * écrivent `%2B` pour un vrai `+`, donc les deux générateurs sont lus juste.
+ */
+function decodeLink(raw: string): Record<string, unknown> | null {
+	const match = BOX_LINK.exec(raw);
+	if (!match) return null;
+
+	// Le lien dit déjà qu'il s'agit d'une box : `type` y est facultatif.
+	const data: Record<string, unknown> = {type: 'cleverbox'};
+	for (const pair of (match[1] ?? '').split('&')) {
+		if (pair === '') continue;
+		const separator = pair.indexOf('=');
+		const key = separator === -1 ? pair : pair.slice(0, separator);
+		const value = separator === -1 ? '' : pair.slice(separator + 1);
+		try {
+			data[decodeURIComponent(key)] = decodeURIComponent(
+				value.replace(/\+/g, ' ')
+			);
+		} catch {
+			invalid(i18n.t('access:qr.notCleverBox'));
+		}
+	}
+	return data;
+}
+
+/**
+ * Parses the raw string carried by a CleverBox QR code: either the pairing
+ * link (`cleverapp://box?…`) or the older bare JSON object.
  *
  * Always throws {@link HotspotError} with code `INVALID_QR` on any problem, so
  * the scanning screen has a single error shape to render.
  */
 export function parseCleverBoxQr(raw: string): CleverBoxQrPayload {
-	let decoded: unknown;
-	try {
-		decoded = JSON.parse(raw);
-	} catch {
-		invalid(i18n.t('access:qr.notCleverBox'));
+	let decoded: unknown = decodeLink(raw.trim());
+	if (decoded === null) {
+		try {
+			decoded = JSON.parse(raw);
+		} catch {
+			invalid(i18n.t('access:qr.notCleverBox'));
+		}
 	}
 
 	if (typeof decoded !== 'object' || decoded === null || Array.isArray(decoded)) {

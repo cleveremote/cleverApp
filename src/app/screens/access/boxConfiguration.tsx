@@ -191,9 +191,6 @@ export function BoxConfiguration(props: any) {
 	// Pourquoi la tentative précédente a échoué, tel que la box le rapporte.
 	// Affiché jusqu'à la première correction.
 	const [lastFailure, setLastFailure] = React.useState('');
-	// Demande du mot de passe actuel, ouverte à la validation de la dernière
-	// étape.
-	const [promptOpen, setPromptOpen] = React.useState(false);
 	// Configuration envoyée : la dernière étape, la progression, prend la
 	// place du formulaire. Porte ce dont `BoxHandover` a besoin.
 	const [handover, setHandover] = React.useState<Record<
@@ -252,13 +249,10 @@ export function BoxConfiguration(props: any) {
 	}, [nav, props.navigation]);
 
 	// Retour arrière — bouton, geste ou touche matérielle — au milieu de
-	// l'assistant : on ferme la demande de mot de passe, ou on recule d'une
-	// étape, plutôt que de quitter. Le `reset` qui suit la soumission, lui,
+	// l'assistant : on recule d'une étape, plutôt que de quitter. Le `reset` qui suit la soumission, lui,
 	// n'est pas un retour et passe.
 	const stepIndexRef = useRef(stepIndex);
 	stepIndexRef.current = stepIndex;
-	const promptOpenRef = useRef(promptOpen);
-	promptOpenRef.current = promptOpen;
 	const handoverRef = useRef(handover);
 	handoverRef.current = handover;
 	useEffect(
@@ -269,9 +263,6 @@ export function BoxConfiguration(props: any) {
 				if (handoverRef.current) {
 					// Configuration envoyée : on ne revient plus au formulaire.
 					e.preventDefault();
-				} else if (promptOpenRef.current) {
-					e.preventDefault();
-					setPromptOpen(false);
 				} else if (stepIndexRef.current > 0) {
 					e.preventDefault();
 					setStepIndex(index => index - 1);
@@ -418,7 +409,6 @@ export function BoxConfiguration(props: any) {
 				currentPassword: 'currentPasswordWrong'
 			}));
 			setStepIndex(BOX_CONFIGURATION_STEPS[mode].length - 1);
-			setPromptOpen(true);
 		} else if (returnReason) {
 			setLastFailure(t(`configureError.${returnReason}`));
 		} else if (
@@ -535,7 +525,9 @@ export function BoxConfiguration(props: any) {
 		}
 
 		// Garde-fou : un brouillon repris peut avoir laissé une étape précédente
-		// invalide. On y retourne plutôt que de demander le mot de passe.
+		// invalide. On y retourne plutôt que d'envoyer — y compris pour le
+		// nouveau mot de passe, qui ne se compare à celui de l'étiquette qu'une
+		// fois ce dernier saisi.
 		const firstInvalid = steps.findIndex(
 			s => !isBoxConfigurationValid(stepErrors(errors, s))
 		);
@@ -545,25 +537,6 @@ export function BoxConfiguration(props: any) {
 			return;
 		}
 
-		setPromptOpen(true);
-	};
-
-	/** Validation de la demande de mot de passe : c'est elle qui envoie. */
-	const confirmPassword = () => {
-		ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
-		// Lu sur la saisie et non sur `errors` : après un refus de la box, le
-		// champ vidé y porte ce refus, pas « obligatoire ».
-		if (!form.currentPassword) {
-			touchAll(['currentPassword']);
-			return;
-		}
-		// Le nouveau mot de passe ne peut se comparer à celui de l'étiquette
-		// qu'une fois ce dernier saisi : l'erreur est montrée sur son champ.
-		if (errors.password) {
-			touchAll(['password']);
-			setPromptOpen(false);
-			return;
-		}
 		configure();
 	};
 
@@ -663,7 +636,6 @@ export function BoxConfiguration(props: any) {
 		// de réseau pour travailler une fois le point d'accès fermé, et toutes
 		// les sorties de `BoxHandover` remplacent la pile.
 		Keyboard.dismiss();
-		setPromptOpen(false);
 		setHandover({
 			deviceName,
 			ssid: form.ssid,
@@ -899,101 +871,74 @@ export function BoxConfiguration(props: any) {
 	);
 
 	/**
-	 * Demande du mot de passe actuel, par-dessus la dernière étape. Dessinée
-	 * dans l'arbre de l'écran et non dans un `Modal` natif, pour la même
-	 * raison que `BusyOverlay`.
+	 * Dernière étape : le mot de passe que la box accepte aujourd'hui. C'est
+	 * sa validation qui envoie la configuration.
 	 */
-	const renderPasswordPrompt = () => (
-		<ScrollView
-			style={styles.promptScrim}
-			contentContainerStyle={styles.promptContent}
-			keyboardShouldPersistTaps="handled"
-			accessibilityViewIsModal>
-			<View style={[styles.card, styles.promptCard]}>
-				<Icon
-					name={mode === 'setup' ? 'tag' : 'lock'}
-					size={26}
-					color={COLORS.primary}
-				/>
-				<Text style={accessStyles.title}>
-					{t(
-						mode === 'setup'
-							? 'boxConfig.ownershipTitle'
-							: 'boxConfig.recoveryTitle'
-					)}
-				</Text>
-				{mode === 'setup' ? (
-					<Text style={[accessStyles.body, styles.promptBody]}>
-						{t('boxConfig.ownershipSubtitle')}
-					</Text>
-				) : null}
-
-				<FieldLabel
-					text={t(
-						mode === 'setup'
-							? 'boxConfig.labelPassword'
-							: 'boxConfig.boxPassword'
-					)}
-				/>
-				<PasswordField
-					autoFocus={true}
-					invalid={Boolean(errorFor('currentPassword'))}
-					placeholder={t(
-						mode === 'setup'
-							? 'boxConfig.labelPassword'
-							: 'boxConfig.boxPassword'
-					)}
-					textContentType="password"
-					value={form.currentPassword}
-					onChangeText={value => set('currentPassword', value)}
-					onSubmitEditing={confirmPassword}
-					returnKeyType="done"
-				/>
-				{currentPasswordFeedback()}
-				{mode === 'setup' ? (
-					<View style={styles.hintRow}>
-						<Icon name="tag" size={14} color={COLORS.primary} />
-						<Text style={[styles.hint, {flex: 1}]}>
-							{t('boxConfig.labelPasswordHint')}
-						</Text>
-					</View>
-				) : (
-					<>
-						<Text style={styles.hint}>{t('boxConfig.boxPasswordHint')}</Text>
-						<Text style={styles.hint}>
-							{t('boxConfig.forgotPassword')}{' '}
-							<Text
-								style={styles.forgotLink}
-								accessibilityRole="link"
-								onPress={() =>
-									props.navigation.navigate('ForgotPassword', {
-										// L'identifiant vient du QR scanné : rien à
-										// ressaisir.
-										login: form.boxIdentifier.trim(),
-										returnTo: 'BoxConfiguration'
-									})
-								}>
-								{t('boxConfig.forgotPasswordAction')}
-							</Text>
-						</Text>
-					</>
+	const renderOwnership = () => (
+		<>
+			<FieldLabel
+				text={t(
+					mode === 'setup' ? 'boxConfig.labelPassword' : 'boxConfig.boxPassword'
 				)}
-
-				<OutlineButton
-					label={t(
-						mode === 'setup' ? 'boxConfig.configure' : 'boxConfig.reconnect'
-					)}
-					icon={mode === 'setup' ? faCheck : faWifi}
-					onPress={confirmPassword}
-					style={styles.outlineSubmit}
-				/>
-				<LinkButton
-					label={t('common:cancel')}
-					onPress={() => setPromptOpen(false)}
-				/>
-			</View>
-		</ScrollView>
+			/>
+			<PasswordField
+				autoFocus={true}
+				invalid={Boolean(errorFor('currentPassword'))}
+				placeholder={t(
+					mode === 'setup' ? 'boxConfig.labelPassword' : 'boxConfig.boxPassword'
+				)}
+				textContentType="password"
+				value={form.currentPassword}
+				onChangeText={value => set('currentPassword', value)}
+				onSubmitEditing={next}
+				returnKeyType="done"
+			/>
+			{currentPasswordFeedback()}
+			{mode === 'setup' ? (
+				<View style={styles.hintRow}>
+					<Icon name="tag" size={14} color={COLORS.primary} />
+					<Text style={[styles.hint, {flex: 1}]}>
+						{t('boxConfig.labelPasswordHint')}
+					</Text>
+				</View>
+			) : (
+				<>
+					<Text style={styles.hint}>{t('boxConfig.boxPasswordHint')}</Text>
+					<Text style={styles.hint}>
+						{t('boxConfig.forgotPassword')}{' '}
+						<Text
+							style={styles.forgotLink}
+							accessibilityRole="link"
+							onPress={() =>
+								props.navigation.navigate('ForgotPassword', {
+									// L'identifiant vient du QR scanné : rien à
+									// ressaisir.
+									login: form.boxIdentifier.trim(),
+									returnTo: 'BoxConfiguration'
+								})
+							}>
+							{t('boxConfig.forgotPasswordAction')}
+						</Text>
+					</Text>
+				</>
+			)}
+		</>
 	);
+
+	const renderStep = () => {
+		switch (step) {
+			case 'wifi':
+				return renderWifi();
+			case 'account':
+				return renderAccount();
+			case 'ownership':
+				return renderOwnership();
+		}
+	};
+
+	// En `recovery`, l'encadré et le bandeau parlent du Wi-Fi : ils restent
+	// sur son étape.
+	const recoveryWifi = mode === 'recovery' && step === 'wifi';
 
 	return (
 		<KeyboardAvoidingView
@@ -1005,29 +950,36 @@ export function BoxConfiguration(props: any) {
 				keyboardShouldPersistTaps="handled">
 				<StepHeader
 					headerKey={mode === 'setup' ? step : 'recovery'}
+					icon={stepIcon(step, mode)}
 					subtitle={
 						mode === 'setup' ? t(`boxConfig.${step}Subtitle`) : undefined
 					}
-					info={
-						mode === 'recovery' ? t('boxConfig.existingAccount') : undefined
-					}
+					info={recoveryWifi ? t('boxConfig.existingAccount') : undefined}
 					index={stepIndex}
 					// L'écran de bascule est la dernière étape de l'assistant.
 					total={steps.length + 1}
-					banner={mode === 'recovery' ? recoveryBanner(boxMode) : undefined}
+					banner={recoveryWifi ? recoveryBanner(boxMode) : undefined}
 				/>
 
 				<View style={styles.card}>
 					<View style={{gap: 8, alignItems: 'center'}}>
 						<DangerBox message={lastFailure} />
 
-						{step === 'wifi' ? renderWifi() : renderAccount()}
+						{renderStep()}
 
 						<DangerBox message={error} />
 
 						<OutlineButton
-							label={t('boxConfig.continue')}
-							icon={faArrowRight}
+							label={t(
+								!isLastStep
+									? 'boxConfig.continue'
+									: mode === 'setup'
+									? 'boxConfig.configure'
+									: 'boxConfig.reconnect'
+							)}
+							icon={
+								!isLastStep ? faArrowRight : mode === 'setup' ? faCheck : faWifi
+							}
 							disabled={isLoading}
 							onPress={next}
 							// Grisé sans être bloqué : l'appui montre ce qui manque.
@@ -1039,7 +991,6 @@ export function BoxConfiguration(props: any) {
 					</View>
 				</View>
 			</ScrollView>
-			{promptOpen ? renderPasswordPrompt() : null}
 			<BusyOverlay visible={isLoading} message={busyMessage} />
 		</KeyboardAvoidingView>
 	);
@@ -1056,12 +1007,20 @@ function recoveryBanner(boxMode: BoxMode | null): string | undefined {
 		: i18n.t('access:boxConfig.recoveryFailedNoSsid');
 }
 
+/** Pastille de l'étape : l'étiquette pour le mot de passe imprimé dessus. */
+function stepIcon(step: BoxConfigurationStep, mode: BoxConfigurationMode) {
+	if (step === 'wifi') return 'wifi';
+	if (step === 'ownership' && mode === 'setup') return 'tag';
+	return 'lock';
+}
+
 /**
  * Titre de l'étape et, en `setup`, la progression de l'assistant. En
  * `recovery`, le bandeau dit pourquoi la box redemande son Wi-Fi.
  */
 const StepHeader = ({
 	headerKey: key,
+	icon,
 	subtitle,
 	info,
 	index,
@@ -1070,6 +1029,7 @@ const StepHeader = ({
 }: {
 	/** `boxConfig.<headerKey>Title` / `…Subtitle` : l'étape, ou la variante `recovery`. */
 	headerKey: BoxConfigurationStep | 'recovery';
+	icon: string;
 	/** Sous-titre ; absent, rien n'est affiché sous le titre. */
 	subtitle?: string;
 	/** Encadré d'information sous le titre. */
@@ -1079,7 +1039,6 @@ const StepHeader = ({
 	banner?: string;
 }) => {
 	const {t} = useTranslation('access');
-	const icon = key === 'account' ? 'lock' : 'wifi';
 	return (
 		<View style={styles.header}>
 			<View style={styles.badge}>
@@ -1200,26 +1159,6 @@ const styles = StyleSheet.create({
 	forgotLink: {
 		fontWeight: 'bold',
 		textDecorationLine: 'underline'
-	},
-	promptScrim: {
-		...StyleSheet.absoluteFillObject,
-		zIndex: 5,
-		backgroundColor: COLORS.scrim
-	},
-	// En haut plutôt qu'au centre : le clavier, ouvert d'office, couvrirait
-	// le bouton d'une carte centrée.
-	promptContent: {
-		paddingTop: 40,
-		paddingBottom: 40
-	},
-	promptCard: {
-		marginTop: 0,
-		gap: 8,
-		alignItems: 'center'
-	},
-	promptBody: {
-		marginTop: 0,
-		marginBottom: 6
 	},
 	banner: {
 		flexDirection: 'row',

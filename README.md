@@ -48,3 +48,7 @@ cd ..
 
 
 {"type":"cleverbox","ssid":"cleveremote-setup","password":"Nya0113?","security":"WPA2","host":"zc080obf","port":443,"deviceId":"zc080obf"}
+
+Même contenu sous forme de lien, lisible par l'appareil photo du téléphone (ouvre l'application sur la configuration de la box) :
+
+cleverapp://box?ssid=cleveremote-setup&password=Nya0113%3F&security=WPA2&host=zc080obf&port=443&deviceId=zc080obf

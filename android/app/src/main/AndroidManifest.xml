@@ -55,6 +55,14 @@
             <action android:name="android.intent.action.MAIN" />
             <category android:name="android.intent.category.LAUNCHER" />
         </intent-filter>
+        <!-- QR pairing: the box QR code is a cleverapp://box?… link, so the
+             phone's own camera opens the app on it (see parseQr.ts). -->
+        <intent-filter>
+            <action android:name="android.intent.action.VIEW" />
+            <category android:name="android.intent.category.DEFAULT" />
+            <category android:name="android.intent.category.BROWSABLE" />
+            <data android:scheme="cleverapp" android:host="box" />
+        </intent-filter>
       </activity>
     </application>
 </manifest>

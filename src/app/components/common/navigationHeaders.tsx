@@ -7,8 +7,7 @@ import {directionalIcon} from '../../../i18n/rtl';
 export function navigationHeader(
 	onPress: (event: GestureResponderEvent) => void,
 	icon: string,
-	rotate = false,
-	disabled = false
+	rotate = false
 ) {
 	return rotate ? (
 		<View>
@@ -20,10 +19,7 @@ export function navigationHeader(
 		</View>
 	) : (
 		<View>
-			<TouchableOpacity
-				onPress={onPress}
-				disabled={disabled}
-				style={disabled ? {opacity: 0.3} : undefined}>
+			<TouchableOpacity onPress={onPress}>
 				<Icon name={directionalIcon(icon)} size={30} color="#32404e" style={{marginHorizontal: 10}} />
 			</TouchableOpacity>
 		</View>

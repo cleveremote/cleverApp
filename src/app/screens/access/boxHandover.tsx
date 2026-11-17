@@ -13,11 +13,13 @@ import {useTranslation} from 'react-i18next';
 import {useNavigation} from '@react-navigation/native';
 import {
 	faPen,
+	faRightToBracket,
 	faRotateRight,
 	faWifi
 } from '@fortawesome/free-solid-svg-icons';
 import {hapticOptions} from '../../data/cycleTypes';
 import {
+	brandLogo,
 	navigationHeader
 } from '../../components/common/navigationHeaders';
 import {hotspotService} from '../../../services/hotspot';
@@ -256,16 +258,15 @@ export function BoxHandover(props: any) {
 
 	useEffect(() => {
 		nav.setOptions({
-			// Quitter l'assistant : retour à la liste des profils.
-			headerLeft: () => navigationHeader(goToProfiles, 'times-circle', false),
-			// Aucun retour en arrière : le formulaire et le scanner n'ont plus
-			// de réseau pour travailler. La connexion se fait d'ici, mais
-			// seulement une fois les trois dernières étapes passées : avant,
-			// rien ne dit que la box y répondra.
-			headerRight: () =>
-				navigationHeader(goToSignin, 'check-circle', false, !canSignIn)
+			// Même en-tête que les étapes du formulaire, dont celle-ci est la
+			// suite.
+			headerLeft: brandLogo,
+			// Quitter l'assistant : retour à la liste des profils. Aucun retour
+			// en arrière — le formulaire et le scanner n'ont plus de réseau pour
+			// travailler.
+			headerRight: () => navigationHeader(goToProfiles, 'list', false)
 		});
-	}, [canSignIn, goToProfiles, goToSignin, nav]);
+	}, [goToProfiles, nav]);
 
 	/**
 	 * Étape 2 — attendre que le téléphone soit revenu sur le réseau demandé.
@@ -554,14 +555,27 @@ export function BoxHandover(props: any) {
 	);
 
 	/**
+	 * Connexion : visible pendant les vérifications, mais active seulement une
+	 * fois les trois dernières passées — avant, rien ne dit que la box
+	 * répondra.
+	 */
+	const signInButton = (
+		<OutlineButton
+			label={t('handover.signIn')}
+			icon={faRightToBracket}
+			disabled={!canSignIn}
+			onPress={goToSignin}
+		/>
+	);
+
+	/**
 	 * Les actions dépendent de la phase, mais la liste des étapes reste, elle,
 	 * affichée dans tous les cas : c'est elle qui dit laquelle a échoué.
 	 */
 	const actions = () => {
 		switch (phase) {
 			case 'confirmed':
-				// La connexion est dans l'en-tête.
-				return null;
+				return signInButton;
 			case 'failed':
 				// Wi-Fi rejoint, ou échec constaté sur le point d'accès : le
 				// téléphone n'a pas de réseau à changer.
@@ -607,7 +621,12 @@ export function BoxHandover(props: any) {
 					</>
 				);
 			default:
-				return <WifiSettingsLink />;
+				return (
+					<>
+						{signInButton}
+						<WifiSettingsLink />
+					</>
+				);
 		}
 	};
 

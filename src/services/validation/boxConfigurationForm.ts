@@ -26,8 +26,8 @@ export type BoxConfigurationForm = {
 	/**
 	 * Mot de passe que la box accepte aujourd'hui, demandé comme preuve de
 	 * possession : celui de l'étiquette en mode `setup`, celui choisi par
-	 * l'utilisateur en mode `recovery`. Il n'appartient à aucune étape : il
-	 * est demandé à la validation de la dernière, juste avant l'envoi.
+	 * l'utilisateur en mode `recovery`. Il a son étape, la dernière : c'est
+	 * sa validation qui envoie la configuration.
 	 */
 	currentPassword: string;
 	/** Nouveau mot de passe, obligatoire en mode `setup`. */
@@ -46,24 +46,21 @@ export type BoxConfigurationForm = {
 export type BoxConfigurationMode = 'setup' | 'recovery';
 
 /**
- * Étapes de l'assistant, dans l'ordre. Le mode `recovery` n'en a qu'une, le
- * Wi-Fi. Le mot de passe actuel se saisit après la dernière, dans les deux
- * modes.
+ * Étapes de l'assistant, dans l'ordre. Le mode `recovery` saute le compte, que
+ * la box garde. Dans les deux modes, la dernière demande le mot de passe
+ * actuel : c'est elle qui envoie.
  */
-export type BoxConfigurationStep = 'wifi' | 'account';
+export type BoxConfigurationStep = 'wifi' | 'account' | 'ownership';
 
 export const BOX_CONFIGURATION_STEPS: Record<
 	BoxConfigurationMode,
 	BoxConfigurationStep[]
 > = {
-	setup: ['wifi', 'account'],
-	recovery: ['wifi']
+	setup: ['wifi', 'account', 'ownership'],
+	recovery: ['wifi', 'ownership']
 };
 
-/**
- * Champs saisis à chaque étape. `currentPassword` n'y figure pas : il est
- * demandé à part, une fois toutes les étapes valides.
- */
+/** Champs saisis à chaque étape. */
 export function fieldsOfStep(
 	step: BoxConfigurationStep
 ): (keyof BoxConfigurationForm)[] {
@@ -72,6 +69,8 @@ export function fieldsOfStep(
 			return ['boxIdentifier', 'ssid', 'psk'];
 		case 'account':
 			return ['deviceName', 'email', 'password', 'confirmPassword'];
+		case 'ownership':
+			return ['currentPassword'];
 	}
 }
 

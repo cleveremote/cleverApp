@@ -59,11 +59,25 @@ class SceneDelegate: UIResponder, UIWindowSceneDelegate {
     // Certaines libs lisent encore `UIApplication.shared.delegate.window`.
     appDelegate.window = window
 
+    // Lancement à froid par un lien d'appairage (`cleverapp://box?…`) : avec
+    // les scènes, l'URL arrive ici et non dans les launchOptions de l'app.
+    // On la remet sous la clé que lit `Linking.getInitialURL()`.
+    var launchOptions: [AnyHashable: Any]?
+    if let url = connectionOptions.urlContexts.first?.url {
+      launchOptions = [UIApplication.LaunchOptionsKey.url: url]
+    }
+
     factory.startReactNative(
       withModuleName: "cleverApp",
       in: window,
-      launchOptions: nil
+      launchOptions: launchOptions
     )
+  }
+
+  // Même lien, application déjà lancée : relayé à `Linking` côté JS.
+  func scene(_ scene: UIScene, openURLContexts URLContexts: Set<UIOpenURLContext>) {
+    guard let url = URLContexts.first?.url else { return }
+    RCTLinkingManager.application(UIApplication.shared, open: url, options: [:])
   }
 }
 

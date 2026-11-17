@@ -199,6 +199,18 @@ export function ScanBoxScreen(props: any) {
 		[joinBox]
 	);
 
+	// QR code lu par l'appareil photo du téléphone : le lien ouvre l'application
+	// sur cet écran avec son contenu (voir `linking` dans routes/index.tsx), et
+	// l'appairage se déroule comme après un scan fait ici. Le paramètre est
+	// retiré aussitôt, pour qu'un retour sur l'écran ne le rejoue pas et qu'un
+	// second scan du même code reparte bien.
+	const linkedQr: string | undefined = props.route?.params?.qr;
+	useEffect(() => {
+		if (!linkedQr) return;
+		props.navigation.setParams({qr: undefined});
+		pair(linkedQr);
+	}, [linkedQr, pair, props.navigation]);
+
 	// ------------------------------------------------------------------ render
 
 	if (phase === 'unavailable') {
@@ -324,7 +336,9 @@ export function ScanBoxScreen(props: any) {
 
 	return (
 		<View style={styles.fill}>
-			{Scanner ? (
+			{/* Monté seulement pour viser : arrivé par le lien d'appairage, le code
+			    est déjà lu, et le scanner demanderait la caméra pour rien. */}
+			{Scanner && phase === 'scanning' ? (
 				// Le focus conditionne aussi `isActive` : sinon VisionCamera garde
 				// la session caméra ouverte pendant qu'un autre écran est affiché.
 				<Scanner
