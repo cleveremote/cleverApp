@@ -20,3 +20,15 @@ export type {
 	RecoveryReason,
 	WaitForStableModeOptions
 } from './boxMode';
+export {
+	boxLocationAfter,
+	configureOutcome,
+	configureSendResult
+} from './boxConfigureResult';
+export type {
+	BoxLocation,
+	ConfigureErrorCode,
+	ConfigureOutcome,
+	ConfigureResult,
+	ConfigureSend
+} from './boxConfigureResult';

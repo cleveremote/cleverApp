@@ -45,6 +45,8 @@ export const COLORS = {
 	warningBorder: '#f6d3a8',
 	success: '#2f9e44',
 	light: '#ffffff',
+	/** Segment d'étape pas encore atteint. */
+	stepTrack: '#CBD5E0',
 	shadow: '#000000',
 	viewfinder: '#000000',
 	/** Voile d'attente posé sur l'écran. */
@@ -199,6 +201,30 @@ export const WarningBox = ({message}: {message?: string}) =>
 /** Encadré descriptif gris : partagé avec les autres écrans. */
 export {DescBox} from '../../components/common/DescBox';
 
+/**
+ * Progression de l'assistant de configuration : un segment par étape, et le
+ * compteur. Partagée par le formulaire et l'écran de bascule, qui en est la
+ * dernière étape.
+ */
+export const StepProgress = ({index, total}: {index: number; total: number}) => (
+	<>
+		<View style={accessStyles.stepProgress}>
+			{Array.from({length: total}, (_v, i) => (
+				<View
+					key={i}
+					style={[
+						accessStyles.stepSegment,
+						i <= index && accessStyles.stepSegmentDone
+					]}
+				/>
+			))}
+		</View>
+		<Text style={accessStyles.stepCounter}>
+			{i18n.t('access:boxConfig.stepCounter', {current: index + 1, total})}
+		</Text>
+	</>
+);
+
 /** Action secondaire : même poids visuel qu'un lien, pas qu'un bouton. */
 export const LinkButton = ({
 	label,
@@ -311,6 +337,28 @@ export const accessStyles = StyleSheet.create({
 		fontSize: 17,
 		fontWeight: 'bold',
 		marginBottom: 10
+	},
+	stepProgress: {
+		flexDirection: 'row',
+		gap: 6,
+		marginTop: 18,
+		alignSelf: 'stretch',
+		paddingHorizontal: 30
+	},
+	stepSegment: {
+		flex: 1,
+		height: 4,
+		borderRadius: 2,
+		backgroundColor: COLORS.stepTrack
+	},
+	stepSegmentDone: {
+		backgroundColor: COLORS.primary
+	},
+	stepCounter: {
+		color: COLORS.primary,
+		opacity: 0.6,
+		fontSize: 13,
+		marginTop: 8
 	},
 	link: {
 		color: COLORS.accent,

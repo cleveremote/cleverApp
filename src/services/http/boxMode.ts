@@ -1,4 +1,5 @@
 import {PollOptions, boxGet, boxPost, boxUrl, pollUntil} from './boxHttp';
+import {ConfigureResult, parseConfigureResult} from './boxConfigureResult';
 
 /** Routes de la box interrogées ici. */
 const MODE_PATH = '/updater/getMode';
@@ -9,8 +10,8 @@ const CHECK_PASSWORD_PATH = '/updater/checkPassword';
  * répond en moins d'une seconde : au-delà de quelques secondes, l'appel est
  * perdu, pas lent.
  */
-const CHECK_ATTEMPT_TIMEOUT_MS = 10000;
-const CHECK_ATTEMPTS = 2;
+const CHECK_ATTEMPT_TIMEOUT_MS = 1500;
+const CHECK_ATTEMPTS = 20;
 
 /** Budget d'une sonde. Court : elle sera relancée. */
 const PROBE_TIMEOUT_MS = 5000;
@@ -33,6 +34,8 @@ export interface BoxMode {
 	recoveryReason: RecoveryReason;
 	/** Réseau que la box a tenté (ou tente) de rejoindre, s'il y en a un. */
 	ssid: string | null;
+	/** Résultat de la dernière configuration envoyée, si la box le publie. */
+	configure: ConfigureResult | null;
 }
 
 const MODES = new Set<BoxModeName>([
@@ -192,6 +195,7 @@ function parseBoxMode(body: string): BoxMode | null {
 		ssid:
 			typeof parsed.wifi?.ssid === 'string' && parsed.wifi.ssid !== ''
 				? parsed.wifi.ssid
-				: null
+				: null,
+		configure: parseConfigureResult(parsed.configure)
 	};
 }

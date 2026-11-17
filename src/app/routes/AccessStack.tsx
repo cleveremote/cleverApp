@@ -39,7 +39,7 @@ export function AccessStack() {
 				/>
 				<Stack.Screen
 					name="BoxConfiguration"
-					options={{headerShown: true, title: t('configureBox')}}
+					options={{headerShown: true, title: t('configureBox'), headerTitleAlign: 'center'}}
 					component={BoxConfiguration}
 				/>
 				<Stack.Screen

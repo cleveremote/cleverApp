@@ -1,19 +1,23 @@
 import React, {useCallback, useEffect, useRef, useState} from 'react';
-import {ActivityIndicator, StyleSheet, Text, View} from 'react-native';
+import {
+	ActivityIndicator,
+	ScrollView,
+	StyleSheet,
+	Text,
+	View
+} from 'react-native';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import i18n from 'i18next';
 import {useTranslation} from 'react-i18next';
 import {useNavigation} from '@react-navigation/native';
 import {
-	faQrcode,
-	faRightToBracket,
+	faPen,
 	faRotateRight,
 	faWifi
 } from '@fortawesome/free-solid-svg-icons';
 import {hapticOptions} from '../../data/cycleTypes';
 import {
-	brandLogo,
 	navigationHeader
 } from '../../components/common/navigationHeaders';
 import {hotspotService} from '../../../services/hotspot';
@@ -24,17 +28,21 @@ import {
 	takePendingProfile
 } from './boxConfigurationDraft';
 import {
-	WifiStatus,
-	hasJoined,
-	isAuthFailure,
-	pollUntil,
-	waitForWifiStatus
+	BoxMode,
+	ConfigureErrorCode,
+	ConfigureOutcome,
+	ConfigureSend,
+	boxLocationAfter,
+	configureOutcome,
+	boxUrl,
+	getBoxMode,
+	pollUntil
 } from '../../../services/http';
+import {probeSocketServer} from '../../../services/socket';
 import {
 	COLORS,
-	Centered,
-	LinkButton,
 	OutlineButton,
+	StepProgress,
 	accessStyles,
 	openWifiSettings,
 	WifiSettingsLink
@@ -46,30 +54,61 @@ import {
  */
 const SEARCH_TIMEOUT_MS = 90000;
 
+/**
+ * Temps passé à interroger la box sur son point d'accès quand `configure` est
+ * restée sans réponse, pour savoir si elle l'a reçue. Court : si elle l'a
+ * reçue, elle a déjà quitté ce point d'accès et ne répondra pas.
+ */
+const RECEIPT_PROBE_MS = 8000;
+const RECEIPT_PROBE_INTERVAL_MS = 1500;
+
+/**
+ * Temps laissé au serveur local de la box pour accepter une connexion. Elle
+ * vient de changer de réseau : il peut encore être en train de démarrer.
+ */
+const SERVER_TIMEOUT_MS = 40000;
+const SERVER_PROBE_INTERVAL_MS = 2000;
+
 /** Temps laissé au téléphone pour revenir sur le réseau demandé. */
 const PHONE_JOIN_MS = 30000;
 const PHONE_PROBE_INTERVAL_MS = 1500;
 
 type Phase =
-	/** Une des deux étapes est en cours. */
+	/** Une des étapes est en cours. */
 	| 'waiting'
-	/** La box déclare être sur le réseau demandé : configuration confirmée. */
+	/** La box déclare la configuration appliquée, et son serveur local répond. */
 	| 'confirmed'
-	/** Le réseau a refusé la box — clé Wi-Fi erronée. */
-	| 'rejected'
-	/** Le téléphone est resté sur un autre réseau : l'étape 1 n'a pas abouti. */
+	/** La box a refusé la configuration, ou n'a pas pu l'appliquer. */
+	| 'failed'
+	/** Le téléphone est resté sur un autre réseau : l'étape 2 n'a pas abouti. */
 	| 'offNetwork'
 	/** Rien de concluant après SEARCH_TIMEOUT_MS. */
-	| 'unconfirmed';
+	| 'unconfirmed'
+	/** Box configurée, mais son serveur local n'a pas répondu à temps. */
+	| 'serverUnreachable';
 
 type StepState = 'pending' | 'running' | 'done' | 'failed';
 
-/** Où en sont les deux étapes de la bascule, telles qu'affichées. */
+/** Où en sont les étapes de la bascule, telles qu'affichées. */
 type Progress = {
-	/** Étape 1 — le téléphone rejoint le réseau demandé. */
+	/** Étape 1 — `configure` est envoyée, et la box l'autorise. */
+	send: StepState;
+	/** Étape 2 — le téléphone rejoint le réseau demandé. */
 	phone: StepState;
-	/** Étape 2 — la box y est trouvée et confirmée. */
+	/** Étape 3 — la box y est trouvée, et dit ce qu'est devenue la configuration. */
 	box: StepState;
+	/** Étape 4 — le serveur local de la box accepte une connexion websocket. */
+	server: StepState;
+};
+
+/**
+ * Pourquoi la configuration a échoué. `onHotspot` : constaté avant d'avoir
+ * relâché le point d'accès — le formulaire peut alors être rouvert tel quel,
+ * sans repasser par le scanner.
+ */
+type Failure = {
+	code: ConfigureErrorCode | 'NOT_RECEIVED';
+	onHotspot: boolean;
 };
 
 /**
@@ -89,20 +128,17 @@ type PhoneOutcome =
 /**
  * Bascule du point d'accès de la box vers le Wi-Fi qui vient d'être configuré.
  *
- * Deux mouvements, dans cet ordre : le téléphone quitte le point d'accès pour
- * le réseau demandé, puis la box y est cherchée. L'inverse ne tient pas — tant
- * que le téléphone est sur le point d'accès, il n'a aucun chemin vers le réseau
- * domestique, et ne peut donc pas y constater quoi que ce soit.
+ * L'écran de configuration ouvre celui-ci au moment où il envoie `configure`,
+ * sans en attendre la réponse. Quatre mouvements, dans cet ordre : la box
+ * reçoit la configuration, le téléphone quitte le point d'accès pour le réseau
+ * demandé, la box y est cherchée, puis son serveur local est essayé. Chercher la box avant ne tient pas —
+ * tant que le téléphone est sur le point d'accès, il n'a aucun chemin vers le
+ * réseau domestique.
  *
- * L'écran de configuration ne peut rien conclure de son côté : la box applique
- * sa configuration et répond souvent trop tard, voire pas du tout. Il délègue
- * ici, et c'est bien pour ça que cet écran remplace la pile d'appairage plutôt
- * que de s'y empiler : il n'y a plus rien à faire derrière.
- *
- * La confirmation porte sur ce que la box dit d'elle-même — `mode: 'client'`
- * sur le SSID demandé, connexion établie — et non sur le simple fait qu'elle
- * réponde. Une box retombée sur un réseau connu répondrait tout aussi bien, et
- * serait annoncée configurée sans l'être.
+ * Tout ce qui suit l'envoi se lit dans `getMode` : la box y publie le résultat
+ * de `configure` — en cours, réussie, ou échouée avec son code. La confirmation
+ * porte donc sur ce que la box dit de cette configuration-là, et non sur le
+ * simple fait qu'elle réponde.
  */
 /**
  * Crée le profil de la box, maintenant qu'elle est confirmée sur le réseau.
@@ -128,14 +164,26 @@ export function BoxHandover(props: any) {
 	// Identifiant choisi à la configuration : la connexion l'affiche figé.
 	const login: string = props.route?.params?.login ?? '';
 	const deviceId: string | undefined = props.route?.params?.deviceId;
+	// `configure.startedAt` lu avant l'envoi : un résultat qui le porte encore
+	// est celui d'une tentative précédente.
+	const staleStartedAt: string | null =
+		props.route?.params?.staleStartedAt ?? null;
+	// Nombre d'étapes de l'assistant, dont celle-ci est la dernière : le
+	// formulaire l'affiche à sa place une fois la configuration envoyée.
+	const stepTotal: number = props.route?.params?.stepTotal ?? 0;
 
 	const [phase, setPhase] = useState<Phase>('waiting');
 	const [elapsed, setElapsed] = useState(0);
-	/** Dernier état obtenu de la box, ou `null` si elle n'a jamais répondu. */
-	const [status, setStatus] = useState<WifiStatus | null>(null);
+	/** Dernier mode lu sur la box, ou `null` si elle n'a jamais répondu. */
+	const [boxMode, setBoxMode] = useState<BoxMode | null>(null);
+	/** Réponse de la box à `configure`, une fois connue. */
+	const [send, setSend] = useState<ConfigureSend | null>(null);
+	const [failure, setFailure] = useState<Failure | null>(null);
 	const [progress, setProgress] = useState<Progress>({
-		phone: 'running',
-		box: 'pending'
+		send: 'running',
+		phone: 'pending',
+		box: 'pending',
+		server: 'pending'
 	});
 	/** Réseau sur lequel le téléphone dit se trouver, quand il sait le dire. */
 	const [phoneSsid, setPhoneSsid] = useState<string | null>(null);
@@ -150,6 +198,8 @@ export function BoxHandover(props: any) {
 
 	/** Sortie normale : la pile d'appairage est morte, on la remplace. */
 	const goToSignin = useCallback(() => {
+		// Encore tenu si l'on sort avant la fin de l'envoi, ou après un refus.
+		hotspotService.disconnect().catch(() => undefined);
 		props.navigation.reset({
 			index: 1,
 			routes: [
@@ -158,6 +208,12 @@ export function BoxHandover(props: any) {
 			]
 		});
 	}, [deviceName, login, props.navigation]);
+
+	// Box configurée : retour à la liste des profils, où elle figure désormais.
+	const goToProfiles = useCallback(() => {
+		hotspotService.disconnect().catch(() => undefined);
+		props.navigation.reset({index: 0, routes: [{name: 'Profiles'}]});
+	}, [props.navigation]);
 
 	/**
 	 * Chemin de correction : rescanner le QR code.
@@ -175,24 +231,49 @@ export function BoxHandover(props: any) {
 		});
 	}, [props.navigation]);
 
+	/**
+	 * Retour direct au formulaire, pour un échec constaté sur le point d'accès :
+	 * le téléphone y est encore, la box aussi. Le brouillon rend la saisie, et
+	 * `code` dit au formulaire ce qui est à corriger.
+	 */
+	const goToForm = useCallback(
+		(code: Failure['code']) => {
+			props.navigation.reset({
+				index: 1,
+				routes: [
+					{name: 'Profiles'},
+					{name: 'BoxConfiguration', params: {deviceId, configureError: code}}
+				]
+			});
+		},
+		[deviceId, props.navigation]
+	);
+
+	const canSignIn =
+		progress.phone === 'done' &&
+		progress.box === 'done' &&
+		progress.server === 'done';
+
 	useEffect(() => {
 		nav.setOptions({
-			headerLeft: brandLogo,
+			// Quitter l'assistant : retour à la liste des profils.
+			headerLeft: () => navigationHeader(goToProfiles, 'times-circle', false),
 			// Aucun retour en arrière : le formulaire et le scanner n'ont plus
-			// de réseau pour travailler. La croix mène là où l'utilisateur
-			// voulait aller.
+			// de réseau pour travailler. La connexion se fait d'ici, mais
+			// seulement une fois les trois dernières étapes passées : avant,
+			// rien ne dit que la box y répondra.
 			headerRight: () =>
-				navigationHeader(goToSignin, 'arrow-alt-circle-right', false)
+				navigationHeader(goToSignin, 'check-circle', false, !canSignIn)
 		});
-	}, [goToSignin, nav]);
+	}, [canSignIn, goToProfiles, goToSignin, nav]);
 
 	/**
-	 * Étape 1 — attendre que le téléphone soit revenu sur le réseau demandé.
+	 * Étape 2 — attendre que le téléphone soit revenu sur le réseau demandé.
 	 *
 	 * Le point d'accès est relâché par l'appelant juste avant ; le système met
 	 * ensuite quelques secondes à retomber sur le Wi-Fi enregistré, et rien ne
 	 * sert de chercher la box avant. Une fois passé, on sait au moins que
-	 * l'échec de l'étape 2, s'il vient, ne s'expliquera pas par le téléphone.
+	 * l'échec de l'étape 3, s'il vient, ne s'expliquera pas par le téléphone.
 	 */
 	const waitForPhoneOnNetwork = useCallback(
 		async (alive: () => boolean): Promise<PhoneOutcome> => {
@@ -231,12 +312,7 @@ export function BoxHandover(props: any) {
 		setElapsed(0);
 
 		/** Fin de parcours : la phase, l'étape fautive, et le retour haptique. */
-		const settle = (
-			outcome: Exclude<Phase, 'waiting'>,
-			seen: WifiStatus | null,
-			steps: Progress
-		) => {
-			setStatus(seen);
+		const settle = (outcome: Exclude<Phase, 'waiting'>, steps: Progress) => {
 			setProgress(steps);
 			setPhase(outcome);
 			// Confirmée, la saisie n'a plus à être retenue — et elle porte la clé
@@ -253,15 +329,89 @@ export function BoxHandover(props: any) {
 			);
 		};
 
-		// Étape 1 — le téléphone. Relâcher le point d'accès d'abord : tant que le
+		const fail = (reason: Failure, steps: Progress) => {
+			setFailure(reason);
+			settle('failed', steps);
+		};
+
+		/** Une lecture de `getMode`, ou `undefined` si la box n'a pas répondu. */
+		const readOutcome = async (): Promise<ConfigureOutcome | undefined> => {
+			const mode = await getBoxMode(deviceId);
+			if (!mode || !alive()) return undefined;
+			setBoxMode(mode);
+			return configureOutcome(mode, staleStartedAt);
+		};
+
+		// Étape 1 — l'envoi. `configure` est partie à l'ouverture de cet écran :
+		// le hotspot reste tenu tant qu'elle n'a pas abouti.
+		setProgress({
+			send: 'running',
+			phone: 'pending',
+			box: 'pending',
+			server: 'pending'
+		});
+		setFailure(null);
+		setBoxMode(null);
+		setPhoneSsid(null);
+		const sent: ConfigureSend = (await settlePendingConfiguration()) ?? {
+			kind: 'lost'
+		};
+		if (!alive()) return;
+		setSend(sent);
+
+		const sendFailed: Progress = {
+			send: 'failed',
+			phone: 'pending',
+			box: 'pending',
+			server: 'pending'
+		};
+		// Refusée : la box n'a rien commencé, et n'a pas quitté son point
+		// d'accès.
+		if (sent.kind === 'refused') {
+			return fail({code: sent.code, onHotspot: true}, sendFailed);
+		}
+
+		// L'autorisation se lit dans `getMode` : un mot de passe refusé y est
+		// publié (`INVALID_CURRENT_PASSWORD`) sans que la box quitte son point
+		// d'accès. On l'y interroge donc tant qu'elle y répond encore — ce qui
+		// dit aussi, quand `configure` est restée sans réponse, si elle l'a
+		// reçue.
+		let answered = false;
+		const receipt = await pollUntil<ConfigureOutcome | 'gone'>(
+			async () => {
+				const read = await readOutcome();
+				// Elle répondait, elle ne répond plus : elle est partie
+				// rejoindre le Wi-Fi.
+				if (!read) return answered ? 'gone' : undefined;
+				answered = true;
+				if (read.kind === 'failed' || read.kind === 'succeeded') return read;
+				// Acceptée, elle n'a simplement pas encore publié son résultat.
+				if (read.kind === 'notApplied' && sent.kind === 'lost') return read;
+				return undefined;
+			},
+			{
+				timeoutMs: RECEIPT_PROBE_MS,
+				intervalMs: RECEIPT_PROBE_INTERVAL_MS,
+				shouldContinue: alive
+			}
+		);
+		if (!alive()) return;
+		if (receipt !== 'gone' && receipt?.kind === 'notApplied') {
+			return fail({code: 'NOT_RECEIVED', onHotspot: true}, sendFailed);
+		}
+		if (receipt !== 'gone' && receipt?.kind === 'failed') {
+			return fail({code: receipt.code, onHotspot: true}, sendFailed);
+		}
+
+		// Étape 2 — le téléphone. Relâcher le point d'accès d'abord : tant que le
 		// process y est rattaché, toute sonde partirait sur une interface morte,
 		// et Android ne rendrait pas la main au réseau enregistré.
-		setProgress({phone: 'running', box: 'pending'});
-		setPhoneSsid(null);
-		// `configure` part en même temps que l'ouverture de cet écran : le
-		// hotspot reste tenu tant qu'elle n'est pas arrivée à la box.
-		await settlePendingConfiguration();
-		if (!alive()) return;
+		setProgress({
+			send: 'done',
+			phone: 'running',
+			box: 'pending',
+			server: 'pending'
+		});
 		await hotspotService.disconnect();
 		if (!alive()) return;
 
@@ -271,27 +421,98 @@ export function BoxHandover(props: any) {
 		// Il a nommé son réseau, et ce n'est pas le bon : chercher la box
 		// dessus n'aurait aucun sens. C'est à l'utilisateur de le déplacer.
 		if (phone.kind === 'elsewhere') {
-			return settle('offNetwork', null, {phone: 'failed', box: 'pending'});
+			return settle('offNetwork', {
+				send: 'done',
+				phone: 'failed',
+				box: 'pending',
+				server: 'pending'
+			});
 		}
 
-		// Étape 2 — la box, sur ce réseau.
-		setProgress({phone: 'done', box: 'running'});
+		// Étape 3 — la box. `getMode` est relu jusqu'à ce qu'elle rende un
+		// verdict sur la configuration.
+		setProgress({
+			send: 'done',
+			phone: 'done',
+			box: 'running',
+			server: 'pending'
+		});
 		setElapsed(0);
 
-		const fromLan = await waitForWifiStatus({
-			ssid,
-			deviceId,
-			timeoutMs: SEARCH_TIMEOUT_MS,
-			shouldContinue: alive
-		});
-
+		const outcome = await pollUntil(
+			async () => {
+				const read = await readOutcome();
+				if (!read || read.kind === 'pending') return undefined;
+				// Acceptée, elle ne peut pas ne pas l'avoir reçue : c'est une
+				// lecture faite avant qu'elle ne publie son résultat.
+				if (read.kind === 'notApplied' && sent.kind === 'accepted') {
+					return undefined;
+				}
+				return read;
+			},
+			{timeoutMs: SEARCH_TIMEOUT_MS, shouldContinue: alive}
+		);
 		if (!alive()) return;
-		const outcome = outcomeFor(fromLan, ssid);
-		settle(outcome, fromLan, {
+
+		const boxFailed: Progress = {
+			send: 'done',
 			phone: 'done',
-			box: outcome === 'confirmed' ? 'done' : 'failed'
+			box: 'failed',
+			server: 'pending'
+		};
+		switch (outcome?.kind) {
+			case 'succeeded':
+				break;
+			case 'failed':
+				return fail(
+					{code: outcome.code, onHotspot: false},
+					// Mot de passe refusé : c'est l'autorisation qui a échoué,
+					// pas la connexion de la box au Wi-Fi.
+					outcome.code === 'INVALID_CURRENT_PASSWORD'
+						? {
+								send: 'failed',
+								phone: 'done',
+								box: 'pending',
+								server: 'pending'
+						  }
+						: boxFailed
+				);
+			case 'notApplied':
+				return fail({code: 'NOT_RECEIVED', onHotspot: false}, boxFailed);
+			default:
+				return settle('unconfirmed', boxFailed);
+		}
+
+		// Étape 4 — le serveur local. La box est sur le réseau ; reste à savoir
+		// si l'application pourra s'y connecter. Une connexion websocket est
+		// ouverte puis refermée aussitôt, et retentée tant qu'elle échoue.
+		setProgress({send: 'done', phone: 'done', box: 'done', server: 'running'});
+		setElapsed(0);
+
+		const reachable = await pollUntil<true>(
+			async () => {
+				const url = await boxUrl('/', deviceId);
+				const responded = await probeSocketServer(
+					url.replace(/\/$/, ''),
+					deviceId ? {boxId: deviceId} : undefined
+				);
+				return responded ? true : undefined;
+			},
+			{
+				timeoutMs: SERVER_TIMEOUT_MS,
+				intervalMs: SERVER_PROBE_INTERVAL_MS,
+				shouldContinue: alive
+			}
+		);
+		if (!alive()) return;
+
+		return settle(reachable ? 'confirmed' : 'serverUnreachable', {
+			send: 'done',
+			phone: 'done',
+			box: 'done',
+			server: reachable ? 'done' : 'failed'
 		});
-	}, [ssid, deviceId, waitForPhoneOnNetwork]);
+	}, [deviceId, staleStartedAt, waitForPhoneOnNetwork]);
 
 	useEffect(() => {
 		mounted.current = true;
@@ -312,6 +533,25 @@ export function BoxHandover(props: any) {
 
 	const network = ssid || t('handover.yourNetwork');
 	const summary = SUMMARIES[phase];
+	// Sans accusé de réception, l'envoi reste incertain tant que le téléphone
+	// n'a pas rejoint le réseau ; une fois l'étape 2 passée, il compte pour
+	// réussi — si la box ne l'a pas reçu, c'est l'étape 3 qui le dira.
+	const sendConfirmed = send?.kind === 'accepted' || progress.phone === 'done';
+
+	/**
+	 * Correction de la saisie. Depuis le point d'accès, le formulaire se rouvre
+	 * tel quel ; ailleurs, il faut repasser par le scanner, qui y ramène le
+	 * téléphone avant de rouvrir le formulaire.
+	 */
+	const fixInput = (
+		<OutlineButton
+			label={t('handover.fixInput')}
+			icon={faPen}
+			onPress={() =>
+				failure?.onHotspot ? goToForm(failure.code) : goToScan()
+			}
+		/>
+	);
 
 	/**
 	 * Les actions dépendent de la phase, mais la liste des étapes reste, elle,
@@ -320,26 +560,21 @@ export function BoxHandover(props: any) {
 	const actions = () => {
 		switch (phase) {
 			case 'confirmed':
-				return (
-					<OutlineButton
-						label={t('handover.signIn')}
-						icon={faRightToBracket}
-						onPress={goToSignin}
-					/>
-				);
-			case 'rejected':
+				// La connexion est dans l'en-tête.
+				return null;
+			case 'failed':
+				// Wi-Fi rejoint, ou échec constaté sur le point d'accès : le
+				// téléphone n'a pas de réseau à changer.
+				if (
+					failure?.onHotspot ||
+					(failure && locationAfter(failure) === 'lan')
+				) {
+					return fixInput;
+				}
 				return (
 					<>
-						<OutlineButton
-							label={t('handover.rescan')}
-							icon={faQrcode}
-							onPress={goToScan}
-						/>
+						{fixInput}
 						<WifiSettingsLink />
-						<LinkButton
-							label={t('handover.retryCheck')}
-							onPress={() => verify()}
-						/>
 					</>
 				);
 			case 'offNetwork':
@@ -350,73 +585,80 @@ export function BoxHandover(props: any) {
 							icon={faWifi}
 							onPress={openWifiSettings}
 						/>
-						<LinkButton
-							label={t('handover.retryCheck')}
-							onPress={() => verify()}
+						{fixInput}
+					</>
+				);
+			case 'serverUnreachable':
+				return (
+					<>
+						<OutlineButton
+							label={t('handover.retry')}
+							icon={faRotateRight}
+							onPress={verify}
 						/>
-						<LinkButton
-							label={t('handover.continueAnyway')}
-							onPress={goToSignin}
-						/>
+						{fixInput}
 					</>
 				);
 			case 'unconfirmed':
 				return (
 					<>
-						<OutlineButton
-							label={t('handover.retryCheck')}
-							icon={faRotateRight}
-							onPress={() => verify()}
-						/>
+						{fixInput}
 						<WifiSettingsLink />
-						<LinkButton
-							label={t('handover.rescan')}
-							onPress={goToScan}
-						/>
-						<LinkButton
-							label={t('handover.continueAnyway')}
-							onPress={goToSignin}
-						/>
 					</>
 				);
 			default:
-				return (
-					<>
-						<WifiSettingsLink />
-						<LinkButton
-							label={t('handover.continueNow')}
-							onPress={goToSignin}
-						/>
-					</>
-				);
+				return <WifiSettingsLink />;
 		}
 	};
 
 	return (
-		<Centered>
-			<Icon name={summary.icon} size={40} color={summary.color} />
+		// Même mise en page que les étapes du formulaire, dont celle-ci est la
+		// suite : pastille, progression de l'assistant, titre, puis la carte.
+		<ScrollView
+			style={styles.screen}
+			contentContainerStyle={styles.screenContent}>
+			<View style={[styles.badge, {borderColor: summary.color}]}>
+				<Icon name={summary.icon} size={26} color={summary.color} />
+			</View>
+			{stepTotal > 1 ? (
+				<StepProgress index={stepTotal - 1} total={stepTotal} />
+			) : null}
 			<Text style={styles.title}>{t(summary.title)}</Text>
 			<Text style={styles.body}>
-				{bodyFor({phase, progress, status, ssid, network, deviceName})}
+				{bodyFor({phase, progress, boxMode, failure, network, deviceName})}
 			</Text>
 
 			<View style={styles.card}>
 				<Step
 					index={1}
+					state={progress.send}
+					label={t('handover.authorizeAndSend')}
+					// Partie, mais la box n'en a pas accusé réception.
+					warning={progress.send === 'done' && !sendConfirmed}
+					detail={sendDetail(progress.send, sendConfirmed, failure)}
+				/>
+				<Step
+					index={2}
 					state={progress.phone}
 					label={t('handover.phoneJoins', {network})}
 					detail={phoneDetail(progress.phone, phoneSsid)}
 				/>
 				<Step
-					index={2}
+					index={3}
 					state={progress.box}
 					label={t('handover.boxJoins', {network})}
-					detail={boxDetail(progress.box, status, ssid, elapsed)}
+					detail={boxDetail(progress.box, boxMode, failure, elapsed)}
+				/>
+				<Step
+					index={4}
+					state={progress.server}
+					label={t('handover.serverReachable')}
+					detail={serverDetail(progress.server, elapsed)}
 				/>
 			</View>
 
 			{actions()}
-		</Centered>
+		</ScrollView>
 	);
 }
 
@@ -425,12 +667,15 @@ const Step = ({
 	index,
 	state,
 	label,
-	detail
+	detail,
+	warning
 }: {
 	index: number;
 	state: StepState;
 	label: string;
 	detail: string;
+	/** Étape passée sans certitude : point d'exclamation au lieu de la coche. */
+	warning?: boolean;
 }) => (
 	<View style={[styles.step, state === 'pending' && styles.stepPending]}>
 		<View style={styles.stepIcon}>
@@ -438,9 +683,9 @@ const Step = ({
 				<ActivityIndicator color={COLORS.primary} />
 			) : (
 				<Icon
-					name={STEP_ICONS[state]}
+					name={warning ? 'exclamation-circle' : STEP_ICONS[state]}
 					size={20}
-					color={STEP_COLORS[state]}
+					color={warning ? COLORS.warning : STEP_COLORS[state]}
 				/>
 			)}
 		</View>
@@ -476,10 +721,10 @@ const SUMMARIES: Record<
 		color: COLORS.success,
 		title: 'handover.title.confirmed'
 	},
-	rejected: {
-		icon: 'key',
+	failed: {
+		icon: 'times-circle',
 		color: COLORS.danger,
-		title: 'handover.title.rejected'
+		title: 'handover.title.failed'
 	},
 	offNetwork: {
 		icon: 'mobile-alt',
@@ -490,38 +735,76 @@ const SUMMARIES: Record<
 		icon: 'exclamation-triangle',
 		color: COLORS.danger,
 		title: 'handover.title.unconfirmed'
+	},
+	serverUnreachable: {
+		icon: 'server',
+		color: COLORS.danger,
+		title: 'handover.title.serverUnreachable'
 	}
 };
+
+/** Où joindre la box après cet échec. */
+function locationAfter(failure: Failure) {
+	return failure.code === 'NOT_RECEIVED'
+		? 'unknown'
+		: boxLocationAfter(failure.code);
+}
+
+/** Ce que la box a répondu à l'envoi de la configuration. */
+function sendDetail(
+	state: StepState,
+	confirmed: boolean,
+	failure: Failure | null
+): string {
+	if (state === 'running') return i18n.t('access:handover.send.sending');
+	if (state === 'done') {
+		return confirmed
+			? i18n.t('access:handover.send.accepted')
+			: i18n.t('access:handover.send.unconfirmed');
+	}
+	if (state === 'failed') {
+		return failure?.code === 'NOT_RECEIVED'
+			? i18n.t('access:handover.send.notReceived')
+			: i18n.t('access:handover.send.refused');
+	}
+	return i18n.t('access:handover.pending');
+}
 
 /** Où en est la recherche de la box, et ce qu'elle a fini par dire. */
 function boxDetail(
 	state: StepState,
-	status: WifiStatus | null,
-	ssid: string,
+	boxMode: BoxMode | null,
+	failure: Failure | null,
 	elapsed: number
 ): string {
 	if (state === 'running') {
-		return i18n.t('access:handover.box.searching', {seconds: elapsed});
+		// Elle répond, sans verdict encore : elle est en train de s'y connecter.
+		return i18n.t(
+			boxMode ? 'access:handover.box.joining' : 'access:handover.box.searching',
+			{seconds: elapsed}
+		);
 	}
 
-	if (state === 'done' && hasJoined(status, ssid)) {
-		return i18n.t('access:handover.box.connected', {
-			state: status.deviceState
-		});
-	}
+	if (state === 'done') return i18n.t('access:handover.box.connected');
 
 	if (state === 'failed') {
-		// Ce qu'elle a répondu vaut mieux qu'un « introuvable » : un `mode ap`
-		// dit qu'elle n'a pas basculé, un autre SSID qu'elle s'est trompée de
-		// réseau — deux pannes qui ne se corrigent pas pareil.
-		return status
-			? i18n.t('access:handover.box.mode', {
-					mode: status.mode,
-					state: status.deviceState
-			  })
+		if (failure) return i18n.t('access:handover.box.failed');
+		// Le mode qu'elle annonce vaut mieux qu'un « introuvable ».
+		return boxMode
+			? i18n.t('access:handover.box.mode', {mode: boxMode.mode})
 			: i18n.t('access:handover.box.noResponse');
 	}
 
+	return i18n.t('access:handover.pending');
+}
+
+/** Où en est l'essai de connexion au serveur local. */
+function serverDetail(state: StepState, elapsed: number): string {
+	if (state === 'running') {
+		return i18n.t('access:handover.server.testing', {seconds: elapsed});
+	}
+	if (state === 'done') return i18n.t('access:handover.server.reachable');
+	if (state === 'failed') return i18n.t('access:handover.server.unreachable');
 	return i18n.t('access:handover.pending');
 }
 
@@ -552,34 +835,60 @@ function phoneDetail(state: StepState, phoneSsid: string | null): string {
 function bodyFor(args: {
 	phase: Phase;
 	progress: Progress;
-	status: WifiStatus | null;
-	ssid: string;
+	boxMode: BoxMode | null;
+	failure: Failure | null;
 	network: string;
 	deviceName: string;
 }): string {
-	const {phase, progress, status, ssid, network, deviceName} = args;
+	const {phase, progress, boxMode, failure, network, deviceName} = args;
 
 	switch (phase) {
-		case 'confirmed':
+		case 'confirmed': {
+			const joined = boxMode?.configure?.ssid || boxMode?.ssid || network;
 			return deviceName
 				? i18n.t('access:handover.body.confirmedNamed', {
 						name: deviceName,
-						network: status?.ssid || network
+						network: joined
 				  })
-				: i18n.t('access:handover.body.confirmed', {
-						network: status?.ssid || network
-				  });
+				: i18n.t('access:handover.body.confirmed', {network: joined});
+		}
 
-		case 'rejected':
-			return i18n.t('access:handover.body.rejected', {network});
+		case 'failed': {
+			if (!failure) return i18n.t('access:configureError.CONFIGURE_FAILED');
+			const reason = i18n.t(`access:configureError.${failure.code}`);
+			// Le Wi-Fi n'a pas abouti et le téléphone a déjà quitté le point
+			// d'accès : la correction passe par le scanner.
+			return !failure.onHotspot && locationAfter(failure) === 'hotspot'
+				? `${reason} ${i18n.t('access:handover.body.failedHotspot')}`
+				: reason;
+		}
 
 		case 'offNetwork':
 			return i18n.t('access:handover.body.offNetwork', {network});
 
 		case 'unconfirmed':
-			return unconfirmedReason(status, ssid, network);
+			// Jamais jointe, ou jointe sans verdict : le mode qu'elle annonce
+			// évite d'avoir à deviner.
+			return boxMode
+				? i18n.t('access:handover.body.notJoined', {
+						network,
+						state: boxMode.mode
+				  })
+				: i18n.t('access:handover.body.noAnswer', {network});
+
+		case 'serverUnreachable':
+			return i18n.t('access:handover.body.serverUnreachable', {
+				network,
+				seconds: SERVER_TIMEOUT_MS / 1000
+			});
 
 		default:
+			if (progress.send === 'running') {
+				return i18n.t('access:handover.body.sending');
+			}
+			if (progress.server === 'running') {
+				return i18n.t('access:handover.body.testingServer', {network});
+			}
 			return progress.phone === 'running'
 				? i18n.t('access:handover.body.apReleased', {network})
 				: i18n.t('access:handover.body.applying', {network});
@@ -591,54 +900,27 @@ function sameNetwork(a: string, b: string): boolean {
 	return a.trim().toLowerCase() === b.trim().toLowerCase();
 }
 
-function outcomeFor(
-	status: WifiStatus | null,
-	ssid: string
-): Exclude<Phase, 'waiting'> {
-	if (hasJoined(status, ssid)) return 'confirmed';
-	if (isAuthFailure(status)) return 'rejected';
-	return 'unconfirmed';
-}
-
-/**
- * Pourquoi la configuration n'a pas pu être confirmée, aussi précisément que ce
- * qu'on a pu observer le permet — de « jamais jointe » à « jointe, mais sur un
- * autre réseau », qui ne se corrigent pas de la même façon.
- */
-function unconfirmedReason(
-	status: WifiStatus | null,
-	ssid: string,
-	network: string
-): string {
-	if (!status) {
-		return i18n.t('access:handover.body.noAnswer', {network});
-	}
-
-	const reported = (status.ssid ?? '').trim();
-	const onAnotherNetwork =
-		status.mode === 'client' &&
-		reported !== '' &&
-		reported.toLowerCase() !== ssid.trim().toLowerCase();
-
-	if (onAnotherNetwork) {
-		return i18n.t('access:handover.body.otherNetwork', {reported, network});
-	}
-
-	// Reste le cas où elle annonce le bon réseau sans que la connexion soit
-	// établie : c'est `deviceState` qui le dit, et le montrer évite d'avoir à
-	// deviner entre une tentative en cours et une tentative perdue.
-	return i18n.t('access:handover.body.notJoined', {
-		network,
-		state: status.deviceState
-	});
-}
-
 /* eslint-disable react-native/no-unused-styles */
 const styles = {
 	...accessStyles,
 	...StyleSheet.create({
 		spinner: {marginTop: 25},
 		progress: {color: COLORS.primary, fontSize: 14, marginTop: 10},
+		screen: {flex: 1},
+		screenContent: {
+			alignItems: 'center',
+			paddingTop: 30,
+			paddingBottom: 40,
+			paddingHorizontal: 24
+		},
+		badge: {
+			width: 64,
+			height: 64,
+			borderRadius: 32,
+			justifyContent: 'center',
+			alignItems: 'center',
+			borderWidth: 6
+		},
 		step: {
 			flexDirection: 'row',
 			alignItems: 'flex-start',

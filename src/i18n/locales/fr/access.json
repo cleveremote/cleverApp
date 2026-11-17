@@ -104,40 +104,43 @@
 		"refreshNetworks": "Actualiser la liste",
 		"continue": "Continuer",
 		"reconnect": "Reconnecter ma box",
-		"tooManyAttempts": "Trop d'essais. Patientez un instant avant de réessayer.",
 		"showPassword": "Afficher le mot de passe",
 		"hidePassword": "Masquer le mot de passe",
 		"existingAccount": "Cette box est déjà associée à un compte. Vous pouvez seulement changer son réseau Wi-Fi : son nom et ses identifiants restent les mêmes.",
 		"forgotPassword": "Mot de passe oublié ?",
 		"forgotPasswordAction": "Le réinitialiser avec mon adresse e-mail de récupération",
-		"checkingPassword": "Vérification du mot de passe ...",
 		"labelPasswordWrong": "Le mot de passe de l'étiquette est incorrect. Vérifiez-le sur l'étiquette collée sous la box, puis réessayez.",
 		"boxPasswordWrong": "Le mot de passe de la box est incorrect. Vérifiez-le, puis réessayez.",
-		"duplicateProfile": "Cette box est déjà enregistrée dans vos profils, sous le nom « {{profile}} ». Pour l'installer à nouveau, supprimez d'abord ce profil (appui long sur son nom dans la liste des profils).",
-		"checkFailed": "La box n'a pas pu vérifier le mot de passe (erreur {{status}}). Réessayez dans un instant."
+		"duplicateProfile": "Cette box est déjà enregistrée dans vos profils, sous le nom « {{profile}} ». Pour l'installer à nouveau, supprimez d'abord ce profil (appui long sur son nom dans la liste des profils)."
 	},
 	"handover": {
 		"yourNetwork": "votre réseau Wi-Fi",
 		"signIn": "Se connecter",
-		"rescan": "Rescanner la box pour corriger",
-		"retryCheck": "Réessayer la vérification",
-		"continueAnyway": "Continuer quand même",
-		"continueNow": "Continuer sans attendre",
 		"phoneJoins": "Le téléphone rejoint {{network}}",
 		"boxJoins": "La box rejoint {{network}}",
+		"serverReachable": "Le serveur local est joignable",
+		"retry": "Réessayer",
 		"pending": "en attente",
 		"title": {
 			"waiting": "Bascule en cours",
 			"confirmed": "Box configurée",
-			"rejected": "Clé Wi-Fi refusée",
 			"offNetwork": "Le téléphone n'est pas sur le bon réseau",
-			"unconfirmed": "Box introuvable pour l'instant"
+			"unconfirmed": "Box introuvable pour l'instant",
+			"serverUnreachable": "Serveur local injoignable",
+			"failed": "La configuration a échoué"
 		},
 		"box": {
 			"searching": "recherche de la box… {{seconds}} s",
-			"connected": "connectée — {{state}}",
-			"mode": "mode {{mode}} — {{state}}",
-			"noResponse": "aucune réponse sur le réseau"
+			"connected": "connectée",
+			"mode": "mode {{mode}}",
+			"noResponse": "aucune réponse sur le réseau",
+			"joining": "connexion au Wi-Fi en cours… {{seconds}} s",
+			"failed": "connexion échouée"
+		},
+		"server": {
+			"testing": "test de connexion… {{seconds}} s",
+			"reachable": "joignable",
+			"unreachable": "aucune réponse"
 		},
 		"phone": {
 			"currentlyOn": "actuellement sur « {{ssid}} »",
@@ -148,16 +151,44 @@
 			"unverifiable": "réseau non vérifiable sur cette plateforme"
 		},
 		"body": {
-			"confirmedNamed": "La box « {{name}} » déclare être connectée à {{network}} et répond sur votre réseau.",
-			"confirmed": "La box déclare être connectée à {{network}} et répond sur votre réseau.",
-			"rejected": "La box a bien reçu la configuration, mais {{network}} a rejeté la clé saisie. Elle a rouvert son point d'accès : rescannez son QR code pour l'y rejoindre et corriger la clé — le reste de votre saisie est conservé.",
+			"confirmedNamed": "La box « {{name}} » est connectée à {{network}} et répond sur votre réseau.",
+			"confirmed": "La box est connectée à {{network}} et répond sur votre réseau.",
 			"offNetwork": "Le téléphone est resté sur un autre réseau que {{network}}. Tant qu'il y est, la box reste hors de portée : reconnectez-le, puis relancez la vérification.",
 			"apReleased": "Le point d'accès de la box est relâché. Reconnectez le téléphone à {{network}} s'il ne l'a pas déjà fait.",
 			"applying": "La box applique sa configuration et rejoint {{network}}. On la cherche sur ce réseau.",
 			"noAnswer": "La configuration a bien été envoyée, mais la box ne répond pas encore sur {{network}}. Vérifiez que le téléphone y est connecté — et que la clé Wi-Fi saisie était la bonne.",
-			"otherNetwork": "La box répond, mais elle est connectée à « {{reported}} » et non à {{network}}.",
-			"notJoined": "La box répond, mais elle n'a pas encore rejoint {{network}} (état : {{state}})."
+			"notJoined": "La box répond, mais elle n'a pas encore rejoint {{network}} (mode : {{state}}).",
+			"sending": "La configuration part vers la box. Gardez le téléphone près d'elle.",
+			"testingServer": "La box est connectée à {{network}}. On vérifie que son serveur local accepte les connexions.",
+			"serverUnreachable": "La box est connectée à {{network}}, mais son serveur local n'a pas répondu en {{seconds}} secondes. Il est peut-être encore en train de démarrer : réessayez dans un instant.",
+			"failedHotspot": "La box a rouvert son point d'accès : rescannez son QR code pour l'y rejoindre et corriger — votre saisie est conservée."
+		},
+		"authorizeAndSend": "Autorisation & envoi de la requête",
+		"fixInput": "Corriger ma saisie",
+		"send": {
+			"sending": "envoi en cours…",
+			"accepted": "configuration acceptée",
+			"unconfirmed": "sans accusé de réception",
+			"refused": "refusée par la box",
+			"notReceived": "non reçue"
 		}
+	},
+	"configureError": {
+		"VALIDATION_FAILED": "La box a refusé la configuration : certaines valeurs sont invalides. Vérifiez votre saisie.",
+		"SETUP_FIELDS_REQUIRED": "La box a refusé la configuration : des informations obligatoires manquent. Vérifiez votre saisie.",
+		"INVALID_CURRENT_PASSWORD": "La box a refusé le mot de passe saisi.",
+		"CONFIGURE_IN_PROGRESS": "La box applique déjà une configuration. Patientez un instant, puis réessayez.",
+		"WIFI_INVALID_PSK": "Le réseau Wi-Fi a refusé la clé saisie. Corrigez-la, puis réessayez.",
+		"WIFI_NETWORK_NOT_FOUND": "La box ne trouve pas le réseau Wi-Fi choisi. Vérifiez qu'il est à portée, ou choisissez-en un autre.",
+		"WIFI_TIMEOUT": "Le réseau Wi-Fi n'a pas répondu à temps. Rapprochez la box du routeur, puis réessayez.",
+		"WIFI_INTERFACE_BUSY": "Le Wi-Fi de la box était occupé. Réessayez dans un instant.",
+		"WIFI_CONNECT_FAILED": "La box n'a pas pu rejoindre le réseau Wi-Fi. Vérifiez le réseau et sa clé, puis réessayez.",
+		"WIFI_OPERATION_FAILED": "Une erreur Wi-Fi est survenue sur la box. Réessayez.",
+		"LOCAL_COORDINATES_SAVE_FAILED": "La box a rejoint le Wi-Fi, mais n'a pas pu enregistrer sa position.",
+		"USER_SAVE_FAILED": "La box a rejoint le Wi-Fi, mais n'a pas pu enregistrer le compte.",
+		"HOTSPOT_STOP_FAILED": "La box a rejoint le Wi-Fi, mais n'a pas pu fermer son point d'accès.",
+		"CONFIGURE_FAILED": "La configuration de la box a échoué. Réessayez.",
+		"NOT_RECEIVED": "La box n'a pas reçu la configuration. Vérifiez que le téléphone est toujours connecté à son réseau, puis renvoyez-la."
 	},
 	"deviceSettings": {
 		"newProfile": "Nouveau profil",

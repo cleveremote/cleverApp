@@ -53,16 +53,14 @@ describe('validateBoxConfiguration — setup', () => {
 			{...complete, deviceName: ''},
 			'setup'
 		);
-		expect(isBoxConfigurationValid(stepErrors(errors, 'setup', 'ownership'))).toBe(
-			true
-		);
-		expect(stepErrors(errors, 'setup', 'account').deviceName).toBe(
+		expect(isBoxConfigurationValid(stepErrors(errors, 'wifi'))).toBe(true);
+		expect(stepErrors(errors, 'account').deviceName).toBe(
 			'deviceNameRequired'
 		);
 	});
 });
 
-describe('étapes 1 et 2 — tous les champs sont obligatoires', () => {
+describe('étapes — le mot de passe actuel n’appartient à aucune', () => {
 	const empty: BoxConfigurationForm = {
 		deviceName: '',
 		ssid: '',
@@ -75,18 +73,24 @@ describe('étapes 1 et 2 — tous les champs sont obligatoires', () => {
 	};
 	const errors = validateBoxConfiguration(empty, 'setup');
 
-	it('étape 1 : identifiant et mot de passe de l’étiquette', () => {
-		expect(stepErrors(errors, 'setup', 'ownership')).toEqual({
+	it('étape 1 : identifiant, réseau et clé Wi-Fi', () => {
+		expect(stepErrors(errors, 'wifi')).toEqual({
 			boxIdentifier: 'boxIdentifierRequired',
-			currentPassword: 'currentPasswordRequired'
-		});
-	});
-
-	it('étape 2 : réseau et clé Wi-Fi', () => {
-		expect(stepErrors(errors, 'setup', 'wifi')).toEqual({
 			ssid: 'ssidRequired',
 			psk: 'pskRequired'
 		});
+	});
+
+	it('étape 2 : nom et nouveau mot de passe', () => {
+		expect(stepErrors(errors, 'account')).toEqual({
+			deviceName: 'deviceNameRequired',
+			password: 'passwordRequired',
+			confirmPassword: 'confirmRequired'
+		});
+	});
+
+	it('reste exigé par la validation complète', () => {
+		expect(errors.currentPassword).toBe('currentPasswordRequired');
 	});
 });
 
@@ -109,8 +113,7 @@ describe('validateBoxConfiguration — recovery', () => {
 			{...complete, currentPassword: ''},
 			'recovery'
 		);
-		expect(stepErrors(errors, 'recovery', 'wifi').currentPassword).toBe(
-			'currentPasswordRequired'
-		);
+		expect(errors.currentPassword).toBe('currentPasswordRequired');
+		expect(isBoxConfigurationValid(stepErrors(errors, 'wifi'))).toBe(true);
 	});
 });

@@ -1,14 +1,15 @@
+import {ConfigureSend} from '../../../services/http';
 import {BoxConfigurationForm} from '../../../services/validation';
 
 /**
  * Dernière saisie du formulaire de configuration de la box.
  *
- * Sert à la retrouver intacte après un échec de bascule : l'écran de
- * configuration est sorti de la pile au moment d'envoyer — il n'a plus de
- * réseau pour travailler — et son état est donc perdu avec lui. Le brouillon
- * survit à cette remise à zéro, quel que soit le chemin par lequel on revient
- * au formulaire : retour direct depuis l'écran de bascule, ou nouvel appairage
- * complet par le scanner.
+ * Sert à la retrouver intacte après un échec de bascule : une fois la
+ * configuration envoyée, le formulaire cède la place à la progression — il n'a
+ * plus de réseau pour travailler — et y revenir remplace la pile, donc perd son
+ * état. Le brouillon survit à cette remise à zéro, quel que soit le chemin par
+ * lequel on revient au formulaire : retour direct depuis la progression, ou
+ * nouvel appairage complet par le scanner.
  *
  * Volontairement en mémoire seulement, jamais sur disque : il contient la clé
  * Wi-Fi du réseau et le mot de passe du compte. Les persister les exposerait
@@ -30,27 +31,24 @@ export function clearBoxConfigurationDraft(): void {
 }
 
 /**
- * Envoi de `configure` encore en vol quand l'écran d'état s'ouvre : il part
- * en même temps que la navigation, et `BoxHandover` doit l'attendre avant de
- * relâcher le hotspot — sur Android, le relâcher coupe une requête qui n'a pas
- * fini de partir.
+ * Envoi de `configure`, lancé au moment d'ouvrir l'écran d'état sans être
+ * attendu. `BoxHandover` en lit l'issue : un refus s'y affiche, et le hotspot
+ * n'est relâché qu'une fois l'envoi abouti — sur Android, le relâcher coupe
+ * une requête qui n'a pas fini de partir. L'issue reste lisible après coup,
+ * pour qu'une nouvelle vérification retrouve la même.
  */
-let pendingConfiguration: Promise<unknown> | null = null;
+let pendingConfiguration: Promise<ConfigureSend> | null = null;
 
-export function setPendingConfiguration(request: Promise<unknown>): void {
-	const settled = request.then(
-		() => undefined,
-		() => undefined
-	);
-	pendingConfiguration = settled;
-	settled.then(() => {
-		if (pendingConfiguration === settled) pendingConfiguration = null;
-	});
+export function setPendingConfiguration(request: Promise<ConfigureSend>): void {
+	pendingConfiguration = request.catch((): ConfigureSend => ({kind: 'lost'}));
 }
 
-/** Attend la fin de l'envoi en cours, s'il y en a un. Ne rejette jamais. */
-export async function settlePendingConfiguration(): Promise<void> {
-	await pendingConfiguration;
+/**
+ * Issue de l'envoi, attendue s'il est encore en vol. `null` si rien n'a été
+ * envoyé. Ne rejette jamais.
+ */
+export async function settlePendingConfiguration(): Promise<ConfigureSend | null> {
+	return pendingConfiguration;
 }
 
 /**

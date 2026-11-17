@@ -104,40 +104,43 @@
 		"refreshNetworks": "Refresh list",
 		"continue": "Continue",
 		"reconnect": "Reconnect my box",
-		"tooManyAttempts": "Too many attempts. Wait a moment before trying again.",
 		"showPassword": "Show password",
 		"hidePassword": "Hide password",
 		"existingAccount": "This box is already linked to an account. You can only change its Wi-Fi network: its name and credentials stay the same.",
 		"forgotPassword": "Forgot your password?",
 		"forgotPasswordAction": "Reset it with my recovery email address",
-		"checkingPassword": "Checking the password ...",
 		"labelPasswordWrong": "The label password is incorrect. Check it on the label under the box, then try again.",
 		"boxPasswordWrong": "The box password is incorrect. Check it, then try again.",
-		"duplicateProfile": "This box is already saved in your profiles, as “{{profile}}”. To set it up again, first delete that profile (long press on its name in the profile list).",
-		"checkFailed": "The box could not check the password (error {{status}}). Try again in a moment."
+		"duplicateProfile": "This box is already saved in your profiles, as “{{profile}}”. To set it up again, first delete that profile (long press on its name in the profile list)."
 	},
 	"handover": {
 		"yourNetwork": "your Wi-Fi network",
 		"signIn": "Sign in",
-		"rescan": "Rescan the box to fix",
-		"retryCheck": "Check again",
-		"continueAnyway": "Continue anyway",
-		"continueNow": "Continue without waiting",
 		"phoneJoins": "The phone joins {{network}}",
 		"boxJoins": "The box joins {{network}}",
+		"serverReachable": "The local server is reachable",
+		"retry": "Try again",
 		"pending": "pending",
 		"title": {
 			"waiting": "Switching networks",
 			"confirmed": "Box configured",
-			"rejected": "Wi-Fi key rejected",
 			"offNetwork": "The phone is not on the right network",
-			"unconfirmed": "Box not found yet"
+			"unconfirmed": "Box not found yet",
+			"serverUnreachable": "Local server unreachable",
+			"failed": "Configuration failed"
 		},
 		"box": {
 			"searching": "looking for the box… {{seconds}} s",
-			"connected": "connected — {{state}}",
-			"mode": "mode {{mode}} — {{state}}",
-			"noResponse": "no response on the network"
+			"connected": "connected",
+			"mode": "mode {{mode}}",
+			"noResponse": "no response on the network",
+			"joining": "connecting to Wi-Fi… {{seconds}} s",
+			"failed": "connection failed"
+		},
+		"server": {
+			"testing": "testing the connection… {{seconds}} s",
+			"reachable": "reachable",
+			"unreachable": "no response"
 		},
 		"phone": {
 			"currentlyOn": "currently on “{{ssid}}”",
@@ -148,16 +151,44 @@
 			"unverifiable": "network cannot be checked on this platform"
 		},
 		"body": {
-			"confirmedNamed": "The box “{{name}}” reports being connected to {{network}} and responds on your network.",
-			"confirmed": "The box reports being connected to {{network}} and responds on your network.",
-			"rejected": "The box received the configuration, but {{network}} rejected the key you entered. It has reopened its access point: rescan its QR code to rejoin it and fix the key — the rest of your input is kept.",
+			"confirmedNamed": "The box “{{name}}” is connected to {{network}} and responds on your network.",
+			"confirmed": "The box is connected to {{network}} and responds on your network.",
 			"offNetwork": "The phone stayed on a network other than {{network}}. While it is there, the box is out of reach: reconnect it, then check again.",
 			"apReleased": "The box's access point has been released. Reconnect the phone to {{network}} if it hasn't already.",
 			"applying": "The box is applying its configuration and joining {{network}}. Looking for it on that network.",
 			"noAnswer": "The configuration was sent, but the box is not responding on {{network}} yet. Check that the phone is connected to it — and that the Wi-Fi key you entered was correct.",
-			"otherNetwork": "The box responds, but it is connected to “{{reported}}” instead of {{network}}.",
-			"notJoined": "The box responds, but it has not joined {{network}} yet (state: {{state}})."
+			"notJoined": "The box responds, but it has not joined {{network}} yet (mode: {{state}}).",
+			"sending": "The configuration is on its way to the box. Keep the phone close to it.",
+			"testingServer": "The box is connected to {{network}}. Checking that its local server accepts connections.",
+			"serverUnreachable": "The box is connected to {{network}}, but its local server did not respond within {{seconds}} seconds. It may still be starting up: try again in a moment.",
+			"failedHotspot": "The box has reopened its access point: rescan its QR code to rejoin it and fix this — your input is kept."
+		},
+		"authorizeAndSend": "Authorization & sending the request",
+		"fixInput": "Fix my input",
+		"send": {
+			"sending": "sending…",
+			"accepted": "configuration accepted",
+			"unconfirmed": "no acknowledgement",
+			"refused": "refused by the box",
+			"notReceived": "not received"
 		}
+	},
+	"configureError": {
+		"VALIDATION_FAILED": "The box refused the configuration: some values are invalid. Check your input.",
+		"SETUP_FIELDS_REQUIRED": "The box refused the configuration: required information is missing. Check your input.",
+		"INVALID_CURRENT_PASSWORD": "The box refused the password you entered.",
+		"CONFIGURE_IN_PROGRESS": "The box is already applying a configuration. Wait a moment, then try again.",
+		"WIFI_INVALID_PSK": "The Wi-Fi network rejected the key you entered. Fix it, then try again.",
+		"WIFI_NETWORK_NOT_FOUND": "The box cannot find the selected Wi-Fi network. Check that it is in range, or pick another one.",
+		"WIFI_TIMEOUT": "The Wi-Fi network did not respond in time. Move the box closer to the router, then try again.",
+		"WIFI_INTERFACE_BUSY": "The box's Wi-Fi was busy. Try again in a moment.",
+		"WIFI_CONNECT_FAILED": "The box could not join the Wi-Fi network. Check the network and its key, then try again.",
+		"WIFI_OPERATION_FAILED": "A Wi-Fi error occurred on the box. Try again.",
+		"LOCAL_COORDINATES_SAVE_FAILED": "The box joined the Wi-Fi, but could not save its location.",
+		"USER_SAVE_FAILED": "The box joined the Wi-Fi, but could not save the account.",
+		"HOTSPOT_STOP_FAILED": "The box joined the Wi-Fi, but could not close its access point.",
+		"CONFIGURE_FAILED": "The box configuration failed. Try again.",
+		"NOT_RECEIVED": "The box did not receive the configuration. Check that the phone is still connected to its network, then send it again."
 	},
 	"deviceSettings": {
 		"newProfile": "New profile",
