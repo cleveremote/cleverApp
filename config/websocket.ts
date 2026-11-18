@@ -1,6 +1,6 @@
-import {HOTSPOT_MOCK_ENABLED} from './env';
+import {API_URL, HOTSPOT_MOCK_ENABLED} from './env';
 
-export const WEBSITE_URL = 'https://api-dev.cleversystech.com';
+export const WEBSITE_URL = API_URL;
 
 // Simulate joining the box hotspot instead of driving the Wi-Fi stack, so the
 // QR pairing screen can be exercised without a box (and on a simulator).

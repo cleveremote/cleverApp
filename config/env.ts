@@ -1,6 +1,7 @@
 import {
 	APP_MODE as RAW_APP_MODE,
 	API_TARGET,
+	API_URL as RAW_API_URL,
 	HOTSPOT_MOCK as RAW_HOTSPOT_MOCK,
 } from '@env';
 
@@ -19,3 +20,9 @@ export const IS_DEMO = APP_MODE === 'demo';
 export const IS_PROD = APP_MODE === 'prod';
 
 export const HOTSPOT_MOCK_ENABLED = RAW_HOTSPOT_MOCK === 'true';
+
+// Backend base URL (API_URL in .env.<mode>). Falls back per mode so a missing
+// variable never points a release build at the dev backend.
+export const API_URL: string =
+	RAW_API_URL ||
+	(IS_PROD ? 'https://api.cleversystech.com' : 'https://api-dev.cleversystech.com');
