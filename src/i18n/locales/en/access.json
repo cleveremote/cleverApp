@@ -212,19 +212,6 @@
 		"CONFIGURE_FAILED": "The box configuration failed. Try again.",
 		"NOT_RECEIVED": "The box did not receive the configuration. Check that the phone is still connected to its network, then send it again."
 	},
-	"deviceSettings": {
-		"newProfile": "New profile",
-		"configured": "configured",
-		"permissionDenied": "Permission denied: check your password.",
-		"selectNetwork": "Select network",
-		"psk": "Wi-Fi key"
-	},
-	"device": {
-		"select": "Select the device to configure:",
-		"label": "device: {{name}}",
-		"scanning": "Scan in progress ...",
-		"scanNetwork": "Scan network"
-	},
 	"profiles": {
 		"add": "Add new profile ...",
 		"deleteHint": "(long press a profile to delete it)",

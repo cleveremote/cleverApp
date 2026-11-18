@@ -212,19 +212,6 @@
 		"CONFIGURE_FAILED": "La configuration de la box a échoué. Réessayez.",
 		"NOT_RECEIVED": "La box n'a pas reçu la configuration. Vérifiez que le téléphone est toujours connecté à son réseau, puis renvoyez-la."
 	},
-	"deviceSettings": {
-		"newProfile": "Nouveau profil",
-		"configured": "configuré",
-		"permissionDenied": "Permission refusée : vérifiez votre mot de passe.",
-		"selectNetwork": "Choisir un réseau",
-		"psk": "Clé Wi-Fi"
-	},
-	"device": {
-		"select": "Sélectionnez l'équipement à configurer :",
-		"label": "équipement : {{name}}",
-		"scanning": "Recherche en cours ...",
-		"scanNetwork": "Rechercher"
-	},
 	"profiles": {
 		"add": "Ajouter un profil ...",
 		"deleteHint": "(appui long sur un profil pour le supprimer)",

@@ -36,6 +36,9 @@ const RECOVERY_CONNECT_TIMEOUT_MS = 10000;
  * perdue. Large : la demande de code attend l'envoi de l'email.
  */
 const RECOVERY_RESPONSE_TIMEOUT_MS = 30000;
+// Bonjour browse for the box service. Short: it only finds a non-default port,
+// the bare `<box>.local` hostname is tried when it finds nothing.
+const LOCAL_SCAN_TIMEOUT_MS = 3000;
 
 /** Résultat d'un appel `front/box/login` (connexion ou récupération). */
 export type BoxLoginResult = {
@@ -409,7 +412,14 @@ class AuthenticationService {
 			return this.resolvedLocalService;
 		}
 
-		const service = await mdnsResolver.resolveService(boxId);
+		// Short scan: it only finds an advertised port now — when it finds
+		// nothing, `resolveLocalServer` still tries the bare hostname.
+		const service = await mdnsResolver.resolveService(
+			boxId,
+			undefined,
+			undefined,
+			LOCAL_SCAN_TIMEOUT_MS
+		);
 		if (!service) {
 			console.warn('mDNS resolution failed for', boxId);
 			return undefined;
@@ -427,16 +437,32 @@ class AuthenticationService {
 		// A box paired by QR code told us its hostname and port outright, so
 		// there is nothing to discover. The URL keeps the same `.local` shape as
 		// the mDNS branch below, which is what keeps the certificate valid.
+		const hostname = boxId.trim().replace(/\.local$/i, '').toLowerCase();
+		// No box known: nothing to try locally, the remote server is the only way.
+		if (!hostname) return undefined;
+
 		const endpoint = await getBoxEndpoint(boxId);
 		if (endpoint) {
-			return `https://${endpoint.host}:${endpoint.port}`;
+			const url = `https://${endpoint.host}:${endpoint.port}`;
+			console.info('local via endpoint ->', url);
+			return url;
 		}
 		const service = await this.scanAndCacheLocalService(boxId);
-		if (!service) return undefined;
-		// The box advertises the port it actually listens on — fall back to the
-		// default https port only when it is missing from the SRV record.
-		const port = service.port ? `:${service.port}` : '';
-		return `https://${service.hostname}.local${port}`;
+		if (service) {
+			// The box advertises the port it actually listens on — fall back to
+			// the default https port only when it is missing from the SRV record.
+			const port = service.port ? `:${service.port}` : '';
+			const url = `https://${service.hostname}.local${port}`;
+			console.info('local via mdns ->', url);
+			return url;
+		}
+		// The box publishes only an A record for its hostname, no `_https._tcp`
+		// service (see MdnsDns.kt): the browse above finds nothing although
+		// `<box>.local` resolves fine — natively on iOS, through MdnsDns on
+		// Android. Without a QR endpoint this is the only way to reach it.
+		const url = `https://${hostname}.local`;
+		console.info('local via hostname ->', url);
+		return url;
 	}
 
 	// try first local if ok else distant
@@ -447,11 +473,16 @@ class AuthenticationService {
 		const boxId = (await AsyncStorage.getItem('boxId')) || '';
 
 		let server = WEBSITE_URL;
-
 		if (isLocal) {
-			server = (await this.resolveLocalServer(boxId)) ?? '';
+			const local = await this.resolveLocalServer(boxId);
+			if (!local) {
+				// No local address to try: straight to the remote server, rather
+				// than opening a socket on '' that can only fail.
+				return this.setSocketServer(false, login);
+			}
+			server = local;
 		} else {
-			server = WEBSITE_URL;
+			console.info('remote ->', server);
 		}
 
 		const token = await tokenStorage.getAccessToken();
@@ -469,9 +500,10 @@ class AuthenticationService {
 						'| native:', _error?.description?.message ?? '(aucun)',
 						'| cause:', _error?.cause ?? '(aucune)'
 					);
-					if (socketService.active && !login && !isLocal) {
-						resolve({res: false, error: 'timeout', retry: true});
-					} else if (login && isLocal) {
+					// Local first, then remote — whatever the caller (login or
+					// reconnect from executeRefresh). Never back from remote to
+					// local: every attempt starts local, so it would only loop.
+					if (isLocal) {
 						resolve({res: false, error: 'timeout', retry: true});
 					} else {
 						this.setStatusServer(false);

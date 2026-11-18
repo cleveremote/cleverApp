@@ -40,13 +40,6 @@
 		"unexpected": "حدث خطأ غير متوقع.",
 		"boxNotConnected": "صندوق غير معروف أو غير متصل."
 	},
-	"ble": {
-		"notConnected": "الجهاز غير متصل",
-		"disconnected": "تم قطع اتصال الجهاز",
-		"bluetoothOff": "البلوتوث متوقف",
-		"locationDisabled": "خدمات الموقع معطّلة",
-		"permissionDenied": "لم يتم منح الأذونات"
-	},
 	"devicesUnreachable": {
 		"title": "أجهزة يتعذّر الوصول إليها",
 		"message": "لا يمكن بدء «{{name}}»:\n{{devices}}",

@@ -40,13 +40,6 @@
 		"unexpected": "Une erreur inattendue est survenue.",
 		"boxNotConnected": "Box inconnue ou non connectée."
 	},
-	"ble": {
-		"notConnected": "L'équipement n'est pas connecté",
-		"disconnected": "Équipement déconnecté",
-		"bluetoothOff": "Le Bluetooth est désactivé",
-		"locationDisabled": "Les services de localisation sont désactivés",
-		"permissionDenied": "Les autorisations n'ont pas été accordées"
-	},
 	"devicesUnreachable": {
 		"title": "Équipements injoignables",
 		"message": "« {{name}} » ne peut pas démarrer :\n{{devices}}",

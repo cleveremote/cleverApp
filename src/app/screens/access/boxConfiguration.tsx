@@ -186,9 +186,7 @@ type Phase = 'detecting' | 'unreachable' | 'normal' | 'ready';
  * d'état s'ouvre alors sans attendre de réponse : c'est `getMode` qui y dit
  * la suite, refus compris. En `recovery`, il s'ouvre dès le réseau rejoint.
  *
- * Tout passe en HTTPS sur le hotspot, contrairement à `deviceSettings`, qui
- * fait la même chose en BLE. Les deux écrans coexistent : l'appairage BLE
- * reste utilisé par les box qui n'exposent pas de point d'accès.
+ * Tout passe en HTTPS sur le hotspot de la box.
  */
 export function BoxConfiguration(props: any) {
 	// `deviceId` du QR scanné : c'est sous lui que l'endpoint de la box est rangé.
@@ -809,8 +807,8 @@ export function BoxConfiguration(props: any) {
 	): Promise<ConfigureSend> => {
 		try {
 			// Best effort pour la position : la box est configurée même sans
-			// GPS, le champ est alors simplement omis — même contrat que
-			// l'appairage BLE. La box en déduit elle-même son fuseau horaire.
+			// GPS, le champ est alors simplement omis. La box en déduit
+			// elle-même son fuseau horaire.
 			const localCoordinates =
 				mode === 'setup'
 					? await coordinatesRef.current?.take(COORDINATES_GRACE_MS)
@@ -1510,7 +1508,7 @@ const FieldError = ({message}: {message?: string}) =>
 
 /**
  * La box a déjà renvoyé deux formes pour cette route : un tableau d'objets
- * (`{name, isConfigured, isConnected, in-use}`, comme la caractéristique BLE) et un tableau
+ * (`{name, isConfigured, isConnected, in-use}`) et un tableau
  * de chaînes. Les deux sont acceptées plutôt que d'imposer un firmware précis.
  */
 function parseNetworks(body: string): NetworkOption[] {

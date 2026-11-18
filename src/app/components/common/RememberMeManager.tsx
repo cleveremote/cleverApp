@@ -21,7 +21,7 @@ const isCancellation = (error: unknown) =>
 /**
  * `account` identifie la box (son nom, qui sert aussi de `boxId`) et `login`
  * est l'identifiant du compte sur cette box. Les deux se confondaient tant que
- * l'appairage BLE ne demandait pas d'identifiant ; la configuration par hotspot
+ * l'appairage ne demandait pas d'identifiant ; la configuration par hotspot
  * les distingue, d'où le trousseau indexé sur l'account et l'username qui porte
  * le vrai login.
  */

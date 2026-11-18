@@ -1,5 +1,4 @@
 /* Textes des demandes d'autorisation, affichés par iOS dans la langue de l'app. */
-"NSBluetoothAlwaysUsageDescription" = "L'application utilise le Bluetooth pour s'appairer avec votre box et la configurer.";
 "NSCameraUsageDescription" = "L'application utilise la caméra pour lire le QR code de votre box et s'y appairer.";
 "NSLocalNetworkUsageDescription" = "L'application doit découvrir les équipements de votre réseau local.";
 "NSFaceIDUsageDescription" = "L'application utilise Face ID ou Touch ID pour vous authentifier.";

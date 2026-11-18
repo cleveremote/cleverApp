@@ -1,0 +1,673 @@
+<!doctype html>
+<html lang="fr" dir="ltr" data-lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Hydro-phyto – Confidentialité &amp; Support</title>
+<meta name="description" content="Politique de confidentialité et support de l'application Hydro-phyto / Privacy policy and support for the Hydro-phyto app.">
+<style>
+  /* Charte de l'application Hydro-phyto */
+  :root {
+    --brand: #32404e;          /* logo, textes principaux */
+    --bg: #f4f6f8;
+    --surface: #ffffff;
+    --text: #32404e;
+    --label: #4A5568;          /* stackLabelColor */
+    --muted: #718096;          /* fieldLabelColor */
+    --border: #CBD5E0;
+    --border-soft: #E2E8F0;
+    --soft: #EDF2F7;
+    --link: #185FA5;
+    --shadow: 0 1px 2.2px rgba(0,0,0,.22);
+    --todo-bg: #FEF3C7; --todo-text: #8A6E20;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --brand: #E2E8F0; --bg: #161c22; --surface: #1f2730; --text: #E2E8F0;
+      --label: #CBD5E0; --muted: #A0AEC0; --border: #3a4654; --border-soft: #2d3742;
+      --soft: #27313c; --link: #60A5FA; --shadow: 0 1px 3px rgba(0,0,0,.5);
+      --todo-bg: #4a3b0a; --todo-text: #ffe08a;
+    }
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; background: var(--bg); color: var(--text);
+    font: 15px/1.6 -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, "Noto Sans", "Noto Sans Arabic", Tahoma, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  header.top {
+    position: sticky; top: 0; z-index: 2; background: var(--surface);
+    border-bottom: 1px solid var(--border-soft);
+  }
+  .bar { max-width: 860px; margin: 0 auto; padding: 10px 16px; display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; }
+  .brand { display: flex; align-items: center; gap: 10px; color: var(--brand); font-weight: 700; font-size: 18px; letter-spacing: .2px; text-decoration: none; }
+  .brand .logo { width: 35px; height: 35px; }
+  .langs { display: flex; gap: 6px; }
+  .langs button {
+    font: inherit; font-size: 14px; font-weight: 600; padding: 4px 12px; border-radius: 8px; cursor: pointer;
+    border: 1px solid var(--border); background: var(--surface); color: var(--brand);
+  }
+  .langs button[aria-pressed="true"] { background: var(--brand); border-color: var(--brand); color: var(--surface); }
+  .hero { text-align: center; padding: 28px 16px 4px; }
+  .hero .logo { width: 70px; height: 70px; color: var(--brand); }
+  .hero .name { display: block; margin-top: 6px; font-size: 22px; font-weight: 700; color: var(--brand); }
+  main { max-width: 860px; margin: 0 auto; padding: 16px 16px 48px; }
+  [data-content] { display: none; }
+  html[data-lang="fr"] [data-content="fr"],
+  html[data-lang="en"] [data-content="en"],
+  html[data-lang="ar"] [data-content="ar"] { display: block; }
+  nav.toc { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; margin: 8px 0 20px; }
+  nav.toc a {
+    text-decoration: none; color: var(--brand); background: var(--surface);
+    border: 1px solid var(--border); padding: 6px 16px; border-radius: 8px; font-weight: 600;
+  }
+  section.card {
+    background: var(--surface); border-radius: 12px; box-shadow: var(--shadow);
+    padding: 8px 20px 20px; margin-bottom: 20px; scroll-margin-top: 72px;
+  }
+  h1 { font-size: 24px; margin: 18px 0 4px; color: var(--brand); }
+  h2 { font-size: 17px; margin: 26px 0 8px; color: var(--brand); padding-bottom: 6px; border-bottom: 1px solid var(--border-soft); }
+  h3 { font-size: 15px; margin: 18px 0 4px; color: var(--label); }
+  p, li { color: var(--label); }
+  strong { color: var(--text); }
+  .meta { color: var(--muted); font-size: 14px; font-weight: 600; margin: 0 0 12px; }
+  a { color: var(--link); }
+  ul { padding-inline-start: 22px; }
+  li { margin: 4px 0; }
+  .table-wrap { overflow-x: auto; margin: 8px 0; border: 1px solid var(--border-soft); border-radius: 10px; }
+  table { border-collapse: collapse; width: 100%; font-size: 14px; min-width: 560px; }
+  th, td { text-align: start; vertical-align: top; padding: 9px 12px; border-bottom: 1px solid var(--border-soft); color: var(--label); }
+  tr:last-child td { border-bottom: 0; }
+  th { background: var(--soft); color: var(--muted); font-weight: 600; font-size: 13px; }
+  td:first-child { color: var(--text); font-weight: 600; }
+  .highlight { background: var(--soft); border: 1px solid var(--border-soft); border-radius: 12px; padding: 12px 16px; margin: 12px 0; color: var(--label); }
+  .todo { background: var(--todo-bg); color: var(--todo-text); padding: 0 4px; border-radius: 4px; font-weight: 600; }
+  .options { display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: 12px; margin: 12px 0; }
+  .option { border: 1px solid var(--border); border-radius: 12px; padding: 4px 16px 12px; background: var(--surface); }
+  .option h3 { margin: 12px 0 2px; color: var(--brand); font-size: 16px; }
+  .option .tag { display: inline-block; font-size: 12px; font-weight: 600; color: var(--muted); background: var(--soft); border-radius: 6px; padding: 1px 8px; }
+  .option dl { margin: 8px 0 0; }
+  .option dt { font-size: 13px; font-weight: 600; color: var(--muted); margin-top: 10px; }
+  .option dd { margin: 2px 0 0; color: var(--label); }
+  .warn { border-inline-start: 3px solid var(--brand); }
+  details { border-bottom: 1px solid var(--border-soft); padding: 12px 0; }
+  details:last-of-type { border-bottom: 0; }
+  summary { cursor: pointer; font-weight: 600; color: var(--text); }
+  details p, details ul { margin: 8px 0 0; }
+  footer { text-align: center; color: var(--muted); font-size: 13px; padding: 0 16px 32px; }
+  footer .logo { width: 22px; height: 22px; vertical-align: middle; color: var(--muted); }
+</style>
+</head>
+<body>
+
+<header class="top">
+  <div class="bar">
+    <a class="brand" href="#"><svg class="logo" aria-hidden="true" focusable="false" viewBox="0 0 40.595 37.358"><g style="display:inline"><path d="m-472.234 457.95-6.425 5.704v0c-3.548 3.15-3.65 8.166-.228 11.205 3.422 3.04 9.073 2.95 12.622-.2s3.65-8.167.228-11.206v0z" style="display:inline;fill:none;fill-opacity:1;fill-rule:evenodd;stroke:currentColor;stroke-width:2.62185;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:20;stroke-opacity:1;paint-order:markers stroke fill" transform="translate(493.294 -444.303)"/><path d="m-449.006 476.659 8.663.014" style="mix-blend-mode:normal;fill:none;fill-opacity:1;fill-rule:evenodd;stroke:currentColor;stroke-width:.389;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1" transform="translate(465.506 -453.702)"/><path d="m-449.006 477.591 8.663.014M-449.006 478.523l8.663.015M-449.006 479.456l8.663.014" style="display:inline;mix-blend-mode:normal;fill:none;fill-opacity:1;fill-rule:evenodd;stroke:currentColor;stroke-width:.389;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1" transform="translate(465.506 -453.702)"/><g style="display:inline"><path d="m-449.006 476.659 8.663.014" style="mix-blend-mode:normal;fill:none;fill-opacity:1;fill-rule:evenodd;stroke:currentColor;stroke-width:.389;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1" transform="rotate(90 14.93 483.967)"/><path d="m-449.006 477.591 8.663.014M-449.006 478.523l8.663.015M-449.006 479.456l8.663.014" style="display:inline;mix-blend-mode:normal;fill:none;fill-opacity:1;fill-rule:evenodd;stroke:currentColor;stroke-width:.389;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1" transform="rotate(90 14.93 483.967)"/></g><path d="M-475.403 465.71h5.881v5.912h-5.881z" style="fill:currentColor;fill-opacity:1;fill-rule:evenodd;stroke:currentColor;stroke-width:.117341;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:20;stroke-opacity:1;paint-order:markers stroke fill" transform="translate(493.294 -444.303)"/><path d="M-524.004 461.195a13.888 15.402 80.996 0 1 .152.794 13.888 15.402 80.996 0 1-13.039 16.127 13.888 15.402 80.996 0 1-2.388.208M-539.728 478.11a13.888 15.402 80.996 0 1-.153-.794 13.888 15.402 80.996 0 1 13.039-16.127 13.888 15.402 80.996 0 1 2.388-.208" style="display:inline;fill:none;fill-opacity:1;fill-rule:evenodd;stroke:currentColor;stroke-width:2.7;stroke-linecap:round;stroke-linejoin:bevel;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:20;stroke-opacity:1;paint-order:stroke markers fill" transform="translate(542.452 -459.63)"/><path d="M-539.362 478.593a17.5 13.773 3.808 0 0-.173.786 17.5 13.773 3.808 0 0 14.837 15.971 17.5 13.773 3.808 0 0 2.717.206" style="display:inline;fill:none;fill-opacity:1;fill-rule:evenodd;stroke:currentColor;stroke-width:2.86615;stroke-linecap:round;stroke-linejoin:bevel;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:20;stroke-opacity:1;paint-order:stroke markers fill" transform="translate(542.452 -459.63)"/><path d="m-539.951 485.787-1.701 2.835" style="fill:none;fill-rule:evenodd;stroke:currentColor;stroke-width:1.865;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:0" transform="translate(542.452 -459.63)"/><path d="m-560.37 452.41 10.584-10.96" style="fill:none;fill-rule:evenodd;stroke:currentColor;stroke-width:.965;stroke-linecap:round;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1" transform="translate(565.626 -437.262)"/><path d="m-558.858 450.781.134-3.942M-554.515 446.037l.067-3.274M-556.052 448.042h3.274M-551.575 443.23h2.272" style="fill:none;fill-rule:evenodd;stroke:currentColor;stroke-width:.565;stroke-linecap:round;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1" transform="translate(565.626 -437.262)"/><path d="M-526.622 450.453a15.402 13.888 9.004 0 0-.153.793 15.402 13.888 9.004 0 0 13.039 16.128 15.402 13.888 9.004 0 0 2.388.208M-510.898 467.367a15.402 13.888 9.004 0 0 .152-.794 15.402 13.888 9.004 0 0-13.039-16.127 15.402 13.888 9.004 0 0-2.388-.208" style="display:inline;fill:none;fill-opacity:1;fill-rule:evenodd;stroke:currentColor;stroke-width:2.7;stroke-linecap:round;stroke-linejoin:bevel;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:20;stroke-opacity:1;paint-order:stroke markers fill" transform="translate(549.834 -448.888)"/><path d="M-511.265 467.85a13.773 17.5 86.192 0 1 .173.787 13.773 17.5 86.192 0 1-14.837 15.97 13.773 17.5 86.192 0 1-2.717.206" style="display:inline;fill:none;fill-opacity:1;fill-rule:evenodd;stroke:currentColor;stroke-width:2.86615;stroke-linecap:round;stroke-linejoin:bevel;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:20;stroke-opacity:1;paint-order:stroke markers fill" transform="translate(549.834 -448.888)"/><g style="display:inline"><path d="m-560.37 452.41 10.584-10.96" style="fill:none;fill-rule:evenodd;stroke:currentColor;stroke-width:.965;stroke-linecap:round;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1" transform="matrix(-1 0 0 1 -523.806 -437.134)"/><path d="m-558.858 450.781.134-3.942M-554.515 446.037l.067-3.274M-556.052 448.042h3.274M-551.575 443.23h2.272" style="fill:none;fill-rule:evenodd;stroke:currentColor;stroke-width:.565;stroke-linecap:round;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1" transform="matrix(-1 0 0 1 -523.806 -437.134)"/></g></g></svg><span>Hydro-phyto</span></a>
+    <div class="langs" role="group" aria-label="Language">
+      <button type="button" data-set-lang="fr" aria-pressed="true">FR</button>
+      <button type="button" data-set-lang="en" aria-pressed="false">EN</button>
+      <button type="button" data-set-lang="ar" aria-pressed="false">العربية</button>
+    </div>
+  </div>
+</header>
+
+<div class="hero"><svg class="logo" role="img" aria-label="Hydro-phyto" focusable="false" viewBox="0 0 40.595 37.358"><g style="display:inline"><path d="m-472.234 457.95-6.425 5.704v0c-3.548 3.15-3.65 8.166-.228 11.205 3.422 3.04 9.073 2.95 12.622-.2s3.65-8.167.228-11.206v0z" style="display:inline;fill:none;fill-opacity:1;fill-rule:evenodd;stroke:currentColor;stroke-width:2.62185;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:20;stroke-opacity:1;paint-order:markers stroke fill" transform="translate(493.294 -444.303)"/><path d="m-449.006 476.659 8.663.014" style="mix-blend-mode:normal;fill:none;fill-opacity:1;fill-rule:evenodd;stroke:currentColor;stroke-width:.389;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1" transform="translate(465.506 -453.702)"/><path d="m-449.006 477.591 8.663.014M-449.006 478.523l8.663.015M-449.006 479.456l8.663.014" style="display:inline;mix-blend-mode:normal;fill:none;fill-opacity:1;fill-rule:evenodd;stroke:currentColor;stroke-width:.389;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1" transform="translate(465.506 -453.702)"/><g style="display:inline"><path d="m-449.006 476.659 8.663.014" style="mix-blend-mode:normal;fill:none;fill-opacity:1;fill-rule:evenodd;stroke:currentColor;stroke-width:.389;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1" transform="rotate(90 14.93 483.967)"/><path d="m-449.006 477.591 8.663.014M-449.006 478.523l8.663.015M-449.006 479.456l8.663.014" style="display:inline;mix-blend-mode:normal;fill:none;fill-opacity:1;fill-rule:evenodd;stroke:currentColor;stroke-width:.389;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1" transform="rotate(90 14.93 483.967)"/></g><path d="M-475.403 465.71h5.881v5.912h-5.881z" style="fill:currentColor;fill-opacity:1;fill-rule:evenodd;stroke:currentColor;stroke-width:.117341;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:20;stroke-opacity:1;paint-order:markers stroke fill" transform="translate(493.294 -444.303)"/><path d="M-524.004 461.195a13.888 15.402 80.996 0 1 .152.794 13.888 15.402 80.996 0 1-13.039 16.127 13.888 15.402 80.996 0 1-2.388.208M-539.728 478.11a13.888 15.402 80.996 0 1-.153-.794 13.888 15.402 80.996 0 1 13.039-16.127 13.888 15.402 80.996 0 1 2.388-.208" style="display:inline;fill:none;fill-opacity:1;fill-rule:evenodd;stroke:currentColor;stroke-width:2.7;stroke-linecap:round;stroke-linejoin:bevel;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:20;stroke-opacity:1;paint-order:stroke markers fill" transform="translate(542.452 -459.63)"/><path d="M-539.362 478.593a17.5 13.773 3.808 0 0-.173.786 17.5 13.773 3.808 0 0 14.837 15.971 17.5 13.773 3.808 0 0 2.717.206" style="display:inline;fill:none;fill-opacity:1;fill-rule:evenodd;stroke:currentColor;stroke-width:2.86615;stroke-linecap:round;stroke-linejoin:bevel;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:20;stroke-opacity:1;paint-order:stroke markers fill" transform="translate(542.452 -459.63)"/><path d="m-539.951 485.787-1.701 2.835" style="fill:none;fill-rule:evenodd;stroke:currentColor;stroke-width:1.865;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:0" transform="translate(542.452 -459.63)"/><path d="m-560.37 452.41 10.584-10.96" style="fill:none;fill-rule:evenodd;stroke:currentColor;stroke-width:.965;stroke-linecap:round;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1" transform="translate(565.626 -437.262)"/><path d="m-558.858 450.781.134-3.942M-554.515 446.037l.067-3.274M-556.052 448.042h3.274M-551.575 443.23h2.272" style="fill:none;fill-rule:evenodd;stroke:currentColor;stroke-width:.565;stroke-linecap:round;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1" transform="translate(565.626 -437.262)"/><path d="M-526.622 450.453a15.402 13.888 9.004 0 0-.153.793 15.402 13.888 9.004 0 0 13.039 16.128 15.402 13.888 9.004 0 0 2.388.208M-510.898 467.367a15.402 13.888 9.004 0 0 .152-.794 15.402 13.888 9.004 0 0-13.039-16.127 15.402 13.888 9.004 0 0-2.388-.208" style="display:inline;fill:none;fill-opacity:1;fill-rule:evenodd;stroke:currentColor;stroke-width:2.7;stroke-linecap:round;stroke-linejoin:bevel;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:20;stroke-opacity:1;paint-order:stroke markers fill" transform="translate(549.834 -448.888)"/><path d="M-511.265 467.85a13.773 17.5 86.192 0 1 .173.787 13.773 17.5 86.192 0 1-14.837 15.97 13.773 17.5 86.192 0 1-2.717.206" style="display:inline;fill:none;fill-opacity:1;fill-rule:evenodd;stroke:currentColor;stroke-width:2.86615;stroke-linecap:round;stroke-linejoin:bevel;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:20;stroke-opacity:1;paint-order:stroke markers fill" transform="translate(549.834 -448.888)"/><g style="display:inline"><path d="m-560.37 452.41 10.584-10.96" style="fill:none;fill-rule:evenodd;stroke:currentColor;stroke-width:.965;stroke-linecap:round;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1" transform="matrix(-1 0 0 1 -523.806 -437.134)"/><path d="m-558.858 450.781.134-3.942M-554.515 446.037l.067-3.274M-556.052 448.042h3.274M-551.575 443.23h2.272" style="fill:none;fill-rule:evenodd;stroke:currentColor;stroke-width:.565;stroke-linecap:round;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1" transform="matrix(-1 0 0 1 -523.806 -437.134)"/></g></g></svg><span class="name">Hydro-phyto</span></div>
+
+<main>
+
+<!-- ============================== FRANÇAIS ============================== -->
+<div data-content="fr" lang="fr" dir="ltr">
+  <nav class="toc">
+    <a href="#privacy">Confidentialité</a>
+    <a href="#support">Support</a>
+  </nav>
+
+  <section class="card" id="fr-privacy">
+    <h1>Politique de confidentialité</h1>
+    <p class="meta">Application iOS Hydro-phyto · Dernière mise à jour : 18 novembre 2026</p>
+
+    <div class="highlight">
+      <strong>En bref :</strong> vos données restent sur <strong>votre box</strong>, installée chez vous.
+      Notre serveur relais, situé en Europe, ne conserve que des journaux techniques pendant 30 jours.
+      L'application ne contient ni publicité, ni outil de mesure d'audience, ni suivi publicitaire, et nous ne vendons aucune donnée.
+    </div>
+
+    <h2>1. Responsable du traitement</h2>
+    <p>
+      <strong>CLEVERSYSTECH</strong>, SASU au capital de 1 000 €, immatriculée sous le numéro SIREN 893 448 985,
+      dont le siège est situé 5 Grande Voie des Vignes, 92290 Châtenay-Malabry, France.<br>
+      Contact pour toute question sur vos données : <a href="mailto:support@cleversystech.com">support@cleversystech.com</a>
+    </p>
+
+    <h2>2. Données traitées</h2>
+    <div class="table-wrap">
+    <table>
+      <thead><tr><th>Donnée</th><th>Où elle est stockée</th><th>Pourquoi</th><th>Combien de temps</th></tr></thead>
+      <tbody>
+        <tr><td>Identifiant et mot de passe du compte</td><td>Sur votre box. Si vous activez « Se souvenir de moi », aussi dans le trousseau iOS de votre iPhone, protégé par Face ID / Touch ID ou votre code</td><td>Vous connecter à votre box</td><td>Jusqu'à la réinitialisation du compte</td></tr>
+        <tr><td>E-mail de récupération</td><td>Sur votre box</td><td>Réinitialiser votre mot de passe en cas d'oubli</td><td>Jusqu'à la réinitialisation du compte</td></tr>
+        <tr><td>Identifiant de la box</td><td>Sur votre box et sur votre iPhone</td><td>Appairer l'application à votre box et l'y connecter</td><td>Jusqu'à la réinitialisation</td></tr>
+        <tr><td>Position GPS précise</td><td>Sur votre box uniquement. Elle transite par le serveur relais sans y être stockée</td><td>Enregistrer le lieu d'installation de la box et calculer les heures de lever et de coucher du soleil pour vos programmations</td><td>Jusqu'à la réinitialisation des « Données »</td></tr>
+        <tr><td>Nom et mot de passe du Wi-Fi</td><td>Transmis directement à votre box par connexion locale. Ils ne passent <strong>jamais</strong> par nos serveurs</td><td>Connecter votre box à votre réseau</td><td>Conservés uniquement sur la box</td></tr>
+        <tr><td>Données de culture : cycles, programmations, capteurs, historique</td><td>Sur votre box</td><td>Faire fonctionner l'application</td><td>Jusqu'à la réinitialisation « Données »</td></tr>
+        <tr><td>Journaux techniques : adresse IP, identifiant de la box, date et heure</td><td>Sur notre serveur relais (AWS, Union européenne)</td><td>Sécurité, détection des abus et diagnostic des pannes</td><td><strong>30 jours</strong>, puis suppression automatique</td></tr>
+        <tr><td>Préférences : langue, profils mémorisés</td><td>Sur votre iPhone uniquement</td><td>Mémoriser vos choix</td><td>Jusqu'à la désinstallation de l'application</td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <h2>3. Autorisations iOS demandées</h2>
+    <ul>
+      <li><strong>Appareil photo :</strong> sert à scanner le QR code de la box. Les images sont analysées sur l'iPhone, puis ni enregistrées ni transmises.</li>
+      <li><strong>Réseau local :</strong> sert à détecter votre box sur votre Wi-Fi (Bonjour) et à communiquer directement avec elle.</li>
+      <li><strong>Localisation (« Lorsque l'app est active ») :</strong> demandée pendant la configuration de la box. Elle n'est jamais utilisée en arrière-plan.</li>
+      <li><strong>Face ID / Touch ID :</strong> sert à déverrouiller vos identifiants mémorisés. Vos données biométriques sont gérées par iOS : ni l'application ni nous n'y avons jamais accès.</li>
+    </ul>
+    <p>Vous pouvez retirer chaque autorisation à tout moment dans <em>Réglages iOS › Hydro-phyto</em>. La fonction concernée ne sera alors plus disponible.</p>
+
+    <h2>4. Bases légales (RGPD)</h2>
+    <ul>
+      <li><strong>Exécution du contrat</strong> (art. 6.1.b) : compte, configuration de la box, fonctionnement de l'application.</li>
+      <li><strong>Consentement</strong> (art. 6.1.a) : localisation et appareil photo. Vous le donnez via les autorisations iOS et pouvez le retirer à tout moment.</li>
+      <li><strong>Intérêt légitime</strong> (art. 6.1.f) : journaux techniques, pour la sécurité et le diagnostic.</li>
+    </ul>
+
+    <h2>5. Destinataires</h2>
+    <ul>
+      <li><a href="https://aws.amazon.com/fr/privacy/" rel="noopener">Amazon Web Services (AWS)</a>, en tant que sous-traitant. AWS héberge notre serveur relais dans l'Union européenne. Ce serveur achemine les échanges entre l'application et votre box, et n'en conserve que les journaux techniques.</li>
+      <li>Les <strong>installateurs et revendeurs habilités</strong>, uniquement <strong>à votre demande</strong>, pour enquêter sur un problème technique.</li>
+    </ul>
+    <p>Aucune donnée n'est vendue, louée ou utilisée à des fins publicitaires. Aucun outil tiers de mesure d'audience ou de suivi n'est intégré à l'application.</p>
+
+    <h2>6. Où se trouvent vos données</h2>
+    <p>Hydro-phyto n'utilise pas de stockage centralisé dans le cloud.</p>
+    <ul>
+      <li><strong>Votre box</strong> conserve vos données personnelles et toutes les données que vous définissez dans l'application. Vous pouvez l'installer partout dans le monde : vos données restent dans le pays où elle se trouve.</li>
+      <li><strong>Notre serveur relais</strong>, hébergé par AWS dans l'Union européenne, sert uniquement de routeur entre l'application et votre box. Il ne stocke aucune donnée de la box. Il ne garde que les journaux techniques, pendant 30 jours.</li>
+    </ul>
+    <p>AWS appartient à un groupe américain. Si des données devaient être transférées vers les États-Unis, ce transfert serait encadré par le Data Privacy Framework UE–États-Unis, auquel Amazon est certifié, et par les clauses contractuelles types de la Commission européenne.</p>
+
+    <h2>7. Sécurité</h2>
+    <ul>
+      <li>Toutes les communications sont chiffrées en HTTPS/TLS, y compris avec la box sur votre réseau local, grâce à un certificat dédié.</li>
+      <li>Les identifiants et les jetons de session sont stockés dans le trousseau iOS chiffré.</li>
+      <li>Les données de la box restent sur la box et ne sont pas centralisées. Le serveur relais ne fait que les acheminer.</li>
+    </ul>
+
+    <h2>8. Supprimer vos données</h2>
+    <p>Depuis l'application : <strong>Réglages › Compte › Réinitialisation</strong>. Deux options indépendantes sont proposées. Vous pouvez choisir l'une, l'autre ou les deux.</p>
+    <div class="options">
+      <div class="option">
+        <h3>Compte</h3>
+        <span class="tag">Identité de l'utilisateur</span>
+        <dl>
+          <dt>Ce qui est supprimé</dt>
+          <dd>Toutes les données liées à l'utilisateur : identifiant, mot de passe (stocké chiffré), e-mail de récupération et rôle.</dd>
+          <dt>Ce qui est conservé</dt>
+          <dd>Toutes les données de l'application sur la box : cycles, programmations, capteurs, historique, données techniques.</dd>
+          <dt>Ensuite</dt>
+          <dd>Pour accéder de nouveau à la box, il faut créer un nouveau compte. Ce nouveau compte a accès aux données conservées.</dd>
+        </dl>
+      </div>
+      <div class="option">
+        <h3>Données</h3>
+        <span class="tag">Contenu de la box</span>
+        <dl>
+          <dt>Ce qui est supprimé</dt>
+          <dd>Toutes les données de l'application, techniques et fonctionnelles, y compris la position GPS. Plus aucune donnée n'est enregistrée sur la box.</dd>
+          <dt>Ce qui est conservé</dt>
+          <dd>Votre compte.</dd>
+          <dt>Ensuite</dt>
+          <dd>Vous gardez l'accès à la box, mais elle ne contient plus aucune donnée.</dd>
+        </dl>
+      </div>
+    </div>
+    <div class="highlight warn">
+      <ul style="margin:0">
+        <li><strong>Suppression physique :</strong> les données sont réellement effacées, et non simplement masquées ou désactivées (pas de suppression logique).</li>
+        <li><strong>Définitive :</strong> la réinitialisation est confirmée par votre mot de passe et ne peut pas être annulée.</li>
+        <li><strong>Pour tout effacer :</strong> réinitialisez <strong>Compte</strong> et <strong>Données</strong>.</li>
+      </ul>
+    </div>
+    <p>Les journaux techniques du serveur relais sont supprimés automatiquement au bout de 30 jours. Désinstaller l'application efface les préférences stockées sur l'iPhone.</p>
+
+    <h2>9. Vos droits</h2>
+    <p>Vous disposez des droits d'accès, de rectification, d'effacement, de limitation, d'opposition et de portabilité de vos données.
+       Pour les exercer, écrivez à <a href="mailto:support@cleversystech.com">support@cleversystech.com</a>. Nous répondons sous un mois au plus.
+       Vous pouvez aussi déposer une réclamation auprès de la <a href="https://www.cnil.fr/fr/plaintes" rel="noopener">CNIL</a>.</p>
+
+    <h2>10. Mineurs</h2>
+    <p>L'application ne s'adresse pas aux enfants de moins de 15 ans. Nous ne collectons pas sciemment de données les concernant.</p>
+
+    <h2>11. Modifications</h2>
+    <p>Nous pouvons mettre à jour cette politique. La date en haut de page indique la dernière version. En cas de changement important, nous vous en informerons dans l'application.</p>
+  </section>
+
+  <section class="card" id="fr-support">
+    <h1>Support</h1>
+    <p class="meta">Une question ou un problème avec Hydro-phyto ? Nous sommes là pour vous aider.</p>
+
+    <div class="highlight">
+      <strong>Nous contacter :</strong> <a href="mailto:support@cleversystech.com?subject=Support%20Hydro-phyto">support@cleversystech.com</a><br>
+      Délai de réponse habituel : <span class="todo">[ex. 2 jours ouvrés]</span>
+    </div>
+
+    <h3>Pour un traitement rapide, indiquez :</h3>
+    <ul>
+      <li>l'identifiant de votre box ;</li>
+      <li>le modèle de votre iPhone et sa version d'iOS ;</li>
+      <li>la version de l'application (dans l'App Store) ;</li>
+      <li>une description du problème et, si possible, une capture d'écran.</li>
+    </ul>
+
+    <h2>Questions fréquentes</h2>
+    <details><summary>Quels appareils sont compatibles ?</summary>
+      <p>Un iPhone sous iOS 15.6 ou une version ultérieure, et une box Hydro-phyto.</p></details>
+    <details><summary>L'application ne trouve pas ma box</summary>
+      <ul>
+        <li>Vérifiez que la box est sous tension.</li>
+        <li>Scannez le QR code de la box. Si l'application vous le demande, rejoignez le Wi-Fi de la box depuis <em>Réglages iOS › Wi-Fi</em>, puis revenez dans l'application.</li>
+        <li>Vérifiez que l'autorisation Réseau local est activée dans <em>Réglages iOS › Hydro-phyto</em>.</li>
+        <li>Désactivez le VPN éventuel.</li>
+      </ul></details>
+    <details><summary>Le scan du QR code ne fonctionne pas</summary>
+      <p>Autorisez l'appareil photo dans <em>Réglages iOS › Hydro-phyto</em>, nettoyez l'objectif et scannez dans un endroit bien éclairé.</p></details>
+    <details><summary>J'ai oublié mon mot de passe</summary>
+      <p>Sur l'écran de connexion, touchez « Mot de passe oublié ? » puis « Le réinitialiser avec mon adresse e-mail de récupération ».</p></details>
+    <details><summary>Pourquoi l'application demande-t-elle ma position ?</summary>
+      <p>Pour enregistrer le lieu d'installation de la box et calculer les heures de lever et de coucher du soleil utilisées par vos programmations. La position n'est demandée que pendant la configuration.</p></details>
+    <details><summary>Comment réinitialiser ou supprimer mes données ?</summary>
+      <p><strong>Réglages › Compte › Réinitialisation</strong>, puis « Compte » et/ou « Données ». Voir la <a href="#privacy">politique de confidentialité</a>.</p></details>
+    <details><summary>Mon installateur peut-il intervenir à distance ?</summary>
+      <p>Oui, mais uniquement à votre demande, pour diagnostiquer un problème technique. Contactez votre installateur ou notre support.</p></details>
+  </section>
+</div>
+
+<!-- ============================== ENGLISH ============================== -->
+<div data-content="en" lang="en" dir="ltr">
+  <nav class="toc">
+    <a href="#privacy">Privacy</a>
+    <a href="#support">Support</a>
+  </nav>
+
+  <section class="card" id="en-privacy">
+    <h1>Privacy Policy</h1>
+    <p class="meta">Hydro-phyto iOS app · Last updated: November 18, 2026</p>
+
+    <div class="highlight">
+      <strong>In short:</strong> your data stays on <strong>your box</strong>, installed at your home.
+      Our relay server, located in Europe, only keeps technical logs for 30 days.
+      The app has no ads, no analytics and no ad tracking, and we never sell data.
+    </div>
+
+    <h2>1. Data controller</h2>
+    <p>
+      <strong>CLEVERSYSTECH</strong>, a French single-shareholder simplified joint-stock company (SASU) with a share capital of €1,000,
+      registered under SIREN 893 448 985, with its registered office at 5 Grande Voie des Vignes, 92290 Châtenay-Malabry, France.<br>
+      Privacy contact: <a href="mailto:support@cleversystech.com">support@cleversystech.com</a>
+    </p>
+
+    <h2>2. Data we process</h2>
+    <div class="table-wrap">
+    <table>
+      <thead><tr><th>Data</th><th>Where it is stored</th><th>Why</th><th>How long</th></tr></thead>
+      <tbody>
+        <tr><td>Account username and password</td><td>On your box. If you turn on "Remember me", also in your iPhone's iOS Keychain, protected by Face ID / Touch ID or your passcode</td><td>Signing in to your box</td><td>Until you reset your account</td></tr>
+        <tr><td>Recovery email</td><td>On your box</td><td>Resetting your password if you forget it</td><td>Until you reset your account</td></tr>
+        <tr><td>Box identifier</td><td>On your box and on your iPhone</td><td>Pairing the app with your box and connecting to it</td><td>Until reset</td></tr>
+        <tr><td>Precise GPS location</td><td>On your box only. It passes through the relay server without being stored there</td><td>Recording where the box is installed and computing sunrise and sunset times for your schedules</td><td>Until you reset "Data"</td></tr>
+        <tr><td>Wi-Fi name and password</td><td>Sent directly to your box over a local connection. They <strong>never</strong> go through our servers</td><td>Connecting your box to your network</td><td>Kept on the box only</td></tr>
+        <tr><td>Growing data: cycles, schedules, sensors, history</td><td>On your box</td><td>Running the app</td><td>Until you reset "Data"</td></tr>
+        <tr><td>Technical logs: IP address, box identifier, date and time</td><td>On our relay server (AWS, European Union)</td><td>Security, abuse detection and troubleshooting</td><td><strong>30 days</strong>, then deleted automatically</td></tr>
+        <tr><td>Preferences: language, saved profiles</td><td>On your iPhone only</td><td>Remembering your choices</td><td>Until you uninstall the app</td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <h2>3. iOS permissions</h2>
+    <ul>
+      <li><strong>Camera:</strong> used to scan the QR code on the box. Images are analyzed on the iPhone and are neither saved nor sent.</li>
+      <li><strong>Local network:</strong> used to find your box on your Wi-Fi (Bonjour) and talk to it directly.</li>
+      <li><strong>Location ("While Using the App"):</strong> requested while you set up the box. It is never used in the background.</li>
+      <li><strong>Face ID / Touch ID:</strong> used to unlock your saved credentials. Your biometric data is handled by iOS: neither the app nor we ever have access to it.</li>
+    </ul>
+    <p>You can turn off any permission at any time in <em>iOS Settings › Hydro-phyto</em>. The related feature will then stop working.</p>
+
+    <h2>4. Legal bases (GDPR)</h2>
+    <ul>
+      <li><strong>Performance of a contract</strong> (Art. 6(1)(b)): your account, box setup and running the app.</li>
+      <li><strong>Consent</strong> (Art. 6(1)(a)): location and camera. You give it through iOS permissions and can withdraw it at any time.</li>
+      <li><strong>Legitimate interest</strong> (Art. 6(1)(f)): technical logs, for security and troubleshooting.</li>
+    </ul>
+
+    <h2>5. Recipients</h2>
+    <ul>
+      <li><a href="https://aws.amazon.com/privacy/" rel="noopener">Amazon Web Services (AWS)</a>, as a processor. AWS hosts our relay server in the European Union. This server routes traffic between the app and your box, and keeps only the technical logs.</li>
+      <li><strong>Authorized installers and resellers</strong>, only <strong>at your request</strong>, to investigate a technical issue.</li>
+    </ul>
+    <p>No data is sold, rented or used for advertising. The app includes no third-party analytics or tracking tools.</p>
+
+    <h2>6. Where your data is</h2>
+    <p>Hydro-phyto does not use centralized cloud storage.</p>
+    <ul>
+      <li><strong>Your box</strong> holds your personal data and all the data you define in the app. You can install it anywhere in the world: your data stays in the country where the box is.</li>
+      <li><strong>Our relay server</strong>, hosted by AWS in the European Union, only acts as a router between the app and your box. It stores no box data. It keeps only technical logs, for 30 days.</li>
+    </ul>
+    <p>AWS belongs to a US group. If any data were transferred to the United States, the transfer would be covered by the EU–US Data Privacy Framework, under which Amazon is certified, and by the European Commission's standard contractual clauses.</p>
+
+    <h2>7. Security</h2>
+    <ul>
+      <li>All traffic is encrypted with HTTPS/TLS, including traffic to the box on your local network, which uses a dedicated certificate.</li>
+      <li>Credentials and session tokens are stored in the encrypted iOS Keychain.</li>
+      <li>Box data stays on the box and is not centralized. The relay server only routes it.</li>
+    </ul>
+
+    <h2>8. Deleting your data</h2>
+    <p>In the app, go to <strong>Settings › Account › Reset</strong>. There are two independent options. You can choose either one, or both.</p>
+    <div class="options">
+      <div class="option">
+        <h3>Account</h3>
+        <span class="tag">User identity</span>
+        <dl>
+          <dt>What is deleted</dt>
+          <dd>All data linked to the user: username, password (stored encrypted), recovery email and role.</dd>
+          <dt>What is kept</dt>
+          <dd>All app data on the box: cycles, schedules, sensors, history and technical data.</dd>
+          <dt>Afterwards</dt>
+          <dd>To access the box again, you must create a new account. That new account can access the kept data.</dd>
+        </dl>
+      </div>
+      <div class="option">
+        <h3>Data</h3>
+        <span class="tag">Box content</span>
+        <dl>
+          <dt>What is deleted</dt>
+          <dd>All app data, both technical and functional, including the GPS location. No data at all remains on the box.</dd>
+          <dt>What is kept</dt>
+          <dd>Your account.</dd>
+          <dt>Afterwards</dt>
+          <dd>You keep access to the box, but it no longer holds any data.</dd>
+        </dl>
+      </div>
+    </div>
+    <div class="highlight warn">
+      <ul style="margin:0">
+        <li><strong>Hard delete:</strong> data is actually erased, not just hidden or deactivated (no soft delete).</li>
+        <li><strong>Permanent:</strong> you confirm the reset with your password, and it cannot be undone.</li>
+        <li><strong>To erase everything:</strong> reset both <strong>Account</strong> and <strong>Data</strong>.</li>
+      </ul>
+    </div>
+    <p>Technical logs on the relay server are deleted automatically after 30 days. Uninstalling the app removes the preferences stored on the iPhone.</p>
+
+    <h2>9. Your rights</h2>
+    <p>You have the right to access, correct, erase, restrict, object to and port your data.
+       To use these rights, write to <a href="mailto:support@cleversystech.com">support@cleversystech.com</a>. We reply within one month at most.
+       You can also file a complaint with the French data protection authority (<a href="https://www.cnil.fr/en" rel="noopener">CNIL</a>) or the authority in your country.</p>
+
+    <h2>10. Children</h2>
+    <p>The app is not intended for children under 15. We do not knowingly collect their data.</p>
+
+    <h2>11. Changes</h2>
+    <p>We may update this policy. The date at the top shows the latest version. If we make a significant change, we will tell you in the app.</p>
+  </section>
+
+  <section class="card" id="en-support">
+    <h1>Support</h1>
+    <p class="meta">Have a question or a problem with Hydro-phyto? We're here to help.</p>
+
+    <div class="highlight">
+      <strong>Contact us:</strong> <a href="mailto:support@cleversystech.com?subject=Hydro-phyto%20support">support@cleversystech.com</a><br>
+      Usual response time: <span class="todo">[e.g. 2 business days]</span>
+    </div>
+
+    <h3>To help us respond quickly, include:</h3>
+    <ul>
+      <li>your box identifier;</li>
+      <li>your iPhone model and iOS version;</li>
+      <li>the app version (shown in the App Store);</li>
+      <li>a description of the problem and, if possible, a screenshot.</li>
+    </ul>
+
+    <h2>FAQ</h2>
+    <details><summary>Which devices are supported?</summary>
+      <p>An iPhone running iOS 15.6 or later, and a Hydro-phyto box.</p></details>
+    <details><summary>The app can't find my box</summary>
+      <ul>
+        <li>Make sure the box is powered on.</li>
+        <li>Scan the QR code on the box. If the app asks you to, join the box's Wi-Fi from <em>iOS Settings › Wi-Fi</em>, then come back to the app.</li>
+        <li>Check that Local Network access is on in <em>iOS Settings › Hydro-phyto</em>.</li>
+        <li>Turn off any VPN.</li>
+      </ul></details>
+    <details><summary>QR code scanning doesn't work</summary>
+      <p>Allow camera access in <em>iOS Settings › Hydro-phyto</em>, clean the lens and scan somewhere well lit.</p></details>
+    <details><summary>I forgot my password</summary>
+      <p>On the sign-in screen, tap "Forgot your password?", then "Reset it with my recovery email address".</p></details>
+    <details><summary>Why does the app ask for my location?</summary>
+      <p>To record where your box is installed and to compute the sunrise and sunset times your schedules use. The app only asks for it during setup.</p></details>
+    <details><summary>How do I reset or delete my data?</summary>
+      <p><strong>Settings › Account › Reset</strong>, then "Account" and/or "Data". See the <a href="#privacy">privacy policy</a>.</p></details>
+    <details><summary>Can my installer help remotely?</summary>
+      <p>Yes, but only at your request, to diagnose a technical issue. Contact your installer or our support.</p></details>
+  </section>
+</div>
+
+<!-- ============================== العربية ============================== -->
+<div data-content="ar" lang="ar" dir="rtl">
+  <nav class="toc">
+    <a href="#privacy">الخصوصية</a>
+    <a href="#support">الدعم</a>
+  </nav>
+
+  <section class="card" id="ar-privacy">
+    <h1>سياسة الخصوصية</h1>
+    <p class="meta">تطبيق Hydro-phyto على iOS · آخر تحديث: 18 نوفمبر 2026</p>
+
+    <div class="highlight">
+      <strong>باختصار:</strong> تبقى بياناتك على <strong>صندوقك</strong> المثبّت في منزلك.
+      لا يحتفظ خادم الترحيل لدينا، الموجود في أوروبا، إلا بسجلات تقنية لمدة 30 يومًا.
+      لا يحتوي التطبيق على إعلانات ولا على أدوات لقياس الاستخدام أو للتتبّع الإعلاني، ولا نبيع أي بيانات.
+    </div>
+
+    <h2>1. المسؤول عن المعالجة</h2>
+    <p>
+      <strong>CLEVERSYSTECH</strong>، شركة مساهمة مبسّطة ذات مساهم وحيد (SASU) برأس مال قدره 1000 يورو،
+      مسجّلة تحت رقم SIREN 893 448 985، ومقرّها 5 Grande Voie des Vignes, 92290 Châtenay-Malabry، فرنسا.<br>
+      للتواصل بشأن بياناتك: <a href="mailto:support@cleversystech.com">support@cleversystech.com</a>
+    </p>
+
+    <h2>2. البيانات التي نعالجها</h2>
+    <div class="table-wrap">
+    <table>
+      <thead><tr><th>البيان</th><th>مكان التخزين</th><th>الغرض</th><th>المدة</th></tr></thead>
+      <tbody>
+        <tr><td>اسم المستخدم وكلمة مرور الحساب</td><td>على صندوقك. وإذا فعّلت «تذكرني»، تُحفظ أيضًا في سلسلة مفاتيح iOS على جهاز iPhone، محمية بـ Face ID / Touch ID أو برمز الدخول</td><td>تسجيل الدخول إلى صندوقك</td><td>حتى إعادة تعيين الحساب</td></tr>
+        <tr><td>البريد الإلكتروني للاسترداد</td><td>على صندوقك</td><td>إعادة تعيين كلمة المرور عند نسيانها</td><td>حتى إعادة تعيين الحساب</td></tr>
+        <tr><td>معرّف الصندوق</td><td>على صندوقك وعلى جهاز iPhone</td><td>إقران التطبيق بصندوقك والاتصال به</td><td>حتى إعادة التعيين</td></tr>
+        <tr><td>الموقع الجغرافي الدقيق (GPS)</td><td>على صندوقك فقط. يمرّ عبر خادم الترحيل دون أن يُخزَّن فيه</td><td>تسجيل مكان تثبيت الصندوق وحساب موعدَي شروق الشمس وغروبها لجداولك</td><td>حتى إعادة تعيين «البيانات»</td></tr>
+        <tr><td>اسم شبكة Wi-Fi وكلمة مرورها</td><td>تُرسل مباشرة إلى صندوقك عبر اتصال محلي، و<strong>لا</strong> تمرّ أبدًا عبر خوادمنا</td><td>ربط صندوقك بشبكتك</td><td>تُحفظ على الصندوق فقط</td></tr>
+        <tr><td>بيانات الزراعة: الدورات والجداول وأجهزة الاستشعار والسجل</td><td>على صندوقك</td><td>تشغيل التطبيق</td><td>حتى إعادة تعيين «البيانات»</td></tr>
+        <tr><td>السجلات التقنية: عنوان IP ومعرّف الصندوق والتاريخ والوقت</td><td>على خادم الترحيل لدينا (AWS، الاتحاد الأوروبي)</td><td>الأمان وكشف إساءة الاستخدام وتشخيص الأعطال</td><td><strong>30 يومًا</strong> ثم تُحذف تلقائيًا</td></tr>
+        <tr><td>التفضيلات: اللغة والملفات الشخصية المحفوظة</td><td>على جهاز iPhone فقط</td><td>تذكّر اختياراتك</td><td>حتى إلغاء تثبيت التطبيق</td></tr>
+      </tbody>
+    </table>
+    </div>
+
+    <h2>3. أذونات iOS المطلوبة</h2>
+    <ul>
+      <li><strong>الكاميرا:</strong> لمسح رمز QR الموجود على الصندوق. تُحلَّل الصور على جهاز iPhone، ولا تُحفظ ولا تُرسل.</li>
+      <li><strong>الشبكة المحلية:</strong> لاكتشاف صندوقك على شبكة Wi-Fi لديك (Bonjour) والتواصل معه مباشرة.</li>
+      <li><strong>الموقع («أثناء استخدام التطبيق»):</strong> يُطلب أثناء إعداد الصندوق، ولا يُستخدم أبدًا في الخلفية.</li>
+      <li><strong>Face ID / Touch ID:</strong> لفتح بيانات الدخول المحفوظة. يتولّى نظام iOS إدارة بياناتك البيومترية، ولا يصل إليها التطبيق ولا نحن أبدًا.</li>
+    </ul>
+    <p>يمكنك سحب أي إذن في أي وقت من <em>إعدادات iOS › Hydro-phyto</em>، وعندها تتوقف الميزة المرتبطة به عن العمل.</p>
+
+    <h2>4. الأسس القانونية (اللائحة العامة لحماية البيانات)</h2>
+    <ul>
+      <li><strong>تنفيذ العقد</strong> (المادة 6.1.b): الحساب وإعداد الصندوق وتشغيل التطبيق.</li>
+      <li><strong>الموافقة</strong> (المادة 6.1.a): الموقع والكاميرا. تمنحها عبر أذونات iOS ويمكنك سحبها في أي وقت.</li>
+      <li><strong>المصلحة المشروعة</strong> (المادة 6.1.f): السجلات التقنية، لأغراض الأمان والتشخيص.</li>
+    </ul>
+
+    <h2>5. الجهات المتلقية</h2>
+    <ul>
+      <li><a href="https://aws.amazon.com/privacy/" rel="noopener">Amazon Web Services (AWS)</a>، بصفتها معالجًا من الباطن. تستضيف AWS خادم الترحيل لدينا في الاتحاد الأوروبي. يمرّر هذا الخادم الاتصالات بين التطبيق وصندوقك، ولا يحتفظ إلا بالسجلات التقنية.</li>
+      <li><strong>المركّبون والموزّعون المعتمدون</strong>، <strong>بناءً على طلبك</strong> فقط، للتحقيق في مشكلة تقنية.</li>
+    </ul>
+    <p>لا تُباع أي بيانات ولا تُؤجَّر ولا تُستخدم لأغراض إعلانية. ولا يتضمّن التطبيق أي أدوات خارجية لقياس الاستخدام أو للتتبّع.</p>
+
+    <h2>6. أين توجد بياناتك</h2>
+    <p>لا يعتمد Hydro-phyto على تخزين سحابي مركزي.</p>
+    <ul>
+      <li><strong>صندوقك</strong> يحتفظ ببياناتك الشخصية وبكل البيانات التي تحدّدها في التطبيق. يمكنك تثبيته في أي مكان في العالم، وتبقى بياناتك في البلد الذي يوجد فيه الصندوق.</li>
+      <li><strong>خادم الترحيل لدينا</strong>، الذي تستضيفه AWS في الاتحاد الأوروبي، يعمل كموجّه فقط بين التطبيق وصندوقك. لا يخزّن أي بيانات من الصندوق، ولا يحتفظ إلا بالسجلات التقنية لمدة 30 يومًا.</li>
+    </ul>
+    <p>تنتمي AWS إلى مجموعة أمريكية. وفي حال نقل أي بيانات إلى الولايات المتحدة، يخضع هذا النقل لإطار خصوصية البيانات بين الاتحاد الأوروبي والولايات المتحدة، الذي تحمل Amazon شهادته، وللبنود التعاقدية النموذجية للمفوضية الأوروبية.</p>
+
+    <h2>7. الأمان</h2>
+    <ul>
+      <li>جميع الاتصالات مشفّرة عبر HTTPS/TLS، بما فيها الاتصال بالصندوق على شبكتك المحلية، بفضل شهادة مخصّصة.</li>
+      <li>تُخزَّن بيانات الدخول ورموز الجلسة في سلسلة مفاتيح iOS المشفّرة.</li>
+      <li>تبقى بيانات الصندوق على الصندوق ولا تُجمع مركزيًا، ويقتصر دور خادم الترحيل على تمريرها.</li>
+    </ul>
+
+    <h2>8. حذف بياناتك</h2>
+    <p>من داخل التطبيق: <strong>الإعدادات › الحساب › إعادة التعيين</strong>. يتوفّر خياران مستقلان، ويمكنك اختيار أحدهما أو كليهما.</p>
+    <div class="options">
+      <div class="option">
+        <h3>الحساب</h3>
+        <span class="tag">هوية المستخدم</span>
+        <dl>
+          <dt>ما يُحذف</dt>
+          <dd>جميع البيانات المرتبطة بالمستخدم: اسم المستخدم وكلمة المرور (المخزّنة مشفّرة) والبريد الإلكتروني للاسترداد والدور.</dd>
+          <dt>ما يُحتفظ به</dt>
+          <dd>جميع بيانات التطبيق على الصندوق: الدورات والجداول وأجهزة الاستشعار والسجل والبيانات التقنية.</dd>
+          <dt>بعد ذلك</dt>
+          <dd>للوصول إلى الصندوق مجددًا، يجب إنشاء حساب جديد، ويمكن لهذا الحساب الجديد الوصول إلى البيانات المحفوظة.</dd>
+        </dl>
+      </div>
+      <div class="option">
+        <h3>البيانات</h3>
+        <span class="tag">محتوى الصندوق</span>
+        <dl>
+          <dt>ما يُحذف</dt>
+          <dd>جميع بيانات التطبيق، التقنية والوظيفية، بما فيها الموقع الجغرافي. لا تبقى أي بيانات مسجّلة على الصندوق.</dd>
+          <dt>ما يُحتفظ به</dt>
+          <dd>حسابك.</dd>
+          <dt>بعد ذلك</dt>
+          <dd>تحتفظ بإمكانية الوصول إلى الصندوق، لكنه لم يعد يحتوي على أي بيانات.</dd>
+        </dl>
+      </div>
+    </div>
+    <div class="highlight warn">
+      <ul style="margin:0">
+        <li><strong>حذف فعلي:</strong> تُمحى البيانات فعلًا، ولا يُكتفى بإخفائها أو تعطيلها (لا يوجد حذف منطقي).</li>
+        <li><strong>نهائي:</strong> تؤكّد إعادة التعيين بكلمة مرورك، ولا يمكن التراجع عنها.</li>
+        <li><strong>لمحو كل شيء:</strong> أعد تعيين <strong>الحساب</strong> و<strong>البيانات</strong> معًا.</li>
+      </ul>
+    </div>
+    <p>تُحذف السجلات التقنية على خادم الترحيل تلقائيًا بعد 30 يومًا. ويؤدي إلغاء تثبيت التطبيق إلى مسح التفضيلات المخزّنة على جهاز iPhone.</p>
+
+    <h2>9. حقوقك</h2>
+    <p>لك الحق في الوصول إلى بياناتك وتصحيحها ومحوها وتقييد معالجتها والاعتراض عليها ونقلها.
+       لممارسة هذه الحقوق، راسلنا على <a href="mailto:support@cleversystech.com">support@cleversystech.com</a>، ونردّ خلال شهر واحد كحدّ أقصى.
+       ويمكنك أيضًا تقديم شكوى إلى الهيئة الفرنسية لحماية البيانات (<a href="https://www.cnil.fr/en" rel="noopener">CNIL</a>) أو إلى الهيئة المختصة في بلدك.</p>
+
+    <h2>10. القاصرون</h2>
+    <p>التطبيق غير موجّه للأطفال دون 15 عامًا، ولا نجمع بياناتهم عن علم.</p>
+
+    <h2>11. التعديلات</h2>
+    <p>قد نحدّث هذه السياسة. يشير التاريخ في أعلى الصفحة إلى آخر نسخة، وسنعلمك داخل التطبيق بأي تغيير مهم.</p>
+  </section>
+
+  <section class="card" id="ar-support">
+    <h1>الدعم</h1>
+    <p class="meta">لديك سؤال أو مشكلة في Hydro-phyto؟ نحن هنا لمساعدتك.</p>
+
+    <div class="highlight">
+      <strong>تواصل معنا:</strong> <a href="mailto:support@cleversystech.com?subject=Hydro-phyto%20support">support@cleversystech.com</a><br>
+      مدة الرد المعتادة: <span class="todo">[مثلًا يوما عمل]</span>
+    </div>
+
+    <h3>لمعالجة طلبك بسرعة، أرسل لنا:</h3>
+    <ul>
+      <li>معرّف صندوقك؛</li>
+      <li>طراز جهاز iPhone وإصدار iOS؛</li>
+      <li>إصدار التطبيق (يظهر في App Store)؛</li>
+      <li>وصفًا للمشكلة، ولقطة شاشة إن أمكن.</li>
+    </ul>
+
+    <h2>الأسئلة الشائعة</h2>
+    <details><summary>ما الأجهزة المتوافقة؟</summary>
+      <p>جهاز iPhone بنظام iOS 15.6 أو أحدث، وصندوق Hydro-phyto.</p></details>
+    <details><summary>لا يعثر التطبيق على صندوقي</summary>
+      <ul>
+        <li>تأكّد من أن الصندوق موصول بالكهرباء.</li>
+        <li>امسح رمز QR الموجود على الصندوق. وإذا طلب منك التطبيق ذلك، فانضمّ إلى شبكة Wi-Fi الخاصة بالصندوق من <em>إعدادات iOS › Wi-Fi</em>، ثم عُد إلى التطبيق.</li>
+        <li>تحقّق من تفعيل إذن الشبكة المحلية في <em>إعدادات iOS › Hydro-phyto</em>.</li>
+        <li>أوقف أي VPN.</li>
+      </ul></details>
+    <details><summary>مسح رمز QR لا يعمل</summary>
+      <p>اسمح باستخدام الكاميرا من <em>إعدادات iOS › Hydro-phyto</em>، ونظّف العدسة، وامسح الرمز في مكان جيد الإضاءة.</p></details>
+    <details><summary>نسيت كلمة المرور</summary>
+      <p>في شاشة تسجيل الدخول، المس «نسيت كلمة المرور؟» ثم «إعادة تعيينها باستخدام بريدي الإلكتروني للاسترداد».</p></details>
+    <details><summary>لماذا يطلب التطبيق موقعي؟</summary>
+      <p>لتسجيل مكان تثبيت الصندوق وحساب موعدَي الشروق والغروب اللذين تعتمد عليهما جداولك. لا يُطلب الموقع إلا أثناء الإعداد.</p></details>
+    <details><summary>كيف أعيد تعيين بياناتي أو أحذفها؟</summary>
+      <p><strong>الإعدادات › الحساب › إعادة التعيين</strong>، ثم «الحساب» و/أو «البيانات». راجع <a href="#privacy">سياسة الخصوصية</a>.</p></details>
+    <details><summary>هل يمكن للمركّب التدخل عن بُعد؟</summary>
+      <p>نعم، بناءً على طلبك فقط، لتشخيص مشكلة تقنية. تواصل مع المركّب أو مع فريق الدعم لدينا.</p></details>
+  </section>
+</div>
+
+</main>
+
+<footer><svg class="logo" aria-hidden="true" focusable="false" viewBox="0 0 40.595 37.358"><g style="display:inline"><path d="m-472.234 457.95-6.425 5.704v0c-3.548 3.15-3.65 8.166-.228 11.205 3.422 3.04 9.073 2.95 12.622-.2s3.65-8.167.228-11.206v0z" style="display:inline;fill:none;fill-opacity:1;fill-rule:evenodd;stroke:currentColor;stroke-width:2.62185;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:20;stroke-opacity:1;paint-order:markers stroke fill" transform="translate(493.294 -444.303)"/><path d="m-449.006 476.659 8.663.014" style="mix-blend-mode:normal;fill:none;fill-opacity:1;fill-rule:evenodd;stroke:currentColor;stroke-width:.389;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1" transform="translate(465.506 -453.702)"/><path d="m-449.006 477.591 8.663.014M-449.006 478.523l8.663.015M-449.006 479.456l8.663.014" style="display:inline;mix-blend-mode:normal;fill:none;fill-opacity:1;fill-rule:evenodd;stroke:currentColor;stroke-width:.389;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1" transform="translate(465.506 -453.702)"/><g style="display:inline"><path d="m-449.006 476.659 8.663.014" style="mix-blend-mode:normal;fill:none;fill-opacity:1;fill-rule:evenodd;stroke:currentColor;stroke-width:.389;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1" transform="rotate(90 14.93 483.967)"/><path d="m-449.006 477.591 8.663.014M-449.006 478.523l8.663.015M-449.006 479.456l8.663.014" style="display:inline;mix-blend-mode:normal;fill:none;fill-opacity:1;fill-rule:evenodd;stroke:currentColor;stroke-width:.389;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1" transform="rotate(90 14.93 483.967)"/></g><path d="M-475.403 465.71h5.881v5.912h-5.881z" style="fill:currentColor;fill-opacity:1;fill-rule:evenodd;stroke:currentColor;stroke-width:.117341;stroke-linecap:round;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:20;stroke-opacity:1;paint-order:markers stroke fill" transform="translate(493.294 -444.303)"/><path d="M-524.004 461.195a13.888 15.402 80.996 0 1 .152.794 13.888 15.402 80.996 0 1-13.039 16.127 13.888 15.402 80.996 0 1-2.388.208M-539.728 478.11a13.888 15.402 80.996 0 1-.153-.794 13.888 15.402 80.996 0 1 13.039-16.127 13.888 15.402 80.996 0 1 2.388-.208" style="display:inline;fill:none;fill-opacity:1;fill-rule:evenodd;stroke:currentColor;stroke-width:2.7;stroke-linecap:round;stroke-linejoin:bevel;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:20;stroke-opacity:1;paint-order:stroke markers fill" transform="translate(542.452 -459.63)"/><path d="M-539.362 478.593a17.5 13.773 3.808 0 0-.173.786 17.5 13.773 3.808 0 0 14.837 15.971 17.5 13.773 3.808 0 0 2.717.206" style="display:inline;fill:none;fill-opacity:1;fill-rule:evenodd;stroke:currentColor;stroke-width:2.86615;stroke-linecap:round;stroke-linejoin:bevel;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:20;stroke-opacity:1;paint-order:stroke markers fill" transform="translate(542.452 -459.63)"/><path d="m-539.951 485.787-1.701 2.835" style="fill:none;fill-rule:evenodd;stroke:currentColor;stroke-width:1.865;stroke-linecap:butt;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:0" transform="translate(542.452 -459.63)"/><path d="m-560.37 452.41 10.584-10.96" style="fill:none;fill-rule:evenodd;stroke:currentColor;stroke-width:.965;stroke-linecap:round;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1" transform="translate(565.626 -437.262)"/><path d="m-558.858 450.781.134-3.942M-554.515 446.037l.067-3.274M-556.052 448.042h3.274M-551.575 443.23h2.272" style="fill:none;fill-rule:evenodd;stroke:currentColor;stroke-width:.565;stroke-linecap:round;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1" transform="translate(565.626 -437.262)"/><path d="M-526.622 450.453a15.402 13.888 9.004 0 0-.153.793 15.402 13.888 9.004 0 0 13.039 16.128 15.402 13.888 9.004 0 0 2.388.208M-510.898 467.367a15.402 13.888 9.004 0 0 .152-.794 15.402 13.888 9.004 0 0-13.039-16.127 15.402 13.888 9.004 0 0-2.388-.208" style="display:inline;fill:none;fill-opacity:1;fill-rule:evenodd;stroke:currentColor;stroke-width:2.7;stroke-linecap:round;stroke-linejoin:bevel;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:20;stroke-opacity:1;paint-order:stroke markers fill" transform="translate(549.834 -448.888)"/><path d="M-511.265 467.85a13.773 17.5 86.192 0 1 .173.787 13.773 17.5 86.192 0 1-14.837 15.97 13.773 17.5 86.192 0 1-2.717.206" style="display:inline;fill:none;fill-opacity:1;fill-rule:evenodd;stroke:currentColor;stroke-width:2.86615;stroke-linecap:round;stroke-linejoin:bevel;stroke-miterlimit:4;stroke-dasharray:none;stroke-dashoffset:20;stroke-opacity:1;paint-order:stroke markers fill" transform="translate(549.834 -448.888)"/><g style="display:inline"><path d="m-560.37 452.41 10.584-10.96" style="fill:none;fill-rule:evenodd;stroke:currentColor;stroke-width:.965;stroke-linecap:round;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1" transform="matrix(-1 0 0 1 -523.806 -437.134)"/><path d="m-558.858 450.781.134-3.942M-554.515 446.037l.067-3.274M-556.052 448.042h3.274M-551.575 443.23h2.272" style="fill:none;fill-rule:evenodd;stroke:currentColor;stroke-width:.565;stroke-linecap:round;stroke-linejoin:miter;stroke-dasharray:none;stroke-opacity:1" transform="matrix(-1 0 0 1 -523.806 -437.134)"/></g></g></svg> © 2026 CLEVERSYSTECH · Hydro-phyto · <a href="mailto:support@cleversystech.com">support@cleversystech.com</a></footer>
+
+<script>
+(function () {
+  var LANGS = ['fr', 'en', 'ar'];
+  var root = document.documentElement;
+
+  function pick() {
+    var q = new URLSearchParams(location.search).get('lang');
+    if (q && LANGS.indexOf(q) >= 0) return q;
+    try { var s = localStorage.getItem('hp-lang'); if (LANGS.indexOf(s) >= 0) return s; } catch (e) {}
+    var n = (navigator.language || 'fr').slice(0, 2).toLowerCase();
+    return LANGS.indexOf(n) >= 0 ? n : 'en';
+  }
+
+  function scrollToHash() {
+    var h = location.hash.replace('#', '');
+    if (h !== 'privacy' && h !== 'support') return;
+    var el = document.getElementById(root.dataset.lang + '-' + h);
+    if (el) el.scrollIntoView();
+  }
+
+  function apply(lang) {
+    root.dataset.lang = lang;
+    root.lang = lang;
+    root.dir = lang === 'ar' ? 'rtl' : 'ltr';
+    document.querySelectorAll('[data-set-lang]').forEach(function (b) {
+      b.setAttribute('aria-pressed', String(b.dataset.setLang === lang));
+    });
+    try { localStorage.setItem('hp-lang', lang); } catch (e) {}
+  }
+
+  document.querySelectorAll('[data-set-lang]').forEach(function (b) {
+    b.addEventListener('click', function () { apply(b.dataset.setLang); scrollToHash(); });
+  });
+  document.addEventListener('click', function (e) {
+    var a = e.target.closest('a[href="#privacy"], a[href="#support"]');
+    if (!a) return;
+    e.preventDefault();
+    history.replaceState(null, '', a.getAttribute('href'));
+    scrollToHash();
+  });
+  window.addEventListener('hashchange', scrollToHash);
+
+  apply(pick());
+  scrollToHash();
+})();
+</script>
+</body>
+</html>

@@ -6,7 +6,6 @@ import {
 } from '@react-navigation/stack';
 import GroupsScreen from '../screens/cycle/GroupsScreen';
 import EventsScreen from '../screens/cycle/events/events';
-import {SettingsScreen} from '../screens/settings/settings';
 
 import {CycleSettingStack} from './CycleSettingsStack';
 import {TriggersStack} from './TriggersStack';
@@ -57,11 +56,6 @@ export function FertigationStack() {
 				name="EventsScreen"
 				component={EventsScreen}
 				options={options(t('eventLog'))}
-			/>
-			<Stack.Screen
-				name="SettingsScreen"
-				component={SettingsScreen}
-				options={options(t('settings'))}
 			/>
 		</Stack.Navigator>
 	);

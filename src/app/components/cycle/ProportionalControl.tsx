@@ -17,8 +17,6 @@ import {
 } from '../../data/controlLoopTypes';
 import {controlLoopBadge} from './controlLoopBadge';
 
-const IN_PROCESS = 'IN_PROCCESS';
-
 // Le module PROPORTIONAL porte une seule séquence pilotant un seul actuator :
 // sa référence (moduleConfig) garde la valeur à appliquer (customValue).
 const moduleRefOf = (cycleData: any) => {
@@ -77,14 +75,18 @@ const loopDisplay = (
 	};
 };
 
-// Remplace le toggle des cartes PROPORTIONAL : le slider fixe la valeur de
-// l'actuator dans les bornes de sa vanne CTRL (minOpening / maxOpening). Au
-// relâchement, la valeur est enregistrée sur le module (customValue) puis le
-// cycle est lancé ; revenir au minimum l'arrête.
-export function ProportionalControl(props: any) {
-	const {cycleData, iconColorSwitch} = props;
+// Contexte d'un PROPORTIONAL : vanne pilotée, bornes, valeur enregistrée et
+// éventuelle boucle (avec la valeur live de son capteur).
+type ProportionalState = {
+	actuators?: any[];
+	controlLoops?: any[];
+	sensors?: any[];
+	sensorValues?: any[];
+};
+
+const resolveProportional = (cycleData: any, state: ProportionalState) => {
 	const {sequence, ref} = moduleRefOf(cycleData);
-	const actuator = (props.actuators || []).find(
+	const actuator = (state.actuators || []).find(
 		(a: any) => `${a.id}` === `${ref?.moduleId}`
 	);
 	// Bornes remises dans l'ordre : `minOpening` peut dépasser `maxOpening`
@@ -95,6 +97,46 @@ export function ProportionalControl(props: any) {
 	const max = Math.max(min + 1, minOpening, maxOpening);
 	const custom = Number(ref?.customValue ?? min);
 	const stored = clamp(isNaN(custom) ? min : custom, min, max);
+	const loop = enabledLoopOf(state.controlLoops, actuator?.id);
+	const loopSensor = (state.sensors || []).find(
+		(x: any) => `${x.id}` === `${loop?.sensorId}`
+	);
+	const loopLive = toFinite(
+		(state.sensorValues || []).find(
+			(x: any) =>
+				loopSensor &&
+				(`${x.id}` === `${loopSensor.id}` ||
+					`${x.deviceId}` === `${loopSensor.id}`)
+		)?.value
+	);
+	return {sequence, ref, actuator, min, max, stored, loop, loopSensor, loopLive};
+};
+
+// ON au sens de la pastille : le box le fait tourner ET la vanne n'est pas à
+// 0 %. Valeur lue comme sur le slider : entrée live recopiée en FOLLOW,
+// customValue sans boucle. En REGULATION l'ouverture n'est pas connue, on
+// s'en tient au statut du box.
+export const isProportionalOn = (
+	cycleData: any,
+	status: string | undefined,
+	state: ProportionalState
+) => {
+	if (status !== 'IN_PROCCESS') return false;
+	const r = resolveProportional(cycleData, state);
+	if (!r.loop) return r.stored !== 0;
+	if (!isFollowLoop(r.loop)) return true;
+	const {value, label} = loopDisplay(r.loop, r.loopSensor, r.loopLive, r.min, r.max);
+	return label !== '–' && value !== 0;
+};
+
+// Remplace le toggle des cartes PROPORTIONAL : le slider fixe la valeur de
+// l'actuator dans les bornes de sa vanne CTRL (minOpening / maxOpening). Au
+// relâchement, la valeur est enregistrée sur le module (customValue) puis le
+// cycle est lancé ; revenir au minimum l'arrête.
+export function ProportionalControl(props: any) {
+	const {cycleData, iconColorSwitch} = props;
+	const {sequence, ref, min, max, stored, loop, loopSensor, loopLive} =
+		resolveProportional(cycleData, props);
 
 	// Valeur affichée pendant le glissement, recalée sur celle du box sinon.
 	const [value, setValue] = useState<number>(stored);
@@ -103,24 +145,11 @@ export function ProportionalControl(props: any) {
 	const entry = (props.status || []).find(
 		(x: any) => x?.id === cycleData.id
 	);
-	const running = entry?.status === IN_PROCESS;
-	// Mêmes verrous que le toggle (cf. CycleStatus) : bandeau de notification
-	// affiché, ou device requis injoignable alors que le cycle est arrêté.
+	// Bandeau de notification affiché, ou device requis injoignable (même si
+	// le cycle tourne : la commande ne pourrait pas être appliquée).
 	const hasNotification = !!notificationMessage(entry, true, props.status);
 	const unreachable = useUnreachableDevices(cycleData, 'CYCLE');
 	// Boucle activée sur la vanne : slider désactivé, il suit la boucle.
-	const loop = enabledLoopOf(props.controlLoops, actuator?.id);
-	const loopSensor = (props.sensors || []).find(
-		(x: any) => `${x.id}` === `${loop?.sensorId}`
-	);
-	const loopLive = toFinite(
-		(props.sensorValues || []).find(
-			(x: any) =>
-				loopSensor &&
-				(`${x.id}` === `${loopSensor.id}` ||
-					`${x.deviceId}` === `${loopSensor.id}`)
-		)?.value
-	);
 	const shown = loop
 		? loopDisplay(loop, loopSensor, loopLive, min, max)
 		: {min, max, value, label: `${value}%`};
@@ -128,7 +157,9 @@ export function ProportionalControl(props: any) {
 		!ref ||
 		!!loop ||
 		hasNotification ||
-		(!!unreachable.length && !running);
+		!!unreachable.length;
+	// Grisé dès que verrouillé hors boucle, ou quand le device est déconnecté.
+	const dimmed = (locked && !loop) || !!unreachable.length;
 
 	const apply = (raw: number) => {
 		const next = clamp(Math.round(raw), min, max);
@@ -152,7 +183,7 @@ export function ProportionalControl(props: any) {
 			props.executeCycle({
 				id: cycleData.id,
 				status: 'STOPPED',
-				action: next > min ? 'ON' : 'OFF',
+				action: next > min && next !== 0 ? 'ON' : 'OFF',
 				function: 'FUNCTION',
 				mode: 'MANUAL',
 				type: 'INIT',
@@ -174,7 +205,7 @@ export function ProportionalControl(props: any) {
 				</View>
 			) : null}
 			<Slider
-				style={{flex: 1, opacity: locked && !loop ? 0.4 : 1}}
+				style={{flex: 1, opacity: dimmed ? 0.4 : 1}}
 				disabled={locked}
 				minimumValue={shown.min}
 				maximumValue={shown.max}
@@ -190,7 +221,7 @@ export function ProportionalControl(props: any) {
 				numberOfLines={1}
 				style={{
 					minWidth: 44,
-					opacity: locked && !loop ? 0.4 : 1,
+					opacity: dimmed ? 0.4 : 1,
 					textAlign: 'right',
 					fontWeight: 'bold',
 					color: cycleData.style?.fontColor

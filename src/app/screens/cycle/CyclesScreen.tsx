@@ -30,6 +30,7 @@ import {endOfDayIn, startOfDayIn} from '../../../services/time';
 import {selectBoxTimeZone} from '../../../module/process/infrasctructure/store/models/boxSettings';
 import {CycleRun, RunOutcome} from '../../../module/process/infrasctructure/store/models/cycleHistory';
 import {isModuleType, MODULE, PROPORTIONAL} from '../../data/cycleTypes';
+import {isProportionalOn} from '../../components/cycle/ProportionalControl';
 import {
 	FilterChips,
 	SearchField,
@@ -343,6 +344,12 @@ export function Cycle(props: any) {
 		setRefreshing(false);
 	};
 
+	const proportionalState = {
+		actuators: useSelector((s: any) => s.root_actuator.actuators),
+		controlLoops: useSelector((s: any) => s.root_control_loop.loops),
+		sensors: useSelector((s: any) => s.root_sensor.sensors),
+		sensorValues: useSelector((s: any) => s.root_sensor.values)
+	};
 	const statusOf = (id: string): string | undefined =>
 		props.status?.find((x: any) => x?.id === id)?.status;
 
@@ -401,8 +408,11 @@ export function Cycle(props: any) {
 		CYCLE: [...groupItems, ...cycleItems].filter(
 			(x: any) => statusOf(x.id) === IN_PROCESS
 		).length,
-		MODULE: moduleItems.filter(
-			(x: any) => statusOf(x.id) === IN_PROCESS
+		// PROPORTIONAL à 0 % (slider ou entrée FOLLOW) : pas compté ON.
+		MODULE: moduleItems.filter((x: any) =>
+			x.type === PROPORTIONAL
+				? isProportionalOn(x, statusOf(x.id), proportionalState)
+				: statusOf(x.id) === IN_PROCESS
 		).length
 	};
 

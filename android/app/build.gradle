@@ -57,7 +57,7 @@ react {
 /**
  * Set this to true to Run Proguard on Release builds to minify the Java bytecode.
  */
-def enableProguardInReleaseBuilds = false
+def enableProguardInReleaseBuilds = true
 
 /**
  * The preferred build flavor of JavaScriptCore (JSC)
@@ -72,12 +72,31 @@ def enableProguardInReleaseBuilds = false
  */
 def jscFlavor = 'io.github.react-native-community:jsc-android:2026004.+'
 
+/**
+ * Clé d'upload Play Store (release). Générée hors du dépôt, ses chemin et
+ * secrets vivent dans ~/.gradle/gradle.properties.
+ */
+def uploadKeyProperties = [
+    'HYDROPHYTO_UPLOAD_STORE_FILE',
+    'HYDROPHYTO_UPLOAD_STORE_PASSWORD',
+    'HYDROPHYTO_UPLOAD_KEY_ALIAS',
+    'HYDROPHYTO_UPLOAD_KEY_PASSWORD'
+]
+def hasUploadKey = uploadKeyProperties.every { project.hasProperty(it) }
+
 android {
     ndkVersion rootProject.ext.ndkVersion
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
     namespace "com.cleveremote.hydrophytoapp"
+    // Pas de lint « vital » pendant bundleRelease / assembleRelease : sous
+    // Gradle 9 il échoue sur des tâches de librairies (polices de
+    // react-native-vector-icons, react-native-ble-plx) qui ne déclarent pas
+    // leurs dépendances. Le lint reste disponible à part (./gradlew lint).
+    lint {
+        checkReleaseBuilds false
+    }
     defaultConfig {
         applicationId "com.cleveremote.hydrophytoapp"
         minSdkVersion rootProject.ext.minSdkVersion
@@ -92,19 +111,54 @@ android {
             keyAlias 'androiddebugkey'
             keyPassword 'android'
         }
+        // Clé d'upload Play Store, hors du dépôt : chemin et secrets lus dans
+        // ~/.gradle/gradle.properties (cf. uploadKeyProperties).
+        if (hasUploadKey) {
+            release {
+                storeFile file(HYDROPHYTO_UPLOAD_STORE_FILE)
+                storePassword HYDROPHYTO_UPLOAD_STORE_PASSWORD
+                keyAlias HYDROPHYTO_UPLOAD_KEY_ALIAS
+                keyPassword HYDROPHYTO_UPLOAD_KEY_PASSWORD
+            }
+        }
     }
     buildTypes {
         debug {
             signingConfig signingConfigs.debug
         }
         release {
-            // Caution! In production, you need to generate your own keystore file.
-            // see https://reactnative.dev/docs/signed-apk-android.
-            signingConfig signingConfigs.debug
+            // Jamais la clé debug en release : sans clé d'upload, la tâche de
+            // build release échoue (cf. taskGraph.whenReady plus bas).
+            signingConfig hasUploadKey ? signingConfigs.release : null
             minifyEnabled enableProguardInReleaseBuilds
+            shrinkResources enableProguardInReleaseBuilds
             proguardFiles getDefaultProguardFile("proguard-android.txt"), "proguard-rules.pro"
         }
     }
+}
+
+// Un build release sans clé d'upload s'arrête ici avec la marche à suivre,
+// plutôt que de produire un AAB non signé. Les builds debug ne sont pas
+// concernés.
+gradle.taskGraph.whenReady { graph ->
+    if (hasUploadKey) return
+    def releaseTask = graph.allTasks.find {
+        it.project == project && it.name ==~ /(assemble|bundle|install|package)Release/
+    }
+    if (releaseTask) {
+        throw new GradleException(
+            "Clé d'upload absente pour ${releaseTask.name}. Renseigner dans " +
+            "~/.gradle/gradle.properties : ${uploadKeyProperties.join(', ')}."
+        )
+    }
+}
+
+// Le bundle JS fige les valeurs de `.env.<APP_ENV>` (react-native-dotenv). Sans
+// ces entrées, changer d'APP_ENV laisse la tâche UP-TO-DATE et l'APK garde le
+// bundle de l'env précédent.
+tasks.matching { it.name ==~ /createBundle.*JsAndAssets/ }.configureEach {
+    inputs.property("APP_ENV", System.getenv("APP_ENV") ?: "")
+    inputs.files(fileTree(dir: "../..", includes: [".env", ".env.*"]))
 }
 
 dependencies {

@@ -9,7 +9,6 @@ import {store} from '../../module/process/infrasctructure/store/store';
 import CycleScreen from '../screens/cycle/CyclesScreen';
 import CycleMenuScreen from '../screens/cycle/CycleMenuScreen';
 import EventsScreen from '../screens/cycle/events/events';
-import {SettingsScreen} from '../screens/settings/settings';
 
 import {CycleSettingStack} from './CycleSettingsStack';
 import {TriggersStack} from './TriggersStack';
@@ -68,11 +67,6 @@ export function CycleStack({typeFilter}: {typeFilter?: string} = {}) {
 				name="EventsScreen"
 				component={EventsScreen}
 				options={options(t('eventLog'))}
-			/>
-			<Stack.Screen
-				name="SettingsScreen"
-				component={SettingsScreen}
-				options={options(t('settings'))}
 			/>
 		</Stack.Navigator>
 	);

@@ -64,8 +64,6 @@
 			</dict>
 		</dict>
 	</dict>
-	<key>NSBluetoothAlwaysUsageDescription</key>
-	<string>$(PRODUCT_NAME) uses Bluetooth to pair with your box and configure it.</string>
 	<key>NSBonjourServices</key>
 	<array>
 		<string>_https._tcp</string>

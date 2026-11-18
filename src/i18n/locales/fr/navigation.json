@@ -32,8 +32,6 @@
 	"masterDevices": "Équipements maîtres",
 	"sensorsSettings": "Réglages des capteurs",
 	"scanBox": "Scanner la box",
-	"devicesFound": "Box trouvée(s)",
-	"configureConnection": "Configurer la connexion",
 	"configureBox": "Configurer la box",
 	"boxConnection": "Connexion de la box",
 	"signIn": "Connexion",

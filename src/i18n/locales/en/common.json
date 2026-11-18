@@ -40,13 +40,6 @@
 		"unexpected": "An unexpected error occurred.",
 		"boxNotConnected": "Unknown or disconnected box."
 	},
-	"ble": {
-		"notConnected": "Device is not connected",
-		"disconnected": "Device disconnected",
-		"bluetoothOff": "Bluetooth is turned off",
-		"locationDisabled": "Location services are disabled",
-		"permissionDenied": "Permissions have not been granted"
-	},
 	"devicesUnreachable": {
 		"title": "Devices unreachable",
 		"message": "\"{{name}}\" cannot start:\n{{devices}}",

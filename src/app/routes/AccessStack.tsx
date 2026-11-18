@@ -2,9 +2,7 @@ import React from 'react';
 import {useTranslation} from 'react-i18next';
 import {createStackNavigator} from '@react-navigation/stack';
 import {ProfilesScreen} from '../screens/access/loading';
-import {DeviceSettings} from '../screens/access/deviceSettings';
 import SignIn from '../screens/access/SignIn';
-import {DeviceScreen} from '../screens/access/device';
 import {ScanBoxScreen} from '../screens/access/scanBox';
 import {BoxConfiguration} from '../screens/access/boxConfiguration';
 import {BoxHandover} from '../screens/access/boxHandover';
@@ -26,16 +24,6 @@ export function AccessStack() {
 					name="ScanBox"
 					options={{headerShown: true, title: t('scanBox')}}
 					component={ScanBoxScreen}
-				/>
-				<Stack.Screen
-					name="Device"
-					options={{headerShown: true, title: t('devicesFound')}}
-					component={DeviceScreen}
-				/>
-				<Stack.Screen
-					name="deviceSettings"
-					options={{headerShown: true, title: t('configureConnection')}}
-					component={DeviceSettings}
 				/>
 				<Stack.Screen
 					name="BoxConfiguration"
