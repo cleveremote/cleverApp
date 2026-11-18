@@ -37,7 +37,8 @@
 	"error": "خطأ",
 	"errors": {
 		"noServer": "لا يوجد اتصال بالخادم!",
-		"unexpected": "حدث خطأ غير متوقع."
+		"unexpected": "حدث خطأ غير متوقع.",
+		"boxNotConnected": "صندوق غير معروف أو غير متصل."
 	},
 	"ble": {
 		"notConnected": "الجهاز غير متصل",

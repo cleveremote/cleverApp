@@ -13,5 +13,6 @@ export type {
 	BoxConfigurationErrors,
 	BoxConfigurationIssue,
 	BoxConfigurationMode,
+	BoxConfigurationOptions,
 	BoxConfigurationStep
 } from './boxConfigurationForm';

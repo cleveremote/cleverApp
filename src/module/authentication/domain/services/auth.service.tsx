@@ -91,6 +91,26 @@ const parseLockedUntil = (value: unknown): number | undefined => {
 };
 
 /**
+ * Statut du serveur quand la box demandée lui est inconnue, ou n'y est pas
+ * connectée. Il n'arrive pas traduit : le message est celui de l'application.
+ */
+const BOX_NOT_CONNECTED = 'BOX_NOT_CONNECTED';
+
+/**
+ * Vrai pour `BOX_NOT_CONNECTED`, sous la forme où il arrive : chaîne seule
+ * dans l'ack, ou porté par `status`, `error` ou `message` du résultat.
+ */
+const isBoxNotConnected = (args: unknown[], response: any): boolean =>
+	args.some(
+		arg =>
+			typeof arg === 'string' &&
+			arg.trim().replace(/^"|"$/g, '') === BOX_NOT_CONNECTED
+	) ||
+	[response?.status, response?.error, response?.message, response?.result].some(
+		value => value === BOX_NOT_CONNECTED
+	);
+
+/**
  * Normalise la réponse de `front/box/login`. La box répond soit à l'ancienne
  * (`{res: false, error}`), soit `{success, status, message, failedAttempts,
  * attemptsRemaining}` ; le message arrive déjà dans la langue de l'utilisateur.
@@ -99,6 +119,13 @@ const parseBoxLoginResponse = (...args: unknown[]): BoxLoginResult => {
 	const response = pickResult(args);
 	const status: string | undefined =
 		typeof response?.status === 'string' ? response.status : undefined;
+	if (isBoxNotConnected(args, response)) {
+		return {
+			res: false,
+			error: i18n.t('common:errors.boxNotConnected'),
+			status: BOX_NOT_CONNECTED
+		};
+	}
 	const explicitSuccess = response?.success === true || response?.res === true;
 	const failed =
 		!response ||

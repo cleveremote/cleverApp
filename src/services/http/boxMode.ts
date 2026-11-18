@@ -3,7 +3,7 @@ import {ConfigureResult, parseConfigureResult} from './boxConfigureResult';
 
 /** Routes de la box interrogées ici. */
 const MODE_PATH = '/updater/getMode';
-const CHECK_PASSWORD_PATH = '/updater/checkPassword';
+const CHECK_PASSWORD_PATH = '/updater/authentication/checkPassword';
 
 /**
  * Budget d'une tentative de `checkPassword`, et nombre de tentatives. La box
@@ -112,14 +112,14 @@ export type PasswordVerdict =
 const PASSWORD_REFUSAL = /password|mot de passe|invalid|incorrect|wrong|unauthori[sz]ed|forbidden/i;
 
 /**
- * Demande à la box si `currentPassword` est celui qu'elle accepte aujourd'hui
- * pour `login` : l'étiquette en `setup`, celui de l'utilisateur en `recovery`.
- * Corps envoyé : `{login, currentPassword}`, comme dans `configure`.
+ * Demande à la box si `password` est celui qu'elle accepte aujourd'hui pour
+ * `login` — l'étiquette, tant qu'elle est en `setup`. Corps envoyé :
+ * `{login, password}`.
  */
 export async function checkBoxPassword(
 	deviceId: string | undefined,
 	login: string,
-	currentPassword: string,
+	password: string,
 	timeoutMs = CHECK_ATTEMPT_TIMEOUT_MS
 ): Promise<PasswordVerdict> {
 	let response: {status: number; body: string} | undefined;
@@ -129,7 +129,7 @@ export async function checkBoxPassword(
 	for (let attempt = 1; attempt <= CHECK_ATTEMPTS && !response; attempt++) {
 		try {
 			const url = await boxUrl(CHECK_PASSWORD_PATH, deviceId);
-			response = await boxPost(url, {login, currentPassword}, timeoutMs);
+			response = await boxPost(url, {login, password}, timeoutMs);
 		} catch (e) {
 			console.warn(
 				`[boxMode] checkPassword sans réponse (essai ${attempt}/${CHECK_ATTEMPTS}):`,

@@ -32,6 +32,13 @@ describe('parseCleverBoxQr', () => {
 		).toEqual(expected);
 	});
 
+	it("lit le mot de passe de l'étiquette quand il y figure", () => {
+		expect(parseCleverBoxQr(`${link}&devicePassword=Ab3%26x`)).toEqual({
+			...expected,
+			devicePassword: 'Ab3&x'
+		});
+	});
+
 	it('tolère la casse du schéma et une barre avant les paramètres', () => {
 		expect(
 			parseCleverBoxQr(link.replace('cleverapp://box?', 'CleverApp://box/?'))

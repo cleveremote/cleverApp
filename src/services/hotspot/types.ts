@@ -22,6 +22,11 @@ export interface CleverBoxQrPayload {
 	host: string;
 	port: number;
 	deviceId: string;
+	/**
+	 * Mot de passe de l'étiquette, quand le QR le porte : il préremplit
+	 * l'étape « C'est bien votre box ? » d'une première configuration.
+	 */
+	devicePassword?: string;
 }
 
 export type HotspotErrorCode =

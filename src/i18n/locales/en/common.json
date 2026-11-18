@@ -37,7 +37,8 @@
 	"error": "Error",
 	"errors": {
 		"noServer": "No server connection!",
-		"unexpected": "An unexpected error occurred."
+		"unexpected": "An unexpected error occurred.",
+		"boxNotConnected": "Unknown or disconnected box."
 	},
 	"ble": {
 		"notConnected": "Device is not connected",

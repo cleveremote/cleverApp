@@ -32,15 +32,18 @@ export function clearBoxConfigurationDraft(): void {
 
 /**
  * Envoi de `configure`, lancé au moment d'ouvrir l'écran d'état sans être
- * attendu. `BoxHandover` en lit l'issue : un refus s'y affiche, et le hotspot
- * n'est relâché qu'une fois l'envoi abouti — sur Android, le relâcher coupe
- * une requête qui n'a pas fini de partir. L'issue reste lisible après coup,
- * pour qu'une nouvelle vérification retrouve la même.
+ * attendu. `BoxHandover` en lit l'issue : un refus s'y affiche. L'issue reste
+ * lisible après coup, pour qu'une nouvelle vérification retrouve la même.
  */
 let pendingConfiguration: Promise<ConfigureSend> | null = null;
 
 export function setPendingConfiguration(request: Promise<ConfigureSend>): void {
 	pendingConfiguration = request.catch((): ConfigureSend => ({kind: 'lost'}));
+}
+
+/** Rien à attendre : la box n'a reçu que son réseau (`recovery`). */
+export function clearPendingConfiguration(): void {
+	pendingConfiguration = null;
 }
 
 /**

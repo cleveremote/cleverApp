@@ -6,6 +6,7 @@ import {
 	Keyboard,
 	KeyboardAvoidingView,
 	Platform,
+	Pressable,
 	ScrollView,
 	StyleSheet,
 	Text,
@@ -25,7 +26,11 @@ import {
 	faRotateRight,
 	faWifi
 } from '@fortawesome/free-solid-svg-icons';
-import {InputStyle, placeholderColor, inputText} from '../../styles/components/common/Input';
+import {
+	InputStyle,
+	placeholderColor,
+	inputText
+} from '../../styles/components/common/Input';
 import {hapticOptions} from '../../data/cycleTypes';
 import {
 	brandLogo,
@@ -40,7 +45,11 @@ import {
 	boxGet,
 	boxPost,
 	boxUrl,
+	checkBoxPassword,
 	configureSendResult,
+	getBoxMode,
+	isTransientMode,
+	pollUntil,
 	waitForStableMode
 } from '../../../services/http';
 import {
@@ -60,6 +69,7 @@ import {
 	validateBoxConfiguration
 } from '../../../services/validation';
 import {
+	clearPendingConfiguration,
 	readBoxConfigurationDraft,
 	saveBoxConfigurationDraft,
 	setPendingConfiguration,
@@ -75,17 +85,17 @@ import {
 	LinkButton,
 	OutlineButton,
 	StepProgress,
+	WifiSettingsLink,
 	accessStyles
 } from './accessUi';
 import {BoxHandover} from './boxHandover';
 import {ErrorBox} from '../../components/common/ErrorBox';
-import {
-	WarningBox,
-	WARNING_COLORS
-} from '../../components/common/WarningBox';
+import {AppSwitch} from '../../components/common/AppSwitch';
+import {WarningBox, WARNING_COLORS} from '../../components/common/WarningBox';
 
 /** Routes de la box appelées depuis cet écran. */
 const NETWORKS_PATH = '/updater/getNetworksList';
+const JOIN_PATH = '/updater/network/joinLocalNetwork';
 const CONFIGURE_PATH = '/updater/configure';
 
 /** Au-delà, une box injoignable ferait patienter indéfiniment. */
@@ -99,11 +109,26 @@ const REQUEST_TIMEOUT_MS = 15000;
 const MODE_TIMEOUT_MS = 60000;
 
 /**
- * Budget accordé à `configure`, envoyée sans être attendue : il borne surtout
- * le temps pendant lequel `BoxHandover` garde le hotspot pour elle. C'est
- * `getMode`, qu'il lit ensuite, qui dit ce que la configuration est devenue.
+ * Budget accordé à `configure`, envoyée sans être attendue. C'est `getMode`,
+ * que `BoxHandover` lit ensuite, qui dit ce que la configuration est devenue.
  */
 const CONFIGURE_TIMEOUT_MS = 20000;
+
+/**
+ * Budget de `joinLocalNetwork`. La box peut quitter son point d'accès avant
+ * d'avoir répondu : un appel resté sans réponse n'est pas un échec.
+ */
+const JOIN_TIMEOUT_MS = 15000;
+
+/** Temps laissé au téléphone pour revenir sur le réseau demandé. */
+const PHONE_JOIN_MS = 30000;
+const PHONE_PROBE_INTERVAL_MS = 1500;
+
+/**
+ * Temps laissé à la box pour apparaître sur le réseau demandé. Une tentative
+ * de connexion Wi-Fi peut prendre une bonne trentaine de secondes.
+ */
+const BOX_JOIN_MS = 90000;
 
 /**
  * Ce que l'envoi accepte encore d'attendre pour la position, si elle n'est
@@ -116,7 +141,19 @@ const COORDINATES_GRACE_MS = 2000;
 type NetworkOption = {
 	label: string;
 	value: string;
+	/** La box connaît déjà ce réseau, et sa clé. */
+	isConfigured: boolean;
+	/** La box y est connectée en ce moment : il n'y a rien à rejoindre. */
+	isConnected: boolean;
 };
+
+/**
+ * Pourquoi la box n'a pas pu être retrouvée sur le réseau demandé :
+ * - `phone` : le téléphone est resté sur un autre réseau ;
+ * - `box` : le téléphone y est, mais pas la box — clé fausse, le plus souvent,
+ *   et elle a alors rouvert son point d'accès.
+ */
+type JoinIssue = 'phone' | 'box';
 
 /**
  * Motif avec lequel `BoxHandover` renvoie ici : un refus de `configure`, ou
@@ -137,15 +174,17 @@ type Phase = 'detecting' | 'unreachable' | 'normal' | 'ready';
  * Configuration de la box une fois le téléphone connecté à son hotspot.
  *
  * Le formulaire suit le mode que la box annonce (`getMode`) :
- * - `setup` : assistant en deux étapes — Wi-Fi, puis nom et nouveau mot de
- *   passe, obligatoire ;
- * - `recovery` : un seul écran, le Wi-Fi.
+ * - `setup` : réseau, mot de passe de l'étiquette, puis nom et nouveau mot de
+ *   passe ;
+ * - `recovery` : le réseau seulement.
  *
- * Passer d'une étape à l'autre n'interroge pas la box. À la validation de la
- * dernière, le mot de passe qu'elle accepte aujourd'hui est demandé — celui
- * de l'étiquette en `setup`, celui de l'utilisateur en `recovery` — et part
- * avec le reste dans `configure`. L'écran d'état s'ouvre aussitôt, sans
- * attendre de réponse : c'est `getMode` qui y dit la suite, refus compris.
+ * La première étape fait rejoindre le réseau choisi à la box
+ * (`joinLocalNetwork`), relâche son point d'accès, attend que le téléphone y
+ * soit revenu puis que la box y réponde à `getMode`. Tout ce qui suit lui
+ * parle sur ce réseau : le mot de passe de l'étiquette est vérifié aussitôt
+ * saisi (`checkPassword`), et la dernière étape envoie `configure`. L'écran
+ * d'état s'ouvre alors sans attendre de réponse : c'est `getMode` qui y dit
+ * la suite, refus compris. En `recovery`, il s'ouvre dès le réseau rejoint.
  *
  * Tout passe en HTTPS sur le hotspot, contrairement à `deviceSettings`, qui
  * fait la même chose en BLE. Les deux écrans coexistent : l'appairage BLE
@@ -154,6 +193,9 @@ type Phase = 'detecting' | 'unreachable' | 'normal' | 'ready';
 export function BoxConfiguration(props: any) {
 	// `deviceId` du QR scanné : c'est sous lui que l'endpoint de la box est rangé.
 	const deviceId: string | undefined = props.route?.params?.deviceId;
+	// Mot de passe de l'étiquette lu dans le QR, s'il y figure.
+	const devicePassword: string | undefined =
+		props.route?.params?.devicePassword;
 	// Repris du brouillon quand on revient ici après un échec de bascule :
 	// refaire saisir six champs pour corriger une clé Wi-Fi serait une punition.
 	// Fusionné aux valeurs par défaut : un brouillon d'une version antérieure du
@@ -191,6 +233,17 @@ export function BoxConfiguration(props: any) {
 	// Pourquoi la tentative précédente a échoué, tel que la box le rapporte.
 	// Affiché jusqu'à la première correction.
 	const [lastFailure, setLastFailure] = React.useState('');
+	// La box a rejoint le réseau choisi : l'étape Wi-Fi n'est plus à valider
+	// avant d'envoyer `configure`.
+	const [joined, setJoined] = React.useState(false);
+	const [joinIssue, setJoinIssue] = React.useState<JoinIssue | null>(null);
+	// Première connexion de la box : elle n'a encore jamais rejoint de réseau,
+	// son mot de passe est donc celui de l'étiquette. Arrêté en quittant
+	// l'étape Wi-Fi — la box n'a encore rien rejoint de son fait.
+	const [firstConnection, setFirstConnection] = React.useState(true);
+	// La box garde son mot de passe actuel au lieu d'en recevoir un nouveau —
+	// par défaut : en changer est un choix explicite.
+	const [keepPassword, setKeepPassword] = React.useState(true);
 	// Configuration envoyée : la dernière étape, la progression, prend la
 	// place du formulaire. Porte ce dont `BoxHandover` a besoin.
 	const [handover, setHandover] = React.useState<Record<
@@ -209,6 +262,7 @@ export function BoxConfiguration(props: any) {
 		setForm(previous => ({...previous, [field]: value}));
 		setTouched(previous => ({...previous, [field]: true}));
 		setLastFailure('');
+		setJoinIssue(null);
 		setServerErrors(previous => {
 			if (!previous[field]) return previous;
 			const next = {...previous};
@@ -229,6 +283,8 @@ export function BoxConfiguration(props: any) {
 
 	// La détection interroge la box en boucle : elle doit s'arrêter avec l'écran.
 	const mountedRef = useRef(true);
+	// Réseau choisi à la main dans la liste : il passe devant la présélection.
+	const ssidPickedRef = useRef(false);
 	useEffect(() => {
 		mountedRef.current = true;
 		return () => {
@@ -284,7 +340,20 @@ export function BoxConfiguration(props: any) {
 			if (status < 200 || status >= 300) {
 				throw new Error(`HTTP ${status}`);
 			}
-			setNetworks(parseNetworks(body));
+			const found = parseNetworks(body);
+			setNetworks(found);
+			// Présélection : le réseau où la box est, à défaut celui qu'elle
+			// connaît, sinon aucun. Seul un choix fait à la main, toujours dans
+			// la liste, la remplace.
+			const preferred =
+				found.find(n => n.isConnected) ??
+				found.find(n => n.isConfigured);
+			setForm(previous =>
+				ssidPickedRef.current &&
+				found.some(n => n.value === previous.ssid)
+					? previous
+					: {...previous, ssid: preferred?.value ?? ''}
+			);
 		} catch (e) {
 			console.warn('[BoxConfiguration] getNetworksList:', e);
 			const err = e instanceof Error ? e : new Error(String(e));
@@ -338,16 +407,6 @@ export function BoxConfiguration(props: any) {
 			if (!coordinatesRef.current) {
 				coordinatesRef.current = startLocalCoordinates();
 			}
-		} else {
-			setForm(previous => ({
-				...previous,
-				// Le réseau que la box n'a pas su rejoindre : le plus souvent,
-				// c'est sa clé qui est à corriger, pas le réseau lui-même.
-				ssid: previous.ssid || found.ssid || '',
-				// Brouillon d'un `setup` dont la bascule a échoué : le mot de
-				// passe de la box est alors celui qui venait d'être choisi.
-				currentPassword: previous.password || previous.currentPassword
-			}));
 		}
 		setPhase('ready');
 	}, [deviceId, t]);
@@ -376,17 +435,6 @@ export function BoxConfiguration(props: any) {
 		};
 	}, [deviceId]);
 
-	// Retour de « mot de passe oublié » : le mot de passe qui vient d'être
-	// choisi est celui que la box accepte désormais.
-	const resetPassword: string | undefined =
-		props.route?.params?.resetPassword;
-	useEffect(() => {
-		if (!resetPassword) return;
-		set('currentPassword', resetPassword);
-		props.navigation.setParams({resetPassword: undefined});
-		// `set` change à chaque rendu ; seule l'arrivée du paramètre compte.
-	}, [resetPassword, props.navigation]);
-
 	// Ce qui a fait échouer la tentative précédente, dit une fois le formulaire
 	// prêt : le motif rapporté par `BoxHandover` s'il renvoie ici, sinon le
 	// dernier échec que la box publie — celui qu'on vient corriger après avoir
@@ -408,7 +456,9 @@ export function BoxConfiguration(props: any) {
 				...previous,
 				currentPassword: 'currentPasswordWrong'
 			}));
-			setStepIndex(BOX_CONFIGURATION_STEPS[mode].length - 1);
+			setStepIndex(
+				Math.max(0, BOX_CONFIGURATION_STEPS[mode].indexOf('ownership'))
+			);
 		} else if (returnReason) {
 			setLastFailure(t(`configureError.${returnReason}`));
 		} else if (
@@ -419,7 +469,8 @@ export function BoxConfiguration(props: any) {
 		) {
 			setLastFailure(t(`configureError.${boxMode.configure.errorCode}`));
 		}
-		if (returnReason) props.navigation.setParams({configureError: undefined});
+		if (returnReason)
+			props.navigation.setParams({configureError: undefined});
 	}, [phase, boxMode, mode, returnReason, t, props.navigation]);
 
 	// Lu sans le trousseau : seul le nom du profil est utile ici.
@@ -445,10 +496,24 @@ export function BoxConfiguration(props: any) {
 	// redémarrée, hors de portée. Relâcher la demande réseau évite alors
 	// qu'Android reste à guetter ce SSID au lieu de rendre la main au Wi-Fi
 	// enregistré. Après soumission, c'est `BoxHandover` qui en est chargé.
-	useEffect(() => hotspotService.onLost(() => hotspotService.disconnect()), []);
+	useEffect(
+		() => hotspotService.onLost(() => hotspotService.disconnect()),
+		[]
+	);
 
+	// Réseau déjà connu de la box : elle en a la clé.
+	const selectedNetwork = networks.find(n => n.value === form.ssid);
+	// Connectée à ce réseau, la box n'a pas à le rejoindre : l'étape Wi-Fi
+	// passe directement à la suite.
+	const alreadyConnected = Boolean(selectedNetwork?.isConnected);
+	const pskOptional = Boolean(
+		selectedNetwork?.isConfigured || selectedNetwork?.isConnected
+	);
 	const errors: BoxConfigurationErrors = {
-		...validateBoxConfiguration(form, mode),
+		...validateBoxConfiguration(form, mode, {
+			pskOptional,
+			keepCurrentPassword: keepPassword
+		}),
 		...serverErrors
 	};
 	const isStepValid = isBoxConfigurationValid(stepErrors(errors, step));
@@ -475,7 +540,7 @@ export function BoxConfiguration(props: any) {
 		serverErrors.currentPassword === 'currentPasswordWrong' ? (
 			<ErrorBox
 				message={t(
-					mode === 'setup'
+					firstConnection
 						? 'boxConfig.labelPasswordWrong'
 						: 'boxConfig.boxPasswordWrong'
 				)}
@@ -499,6 +564,7 @@ export function BoxConfiguration(props: any) {
 
 	const next = () => {
 		ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
+		Keyboard.dismiss();
 
 		// Le bouton reste pressable même grisé : c'est ici qu'une étape
 		// invalide montre enfin ce qui bloque, y compris sur les champs jamais
@@ -511,7 +577,10 @@ export function BoxConfiguration(props: any) {
 		// Dit à chaque étape, et pas seulement à la première : un bouton qui ne
 		// fait que vibrer passerait pour un écran figé.
 		if (duplicateProfile) {
-			ReactNativeHapticFeedback.trigger('notificationError', hapticOptions);
+			ReactNativeHapticFeedback.trigger(
+				'notificationError',
+				hapticOptions
+			);
 			setError(duplicateMessage);
 			return;
 		}
@@ -519,6 +588,12 @@ export function BoxConfiguration(props: any) {
 		setError('');
 		setDropdownOpen(false);
 
+		if (step === 'wifi') {
+			return alreadyConnected
+				? afterJoin()
+				: joinNetwork(form.ssid, pskOptional ? '' : form.psk);
+		}
+		if (step === 'ownership') return verifyOwnership();
 		if (!isLastStep) {
 			setStepIndex(index => index + 1);
 			return;
@@ -528,8 +603,11 @@ export function BoxConfiguration(props: any) {
 		// invalide. On y retourne plutôt que d'envoyer — y compris pour le
 		// nouveau mot de passe, qui ne se compare à celui de l'étiquette qu'une
 		// fois ce dernier saisi.
+		// L'étape Wi-Fi n'est plus à refaire une fois la box sur le réseau.
 		const firstInvalid = steps.findIndex(
-			s => !isBoxConfigurationValid(stepErrors(errors, s))
+			s =>
+				!(s === 'wifi' && joined) &&
+				!isBoxConfigurationValid(stepErrors(errors, s))
 		);
 		if (firstInvalid >= 0) {
 			touchAll(fieldsOfStep(steps[firstInvalid]));
@@ -538,6 +616,187 @@ export function BoxConfiguration(props: any) {
 		}
 
 		configure();
+	};
+
+	/** Busy overlay le temps d'une action ; rend vrai si l'écran est encore là. */
+	const busy = (message: string) => {
+		setBusyMessage(message);
+		return mountedRef.current;
+	};
+
+	/**
+	 * Étape 1 — la box rejoint le réseau choisi, et le téléphone avec elle.
+	 *
+	 * `joinLocalNetwork` part sur le point d'accès ; puis celui-ci est relâché,
+	 * pour que le téléphone retombe sur le réseau enregistré, et la box y est
+	 * cherchée avec `getMode`. Rejouable tel quel : relancée après un échec, la
+	 * requête n'a plus de point d'accès où partir, et l'attente reprend.
+	 */
+	const joinNetwork = async (ssid: string, psk: string) => {
+		const network = ssid;
+		setIsLoading(true);
+		setJoinIssue(null);
+		try {
+			busy(t('boxConfig.joinSending', {network}));
+			try {
+				const url = await boxUrl(JOIN_PATH, deviceId);
+				const {status, body} = await boxPost(
+					url,
+					{ssid, ...(psk ? {psk} : {})},
+					JOIN_TIMEOUT_MS
+				);
+				if (status >= 400) {
+					console.warn(
+						`[BoxConfiguration] joinLocalNetwork refusée — HTTP ${status} ${body.slice(
+							0,
+							200
+						)}`
+					);
+					ReactNativeHapticFeedback.trigger(
+						'notificationError',
+						hapticOptions
+					);
+					setError(t('boxConfig.joinRefused', {status}));
+					return;
+				}
+			} catch (e) {
+				// Le plus souvent, la box a quitté son point d'accès avant de
+				// répondre : c'est le réseau qui dira si elle l'a rejoint.
+				console.warn(
+					'[BoxConfiguration] joinLocalNetwork (bascule ?):',
+					e
+				);
+			}
+
+			// Le téléphone. Tant que le process reste rattaché au point
+			// d'accès, toute sonde partirait sur une interface morte.
+			if (!busy(t('boxConfig.joinPhone', {network}))) return;
+			await hotspotService.disconnect().catch(() => undefined);
+			const phone = await waitForPhoneOn(
+				network,
+				() => mountedRef.current
+			);
+			if (!mountedRef.current) return;
+			if (phone.kind === 'elsewhere') {
+				ReactNativeHapticFeedback.trigger(
+					'notificationError',
+					hapticOptions
+				);
+				setJoinIssue('phone');
+				setError(
+					t('boxConfig.phoneElsewhere', {ssid: phone.ssid, network})
+				);
+				return;
+			}
+
+			// La box. Toute réponse vient désormais du réseau domestique : elle
+			// y est, il reste à attendre qu'elle ait fini de s'y connecter.
+			if (!busy(t('boxConfig.joinBox', {network}))) return;
+			const found = await pollUntil(
+				async () => {
+					const current = await getBoxMode(deviceId);
+					if (!current || isTransientMode(current.mode))
+						return undefined;
+					if (current.ssid && !sameNetwork(current.ssid, network)) {
+						return undefined;
+					}
+					return current;
+				},
+				{
+					timeoutMs: BOX_JOIN_MS,
+					shouldContinue: () => mountedRef.current
+				}
+			);
+			if (!mountedRef.current) return;
+			if (!found) {
+				ReactNativeHapticFeedback.trigger(
+					'notificationError',
+					hapticOptions
+				);
+				setJoinIssue('box');
+				setError(t('boxConfig.boxNotOnNetwork', {network}));
+				return;
+			}
+
+			ReactNativeHapticFeedback.trigger(
+				'notificationSuccess',
+				hapticOptions
+			);
+			setJoined(true);
+			// Revenu à cette étape, l'utilisateur la retrouve telle que la box
+			// la verrait : connectée à ce réseau, plus rien à rejoindre.
+			setNetworks(previous =>
+				previous.map(n => ({...n, isConnected: n.value === network}))
+			);
+			afterJoin();
+		} finally {
+			if (mountedRef.current) setIsLoading(false);
+		}
+	};
+
+	/** La box est sur le réseau choisi : la suite de l'assistant. */
+	const afterJoin = () => {
+		// Un réseau déjà configuré ou rejoint : la box a déjà servi, et son
+		// mot de passe n'est plus forcément celui de l'étiquette.
+		const first = !networks.some(n => n.isConfigured || n.isConnected);
+		setFirstConnection(first);
+		// Le mot de passe de la box est dans le QR : proposé dans tous les cas,
+		// il reste à corriger si l'utilisateur l'a changé depuis. Une saisie
+		// reprise du brouillon passe devant.
+		if (devicePassword) {
+			setForm(previous => ({
+				...previous,
+				currentPassword: previous.currentPassword || devicePassword
+			}));
+		}
+		saveBoxConfigurationDraft(form);
+		if (mode === 'recovery') {
+			// La box garde son compte : il n'y a rien d'autre à lui envoyer.
+			clearPendingConfiguration();
+			setPendingProfile(null);
+			openHandover(savedProfile ?? form.boxIdentifier.trim());
+		} else {
+			setStepIndex(index => index + 1);
+		}
+	};
+
+	/**
+	 * Étape 2 (`setup`) — le mot de passe de l'étiquette, vérifié par la box
+	 * avant de passer au compte.
+	 */
+	const verifyOwnership = async () => {
+		setIsLoading(true);
+		busy(t('boxConfig.checkingPassword'));
+		try {
+			const verdict = await checkBoxPassword(
+				deviceId,
+				form.boxIdentifier.trim(),
+				form.currentPassword
+			);
+			if (!mountedRef.current) return;
+			switch (verdict.kind) {
+				case 'valid':
+					setStepIndex(index => index + 1);
+					return;
+				case 'invalid':
+					ReactNativeHapticFeedback.trigger(
+						'notificationError',
+						hapticOptions
+					);
+					setServerErrors(previous => ({
+						...previous,
+						currentPassword: 'currentPasswordWrong'
+					}));
+					return;
+				case 'locked':
+					setError(t('boxConfig.passwordLocked'));
+					return;
+				default:
+					setError(t('boxConfig.passwordCheckFailed'));
+			}
+		} finally {
+			if (mountedRef.current) setIsLoading(false);
+		}
 	};
 
 	/**
@@ -559,13 +818,19 @@ export function BoxConfiguration(props: any) {
 			const url = await boxUrl(CONFIGURE_PATH, deviceId);
 			const {status, body} = await boxPost(
 				url,
-				{...payload, ...(localCoordinates ? {localCoordinates} : {})},
+				{
+					...payload,
+					...(localCoordinates ? {localCoordinates} : {})
+				},
 				CONFIGURE_TIMEOUT_MS
 			);
 			const result = configureSendResult(status, body);
 			if (result.kind !== 'accepted') {
 				console.warn(
-					`[BoxConfiguration] configure refusée — HTTP ${status} ${body.slice(0, 200)}`
+					`[BoxConfiguration] configure refusée — HTTP ${status} ${body.slice(
+						0,
+						200
+					)}`
 				);
 			}
 			return result;
@@ -575,71 +840,55 @@ export function BoxConfiguration(props: any) {
 		}
 	};
 
+	/** Dernière étape (`setup`) : le compte part dans `configure`. */
 	const configure = () => {
 		if (sentRef.current) return;
 		sentRef.current = true;
 
 		// C'est l'identifiant de la box, et non l'email, qui sert de login.
 		const login = form.boxIdentifier.trim();
-		// En `recovery` rien n'est renommé : le profil existant garde son nom.
-		const deviceName =
-			mode === 'setup' ? form.deviceName.trim() : savedProfile ?? login;
+		const deviceName = form.deviceName.trim();
 		const email = form.email.trim();
+		const newPassword = keepPassword ? form.currentPassword : form.password;
 
 		// Retenu avant l'envoi : à partir d'ici le formulaire cède la place à
 		// la progression, et c'est le brouillon qui rendra la saisie si la
-		// bascule échoue.
+		// configuration échoue.
 		saveBoxConfigurationDraft(form);
 
-		// `recovery` n'envoie que le sous-ensemble Wi-Fi : la box garde son nom,
-		// son compte et son mot de passe. Le mot de passe actuel n'a été vérifié
-		// par aucun appel : c'est `configure` qui l'accepte ou le refuse.
 		setPendingConfiguration(
-			sendConfiguration(
-				mode === 'setup'
-					? {
-							deviceName,
-							ssid: form.ssid,
-							psk: form.psk,
-							login,
-							...(email ? {email} : {}),
-							currentPassword: form.currentPassword,
-							password: form.password
-					  }
-					: {
-							ssid: form.ssid,
-							psk: form.psk,
-							login,
-							currentPassword: form.currentPassword
-					  }
-			)
+			sendConfiguration({
+				deviceName,
+				ssid: form.ssid,
+				// Clé saisie pour un autre réseau avant d'en choisir un connu :
+				// elle n'a pas à partir.
+				...(pskOptional ? {} : {psk: form.psk}),
+				login,
+				...(email ? {email} : {}),
+				currentPassword: form.currentPassword,
+				password: newPassword
+			})
 		);
 
-		// Le nom de la box sert aussi de nom de profil. En `recovery`, un profil
-		// existant est déjà juste ; une box réparée depuis un téléphone qui ne
-		// la connaissait pas y gagne un profil. Il n'est pas créé ici mais par
-		// `BoxHandover`, une fois la box confirmée sur le réseau : une bascule
+		// Le nom de la box sert aussi de nom de profil. Il n'est pas créé ici
+		// mais par `BoxHandover`, une fois la box confirmée : une configuration
 		// qui échoue ne laisse ainsi aucun profil derrière elle.
-		setPendingProfile(
-			mode === 'setup' || !savedProfile
-				? {
-						deviceName,
-						login,
-						password:
-							mode === 'setup' ? form.password : form.currentPassword
-				  }
-				: null
-		);
+		setPendingProfile({deviceName, login, password: newPassword});
 
-		// La progression s'affiche ici même, comme dernière étape de
-		// l'assistant. Plus de retour possible vers le formulaire : il n'a plus
-		// de réseau pour travailler une fois le point d'accès fermé, et toutes
-		// les sorties de `BoxHandover` remplacent la pile.
+		openHandover(deviceName);
+	};
+
+	/**
+	 * La progression s'affiche ici même, comme dernière étape de l'assistant.
+	 * Plus de retour possible vers le formulaire : toutes les sorties de
+	 * `BoxHandover` remplacent la pile.
+	 */
+	const openHandover = (deviceName: string) => {
 		Keyboard.dismiss();
 		setHandover({
 			deviceName,
 			ssid: form.ssid,
-			login,
+			login: form.boxIdentifier.trim(),
 			deviceId,
 			// Résultat déjà publié avant cet envoi : il ne doit pas passer pour
 			// le sien.
@@ -650,7 +899,10 @@ export function BoxConfiguration(props: any) {
 
 	if (handover) {
 		return (
-			<BoxHandover navigation={props.navigation} route={{params: handover}} />
+			<BoxHandover
+				navigation={props.navigation}
+				route={{params: handover}}
+			/>
 		);
 	}
 
@@ -659,7 +911,9 @@ export function BoxConfiguration(props: any) {
 			<Centered>
 				<ActivityIndicator size="large" color={COLORS.primary} />
 				<Text style={accessStyles.title}>{detectingMessage}</Text>
-				<Text style={accessStyles.body}>{t('boxConfig.detectingHint')}</Text>
+				<Text style={accessStyles.body}>
+					{t('boxConfig.detectingHint')}
+				</Text>
 			</Centered>
 		);
 	}
@@ -703,14 +957,14 @@ export function BoxConfiguration(props: any) {
 	}
 
 	const selectedLabel =
-		networks.find(n => n.value === form.ssid)?.label ||
-		form.ssid ||
-		t('boxConfig.wifiNetwork');
+		selectedNetwork?.label || form.ssid || t('boxConfig.wifiNetwork');
 
 	const renderWifi = () => (
 		<>
 			{duplicateMessage ? (
-				<ErrorBox message={duplicateMessage} style={styles.duplicateBox} />
+				<WarningBox style={styles.duplicateBox}>
+					<Text style={styles.reminderText}>{duplicateMessage}</Text>
+				</WarningBox>
 			) : null}
 			<FieldLabel text={t('boxConfig.wifiNetwork')} />
 			<View style={{width: '100%'}}>
@@ -722,12 +976,24 @@ export function BoxConfiguration(props: any) {
 					]}
 					onPress={() => {
 						setTouched(p => ({...p, ssid: true}));
+						Keyboard.dismiss();
 						setDropdownOpen(!dropdownOpen);
 					}}>
 					<View style={styles.dropdownHeader}>
-						<Text style={[inputText, !form.ssid && {color: placeholderColor}]}>
-							{selectedLabel}
-						</Text>
+						<View style={styles.networkName}>
+							<Text
+								style={[
+									inputText,
+									styles.networkLabel,
+									!form.ssid && {color: placeholderColor}
+								]}
+								numberOfLines={1}>
+								{selectedLabel}
+							</Text>
+							{selectedNetwork ? (
+								<NetworkTag network={selectedNetwork} />
+							) : null}
+						</View>
 						<Icon
 							name={dropdownOpen ? 'chevron-up' : 'chevron-down'}
 							size={14}
@@ -744,14 +1010,20 @@ export function BoxConfiguration(props: any) {
 									setDropdownOpen(false);
 									loadNetworks();
 								}}>
-								<Text style={{fontSize: 18, color: placeholderColor}}>
+								<Text
+									style={{
+										fontSize: 18,
+										color: placeholderColor
+									}}>
 									{t('boxConfig.noNetwork')}
 								</Text>
 							</TouchableOpacity>
 						) : (
 							<FlatList
 								data={networks}
-								keyExtractor={(_item, index) => 'network_' + index}
+								keyExtractor={(_item, index) =>
+									'network_' + index
+								}
 								renderItem={({item}: {item: NetworkOption}) => (
 									<TouchableOpacity
 										style={[
@@ -761,10 +1033,21 @@ export function BoxConfiguration(props: any) {
 											}
 										]}
 										onPress={() => {
+											ssidPickedRef.current = true;
 											set('ssid', item.value);
 											setDropdownOpen(false);
 										}}>
-										<Text style={{fontSize: 18}}>{item.label}</Text>
+										<View style={styles.networkName}>
+											<Text
+												style={[
+													{fontSize: 18},
+													styles.networkLabel
+												]}
+												numberOfLines={1}>
+												{item.label}
+											</Text>
+											<NetworkTag network={item} />
+										</View>
 									</TouchableOpacity>
 								)}
 							/>
@@ -774,7 +1057,9 @@ export function BoxConfiguration(props: any) {
 			</View>
 			<FieldError message={errorFor('ssid')} />
 			{networks.length > 0 ? (
-				<TouchableOpacity style={styles.inlineLink} onPress={loadNetworks}>
+				<TouchableOpacity
+					style={styles.inlineLink}
+					onPress={loadNetworks}>
 					<Icon name="sync-alt" size={12} color={COLORS.accent} />
 					<Text style={styles.inlineLinkText}>
 						{t('boxConfig.refreshNetworks')}
@@ -782,15 +1067,20 @@ export function BoxConfiguration(props: any) {
 				</TouchableOpacity>
 			) : null}
 
-			<FieldLabel text={t('boxConfig.psk')} />
-			<PasswordField
-				invalid={Boolean(errorFor('psk'))}
-				placeholder={t('boxConfig.psk')}
-				textContentType="password"
-				value={form.psk}
-				onChangeText={value => set('psk', value)}
-			/>
-			<FieldError message={errorFor('psk')} />
+			{/* Réseau déjà connu de la box : elle en a la clé. */}
+			{pskOptional ? null : (
+				<>
+					<FieldLabel text={t('boxConfig.psk')} />
+					<PasswordField
+						invalid={Boolean(errorFor('psk'))}
+						placeholder={t('boxConfig.psk')}
+						textContentType="password"
+						value={form.psk}
+						onChangeText={value => set('psk', value)}
+					/>
+					<FieldError message={errorFor('psk')} />
+				</>
+			)}
 			{/* Sans champ à l'écran : l'identifiant vient du QR code. */}
 			<FieldError message={errorFor('boxIdentifier')} />
 		</>
@@ -813,9 +1103,15 @@ export function BoxConfiguration(props: any) {
 			/>
 			<FieldError message={errorFor('deviceName')} />
 
-			<FieldLabel text={t('boxConfig.email')} optional={t('boxConfig.optional')} />
+			<FieldLabel
+				text={t('boxConfig.email')}
+				optional={t('boxConfig.optional')}
+			/>
 			<TextInput
-				style={[styles.field, errorFor('email') ? styles.fieldInvalid : null]}
+				style={[
+					styles.field,
+					errorFor('email') ? styles.fieldInvalid : null
+				]}
 				placeholder={t('boxConfig.email')}
 				placeholderTextColor={placeholderColor}
 				keyboardType="email-address"
@@ -828,38 +1124,69 @@ export function BoxConfiguration(props: any) {
 			<FieldError message={errorFor('email')} />
 			<Text style={styles.hint}>{t('boxConfig.emailRecoveryHint')}</Text>
 
-			<FieldLabel text={t('boxConfig.newPassword')} />
-			<PasswordField
-				invalid={Boolean(errorFor('password'))}
-				placeholder={t('boxConfig.newPassword')}
-				textContentType="newPassword"
-				value={form.password}
-				onChangeText={value => set('password', value)}
-			/>
-			{errorFor('password') ? (
-				<FieldError message={errorFor('password')} />
-			) : (
-				<Text style={styles.hint}>
-					{t('boxConfig.passwordRules', {min: PASSWORD_MIN_LENGTH})}
+			<View style={styles.toggleRow}>
+				<Text style={[InputStyle.textInput, styles.toggleLabel]}>
+					{t('boxConfig.keepPassword')}
 				</Text>
+				<AppSwitch
+					value={keepPassword}
+					onValueChange={value => {
+						setKeepPassword(value);
+						setLastFailure('');
+					}}
+					accessibilityLabel={t('boxConfig.keepPassword')}
+				/>
+			</View>
+			{keepPassword ? (
+				<Text style={styles.hint}>
+					{t(
+						firstConnection
+							? 'boxConfig.keepLabelPasswordHint'
+							: 'boxConfig.keepPasswordHint'
+					)}
+				</Text>
+			) : (
+				<>
+					<FieldLabel text={t('boxConfig.newPassword')} />
+					<PasswordField
+						invalid={Boolean(errorFor('password'))}
+						placeholder={t('boxConfig.newPassword')}
+						textContentType="newPassword"
+						value={form.password}
+						onChangeText={value => set('password', value)}
+					/>
+					{errorFor('password') ? (
+						<FieldError message={errorFor('password')} />
+					) : (
+						<Text style={styles.hint}>
+							{t('boxConfig.passwordRules', {
+								min: PASSWORD_MIN_LENGTH
+							})}
+						</Text>
+					)}
+
+					<FieldLabel text={t('boxConfig.confirmPassword')} />
+					<PasswordField
+						invalid={Boolean(errorFor('confirmPassword'))}
+						placeholder={t('boxConfig.confirmPassword')}
+						textContentType="newPassword"
+						value={form.confirmPassword}
+						onChangeText={value => set('confirmPassword', value)}
+						onSubmitEditing={next}
+						returnKeyType="done"
+					/>
+					<FieldError message={errorFor('confirmPassword')} />
+				</>
 			)}
 
-			<FieldLabel text={t('boxConfig.confirmPassword')} />
-			<PasswordField
-				invalid={Boolean(errorFor('confirmPassword'))}
-				placeholder={t('boxConfig.confirmPassword')}
-				textContentType="newPassword"
-				value={form.confirmPassword}
-				onChangeText={value => set('confirmPassword', value)}
-				onSubmitEditing={next}
-				returnKeyType="done"
-			/>
-			<FieldError message={errorFor('confirmPassword')} />
-
 			<DescBox style={styles.summary}>
-				<Text style={accessStyles.cardLabel}>{t('boxConfig.boxIdentifier')}</Text>
+				<Text style={accessStyles.cardLabel}>
+					{t('boxConfig.boxIdentifier')}
+				</Text>
 				<Text style={styles.summaryValue}>{form.boxIdentifier}</Text>
-				<Text style={accessStyles.cardLabel}>{t('boxConfig.wifiNetwork')}</Text>
+				<Text style={accessStyles.cardLabel}>
+					{t('boxConfig.wifiNetwork')}
+				</Text>
 				<Text style={styles.summaryValue}>{form.ssid}</Text>
 			</DescBox>
 			<WarningBox hideIcon={true} style={styles.reminderBox}>
@@ -871,22 +1198,19 @@ export function BoxConfiguration(props: any) {
 	);
 
 	/**
-	 * Dernière étape : le mot de passe que la box accepte aujourd'hui. C'est
-	 * sa validation qui envoie la configuration.
+	 * Le mot de passe de l'étiquette : sa validation le fait vérifier par la
+	 * box (`checkPassword`) avant de passer au compte.
 	 */
+	const ownershipLabel = t(
+		firstConnection ? 'boxConfig.labelPassword' : 'boxConfig.boxPassword'
+	);
 	const renderOwnership = () => (
 		<>
-			<FieldLabel
-				text={t(
-					mode === 'setup' ? 'boxConfig.labelPassword' : 'boxConfig.boxPassword'
-				)}
-			/>
+			<FieldLabel text={ownershipLabel} />
 			<PasswordField
 				autoFocus={true}
 				invalid={Boolean(errorFor('currentPassword'))}
-				placeholder={t(
-					mode === 'setup' ? 'boxConfig.labelPassword' : 'boxConfig.boxPassword'
-				)}
+				placeholder={ownershipLabel}
 				textContentType="password"
 				value={form.currentPassword}
 				onChangeText={value => set('currentPassword', value)}
@@ -894,34 +1218,22 @@ export function BoxConfiguration(props: any) {
 				returnKeyType="done"
 			/>
 			{currentPasswordFeedback()}
-			{mode === 'setup' ? (
-				<View style={styles.hintRow}>
-					<Icon name="tag" size={14} color={COLORS.primary} />
-					<Text style={[styles.hint, {flex: 1}]}>
-						{t('boxConfig.labelPasswordHint')}
+			<DescBox style={styles.passwordDesc}>
+				<View style={styles.descRow}>
+					<Icon
+						name={firstConnection ? 'tag' : 'lock'}
+						size={14}
+						color={COLORS.primary}
+					/>
+					<Text style={styles.descText}>
+						{t(
+							firstConnection
+								? 'boxConfig.labelPasswordHint'
+								: 'boxConfig.boxPasswordHint'
+						)}
 					</Text>
 				</View>
-			) : (
-				<>
-					<Text style={styles.hint}>{t('boxConfig.boxPasswordHint')}</Text>
-					<Text style={styles.hint}>
-						{t('boxConfig.forgotPassword')}{' '}
-						<Text
-							style={styles.forgotLink}
-							accessibilityRole="link"
-							onPress={() =>
-								props.navigation.navigate('ForgotPassword', {
-									// L'identifiant vient du QR scanné : rien à
-									// ressaisir.
-									login: form.boxIdentifier.trim(),
-									returnTo: 'BoxConfiguration'
-								})
-							}>
-							{t('boxConfig.forgotPasswordAction')}
-						</Text>
-					</Text>
-				</>
-			)}
+			</DescBox>
 		</>
 	);
 
@@ -946,50 +1258,95 @@ export function BoxConfiguration(props: any) {
 			behavior={Platform.OS === 'ios' ? 'padding' : undefined}>
 			<ScrollView
 				style={{flex: 1}}
-				contentContainerStyle={{paddingTop: 30, paddingBottom: 40}}
-				keyboardShouldPersistTaps="handled">
-				<StepHeader
-					headerKey={mode === 'setup' ? step : 'recovery'}
-					icon={stepIcon(step, mode)}
-					subtitle={
-						mode === 'setup' ? t(`boxConfig.${step}Subtitle`) : undefined
-					}
-					info={recoveryWifi ? t('boxConfig.existingAccount') : undefined}
-					index={stepIndex}
-					// L'écran de bascule est la dernière étape de l'assistant.
-					total={steps.length + 1}
-					banner={recoveryWifi ? recoveryBanner(boxMode) : undefined}
-				/>
+				contentContainerStyle={styles.scrollContent}
+				keyboardShouldPersistTaps="handled"
+				keyboardDismissMode="on-drag">
+				{/* Un appui hors des champs et des boutons ferme le clavier. */}
+				<Pressable
+					style={styles.dismissArea}
+					onPress={Keyboard.dismiss}
+					accessible={false}>
+					<StepHeader
+						headerKey={mode === 'setup' ? step : 'recovery'}
+						icon={stepIcon(step, firstConnection)}
+						subtitle={
+							mode !== 'setup'
+								? undefined
+								: step === 'ownership' && !firstConnection
+								? t('boxConfig.ownershipSubtitleExisting')
+								: t(`boxConfig.${step}Subtitle`)
+						}
+						info={
+							recoveryWifi
+								? t('boxConfig.existingAccount')
+								: undefined
+						}
+						index={stepIndex}
+						// L'écran de bascule est la dernière étape de l'assistant.
+						total={steps.length + 1}
+						banner={
+							recoveryWifi ? recoveryBanner(boxMode) : undefined
+						}
+					/>
 
-				<View style={styles.card}>
-					<View style={{gap: 8, alignItems: 'center'}}>
-						<DangerBox message={lastFailure} />
+					<View style={styles.card}>
+						<View style={{gap: 8, alignItems: 'center'}}>
+							<DangerBox message={lastFailure} />
 
-						{renderStep()}
+							{renderStep()}
 
-						<DangerBox message={error} />
-
-						<OutlineButton
-							label={t(
-								!isLastStep
-									? 'boxConfig.continue'
-									: mode === 'setup'
-									? 'boxConfig.configure'
-									: 'boxConfig.reconnect'
+							{error && error === duplicateMessage ? (
+								<WarningBox style={styles.duplicateBox}>
+									<Text style={styles.reminderText}>{error}</Text>
+								</WarningBox>
+							) : (
+								<DangerBox message={error} />
 							)}
-							icon={
-								!isLastStep ? faArrowRight : mode === 'setup' ? faCheck : faWifi
-							}
-							disabled={isLoading}
-							onPress={next}
-							// Grisé sans être bloqué : l'appui montre ce qui manque.
-							style={[
-								styles.outlineSubmit,
-								(!isStepValid || duplicateProfile) && styles.outlineDimmed
-							]}
-						/>
+							{joinIssue === 'phone' ? (
+								<WifiSettingsLink />
+							) : null}
+							{joinIssue === 'box' ? (
+								<LinkButton
+									label={t('boxConfig.rescan')}
+									onPress={() =>
+										props.navigation.reset({
+											index: 1,
+											routes: [
+												{name: 'Profiles'},
+												{name: 'ScanBox'}
+											]
+										})
+									}
+								/>
+							) : null}
+
+							<OutlineButton
+								label={t(
+									step === 'wifi' && !alreadyConnected
+										? 'boxConfig.joinNetwork'
+										: !isLastStep
+										? 'boxConfig.continue'
+										: 'boxConfig.configure'
+								)}
+								icon={
+									step === 'wifi' && !alreadyConnected
+										? faWifi
+										: !isLastStep
+										? faArrowRight
+										: faCheck
+								}
+								disabled={isLoading}
+								onPress={next}
+								// Grisé sans être bloqué : l'appui montre ce qui manque.
+								style={[
+									styles.outlineSubmit,
+									(!isStepValid || duplicateProfile) &&
+										styles.outlineDimmed
+								]}
+							/>
+						</View>
 					</View>
-				</View>
+				</Pressable>
 			</ScrollView>
 			<BusyOverlay visible={isLoading} message={busyMessage} />
 		</KeyboardAvoidingView>
@@ -1008,9 +1365,9 @@ function recoveryBanner(boxMode: BoxMode | null): string | undefined {
 }
 
 /** Pastille de l'étape : l'étiquette pour le mot de passe imprimé dessus. */
-function stepIcon(step: BoxConfigurationStep, mode: BoxConfigurationMode) {
+function stepIcon(step: BoxConfigurationStep, firstConnection: boolean) {
 	if (step === 'wifi') return 'wifi';
-	if (step === 'ownership' && mode === 'setup') return 'tag';
+	if (step === 'ownership' && firstConnection) return 'tag';
 	return 'lock';
 }
 
@@ -1047,12 +1404,18 @@ const StepHeader = ({
 			<StepProgress index={index} total={total} />
 			<Text style={accessStyles.title}>{t(`boxConfig.${key}Title`)}</Text>
 			{subtitle ? (
-				<Text style={[accessStyles.body, {marginTop: 6}]}>{subtitle}</Text>
+				<Text style={[accessStyles.body, {marginTop: 6}]}>
+					{subtitle}
+				</Text>
 			) : null}
 			{info ? <InfoBox message={info} /> : null}
 			{banner ? (
 				<View style={styles.banner}>
-					<Icon name="exclamation-triangle" size={16} color="#dd6b20" />
+					<Icon
+						name="exclamation-triangle"
+						size={16}
+						color="#dd6b20"
+					/>
 					<Text style={styles.bannerText}>{banner}</Text>
 				</View>
 			) : null}
@@ -1067,7 +1430,9 @@ const StepHeader = ({
 const FieldLabel = ({text, optional}: {text: string; optional?: string}) => (
 	<Text style={[InputStyle.textInput, styles.label]}>
 		{text}
-		{optional ? <Text style={styles.labelOptional}> · {optional}</Text> : null}
+		{optional ? (
+			<Text style={styles.labelOptional}> · {optional}</Text>
+		) : null}
 	</Text>
 );
 
@@ -1080,7 +1445,11 @@ const PasswordField = ({
 	const {t} = useTranslation('access');
 	return (
 		<View
-			style={[styles.field, styles.passwordField, invalid && styles.fieldInvalid]}>
+			style={[
+				styles.field,
+				styles.passwordField,
+				invalid && styles.fieldInvalid
+			]}>
 			<TextInput
 				{...inputProps}
 				style={styles.passwordInput}
@@ -1094,7 +1463,9 @@ const PasswordField = ({
 				hitSlop={{top: 10, bottom: 10, left: 10, right: 10}}
 				accessibilityRole="button"
 				accessibilityLabel={t(
-					visible ? 'boxConfig.hidePassword' : 'boxConfig.showPassword'
+					visible
+						? 'boxConfig.hidePassword'
+						: 'boxConfig.showPassword'
 				)}>
 				<Icon
 					name={visible ? 'eye-slash' : 'eye'}
@@ -1106,13 +1477,40 @@ const PasswordField = ({
 	);
 };
 
+/**
+ * Pastille d'un réseau : « connecté » si la box y est (`isConnected`), ce qui
+ * suppose qu'elle le connaît ; sinon « déjà configuré » (`isConfigured`).
+ */
+const NetworkTag = ({network}: {network: NetworkOption}) => {
+	const {t} = useTranslation('access');
+	if (!network.isConnected && !network.isConfigured) return null;
+	const color = network.isConnected ? COLORS.success : COLORS.accent;
+	return (
+		<View style={[styles.configuredTag, {borderColor: color}]}>
+			<Icon
+				name={network.isConnected ? 'wifi' : 'check-circle'}
+				size={12}
+				color={color}
+				solid
+			/>
+			<Text style={[styles.configuredTagText, {color}]}>
+				{t(
+					network.isConnected
+						? 'boxConfig.connectedTag'
+						: 'boxConfig.configuredTag'
+				)}
+			</Text>
+		</View>
+	);
+};
+
 /** Message d'erreur sous un champ, ou rien du tout — la place n'est pas réservée. */
 const FieldError = ({message}: {message?: string}) =>
 	message ? <Text style={styles.fieldError}>{message}</Text> : null;
 
 /**
  * La box a déjà renvoyé deux formes pour cette route : un tableau d'objets
- * (`{name, isConfigured, in-use}`, comme la caractéristique BLE) et un tableau
+ * (`{name, isConfigured, isConnected, in-use}`, comme la caractéristique BLE) et un tableau
  * de chaînes. Les deux sont acceptées plutôt que d'imposer un firmware précis.
  */
 function parseNetworks(body: string): NetworkOption[] {
@@ -1126,20 +1524,66 @@ function parseNetworks(body: string): NetworkOption[] {
 	return list
 		.map((entry: any): NetworkOption | null => {
 			if (typeof entry === 'string') {
-				return {label: entry, value: entry};
+				return {
+					label: entry,
+					value: entry,
+					isConfigured: false,
+					isConnected: false
+				};
 			}
 			const value = entry?.name ?? entry?.ssid;
 			if (typeof value !== 'string' || value === '') return null;
 
-			const tag =
-				entry?.isConfigured && entry?.['in-use']
-					? ` ${i18n.t('access:boxConfig.configuredTag')}`
-					: '';
-			return {label: `${value}${tag}`, value};
+			return {
+				label: value,
+				value,
+				isConfigured: Boolean(entry?.isConfigured),
+				isConnected: Boolean(entry?.isConnected)
+			};
 		})
 		.filter((option: NetworkOption | null): option is NetworkOption =>
 			Boolean(option)
 		);
+}
+
+/**
+ * Sur quel réseau le téléphone a-t-il atterri après le point d'accès ?
+ *
+ * `unknown` n'est pas un échec : toutes les plateformes ne savent pas nommer le
+ * réseau courant — iOS n'a pas de pilote hotspot et ne répond jamais. C'est la
+ * recherche de la box qui tranchera. Seul `elsewhere` est un constat d'échec.
+ */
+type PhoneOutcome =
+	| {kind: 'joined'; ssid: string}
+	| {kind: 'unknown'}
+	| {kind: 'elsewhere'; ssid: string};
+
+/** Attend que le téléphone soit revenu sur `network`. */
+async function waitForPhoneOn(
+	network: string,
+	alive: () => boolean
+): Promise<PhoneOutcome> {
+	let last: string | null = null;
+	const found = await pollUntil<string>(
+		async () => {
+			const current = await hotspotService.getCurrentSsid();
+			if (!current) return undefined;
+			last = current;
+			return sameNetwork(current, network) ? current : undefined;
+		},
+		{
+			timeoutMs: PHONE_JOIN_MS,
+			intervalMs: PHONE_PROBE_INTERVAL_MS,
+			shouldContinue: alive
+		}
+	);
+	if (found) return {kind: 'joined', ssid: found};
+	return last ? {kind: 'elsewhere', ssid: last} : {kind: 'unknown'};
+}
+
+/** Deux noms de réseau désignent-ils le même ? */
+function sameNetwork(a: string, b: string): boolean {
+	return a.trim().toLowerCase() === b.trim().toLowerCase();
 }
 
 const styles = StyleSheet.create({
@@ -1155,10 +1599,6 @@ const styles = StyleSheet.create({
 		alignItems: 'center',
 		borderColor: COLORS.primary,
 		borderWidth: 6
-	},
-	forgotLink: {
-		fontWeight: 'bold',
-		textDecorationLine: 'underline'
 	},
 	banner: {
 		flexDirection: 'row',
@@ -1252,13 +1692,6 @@ const styles = StyleSheet.create({
 		fontSize: 13,
 		paddingHorizontal: 4
 	},
-	hintRow: {
-		flexDirection: 'row',
-		alignItems: 'center',
-		alignSelf: 'stretch',
-		gap: 6,
-		paddingHorizontal: 4
-	},
 	inlineLink: {
 		flexDirection: 'row',
 		alignItems: 'center',
@@ -1288,6 +1721,55 @@ const styles = StyleSheet.create({
 	},
 	fieldBox: {
 		alignSelf: 'stretch'
+	},
+	networkName: {
+		flex: 1,
+		flexDirection: 'row',
+		alignItems: 'center',
+		gap: 8
+	},
+	networkLabel: {flexShrink: 1},
+	scrollContent: {flexGrow: 1, paddingTop: 30, paddingBottom: 40},
+	// Couvre tout l'écran, même quand le contenu est court.
+	dismissArea: {flexGrow: 1},
+	passwordDesc: {marginTop: 4},
+	descRow: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		gap: 8
+	},
+	descText: {
+		flex: 1,
+		color: COLORS.primary,
+		fontSize: 14,
+		lineHeight: 19
+	},
+	toggleRow: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		justifyContent: 'space-between',
+		alignSelf: 'stretch',
+		paddingHorizontal: 4,
+		marginTop: 8
+	},
+	toggleLabel: {
+		flex: 1,
+		marginBottom: 0
+	},
+	configuredTag: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		gap: 4,
+		paddingVertical: 2,
+		paddingHorizontal: 8,
+		borderRadius: 10,
+		borderWidth: 1,
+		borderColor: COLORS.success
+	},
+	configuredTagText: {
+		color: COLORS.success,
+		fontSize: 12,
+		fontWeight: 'bold'
 	},
 	dropdownHeader: {
 		flexDirection: 'row',

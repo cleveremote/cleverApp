@@ -37,7 +37,7 @@ describe('validateBoxConfiguration — setup', () => {
 		expect(errors.password).toBe('passwordRequired');
 	});
 
-	it('refuse de garder le mot de passe de l’étiquette', () => {
+	it('accepte un nouveau mot de passe égal à l’actuel', () => {
 		const errors = validateBoxConfiguration(
 			{
 				...complete,
@@ -45,7 +45,16 @@ describe('validateBoxConfiguration — setup', () => {
 			},
 			'setup'
 		);
-		expect(errors.password).toBe('passwordSameAsCurrent');
+		expect(errors.password).toBeUndefined();
+	});
+
+	it('n’exige aucun nouveau mot de passe quand l’actuel est gardé', () => {
+		const errors = validateBoxConfiguration(
+			{...complete, password: '', confirmPassword: ''},
+			'setup',
+			{keepCurrentPassword: true}
+		);
+		expect(errors).toEqual({});
 	});
 
 	it('ne juge une étape que sur ses propres champs', () => {
@@ -60,7 +69,7 @@ describe('validateBoxConfiguration — setup', () => {
 	});
 });
 
-describe('étapes — le mot de passe actuel n’appartient à aucune', () => {
+describe('étapes', () => {
 	const empty: BoxConfigurationForm = {
 		deviceName: '',
 		ssid: '',
@@ -81,25 +90,28 @@ describe('étapes — le mot de passe actuel n’appartient à aucune', () => {
 		});
 	});
 
-	it('étape 2 : nom et nouveau mot de passe', () => {
+	it("étape 2 : mot de passe de l'étiquette", () => {
+		expect(stepErrors(errors, 'ownership')).toEqual({
+			currentPassword: 'currentPasswordRequired'
+		});
+	});
+
+	it('étape 3 : nom et nouveau mot de passe', () => {
 		expect(stepErrors(errors, 'account')).toEqual({
 			deviceName: 'deviceNameRequired',
 			password: 'passwordRequired',
 			confirmPassword: 'confirmRequired'
 		});
 	});
-
-	it('reste exigé par la validation complète', () => {
-		expect(errors.currentPassword).toBe('currentPasswordRequired');
-	});
 });
 
 describe('validateBoxConfiguration — recovery', () => {
-	it('se contente du Wi-Fi et du mot de passe actuel', () => {
+	it('se contente du Wi-Fi', () => {
 		const errors = validateBoxConfiguration(
 			{
 				...complete,
 				deviceName: '',
+				currentPassword: '',
 				password: '',
 				confirmPassword: ''
 			},
@@ -107,13 +119,18 @@ describe('validateBoxConfiguration — recovery', () => {
 		);
 		expect(errors).toEqual({});
 	});
+});
 
-	it('exige le mot de passe actuel', () => {
-		const errors = validateBoxConfiguration(
-			{...complete, currentPassword: ''},
-			'recovery'
-		);
-		expect(errors.currentPassword).toBe('currentPasswordRequired');
-		expect(isBoxConfigurationValid(stepErrors(errors, 'wifi'))).toBe(true);
+describe('validateBoxConfiguration — clé Wi-Fi', () => {
+	it('est exigée pour un réseau inconnu de la box', () => {
+		const errors = validateBoxConfiguration({...complete, psk: ''}, 'setup');
+		expect(errors.psk).toBe('pskRequired');
+	});
+
+	it("est facultative pour un réseau qu'elle connaît déjà", () => {
+		const errors = validateBoxConfiguration({...complete, psk: ''}, 'setup', {
+			pskOptional: true
+		});
+		expect(errors.psk).toBeUndefined();
 	});
 });

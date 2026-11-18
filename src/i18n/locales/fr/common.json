@@ -37,7 +37,8 @@
 	"error": "Erreur",
 	"errors": {
 		"noServer": "Pas de connexion au serveur !",
-		"unexpected": "Une erreur inattendue est survenue."
+		"unexpected": "Une erreur inattendue est survenue.",
+		"boxNotConnected": "Box inconnue ou non connectée."
 	},
 	"ble": {
 		"notConnected": "L'équipement n'est pas connecté",

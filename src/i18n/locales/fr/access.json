@@ -25,7 +25,12 @@
 		"duplicateTitle": "Box déjà enregistrée",
 		"duplicateBody": "Cette box figure déjà dans vos profils sous le nom « {{profile}} ». Connectez-vous depuis ce profil, ou supprimez-le (appui long sur son nom) pour installer la box à nouveau.",
 		"goToProfiles": "Voir mes profils",
-		"changeWifiOnly": "Changer uniquement son Wi-Fi"
+		"changeWifiOnly": "Changer le Wi-Fi",
+		"hotspotPromptTitle": "Allumez le hotspot de la box",
+		"hotspotPrompt": "Appuyez longuement sur le bouton Wi-Fi de la box jusqu'à ce qu'il clignote en vert, puis lancez la recherche. Android vous proposera la box « {{ssid}} » : choisissez-la.",
+		"searchHotspot": "Rechercher la box",
+		"waitingBoxTitle": "Connexion à la box",
+		"waitingBox": "Le téléphone est sur « {{ssid}} ». On attend que la box réponde ..."
 	},
 	"qr": {
 		"cameraRequired": "Accès à la caméra nécessaire",
@@ -57,8 +62,7 @@
 		"confirmRequired": "Confirmation obligatoire.",
 		"passwordMismatch": "Les deux mots de passe ne correspondent pas.",
 		"currentPasswordRequired": "Mot de passe obligatoire.",
-		"currentPasswordWrong": "Mot de passe incorrect.",
-		"passwordSameAsCurrent": "Choisissez un mot de passe différent de celui de l'étiquette."
+		"currentPasswordWrong": "Mot de passe incorrect."
 	},
 	"boxConfig": {
 		"searchingNetworks": "Recherche des réseaux ...",
@@ -75,7 +79,7 @@
 		"newPassword": "Nouveau mot de passe",
 		"confirmPassword": "Confirmer le mot de passe",
 		"configure": "Configurer ma box",
-		"configuredTag": "(configuré)",
+		"configuredTag": "déjà configuré",
 		"detecting": "Connexion à la box ...",
 		"detectingHint": "Gardez le téléphone près de la box, cela ne prend que quelques secondes.",
 		"modeStarting": "Votre box démarre ...",
@@ -92,7 +96,7 @@
 		"wifiTitle": "Wi-Fi de la maison",
 		"wifiSubtitle": "Choisissez le réseau que la box doit rejoindre.",
 		"accountTitle": "Sécurisez votre box",
-		"accountSubtitle": "Donnez-lui un nom et remplacez le mot de passe de l'étiquette par le vôtre.",
+		"accountSubtitle": "Donnez-lui un nom, puis choisissez son mot de passe ou gardez l'actuel.",
 		"recoveryTitle": "Reconnecter votre box",
 		"recoveryFailed": "Votre box n'a pas pu rejoindre « {{ssid}} ». Vérifiez la clé Wi-Fi, ou choisissez un autre réseau.",
 		"recoveryFailedNoSsid": "Votre box n'a pas pu rejoindre son réseau Wi-Fi. Choisissez-le à nouveau.",
@@ -100,7 +104,7 @@
 		"optional": "facultatif",
 		"passwordRules": "{{min}} caractères minimum, avec au moins une lettre et un chiffre.",
 		"boxPassword": "Mot de passe de la box",
-		"boxPasswordHint": "Celui que vous avez choisi à l'installation, pas celui de l'étiquette.",
+		"boxPasswordHint": "Le mot de passe que vous avez choisi pour la box. Si vous ne l'avez jamais changé, c'est celui de l'étiquette collée sous la box.",
 		"refreshNetworks": "Actualiser la liste",
 		"continue": "Continuer",
 		"reconnect": "Reconnecter ma box",
@@ -111,7 +115,23 @@
 		"forgotPasswordAction": "Le réinitialiser avec mon adresse e-mail de récupération",
 		"labelPasswordWrong": "Le mot de passe de l'étiquette est incorrect. Vérifiez-le sur l'étiquette collée sous la box, puis réessayez.",
 		"boxPasswordWrong": "Le mot de passe de la box est incorrect. Vérifiez-le, puis réessayez.",
-		"duplicateProfile": "Cette box est déjà enregistrée dans vos profils, sous le nom « {{profile}} ». Pour l'installer à nouveau, supprimez d'abord ce profil (appui long sur son nom dans la liste des profils)."
+		"duplicateProfile": "Cette box est déjà enregistrée dans vos profils, sous le nom « {{profile}} ». Pour l'installer à nouveau, supprimez d'abord ce profil (appui long sur son nom dans la liste des profils).",
+		"joinNetwork": "Rejoindre le réseau",
+		"joinSending": "Envoi de « {{network}} » à la box ...",
+		"joinPhone": "Le téléphone rejoint « {{network}} » ...",
+		"joinBox": "On attend la box sur « {{network}} » ...",
+		"joinRefused": "La box a refusé ce réseau (HTTP {{status}}). Vérifiez la clé Wi-Fi, puis réessayez.",
+		"phoneElsewhere": "Le téléphone est resté sur « {{ssid}} ». Connectez-le à « {{network}} », puis réessayez.",
+		"boxNotOnNetwork": "La box n'a pas été trouvée sur « {{network}} ». Si la clé Wi-Fi était fausse, elle a rouvert son point d'accès : rescannez son QR code.",
+		"rescan": "Rescanner le QR code",
+		"checkingPassword": "Vérification du mot de passe ...",
+		"passwordLocked": "Trop d'essais : la box n'accepte plus de mot de passe pour l'instant. Patientez quelques minutes, puis réessayez.",
+		"passwordCheckFailed": "La box n'a pas pu vérifier le mot de passe. Réessayez.",
+		"connectedTag": "connecté",
+		"ownershipSubtitleExisting": "Le mot de passe de la box prouve qu'elle est entre vos mains.",
+		"keepPassword": "Garder le mot de passe actuel",
+		"keepPasswordHint": "La box gardera le mot de passe saisi à l'étape précédente.",
+		"keepLabelPasswordHint": "La box gardera le mot de passe de l'étiquette : toute personne qui a l'étiquette sous les yeux pourra s'y connecter."
 	},
 	"handover": {
 		"yourNetwork": "votre réseau Wi-Fi",
@@ -122,7 +142,7 @@
 		"retry": "Réessayer",
 		"pending": "en attente",
 		"title": {
-			"waiting": "Bascule en cours",
+			"waiting": "Initialisation en cours",
 			"confirmed": "Box configurée",
 			"offNetwork": "Le téléphone n'est pas sur le bon réseau",
 			"unconfirmed": "Box introuvable pour l'instant",
@@ -171,7 +191,9 @@
 			"unconfirmed": "sans accusé de réception",
 			"refused": "refusée par la box",
 			"notReceived": "non reçue"
-		}
+		},
+		"serverInitializing": "Initialisation du serveur",
+		"serverInitialized": "Initialisation du serveur terminée avec succès"
 	},
 	"configureError": {
 		"VALIDATION_FAILED": "La box a refusé la configuration : certaines valeurs sont invalides. Vérifiez votre saisie.",

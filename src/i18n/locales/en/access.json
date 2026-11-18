@@ -25,7 +25,12 @@
 		"duplicateTitle": "Box already saved",
 		"duplicateBody": "This box is already in your profiles as “{{profile}}”. Sign in from that profile, or delete it (long press on its name) to set the box up again.",
 		"goToProfiles": "See my profiles",
-		"changeWifiOnly": "Only change its Wi-Fi"
+		"changeWifiOnly": "Change Wi-Fi",
+		"hotspotPromptTitle": "Turn on the box's hotspot",
+		"hotspotPrompt": "Press and hold the box's Wi-Fi button until it blinks green, then start the search. Android will offer the box “{{ssid}}”: pick it.",
+		"searchHotspot": "Search for the box",
+		"waitingBoxTitle": "Connecting to the box",
+		"waitingBox": "The phone is on “{{ssid}}”. Waiting for the box to answer ..."
 	},
 	"qr": {
 		"cameraRequired": "Camera access required",
@@ -57,8 +62,7 @@
 		"confirmRequired": "Confirmation is required.",
 		"passwordMismatch": "The two passwords do not match.",
 		"currentPasswordRequired": "Password is required.",
-		"currentPasswordWrong": "Incorrect password.",
-		"passwordSameAsCurrent": "Choose a password different from the label password."
+		"currentPasswordWrong": "Incorrect password."
 	},
 	"boxConfig": {
 		"searchingNetworks": "Searching for networks ...",
@@ -75,7 +79,7 @@
 		"newPassword": "New password",
 		"confirmPassword": "Confirm password",
 		"configure": "Set up my box",
-		"configuredTag": "(configured)",
+		"configuredTag": "already configured",
 		"detecting": "Connecting to the box ...",
 		"detectingHint": "Keep the phone close to the box, this only takes a few seconds.",
 		"modeStarting": "Your box is starting ...",
@@ -92,7 +96,7 @@
 		"wifiTitle": "Home Wi-Fi",
 		"wifiSubtitle": "Choose the network the box should join.",
 		"accountTitle": "Secure your box",
-		"accountSubtitle": "Give it a name and replace the label password with your own.",
+		"accountSubtitle": "Give it a name, then choose its password or keep the current one.",
 		"recoveryTitle": "Reconnect your box",
 		"recoveryFailed": "Your box could not join “{{ssid}}”. Check the Wi-Fi key, or choose another network.",
 		"recoveryFailedNoSsid": "Your box could not join its Wi-Fi network. Choose it again.",
@@ -100,7 +104,7 @@
 		"optional": "optional",
 		"passwordRules": "At least {{min}} characters, with at least one letter and one digit.",
 		"boxPassword": "Box password",
-		"boxPasswordHint": "The one you chose during setup, not the one on the label.",
+		"boxPasswordHint": "The password you chose for the box. If you never changed it, it is the one on the label under the box.",
 		"refreshNetworks": "Refresh list",
 		"continue": "Continue",
 		"reconnect": "Reconnect my box",
@@ -111,7 +115,23 @@
 		"forgotPasswordAction": "Reset it with my recovery email address",
 		"labelPasswordWrong": "The label password is incorrect. Check it on the label under the box, then try again.",
 		"boxPasswordWrong": "The box password is incorrect. Check it, then try again.",
-		"duplicateProfile": "This box is already saved in your profiles, as “{{profile}}”. To set it up again, first delete that profile (long press on its name in the profile list)."
+		"duplicateProfile": "This box is already saved in your profiles, as “{{profile}}”. To set it up again, first delete that profile (long press on its name in the profile list).",
+		"joinNetwork": "Join network",
+		"joinSending": "Sending “{{network}}” to the box ...",
+		"joinPhone": "The phone is joining “{{network}}” ...",
+		"joinBox": "Waiting for the box on “{{network}}” ...",
+		"joinRefused": "The box refused this network (HTTP {{status}}). Check the Wi-Fi key, then try again.",
+		"phoneElsewhere": "The phone stayed on “{{ssid}}”. Connect it to “{{network}}”, then try again.",
+		"boxNotOnNetwork": "The box was not found on “{{network}}”. If the Wi-Fi key was wrong, it has reopened its access point: rescan its QR code.",
+		"rescan": "Rescan the QR code",
+		"checkingPassword": "Checking the password ...",
+		"passwordLocked": "Too many attempts: the box is not accepting passwords for now. Wait a few minutes, then try again.",
+		"passwordCheckFailed": "The box could not check the password. Try again.",
+		"connectedTag": "connected",
+		"ownershipSubtitleExisting": "The box password proves it is in your hands.",
+		"keepPassword": "Keep the current password",
+		"keepPasswordHint": "The box will keep the password entered in the previous step.",
+		"keepLabelPasswordHint": "The box will keep the label password: anyone who can see the label will be able to sign in to it."
 	},
 	"handover": {
 		"yourNetwork": "your Wi-Fi network",
@@ -122,7 +142,7 @@
 		"retry": "Try again",
 		"pending": "pending",
 		"title": {
-			"waiting": "Switching networks",
+			"waiting": "Initializing",
 			"confirmed": "Box configured",
 			"offNetwork": "The phone is not on the right network",
 			"unconfirmed": "Box not found yet",
@@ -171,7 +191,9 @@
 			"unconfirmed": "no acknowledgement",
 			"refused": "refused by the box",
 			"notReceived": "not received"
-		}
+		},
+		"serverInitializing": "Server initialization",
+		"serverInitialized": "Server initialization completed successfully"
 	},
 	"configureError": {
 		"VALIDATION_FAILED": "The box refused the configuration: some values are invalid. Check your input.",

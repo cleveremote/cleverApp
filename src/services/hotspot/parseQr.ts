@@ -169,6 +169,12 @@ export function parseCleverBoxQr(raw: string): CleverBoxQrPayload {
 	const password =
 		security === 'OPEN' ? '' : asString(data.password, 'password');
 
+	// Facultatif : un QR sans lui fait simplement saisir le mot de passe.
+	const devicePassword =
+		typeof data.devicePassword === 'string' && data.devicePassword !== ''
+			? data.devicePassword
+			: undefined;
+
 	return {
 		type: 'cleverbox',
 		ssid: asString(data.ssid, 'ssid'),
@@ -176,6 +182,7 @@ export function parseCleverBoxQr(raw: string): CleverBoxQrPayload {
 		security,
 		host: normalizeHost(data.host),
 		port: normalizePort(data.port),
-		deviceId: asString(data.deviceId, 'deviceId')
+		deviceId: asString(data.deviceId, 'deviceId'),
+		...(devicePassword ? {devicePassword} : {})
 	};
 }

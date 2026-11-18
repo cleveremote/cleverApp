@@ -24,10 +24,10 @@ export type BoxConfigurationForm = {
 	/** Email de récupération du compte créé sur la box. Facultatif. */
 	email: string;
 	/**
-	 * Mot de passe que la box accepte aujourd'hui, demandé comme preuve de
-	 * possession : celui de l'étiquette en mode `setup`, celui choisi par
-	 * l'utilisateur en mode `recovery`. Il a son étape, la dernière : c'est
-	 * sa validation qui envoie la configuration.
+	 * Mot de passe de l'étiquette, demandé en mode `setup` comme preuve de
+	 * possession, une fois la box sur le réseau : son étape le vérifie auprès
+	 * d'elle (`checkPassword`) avant de passer au compte. Inutile en
+	 * `recovery`, qui ne fait que changer de réseau.
 	 */
 	currentPassword: string;
 	/** Nouveau mot de passe, obligatoire en mode `setup`. */
@@ -46,18 +46,31 @@ export type BoxConfigurationForm = {
 export type BoxConfigurationMode = 'setup' | 'recovery';
 
 /**
- * Étapes de l'assistant, dans l'ordre. Le mode `recovery` saute le compte, que
- * la box garde. Dans les deux modes, la dernière demande le mot de passe
- * actuel : c'est elle qui envoie.
+ * Étapes de l'assistant, dans l'ordre. La première fait rejoindre le réseau à
+ * la box ; tout ce qui suit lui parle sur ce réseau. Le mode `recovery`
+ * s'arrête là : la box garde son compte.
  */
-export type BoxConfigurationStep = 'wifi' | 'account' | 'ownership';
+export type BoxConfigurationStep = 'wifi' | 'ownership' | 'account';
 
 export const BOX_CONFIGURATION_STEPS: Record<
 	BoxConfigurationMode,
 	BoxConfigurationStep[]
 > = {
-	setup: ['wifi', 'account', 'ownership'],
-	recovery: ['wifi', 'ownership']
+	setup: ['wifi', 'ownership', 'account'],
+	recovery: ['wifi']
+};
+
+export type BoxConfigurationOptions = {
+	/**
+	 * Le réseau choisi est déjà connu de la box (`isConfigured`) : elle en a la
+	 * clé, qui n'est plus à ressaisir.
+	 */
+	pskOptional?: boolean;
+	/**
+	 * La box garde le mot de passe qu'elle a aujourd'hui : pas de nouveau mot
+	 * de passe à saisir.
+	 */
+	keepCurrentPassword?: boolean;
 };
 
 /** Champs saisis à chaque étape. */
@@ -91,8 +104,7 @@ export type BoxConfigurationIssue =
 	| 'confirmRequired'
 	| 'passwordMismatch'
 	| 'currentPasswordRequired'
-	| 'currentPasswordWrong'
-	| 'passwordSameAsCurrent';
+	| 'currentPasswordWrong';
 
 export type BoxConfigurationErrors = Partial<
 	Record<keyof BoxConfigurationForm, BoxConfigurationIssue>
@@ -137,22 +149,24 @@ export function passwordIssue(value: string): BoxConfigurationIssue | '' {
  * valide ; un objet vide veut dire que le formulaire est envoyable.
  *
  * En `setup`, tout est obligatoire sauf l'email, y compris le nouveau mot de
- * passe. En `recovery`, seuls le réseau et le mot de passe actuel le sont.
+ * passe. En `recovery`, seul le réseau l'est.
  */
 export function validateBoxConfiguration(
 	form: BoxConfigurationForm,
-	mode: BoxConfigurationMode
+	mode: BoxConfigurationMode,
+	options: BoxConfigurationOptions = {}
 ): BoxConfigurationErrors {
 	const errors: BoxConfigurationErrors = {};
 
 	if (!form.ssid) errors.ssid = 'ssidRequired';
-	if (!form.psk) errors.psk = 'pskRequired';
+	if (!form.psk && !options.pskOptional) errors.psk = 'pskRequired';
 	if (!form.boxIdentifier.trim())
 		errors.boxIdentifier = 'boxIdentifierRequired';
-	if (!form.currentPassword)
-		errors.currentPassword = 'currentPasswordRequired';
 
 	if (mode === 'recovery') return errors;
+
+	if (!form.currentPassword)
+		errors.currentPassword = 'currentPasswordRequired';
 
 	if (!form.deviceName.trim()) errors.deviceName = 'deviceNameRequired';
 
@@ -162,11 +176,11 @@ export function validateBoxConfiguration(
 		if (email) errors.email = email;
 	}
 
-	// Garder celui de l'étiquette reviendrait à laisser la box ouverte à
-	// quiconque l'a eue en main.
-	const password =
-		passwordIssue(form.password) ||
-		(form.password === form.currentPassword ? 'passwordSameAsCurrent' : '');
+	if (options.keepCurrentPassword) return errors;
+
+	// Le nouveau mot de passe peut être l'actuel : le garder est un choix
+	// laissé à l'utilisateur.
+	const password = passwordIssue(form.password);
 	if (password) {
 		errors.password = password;
 	}

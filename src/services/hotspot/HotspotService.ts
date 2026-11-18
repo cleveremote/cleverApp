@@ -116,25 +116,38 @@ class HotspotService {
 	}
 
 	/**
-	 * Remembers where the box lives, then joins its hotspot.
-	 *
-	 * The endpoint is persisted *before* the join is attempted, on purpose: when
-	 * the driver cannot join (iOS today) the user does it by hand, and the
-	 * socket must already point at the right box when they come back.
+	 * Remembers where the box lives, without joining anything: enough to reach
+	 * a box that is already on the phone's network.
 	 */
-	async join(payload: CleverBoxQrPayload): Promise<HotspotConnectResult> {
+	async rememberEndpoint(payload: CleverBoxQrPayload): Promise<void> {
 		await saveBoxEndpoint({
 			host: payload.host,
 			port: payload.port,
 			deviceId: payload.deviceId
 		});
+	}
+
+	/**
+	 * Remembers where the box lives, then joins its hotspot. `timeoutMs` bounds
+	 * the wait for the network (driver default otherwise).
+	 *
+	 * The endpoint is persisted *before* the join is attempted, on purpose: when
+	 * the driver cannot join (iOS today) the user does it by hand, and the
+	 * socket must already point at the right box when they come back.
+	 */
+	async join(
+		payload: CleverBoxQrPayload,
+		options: {timeoutMs?: number} = {}
+	): Promise<HotspotConnectResult> {
+		await this.rememberEndpoint(payload);
 
 		await this.requestJoinPermission();
 
 		return this.driver.connect({
 			ssid: payload.ssid,
 			password: payload.password,
-			security: payload.security
+			security: payload.security,
+			timeoutMs: options.timeoutMs
 		});
 	}
 
