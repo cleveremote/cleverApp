@@ -13,6 +13,17 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import {hapticOptions} from '../../data/cycleTypes';
 
+// Outline sur fond gris au repos ; une fois actif, fond blanc et contour à la
+// couleur principale.
+const COLORS = {
+	primary: '#32404e',
+	muted: '#6b7785',
+	border: '#d5dbe1',
+	// Fond au repos : le gris de l'ancien compteur, un ton plus foncé.
+	restBg: '#dce2e9',
+	white: 'white'
+};
+
 // Les groupes (GROUP) sont listés avec les cycles classiques sous 'CYCLE'.
 export type FilterKey = 'CYCLE' | 'MODULE' | 'EVENTS';
 
@@ -55,7 +66,7 @@ export function CycleFilterBar({
 						<FontAwesomeIcon
 							icon={icon}
 							size={15}
-							color={isActive ? 'white' : '#32404e'}
+							color={isActive ? COLORS.primary : COLORS.muted}
 						/>
 						<Text
 							numberOfLines={1}
@@ -72,10 +83,7 @@ export function CycleFilterBar({
 									isActive && styles.badgeActive
 								]}>
 								<Text
-									style={[
-										styles.badgeText,
-										isActive && styles.badgeTextActive
-									]}>
+									style={styles.badgeText}>
 									{count}
 								</Text>
 							</View>
@@ -94,6 +102,8 @@ const styles = StyleSheet.create({
 		paddingHorizontal: 8,
 		paddingVertical: 8
 	},
+	// Hauteur fixe et contenu centré : passer de 1,5 à 2,5 px de cadre ne décale
+	// rien.
 	segment: {
 		flex: 1,
 		flexDirection: 'row',
@@ -102,27 +112,26 @@ const styles = StyleSheet.create({
 		gap: 6,
 		height: ELEMENT_HEIGHT,
 		borderRadius: 12,
-		backgroundColor: 'white',
-		borderWidth: 1,
-		borderColor: '#e2e8f0',
-		elevation: 2,
-		shadowColor: '#000',
-		shadowOffset: {width: 0, height: 1},
-		shadowOpacity: 0.18,
-		shadowRadius: 2
+		backgroundColor: COLORS.restBg,
+		borderWidth: 1.5,
+		borderColor: COLORS.border
 	},
 	segmentActive: {
-		backgroundColor: '#32404e',
-		borderColor: '#32404e'
+		backgroundColor: COLORS.white,
+		borderColor: COLORS.primary,
+		borderWidth: 2.5
 	},
 	label: {
-		color: '#32404e',
+		color: COLORS.muted,
 		fontSize: ELEMENT_FONT_SIZE,
-		fontWeight: 'bold'
+		fontWeight: '600'
 	},
 	labelActive: {
-		color: 'white'
+		color: COLORS.primary,
+		fontWeight: '800'
 	},
+	// Compteur : plein à la couleur du libellé (gris au repos, principale une
+	// fois actif), chiffre blanc.
 	badge: {
 		minWidth: 20,
 		height: 20,
@@ -130,19 +139,16 @@ const styles = StyleSheet.create({
 		paddingHorizontal: 5,
 		justifyContent: 'center',
 		alignItems: 'center',
-		backgroundColor: '#32404e'
+		backgroundColor: COLORS.muted
 	},
 	badgeActive: {
-		backgroundColor: 'white'
+		backgroundColor: COLORS.primary
 	},
 	badgeText: {
-		color: 'white',
+		color: COLORS.white,
 		fontSize: 11,
 		fontWeight: 'bold'
 	},
-	badgeTextActive: {
-		color: '#32404e'
-	}
 });
 
 export default CycleFilterBar;

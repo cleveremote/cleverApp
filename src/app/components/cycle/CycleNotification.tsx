@@ -54,7 +54,7 @@ export const useBelowCard = () => {
 };
 
 // Le box attend une confirmation pour démarrer l'exécutable.
-const CONFLICT = 'WAITTING_CONFIRMATION';
+export const CONFLICT = 'WAITTING_CONFIRMATION';
 
 // Clés i18n (namespace cycle) des messages du bandeau.
 const MESSAGES: Record<string, 'notification.conditionsNotVerified' | 'notification.waitingConfirmation'> = {
@@ -89,14 +89,26 @@ type ConfirmationKind = keyof typeof CONFIRMATION_MESSAGES;
 const isRunning = (id: string, statusList: any[]) =>
 	statusList.find((x: any) => x?.id === id)?.status === IN_PROCESS;
 
+// Le cycle en face est-il encore en cours ? Inconnu localement (cycle SYSTEM
+// ou proportionnel dont le status n'a pas été poussé) : on fait confiance au
+// box, qui vient de le signaler en conflit. Connu : il doit tourner.
+const isConflictRunning = (id: string, statusList: any[]) => {
+	const other = statusList.find((x: any) => x?.id === id);
+	return !other || other.status === IN_PROCESS;
+};
+
 // Conflits encore d'actualité : un conflit n'a de sens que tant que le cycle
-// en face tourne.
+// en face tourne. Exception : la reprise d'un PROPORTIONAL. Le box la fait
+// confirmer même vanne à 0 % ou cycle arrêté, et son status local n'est pas
+// fiable (WAITTING_CONFIRMATION au fetch, STOPPED après un slider à 0) : tant
+// que le cycle attend, la confirmation reste à faire.
 const activeConflicts = (
 	entry: any,
 	statusList: any[]
 ): ConfirmationConflict[] =>
-	(entry?.confirmation?.conflicts || []).filter((c: ConfirmationConflict) =>
-		isRunning(c.cycleId, statusList)
+	(entry?.confirmation?.conflicts || []).filter(
+		(c: ConfirmationConflict) =>
+			c.isProportionalOverride || isConflictRunning(c.cycleId, statusList)
 	);
 
 // Ancien payload (sans `confirmation`) : les causes de type CYCLE/SEQUENCE

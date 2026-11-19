@@ -4,7 +4,6 @@ import {
 	CYCLE_LOAD,
 	CYCLE_SAVE,
 	CYCLE_STATUS,
-	CYCLE_EXECUTE,
 	DATA_LOAD,
 	EVENTS_LOAD,
 	GROUPS_LOAD,
@@ -141,7 +140,6 @@ export const loadValues =
 		query?: any
 	): ThunkAction<void, RootState, unknown, AnyAction> =>
 	async (dispatch, getState) => {
-		//dispatch({ type: CYCLE_EXECUTE, payload: true });
 		const state = getState() as any;
 		socketService.emitRefresh(
 			type === 'DATA'
@@ -150,7 +148,6 @@ export const loadValues =
 			'front/box/fetch/status',
 			denormalizeIds({type, query}),
 			(response: any) => {
-				//dispatch({ type: CYCLE_EXECUTE, payload: false });
 				if (type !== 'DATA') {
 					const values = normalizeIds(JSON.parse(response.config));
 					// Le box renvoie tout l'objet des valeurs ({processes,
@@ -477,18 +474,17 @@ export const executeCycle =
 			data,
 			(getState() as any).root_cycle.status
 		);
-		dispatch({type: CYCLE_EXECUTE, payload: true});
 		const requestedBy = await authenticationService.getCurrentUserName();
 		return new Promise((resolve, reject) => {
 			if (!socketService.connected) {
 				reject(new Error(i18n.t('common:errors.noServer')));
+				return;
 			}
 
 			socketService.emit(
 				'front/box/execute/process',
 				denormalizeIds({...data, requestedBy}),
 				(response: any) => {
-					dispatch({type: CYCLE_EXECUTE, payload: false});
 					resolve(response);
 				}
 			);

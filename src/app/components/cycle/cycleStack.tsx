@@ -16,7 +16,10 @@ import SequenceStack from './sequenceStack';
 import { ModalOverrideDuration } from '../common/modalOverrideDuration';
 import { connect } from 'react-redux';
 import SensorStatus from './CycleStatus';
-import ProportionalControl from './ProportionalControl';
+import ProportionalControl, {
+	takeHeldProportionalValue,
+	takeIgnoredProportionalRevert
+} from './ProportionalControl';
 import SeqeuncesList from './SequencesList';
 import CycleNotification, {
 	useBelowCard,
@@ -61,6 +64,19 @@ export function CycleStack({
 	// Déconnecté : un tap n'importe où sur la carte (hors menu, posé
 	// par-dessus) ouvre le détail.
 	const [detailsOpen, setDetailsOpen] = useState(false);
+	// PROPORTIONAL en cours dont la nouvelle valeur attendait le choix du
+	// bandeau : elle est enregistrée avant de forcer / mettre en file.
+	const withHeldValue = (action: () => void) => {
+		const commit =
+			cycleData.type === PROPORTIONAL
+				? takeHeldProportionalValue(cycleData.id)
+				: undefined;
+		if (commit) {
+			commit(action);
+		} else {
+			action();
+		}
+	};
 
 	return (
 		<View>
@@ -164,9 +180,23 @@ export function CycleStack({
 			<CycleNotification
 				marginTop={belowCard.marginTop}
 				item={cycleData}
-				onForce={() => onSwitch(true, 'FORCE')}
-				onIgnore={() => onSwitch(false, 'IGNORE')}
-				onQueue={() => onQueueCycle(cycleData.id)}
+				onForce={() =>
+					withHeldValue(() => onSwitch(true, 'FORCE'))
+				}
+				onIgnore={() => {
+					// Valeur retenue (cycle en cours) : jamais enregistrée, le
+					// slider la lâche de lui-même à la fin du conflit.
+					// PROPORTIONAL : la valeur du slider revient à celle d'avant,
+					// une fois l'IGNORE acquitté (sinon la box la ré-exécute).
+					const revert =
+						cycleData.type === PROPORTIONAL
+							? takeIgnoredProportionalRevert(cycleData.id)
+							: undefined;
+					Promise.resolve(onSwitch(false, 'IGNORE'))
+						.then(() => revert?.())
+						.catch(() => undefined);
+				}}
+				onQueue={() => withHeldValue(() => onQueueCycle(cycleData.id))}
 			/>
 			{/* PROPORTIONAL : le slider suffit, pas de progression de séquence. */}
 			{cycleData.type !== PROPORTIONAL && (

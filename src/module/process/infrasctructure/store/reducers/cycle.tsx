@@ -4,7 +4,6 @@ import {
 	CYCLE_UPDATE,
 	CYCLE_LOAD,
 	CYCLE_STATUS,
-	CYCLE_EXECUTE,
 	DATA_LOAD,
 	EVENTS_LOAD,
 	RESET_STORE,
@@ -30,7 +29,6 @@ const initialState = {
 	plan: undefined,
 	planSections: [],
 	status: [],
-	isLoading: false,
 	data: [],
 	events: []
 };
@@ -136,13 +134,6 @@ export default (state = initialState, action: any) => {
 			return {
 				...state,
 				events: action.payload || []
-			};
-		}
-
-		case CYCLE_EXECUTE: {
-			return {
-				...state,
-				isLoading: action.payload
 			};
 		}
 

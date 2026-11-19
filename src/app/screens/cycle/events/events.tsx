@@ -1,5 +1,5 @@
 import React, {useEffect, useMemo, useState} from 'react';
-import {FlatList, Platform, Text, View} from 'react-native';
+import {ActivityIndicator, FlatList, Platform, Text, View} from 'react-native';
 import {connect, useSelector} from 'react-redux';
 import Spinner from 'react-native-loading-spinner-overlay';
 import {
@@ -18,6 +18,7 @@ import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import {useTranslation} from 'react-i18next';
 import {RunCard} from '../../../components/cycle/RunCard';
 import {CycleRun} from '../../../../module/process/infrasctructure/store/models/cycleHistory';
+import {useLocalPagination} from '../../../components/common/useLocalPagination';
 
 const hapticOptions = {
 	enableVibrateFallback: false,
@@ -97,6 +98,11 @@ function EventsScreen(props: any) {
 
 	const runs: CycleRun[] = useMemo(() => props.events ?? [], [props.events]);
 	const cycle = props.route.params.cycle;
+	// Pagination locale : page 1 à chaque nouvelle réponse de la box.
+	const {visible: pagedRuns, hasMore, loadMore} = useLocalPagination(
+		runs,
+		runs
+	);
 
 	// Noms des cycles/séquences : timeline des runs, séquences du cycle, puis
 	// liste des cycles ; à défaut l'id.
@@ -170,20 +176,32 @@ function EventsScreen(props: any) {
 				/>
 			</View>
 			<Spinner
-				visible={props.isLoading || loading}
+				visible={loading}
 				color="#32404e"
 				textStyle={styles.spinnerTextStyle}
 				animation="fade"
 			/>
 			<FlatList
-				data={runs}
+				data={pagedRuns}
 				renderItem={renderItem}
+				onEndReached={loadMore}
+				onEndReachedThreshold={0.5}
+				initialNumToRender={10}
+				ListFooterComponent={
+					hasMore ? (
+						<ActivityIndicator
+							size="small"
+							color="#32404e"
+							style={{marginVertical: 12}}
+						/>
+					) : null
+				}
 				keyExtractor={item => 'run_' + item.runId}
 				extraData={expandedId}
 				onRefresh={() => onRefresh()}
 				refreshing={refreshing}
 				ListEmptyComponent={
-					props.isLoading ? null : (
+					loading ? null : (
 						<Text
 							style={{
 								color: '#777',

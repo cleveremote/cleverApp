@@ -1,6 +1,8 @@
 import React from 'react';
 import {Pressable, StyleSheet, Text, TextInput, View} from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome5';
+import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
+import {hapticOptions} from '../../data/cycleTypes';
 import {fieldLabelColor} from '../../styles/components/common/Input';
 
 // Recherche + pastilles de filtre d'une liste (commandes d'un modèle, modules…).
@@ -9,8 +11,14 @@ const textColor = '#32404e';
 const mutedColor = fieldLabelColor;
 const COLORS = {
 	chip: '#eef1f4',
+	chipBorder: '#d5dbe1',
 	transparent: 'transparent'
 };
+
+// Fond d'un filtre actif : sa couleur à ~10 % (hex #rrggbb seulement, sinon
+// pas de teinte).
+const tint = (color: string) =>
+	/^#[0-9a-f]{6}$/i.test(color) ? `${color}1A` : COLORS.transparent;
 
 // Recherche affichée seulement au-delà de ce nombre d'éléments : en deçà,
 // la liste se parcourt d'un coup d'œil.
@@ -95,8 +103,9 @@ export function PillButton({
 
 export type FilterChip<K extends string> = {key: K; label: string; color: string};
 
-// Pastilles grises se partageant la largeur, chacune précédée d'un petit
-// cercle à sa couleur (plein une fois active).
+// Boutons outline se partageant la largeur, chacun précédé d'une pastille à
+// sa couleur (pleine une fois actif). Actif : contour, texte et fond teinté à
+// la couleur du filtre.
 export function FilterChips<K extends string>({
 	chips,
 	isActive,
@@ -113,9 +122,22 @@ export function FilterChips<K extends string>({
 				return (
 					<Pressable
 						key={key}
-						onPress={() => onToggle(key)}
+						onPress={() => {
+							ReactNativeHapticFeedback.trigger(
+								'impactLight',
+								hapticOptions
+							);
+							onToggle(key);
+						}}
 						accessibilityState={{selected: active}}
-						style={[styles.filter, active && {borderColor: color}]}
+						style={({pressed}) => [
+							styles.filter,
+							active && [
+								styles.filterActive,
+								{borderColor: color, backgroundColor: tint(color)}
+							],
+							pressed && {opacity: 0.6}
+						]}
 					>
 						<View
 							style={[
@@ -130,7 +152,7 @@ export function FilterChips<K extends string>({
 							minimumFontScale={0.8}
 							style={[
 								styles.filterText,
-								active && styles.filterTextActive
+								active && [styles.filterTextActive, {color}]
 							]}
 						>
 							{label}
@@ -184,12 +206,17 @@ const styles = StyleSheet.create({
 		alignItems: 'center',
 		justifyContent: 'center',
 		gap: 4,
-		backgroundColor: COLORS.chip,
-		borderRadius: 18,
-		// Cadre toujours présent (transparent au repos) pour que la sélection
-		// ne décale rien ; il prend la couleur du filtre une fois actif.
+		backgroundColor: COLORS.transparent,
+		borderRadius: 12,
+		// Outline gris fin au repos. Le padding compense l'épaisseur du cadre
+		// (1,5 → 2 une fois actif) pour que la sélection ne décale rien.
+		borderWidth: 1.5,
+		borderColor: COLORS.chipBorder,
+		paddingHorizontal: 4.5,
+		paddingVertical: 8.5
+	},
+	filterActive: {
 		borderWidth: 2,
-		borderColor: COLORS.transparent,
 		paddingHorizontal: 4,
 		paddingVertical: 8
 	},

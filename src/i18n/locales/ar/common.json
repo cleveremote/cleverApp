@@ -90,5 +90,7 @@
 		"boxDiffers": "تنبيه: الصندوق على توقيت {{timeZone}}.",
 		"localDiffers": "تنبيه: هاتفك على توقيت {{timeZone}}.",
 		"localShort": "التوقيت المحلي"
-	}
+	},
+	"privacyPolicy": "سياسة الخصوصية",
+	"support": "الدعم"
 }

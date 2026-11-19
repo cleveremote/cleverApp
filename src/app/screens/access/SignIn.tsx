@@ -35,6 +35,7 @@ import {authenticationService} from '../../../module/authentication/domain/servi
 import {OutlineButton, useLockedUntil} from './accessUi';
 import {ErrorBox} from '../../components/common/ErrorBox';
 import {PasswordInput} from '../../components/common/PasswordInput';
+import {LegalLinks} from '../../components/common/LegalLinks';
 
 export function SignIn(props: any) {
 	const {t} = useTranslation(['access', 'common']);
@@ -336,6 +337,7 @@ export function SignIn(props: any) {
 						</View>
 					</View>
 				</View>
+				<LegalLinks />
 			</View>
 
 			{/* <VStack

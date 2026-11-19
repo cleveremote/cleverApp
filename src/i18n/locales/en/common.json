@@ -90,5 +90,7 @@
 		"boxDiffers": "Warning: the box is in {{timeZone}}.",
 		"localDiffers": "Warning: your phone is in {{timeZone}}.",
 		"localShort": "local time"
-	}
+	},
+	"privacyPolicy": "Privacy policy",
+	"support": "Support"
 }

@@ -7,7 +7,6 @@ import {
 	brandLogo,
 	navigationHeader
 } from '../../components/common/navigationHeaders';
-import Spinner from 'react-native-loading-spinner-overlay';
 import {styles} from '../../styles/cycleStyles';
 import {AppState, View} from 'react-native';
 import {
@@ -170,12 +169,6 @@ export function Groups(props: any) {
 				/>
 			}>
 			<View style={{gap: 8, marginVertical: 4, alignSelf: 'stretch'}}>
-				<Spinner
-					visible={props.isLoading}
-					color="#32404e"
-					textStyle={styles.spinnerTextStyle}
-					animation="fade"
-				/>
 				{groups
 					?.filter((x: any) => !x.delete)
 					?.map((group: any, index: number) => (
@@ -202,7 +195,6 @@ export function Groups(props: any) {
 const mapStateToProps = (state: any) => ({
 	groups: state.root_cycle.groups,
 	cycles: state.root_cycle.cycles,
-	isLoading: state.root_cycle.isLoading,
 	connected: state.status.connected,
 	isBoxConnected: state.status.isBoxConnected
 });

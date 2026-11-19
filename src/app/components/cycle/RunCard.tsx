@@ -269,7 +269,10 @@ export function RunCard({run, expanded, onToggle, nameOf}: Props) {
 							{run.name || nameOf(run.cycleId)}
 						</Text>
 						<Text style={{color: MUTED, fontSize: 12, marginLeft: 8}}>
-							{formatDateTime(run.startedAt || run.requestedAt, tz)}
+							{formatDateTime(
+								run.lastEventAt || run.startedAt || run.requestedAt,
+								tz
+							)}
 						</Text>
 						<Text
 							style={{marginLeft: 8, color: '#32404e', fontSize: 12}}>

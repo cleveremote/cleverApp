@@ -90,5 +90,7 @@
 		"boxDiffers": "Attention : la box est en {{timeZone}}.",
 		"localDiffers": "Attention : votre téléphone est en {{timeZone}}.",
 		"localShort": "heure locale"
-	}
+	},
+	"privacyPolicy": "Politique de confidentialité",
+	"support": "Support"
 }

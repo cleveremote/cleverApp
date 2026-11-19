@@ -33,7 +33,6 @@ export const CYCLES_LOAD = 'CYCLES_LOAD';
 export const CYCLE_LOAD = 'CYCLE_LOAD';
 export const CYCLE_UPDATE = 'CYCLE_UPDATE';
 export const CYCLE_SAVE = 'CYCLE_SAVE';
-export const CYCLE_EXECUTE = 'CYCLE_EXECUTE';
 
 /////////////Sequence
 export const SEQUENCE_UPDATE = 'SEQUENCE_UPDATE';

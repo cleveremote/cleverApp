@@ -3,19 +3,23 @@ import {useTranslation} from 'react-i18next';
 import {StyleSheet, View} from 'react-native';
 import {
 	faEye,
+	faHeadset,
 	faGlobe,
 	faMicrochip,
 	faNetworkWired,
+	faShieldHalved,
 	faUser
 } from '@fortawesome/free-solid-svg-icons';
 import {MenuAccordion, MenuGroup} from '../../components/common/cycleMenu';
+import {openExternalUrl} from '../../components/common/LegalLinks';
+import {PRIVACY_POLICY_URL, SUPPORT_URL} from '../../../../config/env';
 
 // Landing screen of the bottom "Settings" tab: routes to the relocated user
 // settings and to the new Modbus devices area. Mirrors the card+MenuAccordion
 // layout used by the cycle/trigger settings menus. Logout lives in the user
 // settings section (UserSettingsScreen).
 export function SettingsMenuScreen(props: any) {
-	const {t} = useTranslation(['settings', 'navigation']);
+	const {t} = useTranslation(['settings', 'navigation', 'common']);
 
 	return (
 		<View style={styles.container}>
@@ -61,6 +65,18 @@ export function SettingsMenuScreen(props: any) {
 					onPress={() =>
 						props.navigation.navigate('GlobalSettings')
 					}
+				/>
+				<MenuAccordion
+					key={6}
+					name={t('common:support')}
+					icon={faHeadset}
+					onPress={() => openExternalUrl(SUPPORT_URL)}
+				/>
+				<MenuAccordion
+					key={7}
+					name={t('common:privacyPolicy')}
+					icon={faShieldHalved}
+					onPress={() => openExternalUrl(PRIVACY_POLICY_URL)}
 				/>
 			</MenuGroup>
 		</View>

@@ -3,6 +3,8 @@ import {
 	API_TARGET,
 	API_URL as RAW_API_URL,
 	HOTSPOT_MOCK as RAW_HOTSPOT_MOCK,
+	PRIVACY_POLICY_URL as RAW_PRIVACY_POLICY_URL,
+	SUPPORT_URL as RAW_SUPPORT_URL,
 } from '@env';
 
 // App mode, picked at Metro start: APP_ENV=demo npm start (see .env.<mode>).
@@ -26,3 +28,10 @@ export const HOTSPOT_MOCK_ENABLED = RAW_HOTSPOT_MOCK === 'true';
 export const API_URL: string =
 	RAW_API_URL ||
 	(IS_PROD ? 'https://api.cleversystech.com' : 'https://api-dev.cleversystech.com');
+
+// Privacy policy and support pages (PRIVACY_POLICY_URL / SUPPORT_URL in
+// .env.<mode>), linked from the sign-in screen and the settings menu.
+export const PRIVACY_POLICY_URL: string =
+	RAW_PRIVACY_POLICY_URL || 'https://legal.cleversystech.com/privacy';
+export const SUPPORT_URL: string =
+	RAW_SUPPORT_URL || 'https://legal.cleversystech.com/support';

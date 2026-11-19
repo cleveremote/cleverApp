@@ -1,4 +1,4 @@
-import React, {useEffect, useState} from 'react';
+import React, {useEffect, useRef, useState} from 'react';
 import {Text, View} from 'react-native';
 import Slider from '@react-native-community/slider';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
@@ -8,7 +8,7 @@ import {
 	executeCycle,
 	saveCycle
 } from '../../../module/process/infrasctructure/store/actions/cycle';
-import {notificationMessage} from './CycleNotification';
+import {CONFLICT, notificationMessage} from './CycleNotification';
 import {useUnreachableDevices} from '../device/DeviceConnectivity';
 import {
 	enabledLoopOf,
@@ -23,6 +23,24 @@ const moduleRefOf = (cycleData: any) => {
 	const sequence = (cycleData?.sequences || []).find((x: any) => !x.delete);
 	const ref = (sequence?.moduleConfigs || []).find((x: any) => !x.delete);
 	return {sequence, ref};
+};
+
+// Valeur d'avant le glissement, à remettre si la commande lève un conflit et
+// que l'utilisateur choisit « Ignorer » (le box n'applique rien : la vanne reste
+// à l'ancienne valeur). `armed` : le conflit est bien apparu après la commande.
+// Un conflit plus tardif (planification, déclencheur…) ne doit rien restaurer.
+type PendingRevert = {at: number; armed: boolean; revert: () => void};
+const pendingReverts = new Map<string, PendingRevert>();
+const REVERT_WINDOW_MS = 60 * 1000;
+
+// « Ignorer » du bandeau de conflit : retire la restauration en attente et la
+// rend, à lancer une fois l'IGNORE acquitté par la box. Envoyée avant, alors
+// que la commande attend encore sa confirmation, la box la ré-exécutait.
+export const takeIgnoredProportionalRevert = (cycleId: string) => {
+	const key = `${cycleId}`;
+	const pending = pendingReverts.get(key);
+	pendingReverts.delete(key);
+	return pending?.armed ? pending.revert : undefined;
 };
 
 const clamp = (value: number, min: number, max: number) =>
@@ -135,7 +153,7 @@ export const isProportionalOn = (
 // cycle est lancé ; revenir au minimum l'arrête.
 export function ProportionalControl(props: any) {
 	const {cycleData, iconColorSwitch} = props;
-	const {sequence, ref, min, max, stored, loop, loopSensor, loopLive} =
+	const {ref, min, max, stored, loop, loopSensor, loopLive} =
 		resolveProportional(cycleData, props);
 
 	// Valeur affichée pendant le glissement, recalée sur celle du box sinon.
@@ -145,6 +163,27 @@ export function ProportionalControl(props: any) {
 	const entry = (props.status || []).find(
 		(x: any) => x?.id === cycleData.id
 	);
+
+	// Dernier cycle reçu : la restauration part de la version à jour.
+	const latest = useRef(cycleData);
+	latest.current = cycleData;
+	// Arme la restauration quand le conflit apparaît peu après la commande ;
+	// l'oublie si le conflit se résout autrement (forcer, mettre en file).
+	const entryStatus = entry?.status;
+	useEffect(() => {
+		const key = `${cycleData.id}`;
+		const pending = pendingReverts.get(key);
+		if (!pending) return;
+		if (entryStatus === CONFLICT) {
+			if (Date.now() - pending.at > REVERT_WINDOW_MS) {
+				pendingReverts.delete(key);
+			} else {
+				pending.armed = true;
+			}
+		} else if (pending.armed) {
+			pendingReverts.delete(key);
+		}
+	}, [entryStatus, cycleData.id]);
 	// Bandeau de notification affiché, ou device requis injoignable (même si
 	// le cycle tourne : la commande ne pourrait pas être appliquée).
 	const hasNotification = !!notificationMessage(entry, true, props.status);
@@ -161,25 +200,40 @@ export function ProportionalControl(props: any) {
 	// Grisé dès que verrouillé hors boucle, ou quand le device est déconnecté.
 	const dimmed = (locked && !loop) || !!unreachable.length;
 
-	const apply = (raw: number) => {
-		const next = clamp(Math.round(raw), min, max);
-		setValue(next);
-		props.closeSibillings(true);
-		ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
-		const updated = {
-			...cycleData,
-			sequences: (cycleData.sequences || []).map((s: any) =>
-				s !== sequence
+	// Cycle avec la valeur donnée sur la référence du module.
+	const withValue = (data: any, custom: number) => {
+		const target = moduleRefOf(data);
+		return {
+			...data,
+			sequences: (data.sequences || []).map((s: any) =>
+				s !== target.sequence
 					? s
 					: {
 							...s,
 							moduleConfigs: (s.moduleConfigs || []).map((m: any) =>
-								m === ref ? {...m, customValue: next} : m
+								m === target.ref ? {...m, customValue: custom} : m
 							)
 					  }
 			)
 		};
-		props.saveCycle(updated, false, () =>
+	};
+
+	const apply = (raw: number) => {
+		const next = clamp(Math.round(raw), min, max);
+		const previous = stored;
+		setValue(next);
+		props.closeSibillings(true);
+		ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
+		if (next === previous) {
+			pendingReverts.delete(`${cycleData.id}`);
+		} else {
+			pendingReverts.set(`${cycleData.id}`, {
+				at: Date.now(),
+				armed: false,
+				revert: () => props.saveCycle(withValue(latest.current, previous))
+			});
+		}
+		props.saveCycle(withValue(cycleData, next), false, () =>
 			props.executeCycle({
 				id: cycleData.id,
 				status: 'STOPPED',

@@ -56,6 +56,9 @@ export type CycleRun = {
 	requestedAt: string;
 	startedAt?: string;
 	endedAt?: string;
+	// Date du dernier événement du run (remontée par la box) : date affichée et
+	// tri de l'onglet Événements.
+	lastEventAt?: string;
 	realDuration?: number;
 	plannedDuration?: number;
 	sequences?: {run: string[]; skipped: string[]; forced: string[]};

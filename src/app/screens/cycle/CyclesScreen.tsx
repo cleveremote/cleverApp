@@ -10,7 +10,6 @@ import {
 	brandLogo,
 	navigationHeader
 } from '../../components/common/navigationHeaders';
-import Spinner from 'react-native-loading-spinner-overlay';
 import {styles} from '../../styles/cycleStyles';
 import {ActivityIndicator, AppState, Text, View} from 'react-native';
 import {useTranslation} from 'react-i18next';
@@ -39,6 +38,10 @@ import {
 	showsSearch
 } from '../../components/common/ListFilters';
 import {loadActuators} from '../../../module/process/infrasctructure/store/actions/actuator';
+import {
+	isNearBottom,
+	useLocalPagination
+} from '../../components/common/useLocalPagination';
 
 const IN_PROCESS = 'IN_PROCCESS';
 const ALL_DEVICES = 'ALL';
@@ -49,8 +52,10 @@ type EventCriteria = {
 	endDate: Date;
 };
 
+// Dernier événement du run (anciennes box : début, puis demande).
 const runDate = (run: CycleRun) =>
-	new Date(run.startedAt ?? run.requestedAt).getTime() || 0;
+	new Date(run.lastEventAt ?? run.startedAt ?? run.requestedAt).getTime() ||
+	0;
 
 // Filtre de type des modules : un seul à la fois, « tout » = aucun.
 type ModuleTypeFilter = 'all' | typeof MODULE | typeof PROPORTIONAL;
@@ -96,10 +101,13 @@ export function Cycle(props: any) {
 	const [moduleSearch, setModuleSearch] = React.useState('');
 	const [cycleSearch, setCycleSearch] = React.useState('');
 	const [runFilter, setRunFilter] = React.useState<RunFilter>('all');
-	const runFilterRef = useRef(runFilter);
-	runFilterRef.current = runFilter;
 	// Requête d'événements en cours : seule la dernière lancée arrête le loader.
-	const [eventsLoading, setEventsLoading] = React.useState(false);
+	// 'blocking' : loader plein écran (arrivée sur l'onglet, la liste en mémoire
+	// peut être celle d'un autre écran). 'background' : changement de critère,
+	// la liste reste affichée avec un petit indicateur.
+	const [eventsLoading, setEventsLoading] = React.useState<
+		false | 'blocking' | 'background'
+	>(false);
 	const eventsRequestRef = useRef(0);
 	const [orientation, setOrientation] = React.useState<OrientationType>(
 		OrientationType.UNKNOWN
@@ -166,31 +174,29 @@ export function Cycle(props: any) {
 		});
 	};
 
-	// Période + cycle (sans deviceId : tous les cycles).
-	const loadRecentEvents = () => {
+	// Période + cycle (sans deviceId : tous les cycles). Le filtre d'état
+	// n'est pas envoyé : il est appliqué localement (`filteredRuns`), ce qui
+	// rend les pastilles instantanées.
+	const loadRecentEvents = (blocking = true) => {
 		const c = getValues() as EventCriteria;
-		const outcomes = RUN_FILTERS.find(
-			f => f.key === runFilterRef.current
-		)?.outcomes;
 		const request = ++eventsRequestRef.current;
 		const done = () => {
 			if (eventsRequestRef.current === request) setEventsLoading(false);
 		};
-		setEventsLoading(true);
+		setEventsLoading(blocking ? 'blocking' : 'background');
 		// Sans réponse de la box (déconnexion), le loader ne reste pas affiché.
 		setTimeout(done, EVENTS_TIMEOUT_MS);
 		props.loadEvents(
 			{
 				...(c.deviceId !== ALL_DEVICES && {deviceId: c.deviceId}),
 				startDate: c.startDate,
-				endDate: c.endDate,
-				...(outcomes?.length && {outcomes})
+				endDate: c.endDate
 			},
 			done
 		);
 	};
 	// Laisse le formulaire enregistrer la valeur avant de relancer la requête.
-	const reloadEvents = () => setTimeout(loadRecentEvents, 0);
+	const reloadEvents = () => setTimeout(() => loadRecentEvents(false), 0);
 
 	// Les cartes PROPORTIONAL prennent les bornes de leur slider dans
 	// l'actuator (vanne CTRL) qu'elles pilotent.
@@ -203,7 +209,7 @@ export function Cycle(props: any) {
 	useEffect(() => {
 		if (activeFilter !== 'EVENTS') return;
 		loadRecentEvents();
-		return props.navigation.addListener('focus', loadRecentEvents);
+		return props.navigation.addListener('focus', () => loadRecentEvents());
 	}, [activeFilter]);
 
 	useEffect(() => {
@@ -236,7 +242,8 @@ export function Cycle(props: any) {
 			duration: 0
 		};
 
-		props.executeCycle(dto);
+		// Rendu à l'appelant : « Ignorer » d'un PROPORTIONAL attend l'acquit.
+		return props.executeCycle(dto);
 	};
 
 	//override function for settinf custom execution time for all sequences .
@@ -339,7 +346,7 @@ export function Cycle(props: any) {
 		await Promise.all([
 			props.loadCycles(),
 			props.loadGroups(),
-			activeFilter === 'EVENTS' && loadRecentEvents()
+			activeFilter === 'EVENTS' && loadRecentEvents(false)
 		]);
 		setRefreshing(false);
 	};
@@ -434,12 +441,27 @@ export function Cycle(props: any) {
 			/>
 		));
 
-	const runs: CycleRun[] = props.events ?? [];
-	const recentRuns = [...runs].sort((a, b) => runDate(b) - runDate(a));
-	const runOutcomes = RUN_FILTERS.find(f => f.key === runFilter)?.outcomes;
-	const filteredRuns = runOutcomes?.length
-		? recentRuns.filter(run => runOutcomes.includes(run.outcome))
-		: recentRuns;
+	const recentRuns: CycleRun[] = React.useMemo(
+		() =>
+			[...((props.events ?? []) as CycleRun[])].sort(
+				(a, b) => runDate(b) - runDate(a)
+			),
+		[props.events]
+	);
+	const filteredRuns = React.useMemo(() => {
+		const outcomes = RUN_FILTERS.find(f => f.key === runFilter)?.outcomes;
+		return outcomes?.length
+			? recentRuns.filter(run => outcomes.includes(run.outcome))
+			: recentRuns;
+	}, [recentRuns, runFilter]);
+	// Pagination locale : seules les premières cartes sont rendues, la suite
+	// arrive en approchant du bas de la liste. Retour en page 1 à chaque
+	// nouvelle réponse de la box ou changement de filtre.
+	const {
+		visible: pagedRuns,
+		hasMore: hasMoreRuns,
+		loadMore: loadMoreRuns
+	} = useLocalPagination(filteredRuns, filteredRuns);
 
 	const deviceOptions = [
 		{label: t('cycle:events.allDevices'), value: ALL_DEVICES},
@@ -500,17 +522,27 @@ export function Cycle(props: any) {
 					label: t(`cycle:events.filter.${key}`)
 				}))}
 				isActive={key => runFilter === key}
-				// Re-toucher le filtre actif revient à « tout ».
-				onToggle={key => {
-					runFilterRef.current = runFilter === key ? 'all' : key;
-					setRunFilter(runFilterRef.current);
-					reloadEvents();
-				}}
+				// Re-toucher le filtre actif revient à « tout ». Filtrage local :
+				// pas de requête à la box.
+				onToggle={key => setRunFilter(runFilter === key ? 'all' : key)}
 			/>
 			{/* Nombre d'événements affichés, à la couleur du filtre actif ; masqué
 			    pendant la requête (loader sur la liste). */}
-			<View style={{alignSelf: 'flex-end', minHeight: 18, justifyContent: 'center'}}>
-				{eventsLoading ? null : (
+			<View
+				style={{
+					alignSelf: 'flex-end',
+					minHeight: 18,
+					flexDirection: 'row',
+					alignItems: 'center',
+					gap: 6
+				}}>
+				{eventsLoading === 'background' ? (
+					<ActivityIndicator
+						size="small"
+						color={RUN_FILTERS.find(f => f.key === runFilter)?.color}
+					/>
+				) : null}
+				{eventsLoading === 'blocking' ? null : (
 					<Text
 						style={{
 							color: RUN_FILTERS.find(f => f.key === runFilter)?.color,
@@ -525,18 +557,25 @@ export function Cycle(props: any) {
 		</View>
 	);
 
-	const nameOf = (id: string) => {
-		const entity = [...cycles, ...groups].find((x: any) => x.id === id);
-		if (entity?.name) return entity.name;
-		for (const run of recentRuns) {
-			const entry = run.timeline?.find(e => e.elementId === id);
-			if (entry?.name) return entry.name;
-		}
-		return id;
-	};
+	// Index des noms calculé une fois par réponse, plutôt qu'un parcours de
+	// tous les runs à chaque appel depuis chaque carte.
+	const nameOf = React.useMemo(() => {
+		const names: Record<string, string> = {};
+		recentRuns.forEach(run =>
+			(run.timeline || []).forEach(e => {
+				if (e.elementId && e.name && !names[e.elementId]) {
+					names[e.elementId] = e.name;
+				}
+			})
+		);
+		[...cycles, ...groups].forEach((x: any) => {
+			if (x?.id && x.name) names[x.id] = x.name;
+		});
+		return (id: string) => names[id] || id;
+	}, [recentRuns, cycles, groups]);
 
 	const renderRecentEvents = () => {
-		if (eventsLoading) {
+		if (eventsLoading === 'blocking') {
 			return (
 				<ActivityIndicator
 					key="eventsLoader"
@@ -547,7 +586,7 @@ export function Cycle(props: any) {
 			);
 		}
 		if (!filteredRuns.length) {
-			return props.isLoading ? null : (
+			return (
 				<Text style={{color: '#777', textAlign: 'center', marginTop: 24}}>
 					{t(
 						recentRuns.length
@@ -557,7 +596,7 @@ export function Cycle(props: any) {
 				</Text>
 			);
 		}
-		return filteredRuns.map(run => {
+		const cards = pagedRuns.map(run => {
 			const expanded = expandedRunId === run.runId;
 			return (
 				<RunCard
@@ -569,6 +608,17 @@ export function Cycle(props: any) {
 				/>
 			);
 		});
+		return hasMoreRuns
+			? [
+					...cards,
+					<ActivityIndicator
+						key="eventsMore"
+						size="small"
+						color={RUN_FILTERS.find(f => f.key === runFilter)?.color}
+						style={{marginVertical: 12}}
+					/>
+				]
+			: cards;
 	};
 
 	const renderModuleFilters = () =>
@@ -675,7 +725,7 @@ export function Cycle(props: any) {
 					// Arrivée sur les événements : loader tout de suite, la liste
 					// (lourde) n'est rendue qu'à la réponse de la box.
 					if (key === 'EVENTS' && activeFilter !== 'EVENTS') {
-						setEventsLoading(true);
+						setEventsLoading('blocking');
 					}
 					setActiveFilter(key);
 				}}
@@ -685,6 +735,16 @@ export function Cycle(props: any) {
 			<ScrollView
 				scrollEnabled={true}
 				contentContainerStyle={{paddingBottom: 16}}
+				scrollEventThrottle={200}
+				onScroll={({nativeEvent}) => {
+					if (
+						activeFilter === 'EVENTS' &&
+						hasMoreRuns &&
+						isNearBottom(nativeEvent)
+					) {
+						loadMoreRuns();
+					}
+				}}
 				refreshControl={
 					<RefreshControl
 						refreshing={refreshing}
@@ -697,12 +757,6 @@ export function Cycle(props: any) {
 					/>
 				}>
 				<View style={{gap: 8, marginVertical: 4, alignSelf: 'stretch'}}>
-					<Spinner
-						visible={props.isLoading}
-						color="#32404e"
-						textStyle={styles.spinnerTextStyle}
-						animation="fade"
-					/>
 					{renderList()}
 				</View>
 			</ScrollView>
@@ -715,7 +769,6 @@ const mapStateToProps = (state: any) => ({
 	groups: state.root_cycle.groups,
 	status: state.root_cycle.status,
 	events: state.root_cycle.events,
-	isLoading: state.root_cycle.isLoading,
 	connected: state.status.connected,
 	isBoxConnected: state.status.isBoxConnected
 });
