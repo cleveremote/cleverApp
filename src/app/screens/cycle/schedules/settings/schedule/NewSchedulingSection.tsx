@@ -7,6 +7,7 @@ import {fieldLabelColor,
 import {ELEMENT_HEIGHT} from '../../../../../styles/metrics';
 import React from 'react';
 import {
+	Pressable,
 	ScrollView,
 	StyleSheet,
 	Text,
@@ -841,15 +842,133 @@ function wheelLabel(key: FieldKey, v: number): string {
 // Jours (du mois / de semaine) : « du … au … » ; autres champs : « de … à … ».
 // Le libellé du champ et ceux des roues suivent la même tournure.
 const isDayRange = (key: FieldKey) => key === 'dom' || key === 'dow';
+// Catégorie ordinale d'un jour (CLDR) calculée ici : sous Hermes,
+// Intl.PluralRules ignore `type: 'ordinal'` et i18next renverrait toujours la
+// forme « other » (1th, 2th…). Autres langues : Intl si disponible.
+type OrdinalCategory = 'zero' | 'one' | 'two' | 'few' | 'many' | 'other';
+function ordinalCategory(lang: string, n: number): OrdinalCategory {
+	if (lang === 'en') {
+		const d = n % 10;
+		const dd = n % 100;
+		if (d === 1 && dd !== 11) return 'one';
+		if (d === 2 && dd !== 12) return 'two';
+		if (d === 3 && dd !== 13) return 'few';
+		return 'other';
+	}
+	if (lang === 'fr') return n === 1 ? 'one' : 'other';
+	if (lang === 'ar') return 'other';
+	try {
+		return new Intl.PluralRules(lang, {type: 'ordinal'}).select(
+			n
+		) as OrdinalCategory;
+	} catch {
+		return 'other';
+	}
+}
+// Suffixe ordinal du jour du mois (1st, 2nd, 3rd / 1er) ; forme absente de la
+// langue : celle de « other ».
+function daySuffix(n: number): string {
+	const lang = (i18n.resolvedLanguage ?? i18n.language ?? '').split('-')[0];
+	const other = i18n.t('cycle:cron.daySuffix.other');
+	return i18n.t(
+		`cycle:cron.daySuffix.${ordinalCategory(lang, n)}` as never,
+		{defaultValue: other}
+	) as string;
+}
+
+// Les roues (pickers natifs) n'affichent que du texte brut : l'exposant passe
+// par les lettres Unicode en exposant ; une lettre sans équivalent reste telle
+// quelle.
+const SUPERSCRIPT: Record<string, string> = {
+	a: 'ᵃ', b: 'ᵇ', c: 'ᶜ', d: 'ᵈ', e: 'ᵉ', f: 'ᶠ', g: 'ᵍ', h: 'ʰ', i: 'ⁱ',
+	j: 'ʲ', k: 'ᵏ', l: 'ˡ', m: 'ᵐ', n: 'ⁿ', o: 'ᵒ', p: 'ᵖ', r: 'ʳ', s: 'ˢ',
+	t: 'ᵗ', u: 'ᵘ', v: 'ᵛ', w: 'ʷ', x: 'ˣ', y: 'ʸ', z: 'ᶻ'
+};
+const toSuperscript = (txt: string) =>
+	Array.from(txt)
+		.map(ch => SUPERSCRIPT[ch.toLowerCase()] ?? ch)
+		.join('');
 function wheelOptions(key: FieldKey): {label: string; value: number}[] {
 	const cfg = FIELDCFG[key];
 	return Array.from({length: cfg.hi - cfg.lo + 1}, (_, i) => {
 		const v = cfg.lo + i;
-		return {label: wheelLabel(key, v), value: v};
+		// Jour du mois : suffixe ordinal en exposant (1ˢᵗ, 2ⁿᵈ / 1ᵉʳ…).
+		const label =
+			key === 'dom'
+				? wheelLabel(key, v) +
+				  toSuperscript(
+						daySuffix(v)
+				  )
+				: wheelLabel(key, v);
+		return {label, value: v};
 	});
 }
 
 // --- Petits composants d'UI ------------------------------------------------
+// Unités des valeurs d'intervalle (sec, min, heure) ; jours et mois sont déjà
+// en toutes lettres.
+const RANGE_UNIT_FIELDS: FieldKey[] = ['sec', 'min', 'hour'];
+// Unité ajoutée après la borne haute des messages « entre x et y » (sec, min,
+// heure ; accordée à y) ; rien pour jours, mois et semaine, dont les bornes
+// (1-31, 1-12, 0-6) ne sont pas des quantités.
+const boundsSuffix = (key: FieldKey): string =>
+	RANGE_UNIT_FIELDS.includes(key)
+		? ` ${i18n.t(`cycle:cron.stepUnit.${key}`, {count: FIELDCFG[key].hi})}`
+		: '';
+
+// Texte du champ intervalle : « De 08 h à 12 h », « Du 1er au 15 ».
+// Mots de liaison et unités au style des libellés, valeurs en gras. La phrase
+// traduite est découpée sur ses variables pour suivre l'ordre de chaque langue.
+function RangeFieldText({
+	field,
+	from,
+	to
+}: {
+	field: FieldKey;
+	from: number;
+	to: number;
+}) {
+	const template = i18n.t(
+		isDayRange(field) ? 'cycle:cron.rangeFieldDay' : 'cycle:cron.rangeField',
+		{from: '{{from}}', to: '{{to}}', interpolation: {escapeValue: false}}
+	);
+	const unit = RANGE_UNIT_FIELDS.includes(field)
+		? i18n.t(`cycle:cron.rangeUnit.${field as 'sec' | 'min' | 'hour'}`)
+		: null;
+	// Jour du mois : suffixe ordinal selon la langue (1st, 2nd, 3rd… / 1er…),
+	// en exposant ; sec / min / heure : unité sur la ligne.
+	const ordinal = (v: number) =>
+		field === 'dom'
+			? daySuffix(v)
+			: '';
+	const value = (v: number) => (
+		<>
+			<Text style={styles.rangeFieldValue}>{wheelLabel(field, v)}</Text>
+			{ordinal(v) ? (
+				<Text style={styles.rangeFieldOrdinal}>{ordinal(v)}</Text>
+			) : null}
+			{unit ? <Text style={styles.rangeFieldWord}>{` ${unit}`}</Text> : null}
+		</>
+	);
+	// Rangée de Text (et non Text imbriqués) : seul un Text de premier niveau
+	// peut être décalé verticalement, pour l'exposant.
+	return (
+		<View style={styles.rangeFieldTxt}>
+			{template.split(/(\{\{from\}\}|\{\{to\}\})/).map((part, i) =>
+				part === '{{from}}' ? (
+					<React.Fragment key={i}>{value(from)}</React.Fragment>
+				) : part === '{{to}}' ? (
+					<React.Fragment key={i}>{value(to)}</React.Fragment>
+				) : part ? (
+					<Text key={i} style={styles.rangeFieldWord} numberOfLines={1}>
+						{part}
+					</Text>
+				) : null
+			)}
+		</View>
+	);
+}
+
 function Chip({
 	label,
 	active,
@@ -874,13 +993,17 @@ function NumInput({
 	value,
 	onChange,
 	width = 60,
-	invalid = false
+	invalid = false,
+	unit
 }: {
 	value: number;
 	onChange: (n: number) => void;
 	width?: number;
 	invalid?: boolean;
+	// Unité affichée après le nombre, dans le champ (masque, non saisie).
+	unit?: string;
 }) {
+	const inputRef = React.useRef<TextInput>(null);
 	// Texte local : pendant la saisie le champ peut être vidé (pour taper « 10 »
 	// à la place de « 5 ») sans être aussitôt réécrit par la valeur numérique.
 	// Seuls les nombres saisis remontent ; au blur, le texte reprend la valeur.
@@ -889,8 +1012,9 @@ function NumInput({
 	React.useEffect(() => {
 		if (!focused.current) setTxt(String(value));
 	}, [value]);
-	return (
+	const input = (
 		<TextInput
+			ref={inputRef}
 			keyboardType="number-pad"
 			value={txt}
 			onFocus={() => (focused.current = true)}
@@ -903,12 +1027,34 @@ function NumInput({
 				setTxt(digits);
 				if (digits !== '') onChange(parseInt(digits, 10));
 			}}
+			style={
+				unit
+					? styles.numInputText
+					: [
+							styles.numInput,
+							{width},
+							(invalid || txt === '') && styles.inputInvalid
+					  ]
+			}
+		/>
+	);
+	if (!unit) return input;
+	// Avec unité : cadre commun au nombre (largeur du texte) et à l'unité, qui
+	// le suit directement ; toucher le cadre donne le focus au nombre.
+	return (
+		<Pressable
+			onPress={() => inputRef.current?.focus()}
 			style={[
 				styles.numInput,
-				{width},
+				styles.numInputBox,
+				{minWidth: width},
 				(invalid || txt === '') && styles.inputInvalid
-			]}
-		/>
+			]}>
+			{input}
+			<Text style={styles.numInputUnit} numberOfLines={1}>
+				{` ${unit}`}
+			</Text>
+		</Pressable>
 	);
 }
 
@@ -919,11 +1065,14 @@ function ListNumInput({
 	initial,
 	lo,
 	hi,
+	boundsUnit = '',
 	onChangeList
 }: {
 	initial: string;
 	lo: number;
 	hi: number;
+	// Unité après la borne haute des messages (« … et 59 min »), ou ''.
+	boundsUnit?: string;
 	onChangeList: (list: number[]) => void;
 }) {
 	const [txt, setTxt] = React.useState(initial);
@@ -963,11 +1112,11 @@ function ListNumInput({
 			/>
 			{invalid ? (
 				<Text style={styles.errorTxt}>
-					{i18n.t('cycle:cron.listInvalid', {lo, hi})}
+					{i18n.t('cycle:cron.listInvalid', {lo, hi, unit: boundsUnit})}
 				</Text>
 			) : (
 				<Text style={styles.hint}>
-					{i18n.t('cycle:cron.listHint', {lo, hi})}
+					{i18n.t('cycle:cron.listHint', {lo, hi, unit: boundsUnit})}
 				</Text>
 			)}
 		</>
@@ -1119,13 +1268,19 @@ export function NewSchedulingSection(props: any) {
 	const toInvalid = !inBounds(f.to);
 	const orderInvalid = !fromInvalid && !toInvalid && f.from > f.to;
 	const rangeError = fromInvalid || toInvalid
-		? i18n.t('cycle:cron.between', {lo: cfg.lo, hi: cfg.hi})
+		? i18n.t('cycle:cron.between', {
+				lo: cfg.lo,
+				hi: cfg.hi,
+				unit: boundsSuffix(activeTab)
+		  })
 		: orderInvalid
 		? i18n.t('cycle:cron.orderInvalid')
 		: null;
 	const stepInvalid = f.step < 1 || f.step > cfg.hi;
+	// Unité de l'onglet accordée au maximum (« 59 min », « 31 jours »).
+	const stepHiUnit = i18n.t(`cycle:cron.stepUnit.${activeTab}`, {count: cfg.hi});
 	const stepError = stepInvalid
-		? i18n.t('cycle:cron.stepInvalid', {hi: cfg.hi})
+		? i18n.t('cycle:cron.stepInvalid', {hi: cfg.hi, unit: stepHiUnit})
 		: null;
 
 	// Champ « du … au … » : ouvre la popup à deux roues.
@@ -1133,12 +1288,11 @@ export function NewSchedulingSection(props: any) {
 		<TouchableOpacity
 			onPress={() => setRangeModalOpen(true)}
 			style={[styles.textInput, styles.rangeField]}>
-			<Text style={styles.rangeFieldTxt} numberOfLines={1}>
-				{i18n.t(isDayRange(activeTab) ? 'cycle:cron.rangeTextDay' : 'cycle:cron.rangeText', {
-					from: wheelLabel(activeTab, f.from),
-					to: wheelLabel(activeTab, f.to)
-				})}
-			</Text>
+			<RangeFieldText
+				field={activeTab}
+				from={f.from}
+				to={f.to}
+			/>
 			<FontAwesomeIcon icon={faPen} size={14} color={C.muted} />
 		</TouchableOpacity>
 	);
@@ -1261,6 +1415,7 @@ export function NewSchedulingSection(props: any) {
 									initial={f.list.join(',')}
 									lo={cfg.lo}
 									hi={cfg.hi}
+									boundsUnit={boundsSuffix(activeTab)}
 									onChangeList={list =>
 										patch(n => (n.fields[activeTab].list = list))
 									}
@@ -1326,19 +1481,25 @@ export function NewSchedulingSection(props: any) {
 									</>
 								)}
 								<View style={styles.inlineRow}>
-									<Text style={styles.inlineTxt}>{i18n.t('cycle:cron.every')}</Text>
+									<Text style={styles.inlineTxt}>
+										{i18n.t(`cycle:cron.stepEvery.${activeTab}`)}
+									</Text>
+									{/* Unité de l'onglet (sec, min, h, jours…) en masque dans le
+									    champ, accordée au pas ; affichage seul. */}
 									<NumInput
 										value={f.step}
 										invalid={stepInvalid}
+										unit={i18n.t(`cycle:cron.stepUnit.${activeTab}`, {count: f.step})}
+										// Assez large pour 2-3 chiffres + unité (« 10 jours »).
+										width={110}
 										onChange={v => patch(n => (n.fields[activeTab].step = v || 1))}
 									/>
-									<Text style={styles.inlineTxt}>{i18n.t('cycle:cron.units')}</Text>
 								</View>
 								{stepError ? (
 									<Text style={styles.errorTxt}>{stepError}</Text>
 								) : (
 									<Text style={styles.hint}>
-										{i18n.t('cycle:cron.stepHint', {hi: cfg.hi})}
+										{i18n.t('cycle:cron.stepHint', {hi: cfg.hi, unit: stepHiUnit})}
 									</Text>
 								)}
 							</>
@@ -1844,13 +2005,52 @@ const styles = StyleSheet.create({
 		textAlign: 'center',
 		...inputText
 	},
+	// NumInput avec unité : le cadre porte bordure et hauteur, le nombre prend
+	// la largeur de son texte et l'unité le suit.
+	numInputBox: {
+		flexDirection: 'row',
+		alignItems: 'center',
+		justifyContent: 'center',
+		paddingHorizontal: 12,
+		// Ne se laisse pas comprimer par le texte « Toutes les » voisin.
+		flexShrink: 0
+	},
+	numInputText: {
+		// Place pour 2 chiffres sans retour à la ligne de l'unité.
+		minWidth: 24,
+		height: '100%',
+		padding: 0,
+		textAlign: 'center',
+		...inputText
+	},
+	numInputUnit: {
+		fontSize: 15,
+		color: C.muted,
+		fontWeight: '600',
+		flexShrink: 0
+	},
 	rangeField: {
 		flexDirection: 'row',
 		alignItems: 'center',
 		justifyContent: 'space-between',
 		gap: 8
 	},
-	rangeFieldTxt: {flex: 1, color: C.text, fontSize: 15, fontWeight: 'bold'},
+	rangeFieldTxt: {
+		flex: 1,
+		flexDirection: 'row',
+		alignItems: 'center',
+		overflow: 'hidden'
+	},
+	rangeFieldValue: {color: C.text, fontSize: 15, fontWeight: 'bold'},
+	// « De » / « à » et unités du champ intervalle : style des libellés.
+	rangeFieldWord: fieldLabelText,
+	// Suffixe ordinal (st, nd, er…) en exposant : plus petit, remonté.
+	rangeFieldOrdinal: {
+		...fieldLabelText,
+		fontSize: 10,
+		lineHeight: 12,
+		transform: [{translateY: -5}]
+	},
 	segRow: {flexDirection: 'row', gap: 8, marginBottom: 10},
 	segBtn: {
 		flex: 1,

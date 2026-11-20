@@ -276,6 +276,17 @@
 		},
 		"rangeText": "{{from}} à {{to}}",
 		"rangeTextDay": "{{from}} au {{to}}",
+		"rangeField": "De {{from}} à {{to}}",
+		"rangeFieldDay": "Du {{from}} au {{to}}",
+		"daySuffix": {
+			"one": "er",
+			"other": ""
+		},
+		"rangeUnit": {
+			"sec": "s",
+			"min": "min",
+			"hour": "h"
+		},
 		"rangeModal": {
 			"message": "Choisissez le début et la fin de l'intervalle",
 			"from": "De",
@@ -333,12 +344,12 @@
 			"step": "Pas"
 		},
 		"listExample": "ex : 0,15,30,45",
-		"listInvalid": "Valeurs entre {{lo}} et {{hi}}, séparées par des virgules.",
-		"listHint": "Valeurs séparées par des virgules, entre {{lo}} et {{hi}}.",
+		"listInvalid": "Valeurs entre {{lo}} et {{hi}}{{unit}}, séparées par des virgules.",
+		"listHint": "Valeurs séparées par des virgules, entre {{lo}} et {{hi}}{{unit}}.",
 		"oneTimeSummary": "Date ponctuelle : {{date}}",
-		"between": "Valeurs entre {{lo}} et {{hi}}.",
+		"between": "Valeurs entre {{lo}} et {{hi}}{{unit}}.",
 		"orderInvalid": "Le début doit être inférieur ou égal à la fin.",
-		"stepInvalid": "Le pas doit être entre 1 et {{hi}}.",
+		"stepInvalid": "Le pas doit être entre 1 et {{hi}} {{unit}}.",
 		"oneTime": "Date ponctuelle",
 		"dateTime": "Date et heure",
 		"oneTimeHint": "Une seule exécution à la date choisie.",
@@ -347,8 +358,29 @@
 		"inRange": "Dans un intervalle",
 		"to": "à",
 		"every": "Toutes les",
-		"units": "unités",
-		"stepHint": "Pas entre 1 et {{hi}}.",
+		"stepEvery": {
+			"sec": "Toutes les",
+			"min": "Toutes les",
+			"hour": "Toutes les",
+			"dom": "Tous les",
+			"month": "Tous les",
+			"dow": "Tous les"
+		},
+		"stepUnit": {
+			"sec_one": "sec",
+			"sec_other": "sec",
+			"min_one": "min",
+			"min_other": "min",
+			"hour_one": "h",
+			"hour_other": "h",
+			"dom_one": "jour",
+			"dom_other": "jours",
+			"month_one": "mois",
+			"month_other": "mois",
+			"dow_one": "jour",
+			"dow_other": "jours"
+		},
+		"stepHint": "Pas entre 1 et {{hi}} {{unit}}.",
 		"freeExample": "ex : 1-5,10/2,L",
 		"freeHint": "Syntaxe cron brute pour ce champ, y compris les caractères spéciaux non gérés ailleurs.",
 		"expression": "Expression",

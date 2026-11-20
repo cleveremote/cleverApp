@@ -276,6 +276,19 @@
 		},
 		"rangeText": "{{from}} to {{to}}",
 		"rangeTextDay": "{{from}} to {{to}}",
+		"rangeField": "From {{from}} to {{to}}",
+		"rangeFieldDay": "From {{from}} to {{to}}",
+		"daySuffix": {
+			"one": "st",
+			"two": "nd",
+			"few": "rd",
+			"other": "th"
+		},
+		"rangeUnit": {
+			"sec": "s",
+			"min": "min",
+			"hour": "h"
+		},
 		"rangeModal": {
 			"message": "Choose the start and end of the range",
 			"from": "From",
@@ -333,12 +346,12 @@
 			"step": "Step"
 		},
 		"listExample": "e.g. 0,15,30,45",
-		"listInvalid": "Values between {{lo}} and {{hi}}, separated by commas.",
-		"listHint": "Comma-separated values, between {{lo}} and {{hi}}.",
+		"listInvalid": "Values between {{lo}} and {{hi}}{{unit}}, separated by commas.",
+		"listHint": "Comma-separated values, between {{lo}} and {{hi}}{{unit}}.",
 		"oneTimeSummary": "One-time date: {{date}}",
-		"between": "Values between {{lo}} and {{hi}}.",
+		"between": "Values between {{lo}} and {{hi}}{{unit}}.",
 		"orderInvalid": "The start must be less than or equal to the end.",
-		"stepInvalid": "The step must be between 1 and {{hi}}.",
+		"stepInvalid": "The step must be between 1 and {{hi}} {{unit}}.",
 		"oneTime": "One-time date",
 		"dateTime": "Date and time",
 		"oneTimeHint": "A single run at the chosen date.",
@@ -347,8 +360,29 @@
 		"inRange": "Within a range",
 		"to": "to",
 		"every": "Every",
-		"units": "units",
-		"stepHint": "Step between 1 and {{hi}}.",
+		"stepEvery": {
+			"sec": "Every",
+			"min": "Every",
+			"hour": "Every",
+			"dom": "Every",
+			"month": "Every",
+			"dow": "Every"
+		},
+		"stepUnit": {
+			"sec_one": "sec",
+			"sec_other": "sec",
+			"min_one": "min",
+			"min_other": "min",
+			"hour_one": "h",
+			"hour_other": "h",
+			"dom_one": "day",
+			"dom_other": "days",
+			"month_one": "month",
+			"month_other": "months",
+			"dow_one": "day",
+			"dow_other": "days"
+		},
+		"stepHint": "Step between 1 and {{hi}} {{unit}}.",
 		"freeExample": "e.g. 1-5,10/2,L",
 		"freeHint": "Raw cron syntax for this field, including special characters not handled elsewhere.",
 		"expression": "Expression",
