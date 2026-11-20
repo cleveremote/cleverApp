@@ -22,6 +22,7 @@ import {pickerLocaleProps} from '../../../../../components/common/pickerLocale';
 import {connect, useSelector} from 'react-redux';
 import i18n from 'i18next';
 import {AppSwitch} from '../../../../../components/common/AppSwitch';
+import {DurationText} from '../../../../../components/common/DurationText';
 import {TimeZoneNotice} from '../../../../../components/common/TimeZoneNotice';
 import {WarningBox} from '../../../../../components/common/WarningBox';
 import {InfoBox, INFO_COLORS} from '../../../../../components/common/InfoBox';
@@ -974,13 +975,6 @@ function ListNumInput({
 }
 
 // --- Composant principal ---------------------------------------------------
-// Durée (ms) -> « HH:MM ».
-const formatDuration = (ms?: number | null) => {
-	const total = Math.max(0, Math.round((Number(ms) || 0) / 60000));
-	const pad = (n: number) => `${n}`.padStart(2, '0');
-	return `${pad(Math.floor(total / 60))}:${pad(total % 60)}`;
-};
-
 export function NewSchedulingSection(props: any) {
 	// Fuseau et position de la box : les crons s'exécutent en heure de la box.
 	const tz: string = useSelector(selectBoxTimeZone);
@@ -1467,9 +1461,7 @@ export function NewSchedulingSection(props: any) {
 					<TouchableOpacity
 						onPress={() => setDurationPickerVisible(true)}
 						style={styles.dateField}>
-						<Text style={styles.dateFieldTxt}>
-							{formatDuration(props.scheduleData?.duration)}
-						</Text>
+						<DurationText ms={props.scheduleData?.duration} style={styles.dateFieldTxt} />
 					</TouchableOpacity>
 					<DateTimePickerModal
 						isVisible={durationPickerVisible}

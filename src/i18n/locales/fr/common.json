@@ -19,6 +19,10 @@
 		"hours": "Heures",
 		"minutes": "Minutes"
 	},
+	"durationUnit": {
+		"hours": "h",
+		"minutes": "min"
+	},
 	"discard": {
 		"title": "Abandonner les modifications ?",
 		"message": "Vous avez des modifications non enregistrées. Voulez-vous continuer l'édition ou les abandonner ?",

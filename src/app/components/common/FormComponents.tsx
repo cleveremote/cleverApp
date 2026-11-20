@@ -32,7 +32,12 @@ import {
 } from '@fortawesome/free-solid-svg-icons';
 import Slider from '@react-native-community/slider';
 import {ErrorBox} from './ErrorBox';
-import {fromPickerDate, toPickerDate} from '../../../services/time';
+import {DurationText} from './DurationText';
+import {
+	fromPickerDate,
+	pickerDateToDuration,
+	toPickerDate
+} from '../../../services/time';
 
 // Resolve a field error by name, supporting dotted paths (e.g.
 // `config.ipAddress`, `params.persistence.address`). react-hook-form nests its
@@ -213,6 +218,18 @@ export function DropdownSelect<T extends {iconColor?: {base: string}}>({
 	);
 }
 
+// Cadre des champs date/durée (lecture seule, ouvrent le picker).
+const dateFieldBox = {
+	borderRadius: 12,
+	borderWidth: 1,
+	borderColor: '#CBD5E0',
+	paddingHorizontal: 12
+};
+const durationField = {
+	height: ELEMENT_HEIGHT,
+	justifyContent: 'center' as const
+};
+
 export function DateTimePickerForm({
 	control,
 	placeholder,
@@ -257,20 +274,11 @@ export function DateTimePickerForm({
 		setDatePickerVisibility(false);
 	};
 
-	const getTimeString = (dateValue: Date) => {
-		if (
-			!!dateValue &&
-			!(dateValue instanceof Date && !isNaN(dateValue.getTime()))
-		) {
-			dateValue = new Date();
-			dateValue.setHours(0, 0, 0, 0);
-		}
-		const h = dateValue.getHours();
-		const m = dateValue.getMinutes();
-		const hours = h < 10 ? `0${h}` : `${h}`;
-		const minutes = m < 10 ? `0${m}` : `${m}`;
-		return `${hours}:${minutes}`;
-	};
+	// Le mode time sert aux durées (délai, durée max…) : « 01 h : 30 min ».
+	const durationOf = (dateValue: any) =>
+		dateValue instanceof Date && !isNaN(dateValue.getTime())
+			? pickerDateToDuration(dateValue)
+			: 0;
 
 	const mediumTime = new Intl.DateTimeFormat(i18n.language, {
 		weekday: 'long',
@@ -323,34 +331,41 @@ export function DateTimePickerForm({
 							{placeholder}
 						</Text>
 						<Pressable disabled={disabled} onPress={showDatePicker}>
-							<TextInput
-								style={[
-									InputStyle.input,
-									{
-										borderRadius: 12,
-										borderWidth: 1,
-										borderColor: '#CBD5E0',
-										paddingHorizontal: 12
-									},
-									disabled && InputStyle.inputDisabled
-								]}
-								placeholder={placeholder}
-								placeholderTextColor={placeholderColor}
-								onBlur={onBlur}
-								editable={false}
-								value={
-									mode === 'datetime'
-										? mediumTime.format(
-												!!value &&
-													value instanceof Date &&
-													!isNaN(value.getTime())
-													? value
-													: new Date()
-										  )
-										: getTimeString(value)
-								}
-								pointerEvents="none"
-							/>
+							{mode === 'datetime' ? (
+								<TextInput
+									style={[
+										InputStyle.input,
+										dateFieldBox,
+										disabled && InputStyle.inputDisabled
+									]}
+									placeholder={placeholder}
+									placeholderTextColor={placeholderColor}
+									onBlur={onBlur}
+									editable={false}
+									value={mediumTime.format(
+										!!value &&
+											value instanceof Date &&
+											!isNaN(value.getTime())
+											? value
+											: new Date()
+									)}
+									pointerEvents="none"
+								/>
+							) : (
+								// Durée : chiffres en gras, unités en gris clair (texte
+								// imbriqué, impossible dans un TextInput).
+								<View
+									style={[
+										dateFieldBox,
+										durationField,
+										disabled && InputStyle.inputDisabled
+									]}>
+									<DurationText
+										ms={durationOf(value)}
+										style={[inputText, disabled && InputStyle.inputDisabled]}
+									/>
+								</View>
+							)}
 						</Pressable>
 
 						<DateTimePickerModal

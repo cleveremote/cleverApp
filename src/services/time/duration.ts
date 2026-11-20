@@ -18,3 +18,11 @@ export const durationToPickerDate = (ms?: number | null): Date => {
 /** Date du picker -> durée en ms (heures et minutes uniquement). */
 export const pickerDateToDuration = (date: Date): number =>
 	date.getHours() * HOUR + date.getMinutes() * MINUTE;
+
+const pad2 = (n: number) => String(n).padStart(2, '0');
+
+/** Durée en ms -> heures et minutes sur deux chiffres. */
+export const durationParts = (ms?: number | null) => {
+	const total = Math.max(0, Math.round((Number(ms) || 0) / MINUTE));
+	return {hours: pad2(Math.floor(total / 60)), minutes: pad2(total % 60)};
+};

@@ -29,6 +29,7 @@ import {TimeZoneNotice} from '../../components/common/TimeZoneNotice';
 import {endOfDayIn, startOfDayIn} from '../../../services/time';
 import {selectBoxTimeZone} from '../../../module/process/infrasctructure/store/models/boxSettings';
 import {CycleRun, RunOutcome} from '../../../module/process/infrasctructure/store/models/cycleHistory';
+import {EventsPage} from '../../../module/process/infrasctructure/store/actions/cycle';
 import {isModuleType, MODULE, PROPORTIONAL} from '../../data/cycleTypes';
 import {isProportionalOn} from '../../components/cycle/ProportionalControl';
 import {
@@ -39,7 +40,7 @@ import {
 	showsSearch
 } from '../../components/common/ListFilters';
 import {loadActuators} from '../../../module/process/infrasctructure/store/actions/actuator';
-import {useLocalPagination} from '../../components/common/useLocalPagination';
+import {EVENTS_PAGE_SIZE} from '../../components/common/useLocalPagination';
 
 const IN_PROCESS = 'IN_PROCCESS';
 const ALL_DEVICES = 'ALL';
@@ -49,11 +50,6 @@ type EventCriteria = {
 	startDate: Date;
 	endDate: Date;
 };
-
-// Dernier événement du run (anciennes box : début, puis demande).
-const runDate = (run: CycleRun) =>
-	new Date(run.lastEventAt ?? run.startedAt ?? run.requestedAt).getTime() ||
-	0;
 
 // Filtre de type des modules : un seul à la fois, « tout » = aucun.
 type ModuleTypeFilter = 'all' | typeof MODULE | typeof PROPORTIONAL;
@@ -103,6 +99,12 @@ export function Cycle(props: any) {
 	const [moduleSearch, setModuleSearch] = React.useState('');
 	const [cycleSearch, setCycleSearch] = React.useState('');
 	const [runFilter, setRunFilter] = React.useState<RunFilter>('all');
+	// Lu par les requêtes lancées en différé (reloadEvents) : toujours à jour.
+	const runFilterRef = useRef(runFilter);
+	runFilterRef.current = runFilter;
+	// Pagination côté box : vrai tant que la dernière page reçue était pleine.
+	const [hasMoreRuns, setHasMoreRuns] = React.useState(false);
+	const loadingMoreRef = useRef(false);
 	// Requête d'événements en cours : seule la dernière lancée arrête le loader.
 	// 'blocking' : loader plein écran (arrivée sur l'onglet, la liste en mémoire
 	// peut être celle d'un autre écran). 'background' : changement de critère,
@@ -176,26 +178,56 @@ export function Cycle(props: any) {
 		});
 	};
 
-	// Période + cycle (sans deviceId : tous les cycles). Le filtre d'état
-	// n'est pas envoyé : il est appliqué localement (`filteredRuns`), ce qui
-	// rend les pastilles instantanées.
-	const loadRecentEvents = (blocking = true) => {
+	// Période + cycle (sans deviceId : tous les cycles) + filtre d'état,
+	// paginés par la box (EVENTS_PAGE_SIZE runs par page).
+	const eventsQuery = () => {
 		const c = getValues() as EventCriteria;
+		const outcomes = RUN_FILTERS.find(
+			f => f.key === runFilterRef.current
+		)?.outcomes;
+		return {
+			...(c.deviceId !== ALL_DEVICES && {deviceId: c.deviceId}),
+			startDate: c.startDate,
+			endDate: c.endDate,
+			...(outcomes?.length && {outcomes}),
+			limit: EVENTS_PAGE_SIZE
+		};
+	};
+	// Première page : remplace la liste.
+	const loadRecentEvents = (blocking = true) => {
 		const request = ++eventsRequestRef.current;
-		const done = () => {
-			if (eventsRequestRef.current === request) setEventsLoading(false);
+		loadingMoreRef.current = false;
+		const done = (page?: EventsPage) => {
+			if (eventsRequestRef.current !== request) return;
+			setEventsLoading(false);
+			if (page) setHasMoreRuns(page.received >= EVENTS_PAGE_SIZE);
 		};
 		setEventsLoading(blocking ? 'blocking' : 'background');
+		setHasMoreRuns(false);
 		// Sans réponse de la box (déconnexion), le loader ne reste pas affiché.
 		setTimeout(done, EVENTS_TIMEOUT_MS);
-		props.loadEvents(
-			{
-				...(c.deviceId !== ALL_DEVICES && {deviceId: c.deviceId}),
-				startDate: c.startDate,
-				endDate: c.endDate
-			},
-			done
-		);
+		props.loadEvents(eventsQuery(), done);
+	};
+	// Page suivante, à la suite du dernier run reçu. Arrêt si la box renvoie
+	// une page incomplète, ou rien de nouveau (box sans pagination).
+	const loadMoreRuns = () => {
+		const last = (props.events ?? [])[(props.events ?? []).length - 1];
+		if (!hasMoreRuns || eventsLoading || loadingMoreRef.current || !last) {
+			return;
+		}
+		const request = eventsRequestRef.current;
+		loadingMoreRef.current = true;
+		const done = (page?: EventsPage) => {
+			if (eventsRequestRef.current !== request || !loadingMoreRef.current) {
+				return;
+			}
+			loadingMoreRef.current = false;
+			setHasMoreRuns(
+				!!page && page.received >= EVENTS_PAGE_SIZE && page.added > 0
+			);
+		};
+		setTimeout(done, EVENTS_TIMEOUT_MS);
+		props.loadEvents({...eventsQuery(), afterRunId: last.runId}, done);
 	};
 	// Laisse le formulaire enregistrer la valeur avant de relancer la requête.
 	const reloadEvents = () => setTimeout(() => loadRecentEvents(false), 0);
@@ -353,12 +385,6 @@ export function Cycle(props: any) {
 		setRefreshing(false);
 	};
 
-	const proportionalState = {
-		actuators: useSelector((s: any) => s.root_actuator.actuators),
-		controlLoops: useSelector((s: any) => s.root_control_loop.loops),
-		sensors: useSelector((s: any) => s.root_sensor.sensors),
-		sensorValues: useSelector((s: any) => s.root_sensor.values)
-	};
 	const statusOf = (id: string): string | undefined =>
 		props.status?.find((x: any) => x?.id === id)?.status;
 
@@ -413,16 +439,28 @@ export function Cycle(props: any) {
 			)
 	);
 
+	// Modules ON. Le sélecteur renvoie un nombre : l'écran (et toutes ses
+	// cartes) ne se re-rend que si ce nombre change, et non à chaque valeur
+	// de capteur poussée par la box (plusieurs par seconde).
+	// PROPORTIONAL à 0 % (slider ou entrée FOLLOW) : pas compté ON.
+	const moduleOnCount: number = useSelector((s: any) => {
+		const proportionalState = {
+			actuators: s.root_actuator.actuators,
+			controlLoops: s.root_control_loop.loops,
+			sensors: s.root_sensor.sensors,
+			sensorValues: s.root_sensor.values
+		};
+		return moduleItems.filter((x: any) =>
+			x.type === PROPORTIONAL
+				? isProportionalOn(x, statusOf(x.id), proportionalState)
+				: statusOf(x.id) === IN_PROCESS
+		).length;
+	});
 	const counts = {
 		CYCLE: [...groupItems, ...cycleItems].filter(
 			(x: any) => statusOf(x.id) === IN_PROCESS
 		).length,
-		// PROPORTIONAL à 0 % (slider ou entrée FOLLOW) : pas compté ON.
-		MODULE: moduleItems.filter((x: any) =>
-			x.type === PROPORTIONAL
-				? isProportionalOn(x, statusOf(x.id), proportionalState)
-				: statusOf(x.id) === IN_PROCESS
-		).length
+		MODULE: moduleOnCount
 	};
 
 	const renderGroups = () =>
@@ -443,27 +481,15 @@ export function Cycle(props: any) {
 			/>
 		));
 
-	const recentRuns: CycleRun[] = React.useMemo(
-		() =>
-			[...((props.events ?? []) as CycleRun[])].sort(
-				(a, b) => runDate(b) - runDate(a)
-			),
-		[props.events]
-	);
+	// Ordre de la box (du plus récent au plus ancien) : pas de re-tri local,
+	// sinon une page ajoutée pourrait s'intercaler dans la liste déjà vue.
+	const recentRuns: CycleRun[] = (props.events ?? []) as CycleRun[];
 	const filteredRuns = React.useMemo(() => {
 		const outcomes = RUN_FILTERS.find(f => f.key === runFilter)?.outcomes;
 		return outcomes?.length
 			? recentRuns.filter(run => outcomes.includes(run.outcome))
 			: recentRuns;
 	}, [recentRuns, runFilter]);
-	// Pagination locale : seules les premières cartes sont rendues, la suite
-	// arrive en approchant du bas de la liste. Retour en page 1 à chaque
-	// nouvelle réponse de la box ou changement de filtre.
-	const {
-		visible: pagedRuns,
-		hasMore: hasMoreRuns,
-		loadMore: loadMoreRuns
-	} = useLocalPagination(filteredRuns, filteredRuns);
 	const toggleRun = React.useCallback(
 		(runId: string) =>
 			setExpandedRunId(prev => (prev === runId ? null : runId)),
@@ -529,9 +555,14 @@ export function Cycle(props: any) {
 					label: t(`cycle:events.filter.${key}`)
 				}))}
 				isActive={key => runFilter === key}
-				// Re-toucher le filtre actif revient à « tout ». Filtrage local :
-				// pas de requête à la box.
-				onToggle={key => setRunFilter(runFilter === key ? 'all' : key)}
+				// Re-toucher le filtre actif revient à « tout ». Filtrage local
+				// immédiat, puis rechargement filtré par la box (pagination).
+				onToggle={key => {
+					const next = runFilter === key ? 'all' : key;
+					setRunFilter(next);
+					runFilterRef.current = next;
+					reloadEvents();
+				}}
 			/>
 			{/* Nombre d'événements affichés, à la couleur du filtre actif ; masqué
 			    pendant la requête (loader sur la liste). */}
@@ -732,7 +763,7 @@ export function Cycle(props: any) {
 				// hausse continue au scroll).
 				<FlashList
 					style={{flex: 1}}
-					data={pagedRuns}
+					data={filteredRuns}
 					keyExtractor={run => run.runId}
 					renderItem={({item}) => (
 						<RunListItem

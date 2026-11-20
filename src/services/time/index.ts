@@ -9,4 +9,8 @@ export {
 } from './timeZone';
 export type {WallClock} from './timeZone';
 export {toUtcIso, serializeDatesDeep, toEpoch} from './serializeDates';
-export {durationToPickerDate, pickerDateToDuration} from './duration';
+export {
+	durationParts,
+	durationToPickerDate,
+	pickerDateToDuration
+} from './duration';

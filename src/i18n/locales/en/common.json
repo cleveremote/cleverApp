@@ -19,6 +19,10 @@
 		"hours": "Hours",
 		"minutes": "Minutes"
 	},
+	"durationUnit": {
+		"hours": "h",
+		"minutes": "min"
+	},
 	"discard": {
 		"title": "Discard changes?",
 		"message": "You have unsaved changes. Would you like to continue editing or discard them?",

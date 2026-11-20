@@ -178,6 +178,9 @@ export const loadValues =
 		);
 	};
 
+/** Résultat d'une page d'événements : runs reçus de la box, et réellement ajoutés. */
+export type EventsPage = {received: number; added: number};
+
 export const loadEvents =
 	(query: {
 		// Sans deviceId : événements de tous les cycles confondus. Sans aucun
@@ -188,20 +191,37 @@ export const loadEvents =
 		// Filtre d'état ; absent = tous.
 		outcomes?: RunOutcome[];
 		limit?: number;
+		// Pagination : runId du dernier run de la liste. La page reçue est
+		// ajoutée à la suite (sans doublon) au lieu de remplacer la liste.
+		afterRunId?: string;
 	},
 	// Appelé à la réponse de la box (fin de chargement).
-	onDone?: () => void
+	onDone?: (page: EventsPage) => void
 	): ThunkAction<void, RootState, unknown, AnyAction> =>
-	async dispatch => {
+	async (dispatch, getState) => {
 		socketService.emit(
 			'front/box/fetch/events',
 			{...denormalizeIds(query), lang: currentLanguage()},
 			(response: any) => {
-				dispatch({
-					type: EVENTS_LOAD,
-					payload: toCycleRuns(normalizeIds(response?.config))
-				});
-				onDone?.();
+				const runs = toCycleRuns(normalizeIds(response?.config));
+				if (!query.afterRunId) {
+					dispatch({type: EVENTS_LOAD, payload: runs});
+					onDone?.({received: runs.length, added: runs.length});
+					return;
+				}
+				const current: CycleRun[] = (getState() as any).root_cycle.events ?? [];
+				// Liste rechargée entre-temps (autre filtre, autre période) :
+				// cette page ne la prolonge plus, on l'ignore.
+				if (current[current.length - 1]?.runId !== query.afterRunId) {
+					onDone?.({received: runs.length, added: 0});
+					return;
+				}
+				const known = new Set(current.map(run => run.runId));
+				const added = runs.filter(run => !known.has(run.runId));
+				if (added.length) {
+					dispatch({type: EVENTS_LOAD, payload: [...current, ...added]});
+				}
+				onDone?.({received: runs.length, added: added.length});
 			}
 		);
 	};

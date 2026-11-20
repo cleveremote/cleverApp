@@ -4,6 +4,7 @@ import React from 'react';
 import {StyleSheet, Text, TouchableOpacity, View} from 'react-native';
 import DateTimePickerModal from 'react-native-modal-datetime-picker';
 import {pickerLocaleProps} from './pickerLocale';
+import {DurationText} from './DurationText';
 import i18n from 'i18next';
 import {
 	durationToPickerDate,
@@ -39,9 +40,6 @@ export function SolarTriggerFields({
 	onChange: (patch: Partial<SolarTriggerValue>) => void;
 }) {
 	const [offsetPickerVisible, setOffsetPickerVisible] = React.useState(false);
-	const totalMin = Math.round((value.time || 0) / 60000);
-	const offsetH = Math.floor(totalMin / 60);
-	const offsetM = totalMin % 60;
 
 	return (
 		<>
@@ -74,10 +72,7 @@ export function SolarTriggerFields({
 			<TouchableOpacity
 				onPress={() => setOffsetPickerVisible(true)}
 				style={styles.dateField}>
-				<Text style={styles.dateFieldTxt}>
-					{String(offsetH).padStart(2, '0')}:
-					{String(offsetM).padStart(2, '0')}
-				</Text>
+				<DurationText ms={value.time} style={styles.dateFieldTxt} />
 			</TouchableOpacity>
 
 			{/* Décalage solaire : même roue que « Disable trigger for » des triggers. */}
