@@ -1,4 +1,4 @@
-import React from 'react';
+import React, {memo} from 'react';
 import {Text, TouchableOpacity, View} from 'react-native';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import i18n from 'i18next';
@@ -429,3 +429,28 @@ export function RunCard({run, expanded, onToggle, nameOf}: Props) {
 		</View>
 	);
 }
+
+/**
+ * Ligne de liste (FlashList) : mémoïsée, avec un `onToggle(runId)` stable,
+ * pour que déplier une carte ne re-rende que les cartes concernées.
+ */
+export const RunListItem = memo(function RunListItem({
+	run,
+	expanded,
+	onToggle,
+	nameOf
+}: {
+	run: CycleRun;
+	expanded: boolean;
+	onToggle: (runId: string) => void;
+	nameOf: (id: string) => string;
+}) {
+	return (
+		<RunCard
+			run={run}
+			expanded={expanded}
+			onToggle={() => onToggle(run.runId)}
+			nameOf={nameOf}
+		/>
+	);
+});

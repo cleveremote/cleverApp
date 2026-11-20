@@ -20,7 +20,8 @@ import {
 	loadEvents,
 	loadGroups
 } from '../../../module/process/infrasctructure/store/actions/cycle';
-import {OUTCOMES, RunCard} from '../../components/cycle/RunCard';
+import {OUTCOMES, RunListItem} from '../../components/cycle/RunCard';
+import {FlashList} from '@shopify/flash-list';
 import {ModalCreateChoice} from '../../components/cycle/ModalCreateChoice';
 import {DropdownSelect} from '../../components/common/FormComponents';
 import {DateRangePickerForm} from '../../components/common/DateRangePickerForm';
@@ -38,10 +39,7 @@ import {
 	showsSearch
 } from '../../components/common/ListFilters';
 import {loadActuators} from '../../../module/process/infrasctructure/store/actions/actuator';
-import {
-	isNearBottom,
-	useLocalPagination
-} from '../../components/common/useLocalPagination';
+import {useLocalPagination} from '../../components/common/useLocalPagination';
 
 const IN_PROCESS = 'IN_PROCCESS';
 const ALL_DEVICES = 'ALL';
@@ -69,6 +67,10 @@ const EVENTS_TIMEOUT_MS = 15000;
 
 // Filtre d'état des événements : un seul à la fois, « tout » = aucun.
 type RunFilter = 'all' | 'active' | 'ended' | 'stopped';
+
+// Espace entre les cartes de la liste des événements.
+const RunSeparator = () => <View style={{height: 8}} />;
+
 const RUN_FILTERS: {key: RunFilter; outcomes: RunOutcome[]; color: string}[] = [
 	{key: 'all', outcomes: [], color: FILTER_COLOR},
 	{
@@ -462,6 +464,11 @@ export function Cycle(props: any) {
 		hasMore: hasMoreRuns,
 		loadMore: loadMoreRuns
 	} = useLocalPagination(filteredRuns, filteredRuns);
+	const toggleRun = React.useCallback(
+		(runId: string) =>
+			setExpandedRunId(prev => (prev === runId ? null : runId)),
+		[]
+	);
 
 	const deviceOptions = [
 		{label: t('cycle:events.allDevices'), value: ALL_DEVICES},
@@ -596,29 +603,8 @@ export function Cycle(props: any) {
 				</Text>
 			);
 		}
-		const cards = pagedRuns.map(run => {
-			const expanded = expandedRunId === run.runId;
-			return (
-				<RunCard
-					key={run.runId}
-					run={run}
-					expanded={expanded}
-					onToggle={() => setExpandedRunId(expanded ? null : run.runId)}
-					nameOf={nameOf}
-				/>
-			);
-		});
-		return hasMoreRuns
-			? [
-					...cards,
-					<ActivityIndicator
-						key="eventsMore"
-						size="small"
-						color={RUN_FILTERS.find(f => f.key === runFilter)?.color}
-						style={{marginVertical: 12}}
-					/>
-				]
-			: cards;
+		// Liste non vide : rendue par la FlashList (cf. return).
+		return null;
 	};
 
 	const renderModuleFilters = () =>
@@ -711,6 +697,13 @@ export function Cycle(props: any) {
 			: [...groupCards, ...cycleCards];
 	};
 
+	// Onglet Événements avec des runs à afficher : FlashList à la place de la
+	// ScrollView (chargement et liste vide restent dans la ScrollView).
+	const showRunList =
+		activeFilter === 'EVENTS' &&
+		eventsLoading !== 'blocking' &&
+		filteredRuns.length > 0;
+
 	return (
 		<View style={{flex: 1}}>
 			<ModalCreateChoice
@@ -732,19 +725,46 @@ export function Cycle(props: any) {
 				counts={counts}
 			/>
 			<View style={{paddingBottom: 4}}>{renderFixedFilters()}</View>
+			{showRunList ? (
+				// FlashList : seules les cartes proches de l'écran sont montées
+				// et les cellules sont recyclées. Dans la ScrollView, chaque
+				// page chargée ajoutait 20 cartes jamais démontées (mémoire en
+				// hausse continue au scroll).
+				<FlashList
+					style={{flex: 1}}
+					data={pagedRuns}
+					keyExtractor={run => run.runId}
+					renderItem={({item}) => (
+						<RunListItem
+							run={item}
+							expanded={expandedRunId === item.runId}
+							onToggle={toggleRun}
+							nameOf={nameOf}
+						/>
+					)}
+					extraData={expandedRunId}
+					ItemSeparatorComponent={RunSeparator}
+					contentContainerStyle={{paddingTop: 4, paddingBottom: 16}}
+					onEndReached={loadMoreRuns}
+					onEndReachedThreshold={0.5}
+					drawDistance={500}
+					refreshing={refreshing}
+					onRefresh={onRefresh}
+					ListFooterComponent={
+						hasMoreRuns ? (
+							<ActivityIndicator
+								size="small"
+								color={RUN_FILTERS.find(f => f.key === runFilter)?.color}
+								style={{marginVertical: 12}}
+							/>
+						) : null
+					}
+				/>
+			) : (
 			<ScrollView
 				scrollEnabled={true}
 				contentContainerStyle={{paddingBottom: 16}}
 				scrollEventThrottle={200}
-				onScroll={({nativeEvent}) => {
-					if (
-						activeFilter === 'EVENTS' &&
-						hasMoreRuns &&
-						isNearBottom(nativeEvent)
-					) {
-						loadMoreRuns();
-					}
-				}}
 				refreshControl={
 					<RefreshControl
 						refreshing={refreshing}
@@ -760,6 +780,7 @@ export function Cycle(props: any) {
 					{renderList()}
 				</View>
 			</ScrollView>
+			)}
 		</View>
 	);
 }
