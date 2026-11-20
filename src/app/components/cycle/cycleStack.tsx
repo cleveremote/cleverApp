@@ -17,7 +17,6 @@ import { ModalOverrideDuration } from '../common/modalOverrideDuration';
 import { connect } from 'react-redux';
 import SensorStatus from './CycleStatus';
 import ProportionalControl, {
-	takeHeldProportionalValue,
 	takeIgnoredProportionalRevert
 } from './ProportionalControl';
 import SeqeuncesList from './SequencesList';
@@ -30,6 +29,23 @@ import {
 	WARNING_BORDER,
 	useUnreachableDevices
 } from '../device/DeviceConnectivity';
+
+// Cycles en face du conflit d'un cycle : ceux de la confirmation, sinon les
+// causes CYCLE/SEQUENCE (ancien payload), sinon les autres cycles en cours.
+const conflictingIds = (id: string, status: any[] = []): string[] => {
+	const entry = status.find((x: any) => x?.id === id);
+	const fromConfirmation = (entry?.confirmation?.conflicts || []).map(
+		(c: any) => c.cycleId
+	);
+	if (fromConfirmation.length) return fromConfirmation;
+	const fromCauses = (entry?.causes || [])
+		.filter((c: any) => ['CYCLE', 'SEQUENCE'].includes(c?.type))
+		.map((c: any) => c.id);
+	if (fromCauses.length) return fromCauses;
+	return status
+		.filter((x: any) => x?.id !== id && x?.status === 'IN_PROCCESS')
+		.map((x: any) => x.id);
+};
 
 export function CycleStack({
 	cycleData,
@@ -64,19 +80,6 @@ export function CycleStack({
 	// Déconnecté : un tap n'importe où sur la carte (hors menu, posé
 	// par-dessus) ouvre le détail.
 	const [detailsOpen, setDetailsOpen] = useState(false);
-	// PROPORTIONAL en cours dont la nouvelle valeur attendait le choix du
-	// bandeau : elle est enregistrée avant de forcer / mettre en file.
-	const withHeldValue = (action: () => void) => {
-		const commit =
-			cycleData.type === PROPORTIONAL
-				? takeHeldProportionalValue(cycleData.id)
-				: undefined;
-		if (commit) {
-			commit(action);
-		} else {
-			action();
-		}
-	};
 
 	return (
 		<View>
@@ -180,23 +183,24 @@ export function CycleStack({
 			<CycleNotification
 				marginTop={belowCard.marginTop}
 				item={cycleData}
-				onForce={() =>
-					withHeldValue(() => onSwitch(true, 'FORCE'))
-				}
+				onForce={() => onSwitch(true, 'FORCE')}
 				onIgnore={() => {
-					// Valeur retenue (cycle en cours) : jamais enregistrée, le
-					// slider la lâche de lui-même à la fin du conflit.
 					// PROPORTIONAL : la valeur du slider revient à celle d'avant,
 					// une fois l'IGNORE acquitté (sinon la box la ré-exécute).
+					// L'IGNORE de la box l'arrête : l'app le relance à la valeur
+					// du slider dès que les cycles en conflit ont fini.
 					const revert =
 						cycleData.type === PROPORTIONAL
-							? takeIgnoredProportionalRevert(cycleData.id)
+							? takeIgnoredProportionalRevert(
+									cycleData.id,
+									conflictingIds(cycleData.id, status)
+							  )
 							: undefined;
 					Promise.resolve(onSwitch(false, 'IGNORE'))
 						.then(() => revert?.())
 						.catch(() => undefined);
 				}}
-				onQueue={() => withHeldValue(() => onQueueCycle(cycleData.id))}
+				onQueue={() => onQueueCycle(cycleData.id)}
 			/>
 			{/* PROPORTIONAL : le slider suffit, pas de progression de séquence. */}
 			{cycleData.type !== PROPORTIONAL && (

@@ -29,18 +29,49 @@ const moduleRefOf = (cycleData: any) => {
 // que l'utilisateur choisit « Ignorer » (le box n'applique rien : la vanne reste
 // à l'ancienne valeur). `armed` : le conflit est bien apparu après la commande.
 // Un conflit plus tardif (planification, déclencheur…) ne doit rien restaurer.
-type PendingRevert = {at: number; armed: boolean; revert: () => void};
+type PendingRevert = {
+	at: number;
+	armed: boolean;
+	previous: number;
+	revert: () => void;
+};
 const pendingReverts = new Map<string, PendingRevert>();
 const REVERT_WINDOW_MS = 60 * 1000;
+
+// Valeur montrée par le slider (hors boucle), tenue à jour à chaque rendu :
+// c'est elle que la relance applique quand aucune restauration n'est armée.
+const sliderValues = new Map<string, {value: number; min: number}>();
+
+const opens = (value: number, min: number) => value > min && value !== 0;
+
+// Relance après « Ignorer » : l'IGNORE de la box arrête le cycle, la vanne
+// tomberait à 0 % à la fin du cycle en face. L'app relance donc elle-même
+// l'exécution, à `value`, dès que plus aucun cycle de `waitFor` ne tourne.
+// (Une remise en file QUEUED côté box bloquait le cycle.)
+type PendingRelaunch = {value: number; waitFor: string[]};
+const pendingRelaunches = new Map<string, PendingRelaunch>();
 
 // « Ignorer » du bandeau de conflit : retire la restauration en attente et la
 // rend, à lancer une fois l'IGNORE acquitté par la box. Envoyée avant, alors
 // que la commande attend encore sa confirmation, la box la ré-exécutait.
-export const takeIgnoredProportionalRevert = (cycleId: string) => {
+// Programme aussi la relance à la valeur du slider (ancienne valeur si la
+// restauration est armée) une fois les cycles `waitFor` terminés.
+export const takeIgnoredProportionalRevert = (
+	cycleId: string,
+	waitFor: string[]
+) => {
 	const key = `${cycleId}`;
 	const pending = pendingReverts.get(key);
 	pendingReverts.delete(key);
-	return pending?.armed ? pending.revert : undefined;
+	const armed = pending?.armed ? pending : undefined;
+	const shown = sliderValues.get(key);
+	const value = armed ? armed.previous : shown?.value;
+	if (shown && value != null && opens(value, shown.min)) {
+		pendingRelaunches.set(key, {value, waitFor: waitFor.map(String)});
+	} else {
+		pendingRelaunches.delete(key);
+	}
+	return armed?.revert;
 };
 
 const clamp = (value: number, min: number, max: number) =>
@@ -159,6 +190,11 @@ export function ProportionalControl(props: any) {
 	// Valeur affichée pendant le glissement, recalée sur celle du box sinon.
 	const [value, setValue] = useState<number>(stored);
 	useEffect(() => setValue(stored), [stored]);
+	if (loop) {
+		sliderValues.delete(`${cycleData.id}`);
+	} else {
+		sliderValues.set(`${cycleData.id}`, {value: stored, min});
+	}
 
 	const entry = (props.status || []).find(
 		(x: any) => x?.id === cycleData.id
@@ -184,6 +220,24 @@ export function ProportionalControl(props: any) {
 			pendingReverts.delete(key);
 		}
 	}, [entryStatus, cycleData.id]);
+
+	// Relance programmée par « Ignorer » : attend que l'IGNORE soit passé
+	// (plus de conflit) et que les cycles en face ne tournent plus, puis
+	// enregistre la valeur et relance l'exécution.
+	useEffect(() => {
+		const key = `${cycleData.id}`;
+		const pending = pendingRelaunches.get(key);
+		if (!pending || entryStatus === CONFLICT) return;
+		const busy = pending.waitFor.some(
+			id =>
+				(props.status || []).find((x: any) => `${x?.id}` === id)
+					?.status === 'IN_PROCCESS'
+		);
+		if (busy) return;
+		pendingRelaunches.delete(key);
+		run(pending.value);
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [props.status, entryStatus, cycleData.id]);
 	// Bandeau de notification affiché, ou device requis injoignable (même si
 	// le cycle tourne : la commande ne pourrait pas être appliquée).
 	const hasNotification = !!notificationMessage(entry, true, props.status);
@@ -224,27 +278,35 @@ export function ProportionalControl(props: any) {
 		setValue(next);
 		props.closeSibillings(true);
 		ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
+		// Nouveau réglage : il remplace une relance encore en attente.
+		pendingRelaunches.delete(`${cycleData.id}`);
 		if (next === previous) {
 			pendingReverts.delete(`${cycleData.id}`);
 		} else {
 			pendingReverts.set(`${cycleData.id}`, {
 				at: Date.now(),
 				armed: false,
+				previous,
 				revert: () => props.saveCycle(withValue(latest.current, previous))
 			});
 		}
-		props.saveCycle(withValue(cycleData, next), false, () =>
+		run(next);
+	};
+
+	// Enregistre la valeur sur le module puis lance (ou arrête) le cycle.
+	function run(target: number) {
+		props.saveCycle(withValue(latest.current, target), false, () =>
 			props.executeCycle({
 				id: cycleData.id,
 				status: 'STOPPED',
-				action: next > min && next !== 0 ? 'ON' : 'OFF',
+				action: opens(target, min) ? 'ON' : 'OFF',
 				function: 'FUNCTION',
 				mode: 'MANUAL',
 				type: 'INIT',
 				duration: 0
 			})
 		);
-	};
+	}
 
 	return (
 		<View

@@ -20,6 +20,8 @@ import {isTempId, newTempId} from '../../../../services/socket';
 import {DropdownSelect} from '../../../components/common/FormComponents';
 import {fieldLabelColor,placeholderColor, inputText} from '../../../styles/components/common/Input';
 import {OutlineButton} from '../../access/accessUi';
+import {PROPORTIONAL} from '../../../data/cycleTypes';
+import {sensorUnit} from '../../../data/controlLoopTypes';
 import i18n from 'i18next';
 
 /**
@@ -495,6 +497,17 @@ function ConditionRow({
 	onRemove: (id: number) => void;
 }) {
 	const isSensor = cond.elementType === 'SENSOR';
+	const sensor = isSensor
+		? sensors.find((x: any) => x.id === cond.elementId)
+		: undefined;
+	const cycleById = (id: string) => cycles.find((x: any) => x.id === id);
+	// Cycle PROPORTIONAL : se compare comme un sensor (opérateur + valeur
+	// numérique), la valeur étant le pourcentage d'ouverture.
+	const isProportionalId = (id: string) => cycleById(id)?.type === PROPORTIONAL;
+	const isProportional = !isSensor && isProportionalId(cond.elementId);
+	const isNumeric = isSensor || isProportional;
+	// Unité affichée juste après la valeur.
+	const unit = isProportional ? '%' : isSensor ? sensorUnit(sensor) : undefined;
 	// Suppression en fin de seconde ligne, à côté de la valeur.
 	const deleteButton = removable ? (
 		<Pressable
@@ -510,10 +523,21 @@ function ConditionRow({
 	const operatorError = showErrors && !cond.operator;
 	const valueError =
 		showErrors &&
-		(isSensor ? !/^-?\d+(\.\d+)?$/.test(cond.value) : !cond.value);
-	const elementItems: SelectItem[] = (isSensor ? sensors : cycles).map(
-		(x: any) => ({label: x.name, value: x.id})
+		(isNumeric ? !/^-?\d+(\.\d+)?$/.test(cond.value) : !cond.value);
+	// Sensors parents (ayant des enfants) masqués : seules leurs mesures
+	// (enfants) ont une valeur exploitable. On garde celui déjà sélectionné.
+	const parentIds = new Set(
+		sensors
+			.map((x: any) => x.parentId ?? x.parent?.id)
+			.filter((id: any) => id != null)
+			.map((id: any) => `${id}`)
 	);
+	const selectableSensors = sensors.filter(
+		(x: any) => !parentIds.has(`${x.id}`) || x.id === cond.elementId
+	);
+	const elementItems: SelectItem[] = (
+		isSensor ? selectableSensors : cycles
+	).map((x: any) => ({label: x.name, value: x.id}));
 
 	// Bascule Cycle <-> Sensor : réinitialise l'élément, l'opérateur (`=` en
 	// cycle, à choisir en sensor) et la valeur (ON/OFF vs numérique).
@@ -546,6 +570,15 @@ function ConditionRow({
 						getLabel={item => item.label}
 						getValue={item => item.value}
 						onChange={val => {
+							// Cycle classique <-> PROPORTIONAL : l'opérateur et la
+							// valeur changent de nature (ON/OFF vs numérique).
+							if (
+								!isSensor &&
+								isProportionalId(val) !== isProportionalId(cond.elementId)
+							) {
+								cond.operator = isProportionalId(val) ? '==' : '=';
+								cond.value = '';
+							}
 							cond.elementId = val;
 							onChange();
 						}}
@@ -554,8 +587,9 @@ function ConditionRow({
 				</View>
 			</View>
 
-			{isSensor ? (
-				// Sensor : opérateur choisi + valeur numérique.
+			{isNumeric ? (
+				// Sensor / cycle PROPORTIONAL : opérateur choisi + valeur
+				// numérique suivie de l'unité.
 				<View style={styles.condBottomRow}>
 					<View style={{flex: 0.9}}>
 						<DropdownSelect<SelectItem>
@@ -571,6 +605,7 @@ function ConditionRow({
 						/>
 					</View>
 					<TextInput
+						key={`${cond.elementType}-${isProportional}`}
 						style={[
 							styles.valueInput,
 							valueError ? styles.valueInputError : null
@@ -590,6 +625,7 @@ function ConditionRow({
 							onChange();
 						}}
 					/>
+					{unit ? <Text style={styles.unit}>{unit}</Text> : null}
 					{deleteButton}
 				</View>
 			) : (
@@ -702,6 +738,7 @@ const styles = StyleSheet.create({
 		paddingHorizontal: 12,
 		...inputText
 	},
+	unit: {fontSize: 15, color: C.muted, fontWeight: '600'},
 	valueInputError: {borderWidth: 2, borderColor: C.errorBorder},
 	actions: {flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 8},
 	hint: {fontSize: 12, color: C.muted, marginTop: 10, lineHeight: 17}

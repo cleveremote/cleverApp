@@ -1,4 +1,4 @@
-import React, {useEffect, useMemo, useState} from 'react';
+import React, {memo, useCallback, useEffect, useMemo, useState} from 'react';
 import {ActivityIndicator, FlatList, Platform, Text, View} from 'react-native';
 import {connect, useSelector} from 'react-redux';
 import Spinner from 'react-native-loading-spinner-overlay';
@@ -29,6 +29,30 @@ const hapticTriggerType: string = Platform.select({
 	ios: 'notificationSuccess',
 	android: 'impactMedium'
 }) as string;
+
+// Ligne mémoïsée : `onToggle` est stable, donc déplier une carte ne
+// re-rend que l'ancienne et la nouvelle carte dépliée, pas toute la liste.
+const EventRow = memo(function EventRow({
+	run,
+	expanded,
+	onToggle,
+	nameOf
+}: {
+	run: CycleRun;
+	expanded: boolean;
+	onToggle: (key: string) => void;
+	nameOf: (id: string) => string;
+}) {
+	const key = 'run_' + run.runId;
+	return (
+		<RunCard
+			run={run}
+			expanded={expanded}
+			onToggle={() => onToggle(key)}
+			nameOf={nameOf}
+		/>
+	);
+});
 
 function EventsScreen(props: any) {
 	const {t} = useTranslation('cycle');
@@ -76,8 +100,6 @@ function EventsScreen(props: any) {
 		handleSubmit(onSubmit)();
 		setRefreshing(false);
 	};
-	useEffect(() => {}, [props.events]);
-
 	useEffect(() => {
 		props.navigation.setOptions({
 			headerLeft: () =>
@@ -123,21 +145,27 @@ function EventsScreen(props: any) {
 		return (id: string) => names[id] || id;
 	}, [runs, props.cycles, cycle]);
 
-	const renderItem = ({item}: {item: CycleRun}) => {
-		const key = 'run_' + item.runId;
-		const expanded = expandedId === key;
-		return (
-			<RunCard
+	const onToggle = useCallback(
+		(key: string) => setExpandedId(prev => (prev === key ? null : key)),
+		[]
+	);
+	const renderItem = useCallback(
+		({item}: {item: CycleRun}) => (
+			<EventRow
 				run={item}
-				expanded={expanded}
-				onToggle={() => setExpandedId(expanded ? null : key)}
+				expanded={expandedId === 'run_' + item.runId}
+				onToggle={onToggle}
 				nameOf={nameOf}
 			/>
-		);
-	};
+		),
+		[expandedId, onToggle, nameOf]
+	);
 
 	return (
-		<View style={{gap: 8, marginVertical: 4, alignSelf: 'stretch'}}>
+		// flex: 1 borne la hauteur de la FlatList : sans elle, la liste prend
+		// la hauteur de son contenu et rend TOUTES les cartes (pas de
+		// virtualisation), d'où le freeze après plusieurs pages.
+		<View style={{flex: 1, gap: 8, marginVertical: 4, alignSelf: 'stretch'}}>
 			<View style={BoxFormStyle.boxForm}>
 				<TimeZoneNotice kind="box" />
 				<DateTimePickerForm
@@ -182,11 +210,18 @@ function EventsScreen(props: any) {
 				animation="fade"
 			/>
 			<FlatList
+				style={{flex: 1}}
 				data={pagedRuns}
 				renderItem={renderItem}
 				onEndReached={loadMore}
 				onEndReachedThreshold={0.5}
 				initialNumToRender={10}
+				// Ne garde montées que ~2 écrans au-dessus/en dessous ; les
+				// cartes remontées hors écran sont démontées puis recréées.
+				windowSize={5}
+				maxToRenderPerBatch={10}
+				updateCellsBatchingPeriod={50}
+				removeClippedSubviews
 				ListFooterComponent={
 					hasMore ? (
 						<ActivityIndicator
