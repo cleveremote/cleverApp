@@ -181,6 +181,8 @@
 		"value": "القيمة*",
 		"valueRequired": "القيمة مطلوبة",
 		"valueNumeric": "يجب أن تكون القيمة رقمية",
+		"valuePlaceholder": "القيمة",
+		"valuePlaceholderUnit": "القيمة ({{unit}})",
 		"symbolStart": "رمز البداية",
 		"symbolEnd": "رمز النهاية"
 	},

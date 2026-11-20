@@ -508,6 +508,7 @@ function ConditionRow({
 	const isNumeric = isSensor || isProportional;
 	// Unité affichée juste après la valeur.
 	const unit = isProportional ? '%' : isSensor ? sensorUnit(sensor) : undefined;
+	const valueInputRef = React.useRef<TextInput>(null);
 	// Suppression en fin de seconde ligne, à côté de la valeur.
 	const deleteButton = removable ? (
 		<Pressable
@@ -604,28 +605,48 @@ function ConditionRow({
 							hasError={operatorError}
 						/>
 					</View>
-					<TextInput
-						key={`${cond.elementType}-${isProportional}`}
+					{/* Unité affichée dans le champ, comme un masque : dans le
+					    placeholder tant qu'il est vide, puis juste après la valeur
+					    saisie. Affichage seul : `cond.value` reste le nombre. */}
+					<Pressable
 						style={[
 							styles.valueInput,
 							valueError ? styles.valueInputError : null
 						]}
-						placeholder="valeur"
-						placeholderTextColor={placeholderColor}
-						keyboardType="decimal-pad"
-						defaultValue={cond.value}
-						onChangeText={t => {
-							// Strictement numérique : on ne garde que chiffres, un
-							// point décimal et un éventuel signe moins en tête.
-							const cleaned = t
-								.replace(/[^0-9.-]/g, '')
-								.replace(/(?!^)-/g, '')
-								.replace(/(\..*)\./g, '$1');
-							cond.value = cleaned;
-							onChange();
-						}}
-					/>
-					{unit ? <Text style={styles.unit}>{unit}</Text> : null}
+						onPress={() => valueInputRef.current?.focus()}>
+						<TextInput
+							ref={valueInputRef}
+							key={`${cond.elementType}-${isProportional}`}
+							style={
+								unit && cond.value
+									? styles.valueTextFit
+									: styles.valueTextFill
+							}
+							placeholder={
+								unit
+									? i18n.t('cycle:conditions.valuePlaceholderUnit', {unit})
+									: i18n.t('cycle:conditions.valuePlaceholder')
+							}
+							placeholderTextColor={placeholderColor}
+							keyboardType="decimal-pad"
+							defaultValue={cond.value}
+							onChangeText={t => {
+								// Strictement numérique : on ne garde que chiffres, un
+								// point décimal et un éventuel signe moins en tête.
+								const cleaned = t
+									.replace(/[^0-9.-]/g, '')
+									.replace(/(?!^)-/g, '')
+									.replace(/(\..*)\./g, '$1');
+								cond.value = cleaned;
+								onChange();
+							}}
+						/>
+						{unit && cond.value ? (
+							<Text style={styles.unit} numberOfLines={1}>
+								{` ${unit}`}
+							</Text>
+						) : null}
+					</Pressable>
 					{deleteButton}
 				</View>
 			) : (
@@ -736,6 +757,18 @@ const styles = StyleSheet.create({
 		borderColor: C.border,
 		borderRadius: 12,
 		paddingHorizontal: 12,
+		// Cadre du champ : valeur saisie + unité sur une ligne.
+		flexDirection: 'row',
+		alignItems: 'center'
+	},
+	// Champ vide (ou sans unité) : occupe tout le cadre, placeholder compris.
+	valueTextFill: {flex: 1, height: '100%', padding: 0, ...inputText},
+	// Valeur saisie : largeur du texte, l'unité vient juste derrière.
+	valueTextFit: {
+		flexShrink: 1,
+		minWidth: 8,
+		height: '100%',
+		padding: 0,
 		...inputText
 	},
 	unit: {fontSize: 15, color: C.muted, fontWeight: '600'},

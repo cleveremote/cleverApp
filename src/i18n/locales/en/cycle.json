@@ -177,6 +177,8 @@
 		"value": "Value*",
 		"valueRequired": "Value is required",
 		"valueNumeric": "Value must be numeric",
+		"valuePlaceholder": "Value",
+		"valuePlaceholderUnit": "Value ({{unit}})",
 		"symbolStart": "Symbol start",
 		"symbolEnd": "Symbol end"
 	},
