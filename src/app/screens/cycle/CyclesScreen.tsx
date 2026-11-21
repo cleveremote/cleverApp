@@ -580,16 +580,6 @@ export function Cycle(props: any) {
 						color={RUN_FILTERS.find(f => f.key === runFilter)?.color}
 					/>
 				) : null}
-				{eventsLoading === 'blocking' ? null : (
-					<Text
-						style={{
-							color: RUN_FILTERS.find(f => f.key === runFilter)?.color,
-							fontSize: 13,
-							fontWeight: '600'
-						}}>
-						{t('cycle:events.count', {count: filteredRuns.length})}
-					</Text>
-				)}
 			</View>
 			<TimeZoneNotice kind="box" style={{marginTop: 4, marginHorizontal: -10}} />
 		</View>

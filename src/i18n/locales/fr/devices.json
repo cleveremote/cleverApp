@@ -120,6 +120,35 @@
 		"noParameter": "Aucun paramètre pour ce variateur.",
 		"persistent": "persistant",
 		"value": "Valeur",
-		"none": "Aucun variateur lié à cet équipement."
+		"none": "Aucun variateur lié à cet équipement.",
+		"configuration": {
+			"open": "Configuration",
+			"hint": "Valeurs maintenues par la box sur le variateur (écrites seulement si elles diffèrent). Champ vide : paramètre non imposé.",
+			"notImposed": "Non imposé",
+			"invalidNumber": "Nombre attendu",
+			"outOfRange": "Valeur attendue entre {{min}} et {{max}} {{unit}}",
+			"analogReading": "Valeur lue :",
+			"mode": {
+				"PID": "PID (capteur du variateur)",
+				"RS485": "RS485 (fréquence pilotée par la box)"
+			},
+			"groups": {
+				"F00": "Paramètres de base",
+				"F01": "Démarrage / arrêt",
+				"F02": "Entrées logiques X",
+				"F03": "Entrées analogiques AI1 / AI2",
+				"F11": "Régulation PID",
+				"F12": "Multi-vitesses",
+				"F13": "Communication",
+				"other": "Autres paramètres"
+			}
+		},
+		"sensor": {
+			"title": "Capteur {{input}}",
+			"none": "Aucun capteur",
+			"noneHint": "Sans caractéristique, la courbe de l'entrée se règle directement et la consigne PID se saisit en %.",
+			"curve": "Courbe reportée sur le variateur : {{low}} V ↔ 0 % · {{high}} V ↔ 100 %",
+			"inputOutOfRange": "Doit être entre 0 et {{max}} {{unit}}"
+		}
 	}
 }

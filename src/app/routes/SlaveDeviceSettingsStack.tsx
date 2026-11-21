@@ -10,6 +10,7 @@ import ComRequestsSection from '../screens/devices/slave/ComRequestsSection';
 import {ComRequestSettingsStack} from './ComRequestSettingsStack';
 import {ActuatorSettingsStack} from './ActuatorSettingsStack';
 import {SensorSettingsStack} from './SensorSettingsStack';
+import InverterConfigurationScreen from '../screens/devices/slave/inverter/InverterConfigurationScreen';
 
 export function SlaveDeviceSettingsStack() {
 	const {t} = useTranslation('navigation');
@@ -52,6 +53,11 @@ export function SlaveDeviceSettingsStack() {
 				name="SensorSettingsStack"
 				component={SensorSettingsStack}
 				options={{headerShown: false}}
+			/>
+			<Stack.Screen
+				name="InverterConfiguration"
+				component={InverterConfigurationScreen}
+				options={options(t('configuration'))}
 			/>
 		</Stack.Navigator>
 	);

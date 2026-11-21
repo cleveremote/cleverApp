@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import {
+	Pressable,
 	ScrollView,
 	StyleSheet,
 	Text,
@@ -8,6 +9,7 @@ import {
 	View
 } from 'react-native';
 import {
+	fieldLabelText,
 	InputStyle,
 	inputText,
 	placeholderColor
@@ -26,6 +28,10 @@ import { connect } from 'react-redux';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import { hapticOptions } from '../../../../data/cycleTypes';
 import {
+	pidFeedbackSensorOf,
+	targetToPercent
+} from '../../../../data/inverterTypes';
+import {
 	isEmpty,
 	useValidateOnOpen,
 	useEmbeddedSection
@@ -39,8 +45,10 @@ import {
 
 // Pilotage d'un variateur par la séquence (`inverterDirectives`, DTO
 // SequenceInverterDirectiveSync) :
-//  - PID   : PID interne du variateur (capteur AI1), consigne F11.01
-//            (`pidSetpoint`, obligatoire) ;
+//  - PID   : PID interne du variateur (capteur de retour AI1 / AI2), consigne
+//            F11.01 : `pidTarget` dans l'unité du capteur quand le variateur
+//            connaît sa caractéristique (la box la traduit en %), sinon
+//            `pidSetpoint` en % (l'un des deux obligatoire) ;
 //  - RS485 : consigne de fréquence écrite par la box (0x2000), `frequency`
 //            obligatoire.
 export enum InverterMode {
@@ -72,18 +80,32 @@ const numberRule = (value: any) =>
 	typeof toNumber(value) === 'number' ||
 	i18n.t('cycle:sequence.inverter.invalidNumber');
 
+// Consigne PID d'une directive : `pidTarget` (unité du capteur de retour)
+// accompagnée de son équivalent en % (repli de la box si la caractéristique
+// disparaît), sinon `pidSetpoint` saisi en %.
+const pidFields = (d: any, inverters?: any[]) => {
+	if (isEmpty(d.pidTarget)) return { pidSetpoint: toNumber(d.pidSetpoint) };
+	const pidTarget = toNumber(d.pidTarget);
+	const sensor = pidFeedbackSensorOf(
+		(inverters ?? []).find((i: any) => `${i.id}` === `${d.inverterId}`)
+	);
+	const pidSetpoint =
+		sensor && typeof pidTarget === 'number'
+			? targetToPercent(sensor, pidTarget)
+			: undefined;
+	return { pidTarget, ...(pidSetpoint !== undefined && { pidSetpoint }) };
+};
+
 // Directives du formulaire → forme attendue par la box : seuls les champs du
 // mode choisi sont envoyés.
-export const toInverterDirectives = (directives: any[]) =>
+export const toInverterDirectives = (directives: any[], inverters?: any[]) =>
 	(directives ?? []).map((d: any) => ({
 		inverterId: `${d.inverterId}`,
 		mode: d.mode,
 		...(d.mode === InverterMode.RS485
 			? { frequency: toNumber(d.frequency) }
 			: {}),
-		...(d.mode === InverterMode.PID
-			? { pidSetpoint: toNumber(d.pidSetpoint) }
-			: {})
+		...(d.mode === InverterMode.PID ? pidFields(d, inverters) : {})
 	}));
 
 // Directive non conforme au DTO (section Security en rouge au save).
@@ -91,7 +113,9 @@ export const isInverterDirectiveInvalid = (d: any) =>
 	isEmpty(d?.inverterId) ||
 	!isInverterMode(d?.mode) ||
 	(d.mode === InverterMode.RS485 && typeof d.frequency !== 'number') ||
-	(d.mode === InverterMode.PID && typeof d.pidSetpoint !== 'number');
+	(d.mode === InverterMode.PID &&
+		typeof d.pidSetpoint !== 'number' &&
+		typeof d.pidTarget !== 'number');
 
 export function SequenceSecuritySettingsSection(props: any) {
 	const embedded = !!props.embedded;
@@ -142,7 +166,7 @@ export function SequenceSecuritySettingsSection(props: any) {
 				securityConfig: {
 					maxDuration: pickerDateToDuration(data.securityConfig?.maxDuration)
 				},
-				inverterDirectives: toInverterDirectives(data.inverterDirectives),
+				inverterDirectives: toInverterDirectives(data.inverterDirectives, props.inverters),
 				isModified: true
 			})
 	});
@@ -154,7 +178,7 @@ export function SequenceSecuritySettingsSection(props: any) {
 				securityConfig: {
 					maxDuration: pickerDateToDuration(data.securityConfig.maxDuration)
 				},
-				inverterDirectives: toInverterDirectives(data.inverterDirectives),
+				inverterDirectives: toInverterDirectives(data.inverterDirectives, props.inverters),
 				isModified: saveUnchangedData
 			});
 		}
@@ -201,6 +225,26 @@ export function SequenceSecuritySettingsSection(props: any) {
 	const directive = directives[0];
 	const directiveErrors: any = (errors as any).inverterDirectives?.[0];
 	const isRs485 = directive?.mode === InverterMode.RS485;
+	// Capteur du retour PID du variateur choisi : consigne saisie dans son
+	// unité (ex. 3 bar), la box la traduit en % PID.
+	const feedbackSensor = pidFeedbackSensorOf(
+		(props.inverters ?? []).find(
+			(i: any) => `${i.id}` === `${directive?.inverterId}`
+		)
+	);
+	const pidField = feedbackSensor ? 'pidTarget' : 'pidSetpoint';
+	const valueField = isRs485 ? 'frequency' : pidField;
+	const valueError = directiveErrors?.[valueField];
+	// Unité affichée dans le champ (masque, non enregistrée) : Hz en RS485,
+	// unité du capteur de retour en PID, sinon % PID.
+	const valueUnit = isRs485
+		? i18n.t('cycle:sequence.inverter.unitHz')
+		: feedbackSensor?.unit || '%';
+	const valueInputRef = React.useRef<TextInput>(null);
+	const pidPercent =
+		feedbackSensor && typeof toNumber(directive?.pidTarget) === 'number'
+			? targetToPercent(feedbackSensor, toNumber(directive?.pidTarget))
+			: undefined;
 	const inverterItems: InverterItem[] = (props.inverters ?? [])
 		.filter((i: any) => !i.deletedAt)
 		.map((i: any) => ({ label: i.name ?? `${i.id}`, value: `${i.id}` }));
@@ -239,6 +283,7 @@ export function SequenceSecuritySettingsSection(props: any) {
 		);
 		setValue('inverterDirectives.0.frequency', undefined);
 		setValue('inverterDirectives.0.pidSetpoint', undefined);
+		setValue('inverterDirectives.0.pidTarget', undefined);
 		setSaveUnchangedData(true);
 	};
 
@@ -325,13 +370,9 @@ export function SequenceSecuritySettingsSection(props: any) {
 								)}
 							/>
 							<Controller
-								key={`${directiveFields[0]?.id}-${directive.mode}`}
+								key={`${directiveFields[0]?.id}-${directive.mode}-${pidField}`}
 								control={control}
-								name={
-									isRs485
-										? 'inverterDirectives.0.frequency'
-										: 'inverterDirectives.0.pidSetpoint'
-								}
+								name={`inverterDirectives.0.${valueField}`}
 								rules={
 									isRs485
 										? {
@@ -347,37 +388,68 @@ export function SequenceSecuritySettingsSection(props: any) {
 												validate: numberRule
 										  }
 								}
-								render={({ field: { value, onChange, onBlur } }) => (
-									<TextInput
-										style={[
-											styles.valueInput,
-											(isRs485
-												? directiveErrors?.frequency
-												: directiveErrors?.pidSetpoint) &&
-												styles.valueInputError
-										]}
-										placeholder={i18n.t(
-											isRs485
-												? 'cycle:sequence.inverter.frequency'
-												: 'cycle:sequence.inverter.pidSetpoint'
-										)}
-										placeholderTextColor={placeholderColor}
-										keyboardType="decimal-pad"
-										value={value === undefined || value === null ? '' : `${value}`}
-										onBlur={onBlur}
-										onChangeText={text => {
-											onChange(text);
-											setSaveUnchangedData(true);
-										}}
-									/>
-								)}
+								render={({ field: { value, onChange, onBlur } }) => {
+									const text =
+										value === undefined || value === null ? '' : `${value}`;
+									// Placeholder (avec l'unité) tant que vide, puis unité
+									// juste derrière la valeur saisie.
+									return (
+										<Pressable
+											style={[
+												styles.valueInput,
+												valueError && styles.valueInputError
+											]}
+											onPress={() => valueInputRef.current?.focus()}>
+											<TextInput
+												ref={valueInputRef}
+												style={
+													text ? styles.valueTextFit : styles.valueTextFill
+												}
+												placeholder={
+													feedbackSensor && !isRs485
+														? i18n.t('cycle:sequence.inverter.pidTarget', {
+																unit: feedbackSensor.unit
+														  })
+														: i18n.t(
+																isRs485
+																	? 'cycle:sequence.inverter.frequency'
+																	: 'cycle:sequence.inverter.pidSetpoint'
+														  )
+												}
+												placeholderTextColor={placeholderColor}
+												keyboardType="decimal-pad"
+												value={text}
+												onBlur={onBlur}
+												onChangeText={t => {
+													onChange(t);
+													setSaveUnchangedData(true);
+												}}
+											/>
+											{text ? (
+												<Text style={styles.valueUnit} numberOfLines={1}>
+													{` ${valueUnit}`}
+												</Text>
+											) : null}
+										</Pressable>
+									);
+								}}
 							/>
 						</View>
-						<FieldError
-							error={
-								isRs485 ? directiveErrors?.frequency : directiveErrors?.pidSetpoint
-							}
-						/>
+						<FieldError error={valueError} />
+						{!isRs485 && feedbackSensor ? (
+							<Text style={styles.pidHint}>
+								{i18n.t('cycle:sequence.inverter.pidTargetHint', {
+									min: feedbackSensor.outputMin,
+									max: feedbackSensor.outputMax,
+									unit: feedbackSensor.unit
+								})}
+								{pidPercent === undefined
+									? ''
+									: ` · ${i18n.t('cycle:sequence.inverter.pidPercent', {
+											percent: pidPercent
+									  })}`}
+							</Text>
+						) : null}
 					</View>
 				) : null}
 			</View>
@@ -395,6 +467,7 @@ const COLORS = {
 };
 
 const styles = StyleSheet.create({
+	pidHint: { color: COLORS.text, fontSize: 12, marginTop: 4, opacity: 0.7 },
 	frame: {
 		borderWidth: 1,
 		borderColor: COLORS.border,
@@ -441,8 +514,22 @@ const styles = StyleSheet.create({
 		borderColor: COLORS.border,
 		borderRadius: 12,
 		paddingHorizontal: 12,
+		// Cadre : valeur saisie + unité sur une ligne.
+		flexDirection: 'row',
+		alignItems: 'center'
+	},
+	// Champ vide : occupe tout le cadre, placeholder compris.
+	valueTextFill: { flex: 1, height: '100%', padding: 0, ...inputText },
+	// Valeur saisie : largeur du texte, l'unité vient juste derrière.
+	valueTextFit: {
+		flexShrink: 1,
+		minWidth: 8,
+		height: '100%',
+		padding: 0,
 		...inputText
 	},
+	// Unité : style des libellés.
+	valueUnit: { ...fieldLabelText, flexShrink: 0 },
 	valueInputError: { borderWidth: 2, borderColor: COLORS.errorBorder }
 });
 

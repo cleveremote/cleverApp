@@ -120,6 +120,35 @@
 		"noParameter": "No parameter for this inverter.",
 		"persistent": "persistent",
 		"value": "Value",
-		"none": "No inverter linked to this device."
+		"none": "No inverter linked to this device.",
+		"configuration": {
+			"open": "Configuration",
+			"hint": "Values kept by the box on the inverter (written only when they differ). Empty field: parameter not imposed.",
+			"notImposed": "Not imposed",
+			"invalidNumber": "Number expected",
+			"outOfRange": "Value expected between {{min}} and {{max}} {{unit}}",
+			"analogReading": "Read value:",
+			"mode": {
+				"PID": "PID (inverter sensor)",
+				"RS485": "RS485 (frequency driven by the box)"
+			},
+			"groups": {
+				"F00": "Basic parameters",
+				"F01": "Start / stop",
+				"F02": "Digital inputs X",
+				"F03": "Analog inputs AI1 / AI2",
+				"F11": "PID control",
+				"F12": "Multi-speed",
+				"F13": "Communication",
+				"other": "Other parameters"
+			}
+		},
+		"sensor": {
+			"title": "{{input}} sensor",
+			"none": "No sensor",
+			"noneHint": "Without characteristic, the input curve is set directly and the PID setpoint is entered in %.",
+			"curve": "Curve set on the inverter: {{low}} V ↔ 0 % · {{high}} V ↔ 100 %",
+			"inputOutOfRange": "Must be between 0 and {{max}} {{unit}}"
+		}
 	}
 }

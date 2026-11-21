@@ -100,7 +100,10 @@ export function SlaveDeviceSettingsScreen(props: any) {
 							name={i18n.t('devices:inverter.title')}
 							icon={faBolt}
 							onPress={() => {}}>
-							<SlaveInverterSection device={deviceRef.current} />
+							<SlaveInverterSection
+								device={deviceRef.current}
+								navigation={props.navigation}
+							/>
 						</MenuAccordion>
 					)}
 				<DeleteItemMenu key={6} OnConfirm={deleteItem} />

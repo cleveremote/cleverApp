@@ -108,8 +108,12 @@
 			"modeRequired": "الوضع مطلوب",
 			"frequency": "التردد (هرتز)*",
 			"frequencyRequired": "التردد مطلوب في وضع RS485",
-			"pidSetpoint": "قيمة PID المرجعية*",
+			"unitHz": "هرتز",
+			"pidSetpoint": "قيمة PID المرجعية (%)*",
 			"pidSetpointRequired": "قيمة PID المرجعية مطلوبة في وضع PID",
+			"pidTarget": "القيمة المرجعية ({{unit}})*",
+			"pidTargetHint": "نطاق المستشعر: من {{min}} إلى {{max}} {{unit}}",
+			"pidPercent": "≈ {{percent}} % PID",
 			"invalidNumber": "يجب أن يكون رقمًا"
 		}
 	},
@@ -124,12 +128,6 @@
 		"proportionalShort": "تناسبي"
 	},
 	"events": {
-		"count_zero": "لا أحداث",
-		"count_one": "حدث واحد",
-		"count_two": "حدثان",
-		"count_few": "{{count}} أحداث",
-		"count_many": "{{count}} حدثًا",
-		"count_other": "{{count}} حدث",
 		"filter": {
 			"all": "الكل",
 			"active": "قيد التشغيل",

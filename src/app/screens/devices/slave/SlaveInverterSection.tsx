@@ -67,12 +67,14 @@ function InverterCard({
 	inverter,
 	model,
 	sensors,
-	onOpen
+	onOpen,
+	onConfigure
 }: Readonly<{
 	inverter: any;
 	model: any;
 	sensors: any[];
 	onOpen: (command: any) => void;
+	onConfigure?: () => void;
 }>) {
 	const manualSensor = (sensors ?? []).find(
 		(s: any) => `${s.id}` === `${inverter.manualSensorId}`
@@ -118,6 +120,18 @@ function InverterCard({
 						: undefined)
 				}
 			/>
+			{onConfigure ? (
+				<Pressable
+					onPress={onConfigure}
+					style={({pressed}) => [
+						styles.configure,
+						pressed && {opacity: 0.6}
+					]}>
+					<Text style={styles.configureText}>
+						{i18n.t('devices:inverter.configuration.open')}
+					</Text>
+				</Pressable>
+			) : null}
 
 			<Text style={styles.subTitle}>
 				{i18n.t('devices:inverter.commands')}
@@ -199,8 +213,8 @@ function InverterCard({
 	);
 }
 
-// Variateur(s) d'un slave INVERTER : identité, profil, mode par défaut, puis
-// ses commandes (rôle → device command du modèle) et ses paramètres (bloc,
+// Variateur(s) d'un slave INVERTER : identité, profil, mode par défaut, accès
+// à sa configuration (écran InverterConfiguration), puis ses commandes (rôle → device command du modèle) et ses paramètres (bloc,
 // valeur, lecture / écriture). Les pastilles ouvrent la popin d'exécution.
 export function SlaveInverterSection(props: any) {
 	const model = findModel(props.models, props.device);
@@ -221,6 +235,15 @@ export function SlaveInverterSection(props: any) {
 							model={model}
 							sensors={props.sensors}
 							onOpen={setOpened}
+							onConfigure={
+								props.navigation && inverter.id != null
+									? () =>
+											props.navigation.navigate('InverterConfiguration', {
+												inverterId: inverter.id,
+												modelId: model?.id
+											})
+									: undefined
+							}
 						/>
 					</View>
 				))
@@ -242,6 +265,7 @@ const textColor = '#32404e';
 const mutedColor = fieldLabelColor;
 const COLORS = {
 	cardBackground: 'white',
+	accent: '#3b82f6',
 	border: '#e5e7eb',
 	shadow: '#000'
 };
@@ -291,6 +315,17 @@ const styles = StyleSheet.create({
 		shadowRadius: 2.22
 	},
 	paramHeader: {flexDirection: 'row', alignItems: 'center', gap: 6},
+	// Accès à l'écran de configuration du variateur.
+	configure: {
+		alignSelf: 'stretch',
+		alignItems: 'center',
+		marginTop: 10,
+		paddingVertical: 10,
+		borderRadius: 12,
+		borderWidth: 1,
+		borderColor: COLORS.accent
+	},
+	configureText: {color: COLORS.accent, fontWeight: 'bold', fontSize: 14},
 	itemName: {
 		flexShrink: 1,
 		textAlign: 'left',

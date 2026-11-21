@@ -108,8 +108,12 @@
 			"modeRequired": "Le mode est obligatoire",
 			"frequency": "Fréquence (Hz)*",
 			"frequencyRequired": "La fréquence est obligatoire en mode RS485",
-			"pidSetpoint": "Consigne PID*",
+			"unitHz": "Hz",
+			"pidSetpoint": "Consigne PID (%)*",
 			"pidSetpointRequired": "La consigne PID est obligatoire en mode PID",
+			"pidTarget": "Consigne ({{unit}})*",
+			"pidTargetHint": "Plage du capteur : {{min}} à {{max}} {{unit}}",
+			"pidPercent": "≈ {{percent}} % PID",
 			"invalidNumber": "Doit être un nombre"
 		}
 	},
@@ -124,8 +128,6 @@
 		"proportionalShort": "Proportionnel"
 	},
 	"events": {
-		"count_one": "{{count}} événement",
-		"count_other": "{{count}} événements",
 		"filter": {
 			"all": "Tout",
 			"active": "En cours",
