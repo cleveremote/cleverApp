@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Langues proposées par Android 13+ dans « Langue de l'application ».
+     À garder aligné avec SUPPORTED_LANGUAGES (src/i18n/resources.ts). -->
+<locale-config xmlns:android="http://schemas.android.com/apk/res/android">
+    <locale android:name="fr" />
+    <locale android:name="en" />
+    <locale android:name="ar" />
+</locale-config>

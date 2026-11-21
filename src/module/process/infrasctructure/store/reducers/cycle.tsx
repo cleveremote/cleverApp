@@ -4,27 +4,33 @@ import {
 	CYCLE_UPDATE,
 	CYCLE_LOAD,
 	CYCLE_STATUS,
-	CYCLE_EXECUTE,
 	DATA_LOAD,
+	EVENTS_LOAD,
 	RESET_STORE,
-	PLAN_LOAD
+	PLAN_LOAD,
+	GROUPS_LOAD,
+	GROUP_SAVE
 } from '../actions/types';
 import {
 	getKeys,
 	loadCycle,
 	loadCycles,
 	updateCycle,
-	updateStatus
+	updateStatus,
+	keepPendingNotifications,
+	stampNotified
 } from './cycle-reducer-helper';
+import {withoutDismissedNotification} from '../models/dismissedNotifications';
 
 const initialState = {
 	cycles: [],
+	groups: [],
 	cycle: undefined,
 	plan: undefined,
 	planSections: [],
 	status: [],
-	isLoading: false,
-	data: []
+	data: [],
+	events: []
 };
 
 export default (state = initialState, action: any) => {
@@ -32,7 +38,11 @@ export default (state = initialState, action: any) => {
 		case RESET_STORE:
 			return {
 				...state,
-				cycles: initialState.cycles
+				cycles: initialState.cycles,
+				groups: initialState.groups,
+				// Sans ça, les status de la session précédente réapparaissent au
+				// login suivant, avant le premier fetch.
+				status: initialState.status
 			};
 		case PLAN_LOAD: {
 			return {
@@ -48,10 +58,29 @@ export default (state = initialState, action: any) => {
 			};
 		}
 
+		case GROUPS_LOAD: {
+			return {
+				...state,
+				groups: action.payload || []
+			};
+		}
+
+		case GROUP_SAVE: {
+			return {
+				...state,
+				groups: updateCycle(state.groups, action.payload, action.tempId)
+			};
+		}
+
 		case CYCLE_LOAD: {
 			return {
 				...state,
-				cycle: loadCycle(state.cycles, action.payload)
+				cycle: loadCycle(
+					state.cycles,
+					action.payload,
+					action.parentCycleId,
+					action.newType
+				)
 			};
 		}
 
@@ -65,17 +94,32 @@ export default (state = initialState, action: any) => {
 		case CYCLE_SAVE: {
 			return {
 				...state,
-				cycles: updateCycle(state.cycles, action.payload)
+				cycles: updateCycle(state.cycles, action.payload, action.tempId)
 			};
 		}
 
 		case CYCLE_STATUS: {
-			const data = Array.isArray(action.payload)
+			const payload = Array.isArray(action.payload)
 				? action.payload
 				: [action.payload];
+			// Réponse de l'utilisateur (dismiss) : l'entrée sans notification
+			// s'applique telle quelle ; sinon la notification en attente reste.
+			// Une notification déjà ignorée (même refus revenu au fetch) est
+			// écartée, d'où qu'elle vienne.
+			const data = action.dismissed
+				? payload
+				: stampNotified(
+						state.status,
+						keepPendingNotifications(state.status, payload).map(
+							withoutDismissedNotification
+						)
+				  );
 			return {
 				...state,
-				status: updateStatus(state.status, data)
+				// Un fetch renvoie l'état complet : on remplace pour purger les
+				// entrées périmées. Les pushs socket restent des deltas et
+				// conservent l'upsert.
+				status: action.replace ? data : updateStatus(state.status, data)
 			};
 		}
 
@@ -86,10 +130,10 @@ export default (state = initialState, action: any) => {
 			};
 		}
 
-		case CYCLE_EXECUTE: {
+		case EVENTS_LOAD: {
 			return {
 				...state,
-				isLoading: action.payload
+				events: action.payload || []
 			};
 		}
 

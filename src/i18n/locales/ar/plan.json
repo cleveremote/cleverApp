@@ -1,0 +1,6 @@
+{
+	"temperature": "درجة الحرارة: {{value}}",
+	"humidity": "الرطوبة: {{value}}",
+	"wind": "الرياح: {{value}}",
+	"precipitation": "الهطول: {{value}}"
+}

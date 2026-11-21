@@ -1,15 +1,15 @@
 import React from 'react';
+import {useTranslation} from 'react-i18next';
 import {
 	StackNavigationOptions,
 	createStackNavigator
 } from '@react-navigation/stack';
-import {Provider} from 'react-redux';
-import {store} from '../../module/process/infrasctructure/store/store';
-import TriggerConditionParamSettingsSection from '../screens/cycle/triggers/settings/condition/TriggerConditionParamSettingsSection';
-import TriggerConditionGeneralSettingsSection from '../screens/cycle/triggers/settings/condition/TriggerConditionGeneralSettingsSection';
-import TriggerConditionSettingsScreen from '../screens/cycle/triggers/settings/condition/TriggerConditionSettingsScreen';
+import ConditionParamSettingsSection from '../screens/cycle/conditions/ConditionParamSettingsSection';
+import ConditionGeneralSettingsSection from '../screens/cycle/conditions/ConditionGeneralSettingsSection';
+import ConditionSettingsScreen from '../screens/cycle/conditions/ConditionSettingsScreen';
 
 export function ConditionSettingsStack() {
+	const {t} = useTranslation('navigation');
 	const options = (title: string) =>
 		({
 			headerTitleAlign: 'center',
@@ -21,19 +21,19 @@ export function ConditionSettingsStack() {
 	return (
 		<Stack.Navigator screenOptions={{animation: 'none'}}>
 			<Stack.Screen
-				name="TriggerConditionSettingsScreen"
-				component={TriggerConditionSettingsScreen}
-				options={options('Condition settings')}
+				name="ConditionSettingsScreen"
+				component={ConditionSettingsScreen}
+				options={options(t('conditionSettings'))}
 			/>
 			<Stack.Screen
-				name="TriggerConditionGeneralSettingsSection"
-				component={TriggerConditionGeneralSettingsSection}
-				options={options('General')}
+				name="ConditionGeneralSettingsSection"
+				component={ConditionGeneralSettingsSection}
+				options={options(t('general'))}
 			/>
 			<Stack.Screen
-				name="TriggerConditionParamSettingsSection"
-				component={TriggerConditionParamSettingsSection}
-				options={options('Parameters')}
+				name="ConditionParamSettingsSection"
+				component={ConditionParamSettingsSection}
+				options={options(t('parameters'))}
 			/>
 		</Stack.Navigator>
 	);

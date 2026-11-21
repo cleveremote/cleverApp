@@ -1,4 +1,6 @@
 import {Pattern} from 'react-native-svg';
+import {newTempId} from '../../../../../services/socket';
+import i18n from 'i18next';
 
 export const loadSensors = (sensors: any) => {
 	return sensors || [];
@@ -9,9 +11,9 @@ export const loadSensor = (sensors: any, sensorId: string) => {
 		return sensors.find((x: any) => x.id === sensorId);
 	} else {
 		return {
-			id: `${Math.random()}`,
-			name: 'new scheduled sensor',
-			description: 'new scheduled sensor',
+			id: newTempId(),
+			name: i18n.t('common:defaults.newScheduledSensor'),
+			description: i18n.t('common:defaults.newScheduledSensor'),
 			taskId: '',
 			Pattern: '',
 			style: {
@@ -21,20 +23,40 @@ export const loadSensor = (sensors: any, sensorId: string) => {
 			},
 			type: 'SCHEDULED',
 			unit: 'V',
+			display: true,
 			isModified: true
 		};
 	}
 };
 
-export const updateSensor = (prevSensors: any, sensor: any) => {
-	const previous = [...prevSensors];
+export const updateSensor = (
+	prevSensors: any,
+	sensor: any,
+	tempId?: string
+) => {
+	const previous: any[] = tempId
+		? prevSensors.filter((x: any) => x.id !== tempId)
+		: [...prevSensors];
 	if (sensor) {
-		const deleteId = sensor?.id.split('_');
-		const index = previous.findIndex(
-			x => x.id === (deleteId[1] || sensor?.id)
-		);
+		const index = previous.findIndex(x => x.id === sensor?.id);
 		if (index > -1) {
-			previous[index] = sensor;
+			// La réponse de sync ne renvoie pas les champs résolus du fetch
+			// complet (deviceCommand, model…) : on fusionne avec le sensor connu
+			// au lieu de le remplacer, sinon la section Configuration se vide
+			// jusqu'au prochain refresh. Si la commande liée a changé, on ne
+			// garde pas une deviceCommand / un model périmés.
+			const prev = previous[index];
+			const sameCommand =
+				`${prev?.config?.commandId}` === `${sensor?.config?.commandId}`;
+			previous[index] = {
+				...prev,
+				...sensor,
+				deviceCommand:
+					sensor.deviceCommand ??
+					(sameCommand ? prev?.deviceCommand : undefined),
+				model: sensor.model ?? (sameCommand ? prev?.model : undefined),
+				isModified: false
+			};
 		} else {
 			previous.push(sensor);
 		}
@@ -48,7 +70,7 @@ export const updateStatus = (prevSensors: any, status: any) => {
 	}
 	if (status.type === 'SENSOR') {
 		const values = [...prevSensors];
-		const index = values.findIndex(x => x.deviceId === status.id);
+		const index = values.findIndex(x => x.id === status.id);
 		if (index > -1) {
 			values[index] = {...values[index], value: status.value};
 		} else {

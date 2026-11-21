@@ -1,14 +1,25 @@
-import React, {useCallback, useEffect, useState} from 'react';
-import {FlatList, Platform, Text, View} from 'react-native';
-import {connect} from 'react-redux';
+import React, {useCallback, useEffect, useMemo, useState} from 'react';
+import {ActivityIndicator, Platform, Text, View} from 'react-native';
+import {FlashList} from '@shopify/flash-list';
+import {connect, useSelector} from 'react-redux';
 import Spinner from 'react-native-loading-spinner-overlay';
-import {loadValues} from '../../../../module/process/infrasctructure/store/actions/cycle';
+import {
+	loadEvents,
+	loadValues
+} from '../../../../module/process/infrasctructure/store/actions/cycle';
 import {styles} from '../../../styles/cycleStyles';
 import {DateTimePickerForm} from '../../../components/common/FormComponents';
+import {TimeZoneNotice} from '../../../components/common/TimeZoneNotice';
+import {startOfDayIn} from '../../../../services/time';
+import {selectBoxTimeZone} from '../../../../module/process/infrasctructure/store/models/boxSettings';
 import {useForm} from 'react-hook-form';
 import {BoxFormStyle} from '../../../styles/components/common/boxForm';
 import {navigationHeader} from '../../../components/common/navigationHeaders';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
+import {useTranslation} from 'react-i18next';
+import {RunListItem} from '../../../components/cycle/RunCard';
+import {CycleRun} from '../../../../module/process/infrasctructure/store/models/cycleHistory';
+import {useLocalPagination} from '../../../components/common/useLocalPagination';
 
 const hapticOptions = {
 	enableVibrateFallback: false,
@@ -21,14 +32,13 @@ const hapticTriggerType: string = Platform.select({
 }) as string;
 
 function EventsScreen(props: any) {
-	const getTimeString = (dateValue: number) => {
-		const date = new Date();
-		date.setHours(0, 0, 0, 0);
-		return new Date(date.getTime() + dateValue);
-	};
-	const defaultValues = {startDate: getTimeString(0), endDate: new Date()};
+	const {t} = useTranslation('cycle');
+	// Dates saisies et affichées en heure de la box, comme ses crons.
+	const tz: string = useSelector(selectBoxTimeZone);
+	const startOfToday = () => new Date(startOfDayIn(tz));
+	const defaultValues = {startDate: startOfToday(), endDate: new Date()};
 	const [maximumDate, setMaximumDate] = useState(new Date());
-	const [minimumDate, setMinimumDate] = useState(getTimeString(0));
+	const [minimumDate, setMinimumDate] = useState(startOfToday());
 
 	const {
 		control,
@@ -38,12 +48,27 @@ function EventsScreen(props: any) {
 		register
 	} = useForm({defaultValues});
 
+	const [expandedId, setExpandedId] = useState<string | null>(null);
+
+	// Requête des événements exclue du loader global : loader propre à
+	// l'écran, levé à la réponse (ou au bout de 15 s sans réponse).
+	const [loading, setLoading] = useState(false);
+	const requestRef = React.useRef(0);
 	const onSubmit = (data: any) => {
-		props.loadValues('DATA', {
-			startDate: data.startDate,
-			endDate: data.endDate,
-			deviceId: props.route.params.cycle.id
-		});
+		const request = ++requestRef.current;
+		const done = () => {
+			if (requestRef.current === request) setLoading(false);
+		};
+		setLoading(true);
+		setTimeout(done, 15000);
+		props.loadEvents(
+			{
+				deviceId: props.route.params.cycle.id,
+				startDate: data.startDate,
+				endDate: data.endDate
+			},
+			done
+		);
 	};
 
 	const [refreshing, setRefreshing] = useState<boolean>(false);
@@ -52,8 +77,6 @@ function EventsScreen(props: any) {
 		handleSubmit(onSubmit)();
 		setRefreshing(false);
 	};
-	useEffect(() => {}, [props.data]);
-
 	useEffect(() => {
 		props.navigation.setOptions({
 			headerLeft: () =>
@@ -72,78 +95,64 @@ function EventsScreen(props: any) {
 		handleSubmit(onSubmit)();
 	}, []);
 
-	const renderItem = useCallback(({item}: {item: any}) => {
-		const date = new Date(item.date);
-		return (
-			<View key={item.key} style={{marginVertical: 4}}>
-				<View
-					style={{
-						alignSelf: 'stretch',
-						backgroundColor: 'white',
-						borderRadius: 12,
-						elevation: 3,
-						shadowColor: '#000',
-						shadowOffset: {width: 0, height: 1},
-						shadowOpacity: 0.22,
-						shadowRadius: 2.22,
-						height: 45,
-						marginHorizontal: 4
-					}}>
-					<View
-						style={{
-							flexDirection: 'row',
-							marginTop: 4,
-							marginHorizontal: 8
-						}}>
-						<View
-							style={{
-								flex: 2,
-								alignItems: 'flex-start',
-								zIndex: 99
-							}}>
-							<View style={{flexDirection: 'row'}}>
-								<Text
-									style={{
-										flex: 2,
-										marginTop: 4,
-										marginLeft: 8,
-										fontWeight: 'bold',
-										color: 'black',
-										fontSize: 15
-									}}
-									numberOfLines={1}
-									ellipsizeMode="middle">
-									{date.getDate() +
-										'-' +
-										(date.getMonth() + 1) +
-										'-' +
-										date.getFullYear() +
-										' ' +
-										date.getHours() +
-										':' +
-										date.getMinutes() +
-										':' +
-										date.getSeconds()}{' '}
-									: {item.type} SWITCH {item.value}
-								</Text>
-							</View>
-						</View>
-					</View>
-				</View>
-			</View>
+	const runs: CycleRun[] = useMemo(() => props.events ?? [], [props.events]);
+	const cycle = props.route.params.cycle;
+	// Pagination locale : page 1 à chaque nouvelle réponse de la box.
+	const {visible: pagedRuns, hasMore, loadMore} = useLocalPagination(
+		runs,
+		runs
+	);
+
+	// Noms des cycles/séquences : timeline des runs, séquences du cycle, puis
+	// liste des cycles ; à défaut l'id.
+	const nameOf = useMemo(() => {
+		const names: Record<string, string> = {};
+		(props.cycles || []).forEach((c: any) => {
+			if (c?.id && c.name) names[c.id] = c.name;
+		});
+		(cycle?.sequences || []).forEach((sq: any) => {
+			if (sq?.id && sq.name) names[sq.id] = sq.name;
+		});
+		if (cycle?.id && cycle.name) names[cycle.id] = cycle.name;
+		runs.forEach(run =>
+			(run.timeline || []).forEach(t => {
+				if (t.elementId && t.name) names[t.elementId] = t.name;
+			})
 		);
-	}, []);
+		return (id: string) => names[id] || id;
+	}, [runs, props.cycles, cycle]);
+
+	const onToggle = useCallback(
+		(runId: string) => setExpandedId(prev => (prev === runId ? null : runId)),
+		[]
+	);
+	const renderItem = useCallback(
+		({item}: {item: CycleRun}) => (
+			<RunListItem
+				run={item}
+				expanded={expandedId === item.runId}
+				onToggle={onToggle}
+				nameOf={nameOf}
+			/>
+		),
+		[expandedId, onToggle, nameOf]
+	);
 
 	return (
-		<View style={{gap: 8, marginVertical: 4, alignSelf: 'stretch'}}>
+		// flex: 1 borne la hauteur de la liste : sans elle, la liste prend
+		// la hauteur de son contenu et rend TOUTES les cartes (pas de
+		// virtualisation), d'où le freeze après plusieurs pages.
+		<View style={{flex: 1, gap: 8, marginVertical: 4, alignSelf: 'stretch'}}>
 			<View style={BoxFormStyle.boxForm}>
+				<TimeZoneNotice kind="box" />
 				<DateTimePickerForm
 					mode={'datetime'}
+					timeZone={tz}
 					control={control}
 					errors={errors}
 					name="startDate"
-					placeholder="Get logs from :"
-					rules={{required: 'start date is required'}}
+					placeholder={t('events.from')}
+					rules={{required: t('events.startRequired')}}
 					maximumDate={maximumDate}
 					onChangeText={(value: any) => {
 						const now = new Date();
@@ -156,11 +165,12 @@ function EventsScreen(props: any) {
 				/>
 				<DateTimePickerForm
 					mode={'datetime'}
+					timeZone={tz}
 					control={control}
 					errors={errors}
 					name="endDate"
-					placeholder="to :"
-					rules={{required: 'end date is required'}}
+					placeholder={t('events.to')}
+					rules={{required: t('events.endRequired')}}
 					minimumDate={minimumDate}
 					maximumDate={maximumDate}
 					onChangeText={(value: any) => {
@@ -171,26 +181,58 @@ function EventsScreen(props: any) {
 				/>
 			</View>
 			<Spinner
-				visible={props.isLoading}
+				visible={loading}
 				color="#32404e"
 				textStyle={styles.spinnerTextStyle}
 				animation="fade"
 			/>
-			<FlatList
-				data={props.data}
+			<FlashList
+				style={{flex: 1}}
+				data={pagedRuns}
 				renderItem={renderItem}
-				keyExtractor={item => item.id}
+				onEndReached={loadMore}
+				onEndReachedThreshold={0.5}
+				// FlashList recycle les cellules : les cartes remontées hors
+				// écran sont réutilisées pour les nouvelles au lieu d'être
+				// gardées montées ou recréées.
+				drawDistance={500}
+				ListFooterComponent={
+					hasMore ? (
+						<ActivityIndicator
+							size="small"
+							color="#32404e"
+							style={{marginVertical: 12}}
+						/>
+					) : null
+				}
+				keyExtractor={item => 'run_' + item.runId}
+				extraData={expandedId}
 				onRefresh={() => onRefresh()}
 				refreshing={refreshing}
+				ListEmptyComponent={
+					loading ? null : (
+						<Text
+							style={{
+								color: '#777',
+								textAlign: 'center',
+								marginTop: 24
+							}}>
+							{t('events.noRun')}
+						</Text>
+					)
+				}
 			/>
 		</View>
 	);
 }
 
 const mapStateToProps = (state: any) => ({
-	data: state.root_cycle.data
+	data: state.root_cycle.data,
+	events: state.root_cycle.events,
+	cycles: state.root_cycle.cycles
 });
 
 export default connect(mapStateToProps, {
-	loadValues
+	loadValues,
+	loadEvents
 })(EventsScreen);

@@ -1,13 +1,13 @@
+import { ELEMENT_HEIGHT, ELEMENT_FONT_SIZE } from '../../styles/metrics';
 import * as React from 'react';
-import {Text, TouchableOpacity, View} from 'react-native';
+import { Text, TouchableOpacity, View } from 'react-native';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
-import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
-import {faCog, faForward} from '@fortawesome/free-solid-svg-icons';
-import {styles} from '../../styles/cycleStyles';
-import {hapticOptions} from '../../data/cycleTypes';
-import {connect} from 'react-redux';
-import {loadValues} from '../../../module/process/infrasctructure/store/actions/cycle';
-
+import i18n from 'i18next';
+import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
+import { faCog, faForward } from '@fortawesome/free-solid-svg-icons';
+import { styles } from '../../styles/cycleStyles';
+import { hapticOptions } from '../../data/cycleTypes';
+import { connect } from 'react-redux';
 export function SequenceStack({
 	navigation,
 	isActive,
@@ -15,7 +15,8 @@ export function SequenceStack({
 	cycleId,
 	onSkip,
 	stackParent,
-	statusIn
+	statusIn,
+	plannedDuration
 }: {
 	navigation: any;
 	isActive: boolean;
@@ -24,6 +25,9 @@ export function SequenceStack({
 	onSkip: (sequenceId: string) => void;
 	stackParent?: boolean;
 	statusIn?: any;
+	// Durée prévue tant que la séquence n'a pas démarré : la sienne, ou celle
+	// forcée pour le cycle. Absente : durée propre de la séquence.
+	plannedDuration?: number;
 }) {
 	const [progression, setProgression] = React.useState(0);
 	const [miliseconds, setMiliseconds] = React.useState(0);
@@ -34,25 +38,10 @@ export function SequenceStack({
 		duration: number,
 		status: string
 	) => {
-		const now = new Date();
-		const startDate = new Date(startedAt);
-		const date1utc = Date.UTC(
-			now.getFullYear(),
-			now.getMonth(),
-			now.getDate(),
-			now.getHours(),
-			now.getMinutes(),
-			now.getSeconds()
-		);
-		const date2utc = Date.UTC(
-			startDate.getFullYear(),
-			startDate.getMonth(),
-			startDate.getDate(),
-			startDate.getHours(),
-			startDate.getMinutes(),
-			startDate.getSeconds()
-		);
-		const diff = Math.max(date1utc - date2utc, 0);
+		// Écart entre deux instants : indépendant du fuseau (et du changement
+		// d'heure, que le passage par les heures murales faussait).
+		const diff =
+			Math.max(Date.now() - new Date(startedAt).getTime(), 0) || 0;
 		const millisenconds = duration - diff;
 		const startIndex = status === 'STOPPED' ? 0 : (diff * 100) / duration;
 		const step = (100 - startIndex) / ((duration - diff) / 1000);
@@ -90,7 +79,8 @@ export function SequenceStack({
 				const status = statusData?.status;
 				const timerSpeed = 1000;
 				const startedAt = statusData?.startedAt;
-				const duration = statusData?.duration || item.maxDuration;
+				const duration =
+					statusData?.duration || item.securityConfig.maxDuration;
 				const timerParams = getTimerParams(startedAt, duration, status);
 
 				if (previousStatus.current !== status && status === 'STOPPED') {
@@ -107,13 +97,17 @@ export function SequenceStack({
 					setMiliseconds(timerParams.millisenconds);
 					setProgression(timerParams.progression);
 
+					// Recalculé depuis startedAt à chaque tick : les timers JS
+					// sont suspendus en arrière-plan, un cumul de pas laisserait
+					// la barre en retard au retour au premier plan.
 					timerId = setInterval(() => {
-						setProgression(progression =>
-							progression + timerParams.step < 100
-								? progression + timerParams.step
-								: 100
+						const tick = getTimerParams(
+							startedAt,
+							duration,
+							status
 						);
-						setMiliseconds((ms: number) => ms - timerSpeed);
+						setProgression(tick.progression);
+						setMiliseconds(tick.millisenconds);
 					}, timerSpeed);
 				}
 				return () => {
@@ -127,6 +121,31 @@ export function SequenceStack({
 		stackParent ? [statusIn] : []
 	);
 
+	// Titre court : il tient sur la ligne de la barre, à sa gauche.
+	const inlineTitle = !!stackParent && (item.name?.length ?? 0) < 10;
+	const title = (
+		<Text
+			style={[
+				isActive ? styles.textSequenceDrag : styles.textSequence,
+				{ fontSize: ELEMENT_FONT_SIZE, fontWeight: 'bold' },
+				inlineTitle
+					? { marginRight: 8 }
+					: {
+							flex: 1,
+							marginTop: 8,
+							marginBottom: !stackParent
+								? 8
+								: miliseconds > 0
+								? 0
+								: 4,
+							marginLeft: 8
+					  }
+			]}
+		>
+			{item.name}
+		</Text>
+	);
+
 	return (
 		<View
 			style={{
@@ -135,35 +154,76 @@ export function SequenceStack({
 				borderRadius: 12,
 				elevation: 3,
 				shadowColor: '#000',
-				shadowOffset: {width: 0, height: 1},
+				shadowOffset: { width: 0, height: 1 },
 				shadowOpacity: 0.22,
 				shadowRadius: 2.22,
-				margin: 4
-			}}>
-			<View style={{flexDirection: 'row'}}>
-				<Text
-					style={[
-						isActive ? styles.textSequenceDrag : styles.textSequence,
-						{flex: 1, alignSelf: 'flex-start', marginVertical: 8, marginLeft: 8}
-					]}>
-					{item.name}
-				</Text>
+				margin: 4,
+				minHeight: ELEMENT_HEIGHT,
+				justifyContent: 'center'
+			}}
+		>
+			{!inlineTitle ? (
+				<View style={{ flexDirection: 'row', alignItems: 'center' }}>
+					{title}
 
-				{stackParent ? (
-					<View
-						style={{
-							flex: 3,
-							alignSelf: 'stretch',
-							marginTop: 16,
-							marginRight: 8
-						}}>
+					{!stackParent ? (
 						<View
 							style={{
+								alignSelf: 'center',
+								marginVertical: 8,
+								marginRight: 8
+							}}
+						>
+							<TouchableOpacity
+								onPress={() => {
+									ReactNativeHapticFeedback.trigger(
+										'impactMedium',
+										hapticOptions
+									);
+									navigation.navigate(
+										'SequenceSettingsStack',
+										{
+											screen: 'SequenceSettingsMenu',
+											params: { cycleId, item }
+										}
+									);
+								}}
+							>
+								<FontAwesomeIcon
+									icon={faCog}
+									size={20}
+									style={
+										isActive
+											? styles.textSequenceDrag
+											: styles.textSequence
+									}
+								/>
+							</TouchableOpacity>
+						</View>
+					) : null}
+				</View>
+			) : null}
+			{stackParent ? (
+				<View
+					style={{
+						marginHorizontal: 8,
+						marginTop: inlineTitle ? 8 : 0,
+						marginBottom: 8
+					}}
+				>
+					<View
+						style={{ flexDirection: 'row', alignItems: 'center' }}
+					>
+						{inlineTitle ? title : null}
+						<View
+							style={{
+								flex: 1,
 								height: 4,
 								backgroundColor: '#e0e0e0',
 								borderRadius: 12,
 								overflow: 'hidden'
-							}}>
+							}}
+						>
 							<View
 								style={{
 									height: '100%',
@@ -173,79 +233,55 @@ export function SequenceStack({
 								}}
 							/>
 						</View>
-						<Text
-							style={[
-								isActive
-									? styles.textSequenceDrag
-									: styles.textSequence,
-								{alignSelf: 'center'}
-							]}>
-							{miliseconds > 0
-								? 'expected end in ' + getEndTime(miliseconds)
-								: 'duration ' + getEndTime(item.maxDuration)}
-						</Text>
+						{stackParent && miliseconds > 0 ? (
+							<View
+								style={{
+									marginLeft: 8
+								}}
+							>
+								<TouchableOpacity
+									onLongPress={() => {
+										ReactNativeHapticFeedback.trigger(
+											'impactMedium',
+											hapticOptions
+										);
+										onSkip(item.id);
+									}}
+								>
+									<FontAwesomeIcon
+										icon={faForward}
+										size={20}
+										style={
+											isActive
+												? styles.textSequenceDrag
+												: styles.textSequence
+										}
+									/>
+								</TouchableOpacity>
+							</View>
+						) : null}
 					</View>
-				) : null}
-
-				{stackParent && miliseconds > 0 ? (
-					<View
-						style={{
-							alignSelf: 'flex-end',
-							marginVertical: 8,
-							marginRight: 8
-						}}>
-						<TouchableOpacity
-							onLongPress={() => {
-								ReactNativeHapticFeedback.trigger(
-									'impactMedium',
-									hapticOptions
-								);
-								onSkip(item.id);
-							}}>
-							<FontAwesomeIcon
-								icon={faForward}
-								size={24}
-								style={
-									isActive
-										? styles.textSequenceDrag
-										: styles.textSequence
-								}
-							/>
-						</TouchableOpacity>
-					</View>
-				) : null}
-
-				{!stackParent ? (
-					<View
-						style={{
-							alignSelf: 'flex-end',
-							marginVertical: 8,
-							marginRight: 8
-						}}>
-						<TouchableOpacity
-							onPress={() => {
-								ReactNativeHapticFeedback.trigger(
-									'impactMedium',
-									hapticOptions
-								);
-								navigation.navigate('SequenceSettingsStack', {
-									screen: 'SequenceSettingsMenu',
-									params: {cycleId, item}
-								});
-							}}>
-							<FontAwesomeIcon
-								icon={faCog}
-								size={20}
-								style={
-									isActive
-										? styles.textSequenceDrag
-										: styles.textSequence
-								}
-							/>
-						</TouchableOpacity>
-					</View>
-				) : null}
-			</View>
+					<Text
+						style={[
+							isActive
+								? styles.textSequenceDrag
+								: styles.textSequence,
+							{ alignSelf: 'center' }
+						]}
+					>
+						{miliseconds > 0
+							? i18n.t('cycle:sequence.expectedEnd', {
+									time: getEndTime(miliseconds)
+							  })
+							: i18n.t('cycle:sequence.duration', {
+									time: getEndTime(
+										plannedDuration ??
+											item.securityConfig?.maxDuration
+									)
+							  })}
+					</Text>
+				</View>
+			) : null}
 		</View>
 	);
 }

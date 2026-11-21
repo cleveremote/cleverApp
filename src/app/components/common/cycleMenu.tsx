@@ -1,5 +1,6 @@
-import React, {useState} from 'react';
-import {Pressable, Text, View} from 'react-native';
+import React, {createContext, useContext, useState} from 'react';
+import {Pressable, Text, View, ViewProps} from 'react-native';
+import i18n from 'i18next';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
@@ -7,15 +8,64 @@ import {IconDefinition} from '@fortawesome/fontawesome-svg-core';
 import {ModalConfirmation} from '../modalDelete';
 import {faTrash} from '@fortawesome/free-solid-svg-icons';
 import {hapticOptions} from '../../data/cycleTypes';
+import {directionalIcon} from '../../../i18n/rtl';
+
+// Position d'un menu dans son MenuGroup : undefined hors groupe (la prop
+// isLast fait alors foi).
+const MenuIsLastContext = createContext<boolean | undefined>(undefined);
+
+// Aplatit fragments / tableaux et ignore null, false, undefined pour ne garder
+// que les menus réellement rendus.
+function flattenMenuChildren(children: React.ReactNode): React.ReactElement[] {
+	const out: React.ReactElement[] = [];
+	React.Children.forEach(children, child => {
+		if (!React.isValidElement(child)) return;
+		if (child.type === React.Fragment) {
+			out.push(
+				...flattenMenuChildren(
+					(child.props as {children?: React.ReactNode}).children
+				)
+			);
+		} else {
+			out.push(child);
+		}
+	});
+	return out;
+}
+
+// Conteneur de MenuAccordion / DeleteItemMenu : indique automatiquement au
+// dernier menu rendu qu'il est le dernier (pas de ligne de séparation en bas),
+// y compris quand des menus apparaissent ou disparaissent dynamiquement.
+export function MenuGroup({children, ...viewProps}: ViewProps) {
+	const items = flattenMenuChildren(children);
+	return (
+		<View {...viewProps}>
+			{items.map((item, i) => (
+				<MenuIsLastContext.Provider
+					key={item.key ?? i}
+					value={i === items.length - 1}>
+					{item}
+				</MenuIsLastContext.Provider>
+			))}
+		</View>
+	);
+}
+
+const DEFAULT_MENU_COLOR = '#32404e';
 
 export function MenuAccordion({
 	name,
 	icon,
-	color = '#32404e',
-	isLast = false,
+	color = DEFAULT_MENU_COLOR,
+	isLast: isLastProp = false,
 	closeSibillings,
 	current,
-	onPress
+	onPress,
+	children,
+	invalid = false,
+	alwaysExpanded = false,
+	defaultExpanded = false,
+	expanded
 }: {
 	name: string;
 	icon: IconDefinition;
@@ -24,8 +74,29 @@ export function MenuAccordion({
 	closeSibillings?: Function;
 	current?: string;
 	onPress: Function;
+	children?: React.ReactNode;
+	// Encadre la section en rouge quand son sous-formulaire n'est pas conforme.
+	invalid?: boolean;
+	// Seul menu de l'accordéon : toujours déplié (pas de repli ni de chevron) et
+	// sans ligne de séparation en bas.
+	alwaysExpanded?: boolean;
+	// Déplié à l'ouverture de l'écran, mais repliable.
+	defaultExpanded?: boolean;
+	// Ouverture pilotée par le parent (qui la bascule dans `onPress`) ; absent,
+	// l'accordéon gère seul son état.
+	expanded?: boolean;
 }) {
-	const [isExpanded, setExpended] = useState(false);
+	const isLast = useContext(MenuIsLastContext) ?? isLastProp;
+	const [expandedState, setExpended] = useState(defaultExpanded);
+	const isExpanded = alwaysExpanded || (expanded ?? expandedState);
+	const showSeparator = !alwaysExpanded && (!isLast || isExpanded);
+
+	// Section non conforme : icône + titre en rouge et mention « not valid ».
+	const errorColor = '#E53E3E';
+	const activeColor = invalid ? errorColor : color;
+	// Chevron gris, sauf pour une section de couleur propre (ex. rouge pour
+	// une réinitialisation) : il en prend la couleur.
+	const chevronColor = color === DEFAULT_MENU_COLOR ? 'grey' : color;
 
 	return (
 		<View>
@@ -35,6 +106,12 @@ export function MenuAccordion({
 						'impactMedium',
 						hapticOptions
 					);
+					// Avec un contenu déplié, l'accordéon se déplie/replie inline
+					// au lieu de déléguer la navigation.
+					if (alwaysExpanded) return;
+					if (children && expanded === undefined) {
+						setExpended(prev => !prev);
+					}
 					onPress();
 				}}
 				style={{height: 50, backgroundColor: 'white', borderRadius: 12}}>
@@ -46,9 +123,8 @@ export function MenuAccordion({
 							alignItems: 'center',
 							flexDirection: 'row',
 							transform: [{scale: pressed ? 0.99 : 1}],
-							borderBottomColor:
-								!isLast || isExpanded ? color : 'white',
-							borderBottomWidth: !isLast || isExpanded ? 1 : 0
+							borderBottomColor: showSeparator ? color : 'white',
+							borderBottomWidth: showSeparator ? 1 : 0
 						}}>
 						<View
 							style={{
@@ -64,19 +140,19 @@ export function MenuAccordion({
 									borderRadius: 0.5 * 45,
 									justifyContent: 'center',
 									alignItems: 'center',
-									borderColor: color,
+									borderColor: activeColor,
 									borderWidth: 2.5
 								}}>
 								<FontAwesomeIcon
 									icon={icon}
 									size={20}
-									color={color}
+									color={activeColor}
 								/>
 							</View>
 							<Text
 								style={{
 									fontWeight: 'bold',
-									color: color,
+									color: activeColor,
 									fontSize: 15,
 									marginLeft: 8
 								}}>
@@ -88,31 +164,54 @@ export function MenuAccordion({
 						<View
 							style={{
 								flex: 1,
-								alignItems: 'flex-end',
+								flexDirection: 'row',
+								alignItems: 'center',
+								justifyContent: 'flex-end',
 								marginRight: 20
 							}}>
-							<Icon
-								name={
-									isExpanded ? 'angle-down' : 'angle-right'
-								}
-								size={20}
-								color={'grey'}
-							/>
+							{invalid ? (
+								<Text
+									style={{
+										color: errorColor,
+										fontSize: 12,
+										fontWeight: 'bold',
+										marginRight: 8
+									}}>
+									{i18n.t('common:notValid')}
+								</Text>
+							) : null}
+							{alwaysExpanded ? null : (
+								<Icon
+									name={
+										isExpanded ? 'angle-down' : directionalIcon('angle-right')
+									}
+									size={20}
+									color={chevronColor}
+								/>
+							)}
 						</View>
 					</View>
 				)}
 			</Pressable>
+			{children && isExpanded ? (
+				// Les menus imbriqués dans le contenu ne dépendent pas de ce groupe.
+				<MenuIsLastContext.Provider value={undefined}>
+					<View>{children}</View>
+				</MenuIsLastContext.Provider>
+			) : null}
 		</View>
 	);
 }
 
 export function DeleteItemMenu({
-	name = 'Remove',
+	name = i18n.t('common:remove'),
 	icon = faTrash,
 	color = '#fb1900',
-	isLast = true,
+	isLast: isLastProp = true,
 	onCancel = () => {},
-	OnConfirm
+	OnConfirm,
+	confirmTitle,
+	confirmMessage
 }: {
 	name?: string;
 	icon?: IconDefinition;
@@ -120,16 +219,20 @@ export function DeleteItemMenu({
 	isLast?: boolean;
 	onCancel?: () => void;
 	OnConfirm: () => void;
+	confirmTitle?: string;
+	confirmMessage?: string;
 }) {
+	const isLast = useContext(MenuIsLastContext) ?? isLastProp;
 	const [isOpened, setOpened] = useState(false);
-	const onPress = () => {
+	// Appui long : ouvre une modal « Are you sure ? » (Yes / No).
+	const onLongPress = () => {
 		ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
-		setOpened(!isOpened);
+		setOpened(true);
 	};
 	return (
 		<View>
 			<Pressable
-				onLongPress={onPress}
+				onLongPress={onLongPress}
 				style={{height: 55, backgroundColor: 'white', borderRadius: 12}}>
 				{({pressed}) => (
 					<View
@@ -168,6 +271,8 @@ export function DeleteItemMenu({
 							</View>
 							<Text
 								style={{
+									// 'left' = côté de début : RN l'inverse en RTL (titre à droite en arabe).
+									textAlign: 'left',
 									flex: 1,
 									fontWeight: 'bold',
 									color: '#E53E3E',
@@ -179,13 +284,14 @@ export function DeleteItemMenu({
 							</Text>
 							<Text
 								style={{
+									textAlign: 'left',
 									flex: 2,
 									fontWeight: 'bold',
 									color: '#E53E3E',
 									fontSize: 10
 								}}>
 								{' '}
-								(long press to remove){' '}
+								{i18n.t('common:longPressToRemove')}{' '}
 							</Text>
 						</View>
 					</View>
@@ -193,13 +299,15 @@ export function DeleteItemMenu({
 			</Pressable>
 			<ModalConfirmation
 				isOpen={isOpened}
+				title={confirmTitle}
+				message={confirmMessage}
 				onClose={() => {
 					onCancel();
-					onPress();
+					setOpened(false);
 				}}
 				onDelete={() => {
+					setOpened(false);
 					OnConfirm();
-					onPress();
 				}}
 			/>
 		</View>

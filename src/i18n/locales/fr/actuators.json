@@ -1,0 +1,68 @@
+{
+	"enum": {
+		"RPI": "RPI",
+		"COM": "COM",
+		"CTRL": "CTRL",
+		"in": "entrée",
+		"out": "sortie",
+		"high": "haut",
+		"low": "bas",
+		"none": "aucun",
+		"rising": "montant",
+		"falling": "descendant",
+		"both": "les deux",
+		"PROPORTIONAL": "Proportionnelle",
+		"ON_OFF": "Tout ou rien"
+	},
+	"controlLoop": {
+		"mode": {
+			"REGULATION": "Régulation (consigne)",
+			"FOLLOW": "Suivi du potentiomètre"
+		}
+	},
+	"empty": "Aucun actionneur RPI.",
+	"add": "Ajouter un actionneur RPI ...",
+	"actions": "Actions",
+	"channel": "canal",
+	"addAction": "Ajouter une action (commande d'équipement) ...",
+	"regulation": {
+		"enable": "Activer la régulation",
+		"mode": "Mode",
+		"analogInput": "Potentiomètre / entrée analogique*",
+		"analogInputRequired": "L'entrée analogique est obligatoire",
+		"deadband": "Zone morte (%)",
+		"readPeriod": "Période de lecture (ms)",
+		"feedbackSensor": "Capteur de retour*",
+		"feedbackSensorRequired": "Le capteur de retour est obligatoire",
+		"setpoint": "Consigne*",
+		"setpointRequired": "La consigne est obligatoire",
+		"algorithm": "Algorithme",
+		"kP": "kP (gain)",
+		"kI": "kI (intégral)",
+		"kD": "kD (dérivé)",
+		"advanced": "Avancé",
+		"tolerance": "Tolérance",
+		"maxIterations": "Itérations max",
+		"iterationDelay": "Délai entre itérations (ms)",
+		"offHint": "Régulation désactivée : dans une séquence, la valeur envoyée à cette vanne est son ouverture (%)."
+	},
+	"ctrl": {
+		"minOpening": "Ouverture min (%)",
+		"maxOpening": "Ouverture max (%)",
+		"openingPercent": "Ouverture (%)",
+		"fullStrokeMs": "Course complète (ms)",
+		"minOutputValue": "Valeur de sortie min",
+		"maxOutputValue": "Valeur de sortie max"
+	},
+	"rpi": {
+		"pin": "Broche RPI*",
+		"pinRequired": "La broche RPI est obligatoire",
+		"direction": "Direction*",
+		"directionRequired": "La direction est obligatoire",
+		"edge": "Front*",
+		"edgeRequired": "Le front est obligatoire",
+		"debounce": "Anti-rebond (ms)",
+		"activeLow": "Actif à l'état bas",
+		"reconfigureDirection": "Reconfigurer la direction"
+	}
+}

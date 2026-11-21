@@ -1,0 +1,100 @@
+{
+	"yes": "Yes",
+	"no": "No",
+	"confirmChoice": "Confirm",
+	"dateRange": "From {{from}} to {{to}}",
+	"cancel": "Cancel",
+	"execute": "Execute",
+	"remove": "Remove",
+	"notValid": "not valid",
+	"longPressToRemove": "(long press to remove)",
+	"unknownError": "unknown error",
+	"confirm": {
+		"title": "Confirmation required!",
+		"irreversible": "This action cannot be undone. Deleted data cannot be recovered."
+	},
+	"overrideDuration": {
+		"title": "Override duration",
+		"message": "Pick a duration to override the default sequence duration",
+		"hours": "Hours",
+		"minutes": "Minutes"
+	},
+	"durationUnit": {
+		"hours": "h",
+		"minutes": "min"
+	},
+	"discard": {
+		"title": "Discard changes?",
+		"message": "You have unsaved changes. Would you like to continue editing or discard them?",
+		"continue": "Continue",
+		"confirm": "Discard",
+		"leaveMessage": "You have unsaved changes. Are you sure you want to discard them and leave the screen?",
+		"invalidMessage": "Some fields contain invalid or incomplete information. Would you like to discard changes or continue editing?"
+	},
+	"priority": {
+		"highest": "highest",
+		"lowest": "lowest"
+	},
+	"back": "Back",
+	"retry": "Retry",
+	"password": "Password",
+	"error": "Error",
+	"errors": {
+		"noServer": "No server connection!",
+		"unexpected": "An unexpected error occurred.",
+		"boxNotConnected": "Unknown or disconnected box."
+	},
+	"devicesUnreachable": {
+		"title": "Devices unreachable",
+		"message": "\"{{name}}\" cannot start:\n{{devices}}",
+		"master": "master \"{{name}}\" unreachable"
+	},
+	"defaults": {
+		"newGroup": "new group",
+		"newModule": "new module",
+		"newCycle": "new cycle",
+		"newScheduledSensor": "new scheduled sensor",
+		"newSchedule": "new schedule",
+		"newSequence": "new sequence",
+		"newTrigger": "new trigger",
+		"newCondition": "new condition"
+	},
+	"modes": {
+		"MANUAL": "Manual",
+		"SCHEDULE": "Schedule",
+		"TRIGGER": "Trigger"
+	},
+	"save": "Save",
+	"form": {
+		"name": "Name*",
+		"nameRequired": "Name is required",
+		"description": "Description",
+		"noDescription": "No description",
+		"editDescription": "Edit description",
+		"done": "Done"
+	},
+	"sections": {
+		"general": "General",
+		"connectivity": "Connectivity",
+		"triggerConditions": "Trigger Conditions",
+		"actions": "Actions",
+		"preconditions": "Preconditions",
+		"security": "Safety Limits",
+		"actuators": "Actuators",
+		"sensors": "Sensors",
+		"configuration": "Configuration",
+		"parameters": "Parameters",
+		"execution": "Execution",
+		"cycles": "Cycles",
+		"sequences": "Sequences"
+	},
+	"timeZoneNotice": {
+		"box": "Box time ({{timeZone}})",
+		"local": "Phone local time ({{timeZone}})",
+		"boxDiffers": "Warning: the box is in {{timeZone}}.",
+		"localDiffers": "Warning: your phone is in {{timeZone}}.",
+		"localShort": "local time"
+	},
+	"privacyPolicy": "Privacy policy",
+	"support": "Support"
+}

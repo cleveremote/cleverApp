@@ -1,34 +1,65 @@
 import React, {useEffect, useRef, useState} from 'react';
-import {Alert, ScrollView, StyleSheet, Text, View} from 'react-native';
-import {AppSwitch} from '../../../../../components/common/AppSwitch';
+import {
+	Alert,
+	ScrollView,
+	StyleSheet,
+	Text,
+	TouchableOpacity,
+	View
+} from 'react-native';
+import {SolarTriggerFields} from '../../../../../components/common/SolarTriggerFields';
+import {WarningBox} from '../../../../../components/common/WarningBox';
 import type {EventArg, NavigationAction} from '@react-navigation/core';
 import {navigationHeader} from '../../../../../components/common/navigationHeaders';
 import {BoxFormStyle} from '../../../../../styles/components/common/boxForm';
 import {
 	DateTimePickerForm,
-	SelectForm
+	FieldError,
+	SwitchForm
 } from '../../../../../components/common/FormComponents';
+import {ELEMENT_HEIGHT} from '../../../../../styles/metrics';
+import {OutlineButton} from '../../../../access/accessUi';
+import {faPowerOff} from '@fortawesome/free-solid-svg-icons';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import {hapticOptions} from '../../../../../data/cycleTypes';
-import {useForm} from 'react-hook-form';
+import {Controller, useForm} from 'react-hook-form';
+import {
+	useValidateOnOpen,
+	useEmbeddedSection
+} from '../../../../../components/common/useSectionSettingsHeader';
 import {updateTrigger} from '../../../../../../module/process/infrasctructure/store/actions/trigger';
 import {connect} from 'react-redux';
+import i18n from 'i18next';
+import {
+	durationToPickerDate,
+	pickerDateToDuration
+} from '../../../../../../services/time';
 
-const SWITCH_TRACK_COLOR = {true: '#32404e', false: '#d1d1d6'};
+
+// Les anciens triggers n'ont pas de timeDirection : « après le coucher » et
+// « avant le lever » étaient implicites.
+const defaultTimeDirection = (sunBehavior: any) =>
+	sunBehavior?.timeDirection ??
+	(sunBehavior?.sunState === 'SUNSET' ? 'AFTER' : 'BEFORE');
 
 export function TriggerExecutionSettingsSection(props: any) {
-	const defValues = {...props.route.params?.triggerData};
-	const getTimeString = (dateValue: number) => {
-		const date = new Date();
-		date.setHours(0, 0, 0, 0);
-		return new Date(date.getTime() + dateValue);
+	const embedded = !!props.embedded;
+	const parentRef = useRef(props.triggerData);
+	parentRef.current = props.triggerData;
+	const defValues = {
+		...(embedded ? props.triggerData : props.route.params?.triggerData)
 	};
 	const defaultValues = {
-		action: defValues.action,
-		delay: getTimeString(defValues.delay),
-		timeAfter: getTimeString(defValues.trigger?.timeAfter),
+		// ON par défaut (anciens triggers sans action).
+		action: defValues.action ?? 'ON',
+		delay: durationToPickerDate(defValues.delay),
+		timeAfter: durationToPickerDate(defValues.trigger?.timeAfter),
 		sunState: defValues.trigger?.sunBehavior?.sunState,
-		time: getTimeString(defValues.trigger?.sunBehavior?.time)
+		timeDirection: defaultTimeDirection(defValues.trigger?.sunBehavior),
+		time: durationToPickerDate(defValues.trigger?.sunBehavior?.time),
+		// Le formulaire affiche « Activé » : inverse de `isPaused` (absent = activé).
+		isEnabled: !defValues.isPaused,
+		shouldConfirmation: defValues.shouldConfirmation
 	};
 
 	const [sunState, setSunState] = useState(
@@ -42,9 +73,32 @@ export function TriggerExecutionSettingsSection(props: any) {
 		handleSubmit,
 		formState: {errors},
 		setValue,
+		watch,
 		getValues,
-		reset
-	} = useForm({defaultValues, mode: 'onBlur'});
+		trigger
+	} = useForm<any>({defaultValues, mode: 'onChange'});
+
+	useValidateOnOpen(props.route, trigger);
+
+	useEmbeddedSection({
+		embedded,
+		showErrors: props.showErrors,
+		trigger,
+		watch,
+		getValues,
+		stage: data => {
+			const dto = mappingtoDto(data);
+			props.updateTrigger({
+				...parentRef.current,
+				action: dto.action,
+				delay: dto.delay,
+				trigger: dto.trigger,
+				isPaused: dto.isPaused,
+				shouldConfirmation: dto.shouldConfirmation,
+				isModified: true
+			});
+		}
+	});
 
 	const onSubmit = (data: any) => {
 		if (saveUnchangedData.current) {
@@ -57,29 +111,29 @@ export function TriggerExecutionSettingsSection(props: any) {
 
 	const mappingtoDto = (data: any) => {
 		const result = {...defValues};
-		result.delay = convertToMs(data.delay);
+		result.delay = pickerDateToDuration(data.delay);
 		result.action = data.action;
+		result.isPaused = !data.isEnabled;
+		result.shouldConfirmation = data.shouldConfirmation;
 		if (sunStateRef.current) {
 			result.trigger = {
 				...result.trigger,
 				sunBehavior: {
 					sunState: data.sunState,
-					time: convertToMs(data.time)
+					timeDirection: data.timeDirection,
+					time: pickerDateToDuration(data.time)
 				},
 				timeAfter: undefined
 			};
 		} else {
 			result.trigger = {
 				...result.trigger,
-				timeAfter: convertToMs(data.timeAfter),
+				timeAfter: pickerDateToDuration(data.timeAfter),
 				sunBehavior: undefined
 			};
 		}
 		return result;
 	};
-
-	const convertToMs = (t: Date) =>
-		t.getHours() * 60 * 60 * 1000 + t.getMinutes() * 60 * 1000;
 
 	const buildBeforeRemoveListener = (
 		e: EventArg<'beforeRemove', true, {action: NavigationAction}>,
@@ -94,16 +148,16 @@ export function TriggerExecutionSettingsSection(props: any) {
 			},
 			_errors => {
 				Alert.alert(
-					'Discard changes?',
-					'Some fields contain invalid or incomplete information. Would you like to discard changes or continue editing?',
+					i18n.t('common:discard.title'),
+					i18n.t('common:discard.invalidMessage'),
 					[
 						{
-							text: 'Continue',
+							text: i18n.t('common:discard.continue'),
 							style: 'cancel',
 							onPress: onContinue
 						},
 						{
-							text: 'Discard',
+							text: i18n.t('common:discard.confirm'),
 							style: 'destructive',
 							onPress: onDiscard
 						}
@@ -114,6 +168,7 @@ export function TriggerExecutionSettingsSection(props: any) {
 	};
 
 	useEffect(() => {
+		if (embedded) return;
 		const subscribe = () => {
 			const unsubscribe = props.navigation.addListener(
 				'beforeRemove',
@@ -125,12 +180,10 @@ export function TriggerExecutionSettingsSection(props: any) {
 							subscribe();
 						},
 						() => {
-							reset();
-							const data = getValues();
-							sunStateRef.current = !!data.sunState;
-							setSunState(!!data.sunState);
 							unsubscribe();
-							subscribe();
+							props.navigation.dispatch(
+								e.data.action
+							);
 						}
 					)
 			);
@@ -157,122 +210,243 @@ export function TriggerExecutionSettingsSection(props: any) {
 		// eslint-disable-next-line react-hooks/exhaustive-deps
 	}, []);
 
+	// Mode du déclencheur : après un délai (false) ou phase solaire (true).
+	const setSolarMode = (checked: boolean) => {
+		sunStateRef.current = checked;
+		setSunState(checked);
+		if (checked) {
+			setValue(
+				'timeAfter',
+				new Date(new Date().setHours(0, 0, 0, 0)),
+				{shouldValidate: true}
+			);
+			setValue('sunState', 'SUNRISE', {
+				shouldValidate: true
+			});
+			setValue('timeDirection', 'BEFORE', {
+				shouldValidate: true
+			});
+		} else {
+			setValue('sunState', null, {
+				shouldValidate: true
+			});
+			setValue(
+				'time',
+				new Date(new Date().setHours(0, 0, 0, 0)),
+				{shouldValidate: true}
+			);
+		}
+		saveUnchangedData.current = true;
+	};
+
+	const Body: any = embedded ? View : ScrollView;
+	const bodyProps: any = embedded
+		? {}
+		: {automaticallyAdjustKeyboardInsets: true};
+
 	return (
-		<ScrollView automaticallyAdjustKeyboardInsets={true}>
+		<Body {...bodyProps}>
 			<View style={BoxFormStyle.boxForm}>
-				<SelectForm
-					lstData={[
-						{label: 'ON', value: 'ON'},
-						{label: 'OFF', value: 'OFF'}
-					]}
+				{/* Action : bouton outline qui bascule ON / OFF à chaque toucher. */}
+				<Controller
 					control={control}
-					errors={errors}
 					name="action"
-					placeholder="Action*"
-					rules={{required: 'Action is required'}}
-					onValueChange={() => {
-						saveUnchangedData.current = true;
-					}}
+					rules={{required: i18n.t('cycle:triggers.actionRequired')}}
+					render={({field: {value, onChange}}) => (
+						<View style={styles.actionRow}>
+							<OutlineButton
+								label={value ?? '—'}
+								icon={faPowerOff}
+								color={value === 'ON' ? COLORS.on : COLORS.off}
+								accessibilityLabel={`${i18n.t('cycle:triggers.action')} ${
+									value ?? ''
+								}`}
+								onPress={() => {
+									ReactNativeHapticFeedback.trigger(
+										'impactMedium',
+										hapticOptions
+									);
+									onChange(value === 'ON' ? 'OFF' : 'ON');
+									saveUnchangedData.current = true;
+								}}
+								style={styles.actionButton}
+							/>
+							{/* Mode : bouton outline à double choix. */}
+							<View style={styles.modeToggle}>
+								{[false, true].map(solar => {
+									const active = sunState === solar;
+									return (
+										<TouchableOpacity
+											key={solar ? 'solar' : 'delay'}
+											accessibilityRole="button"
+											accessibilityState={{selected: active}}
+											onPress={() => {
+												if (active) return;
+												ReactNativeHapticFeedback.trigger(
+													'impactMedium',
+													hapticOptions
+												);
+												setSolarMode(solar);
+											}}
+											style={[
+												styles.modeOption,
+												active && styles.modeOptionActive
+											]}>
+											<Text
+												numberOfLines={1}
+												adjustsFontSizeToFit
+												minimumFontScale={0.8}
+												style={[
+													styles.modeLabel,
+													active && styles.modeLabelActive
+												]}>
+												{i18n.t(
+													solar
+														? 'cycle:triggers.modeSolar'
+														: 'cycle:triggers.modeDelay'
+												)}
+											</Text>
+										</TouchableOpacity>
+									);
+								})}
+							</View>
+						</View>
+					)}
 				/>
-				<DateTimePickerForm
-					mode={'time'}
-					control={control}
-					errors={errors}
-					name="delay"
-					placeholder="Disable trigger for moment"
-					rules={{required: 'Delay is required'}}
-					onChangeText={() => {
-						saveUnchangedData.current = true;
-					}}
-				/>
-				<View style={styles.switchRow}>
-					<AppSwitch
-						value={sunState}
-						trackColor={SWITCH_TRACK_COLOR}
-						onValueChange={checked => {
-							sunStateRef.current = checked;
-							setSunState(checked);
-							if (checked) {
-								setValue('timeAfter', new Date(), {
-									shouldValidate: true
-								});
-								setValue('sunState', 'SUNRISE', {
-									shouldValidate: true
-								});
-							} else {
-								setValue('sunState', null, {
-									shouldValidate: true
-								});
-								setValue('time', new Date(), {
-									shouldValidate: true
-								});
-							}
-							saveUnchangedData.current = true;
-						}}
-					/>
-					<Text style={styles.switchLabel}>
-						Trigger based on (sun-state/delay)
-					</Text>
-				</View>
+				<FieldError error={errors.action} />
 				{sunState ? (
-					<>
-						<SelectForm
-							lstData={[
-								{label: 'SUNSET', value: 'SUNSET'},
-								{label: 'SUNRISE', value: 'SUNRISE'}
-							]}
-							control={control}
-							errors={errors}
-							name="sunState"
-							placeholder="Sun state*"
-							rules={{required: 'Sun state is required'}}
-							onValueChange={() => {
+					<View style={styles.solarBox}>
+						{/* Critères solaires dans une box, comme dans la planification. */}
+						<SolarTriggerFields
+							value={{
+								sunState: watch('sunState') ?? 'SUNRISE',
+								timeDirection: watch('timeDirection') ?? 'BEFORE',
+								time: watch('time') ? pickerDateToDuration(watch('time')) : 0
+							}}
+							onChange={patch => {
+								if (patch.sunState)
+									setValue('sunState', patch.sunState, {shouldValidate: true});
+								if (patch.timeDirection)
+									setValue('timeDirection', patch.timeDirection, {
+										shouldValidate: true
+									});
+								if (patch.time !== undefined)
+									setValue('time', durationToPickerDate(patch.time), {
+										shouldValidate: true
+									});
 								saveUnchangedData.current = true;
 							}}
 						/>
-						<DateTimePickerForm
-							mode={'time'}
-							control={control}
-							errors={errors}
-							name="time"
-							placeholder="After sunset / Before sunrise*"
-							rules={{required: 'Time is required'}}
-							onChangeText={() => {
-								saveUnchangedData.current = true;
-							}}
-						/>
-					</>
+					</View>
 				) : (
 					<DateTimePickerForm
 						mode={'time'}
 						control={control}
 						errors={errors}
 						name="timeAfter"
-						placeholder="Trigger after*"
-						rules={{required: 'Time after is required'}}
+						placeholder={i18n.t('cycle:triggers.after')}
+						rules={{required: i18n.t('cycle:triggers.afterRequired')}}
 						onChangeText={() => {
 							saveUnchangedData.current = true;
 						}}
 					/>
 				)}
+				<DateTimePickerForm
+					mode={'time'}
+					control={control}
+					errors={errors}
+					name="delay"
+					placeholder={i18n.t('cycle:triggers.disableFor')}
+					rules={{required: i18n.t('cycle:triggers.delayRequired')}}
+					onChangeText={() => {
+						saveUnchangedData.current = true;
+					}}
+				/>
+				<WarningBox hideIcon style={styles.warning}>
+					<SwitchForm
+						control={control}
+						errors={errors}
+						name="isEnabled"
+						placeholder={i18n.t('cycle:schedules.enabled')}
+						rules={{required: false}}
+						onChangeText={() => {
+							saveUnchangedData.current = true;
+						}}
+					/>
+					<SwitchForm
+						control={control}
+						errors={errors}
+						name="shouldConfirmation"
+						placeholder={i18n.t('cycle:schedules.needConfirmation')}
+						rules={{required: false}}
+						onChangeText={() => {
+							saveUnchangedData.current = true;
+						}}
+					/>
+				</WarningBox>
 			</View>
-		</ScrollView>
+		</Body>
 	);
 }
 
+// Action ON (vert, comme l'état « connecté ») / OFF (slate).
+const COLORS = {
+	on: '#16a34a',
+	off: '#32404e',
+	onText: '#ffffff',
+	shadow: '#000'
+};
+
 const styles = StyleSheet.create({
-	switchRow: {
+	// Bouton seul (sans libellé), en début de ligne.
+	// Même box que l'éditeur solaire de la planification (editorCard).
+	solarBox: {
+		backgroundColor: COLORS.onText,
+		borderRadius: 12,
+		padding: 14,
+		marginVertical: 8,
+		elevation: 3,
+		shadowColor: COLORS.shadow,
+		shadowOffset: {width: 0, height: 1},
+		shadowOpacity: 0.22,
+		shadowRadius: 2.22
+	},
+	actionRow: {
 		flexDirection: 'row',
-		marginLeft: 20,
+		alignItems: 'center',
+		gap: 10,
 		marginTop: 8,
 		marginBottom: 8
 	},
-	switchLabel: {
-		marginTop: 5,
-		color: '#32404e',
-		fontSize: 15,
-		marginLeft: 5,
-		fontWeight: 'bold'
+	// Double choix Après délai / Phase solaire : même contour que l'OutlineButton.
+	modeToggle: {
+		flex: 1,
+		flexDirection: 'row',
+		height: ELEMENT_HEIGHT,
+		borderWidth: 2,
+		borderColor: COLORS.off,
+		borderRadius: 12,
+		overflow: 'hidden'
+	},
+	modeOption: {
+		flex: 1,
+		alignItems: 'center',
+		justifyContent: 'center',
+		paddingHorizontal: 6
+	},
+	modeOptionActive: {backgroundColor: COLORS.off},
+	modeLabel: {color: COLORS.off, fontSize: 14, fontWeight: 'bold'},
+	modeLabelActive: {color: COLORS.onText},
+	// OutlineButton à droite de la ligne : sans sa marge / son centrage par
+	// défaut, largeur fixe pour que ON et OFF aient la même taille.
+	actionButton: {
+		marginTop: 0,
+		alignSelf: 'auto',
+		minWidth: 96,
+		justifyContent: 'center'
+	},
+	warning: {
+		marginTop: 8
 	}
 });
 

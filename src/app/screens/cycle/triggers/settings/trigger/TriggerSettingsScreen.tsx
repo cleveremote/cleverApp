@@ -1,47 +1,48 @@
 import React, {useEffect, useRef} from 'react';
 import {StyleSheet, View} from 'react-native';
+import {KeyboardAwareScrollView} from '../../../../../components/common/KeyboardAwareScrollView';
 import {connect} from 'react-redux';
-import {navigationHeader} from '../../../../../components/common/navigationHeaders';
 import {
 	DeleteItemMenu,
-	MenuAccordion
+	MenuAccordion,
+	MenuGroup
 } from '../../../../../components/common/cycleMenu';
-import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
-import {faBolt, faCheckDouble, faGear} from '@fortawesome/free-solid-svg-icons';
-import {hapticOptions} from '../../../../../data/cycleTypes';
+import {
+	useSectionSettingsHeader,
+	isEmpty,
+	useEntityLoaded
+} from '../../../../../components/common/useSectionSettingsHeader';
+import {faBolt, faCheckDouble} from '@fortawesome/free-solid-svg-icons';
 import {
 	loadTrigger,
-	saveTrigger
+	saveTrigger,
+	updateTrigger
 } from '../../../../../../module/process/infrasctructure/store/actions/trigger';
 import {saveCycle} from '../../../../../../module/process/infrasctructure/store/actions/cycle';
+import ConditionBuilderSection, {
+	isConditionIncomplete
+} from '../../../conditions/ConditionBuilderSection';
+import TriggerGeneralSettingsSection from './TriggerGeneralSettingsSection';
+import TriggerExecutionSettingsSection from './TriggerExecutionSettingsSection';
+import {generalContainerStyle} from '../../../../../components/common/GeneralSettingsFields';
+import i18n from 'i18next';
 
 export function TriggerSettingsScreen(props: any) {
+	const isNew = !props.route.params.trigger?.id;
 	const triggerRef = useRef(props.trigger);
 	triggerRef.current = props.trigger;
+	const generalLoaded = useEntityLoaded(
+		props.trigger,
+		props.route.params.trigger?.id
+	);
 
 	const triggersRef = useRef(props.triggers);
 	triggersRef.current = props.triggers;
 
-	const checkChanges = (e: any) => {
-		const isModified =
-			triggerRef.current?.isModified ||
-			triggerRef.current?.conditions?.some(
-				(x: {isModified: boolean}) => x.isModified
-			);
-
-		if (!isModified) return;
-
-		e.preventDefault();
-
-		props.saveTrigger(triggerRef.current, true, () => {
-			props.navigation.dispatch(e.data.action);
-		});
-	};
-
 	const _deleteItem = () => {
 		triggerRef.current = {
 			...triggerRef.current,
-			id: `deleted_${props.trigger.id}`,
+			delete: true,
 			isModified: true
 		};
 		props.navigation.goBack();
@@ -52,71 +53,103 @@ export function TriggerSettingsScreen(props: any) {
 			props.route.params.trigger?.id,
 			props.route.params.trigger?.cycleId || props.route.params.cycle.id
 		);
-
-		props.navigation.setOptions({
-			headerLeft: () =>
-				navigationHeader(
-					() => {
-						ReactNativeHapticFeedback.trigger(
-							'impactMedium',
-							hapticOptions
-						);
-						props.navigation.goBack();
-					},
-					'arrow-alt-circle-left',
-					false
-				)
-		});
-
-		const unsubscribe = props.navigation.addListener(
-			'beforeRemove',
-			checkChanges
-		);
-		return unsubscribe;
 	}, []);
 
+	const {invalidSections} = useSectionSettingsHeader({
+		navigation: props.navigation,
+		entity: props.trigger,
+		isNew,
+		// Section General toujours visible : pas de rouge à l'entrée en création.
+		deferNewValidation: true,
+		// En modification, valider n'apparaît qu'après un changement.
+		backWhenPristine: true,
+		// Abandon : remet dans le slice l'élément d'origine (celui de la liste),
+		// sinon sa réouverture repartirait des modifications abandonnées.
+		discard: () => {
+			if (props.route.params.trigger?.id) {
+				props.loadTrigger(
+					props.route.params.trigger.id,
+					props.route.params.trigger.cycleId || props.route.params.cycle.id
+				);
+			}
+		},
+		hasChanges: () =>
+			triggerRef.current?.isModified ||
+			triggerRef.current?.conditions?.some(
+				(x: {isModified: boolean}) => x.isModified
+			),
+		save: onDone => props.saveTrigger(triggerRef.current, true, onDone),
+		// Requis inconditionnels par section (les champs conditionnels restent
+		// gardés par le sous-formulaire lui-même).
+		validate: () => ({
+			general: isEmpty(triggerRef.current?.name),
+			execution:
+				isEmpty(triggerRef.current?.action) ||
+				isEmpty(triggerRef.current?.delay),
+			conditions: !!triggerRef.current?.conditions?.some(
+				(c: any) => !c.delete && isConditionIncomplete(c)
+			)
+		})
+	});
+
 	return (
-		<View style={styles.container}>
-			<View style={styles.card}>
-				<MenuAccordion
-					key={21}
-					name={'General'}
-					icon={faGear}
-					onPress={() =>
-						props.navigation.navigate(
-							'TriggerGeneralSettingsSection',
-							{
-								triggerData: props.trigger
-							}
-						)
-					}
-				/>
-				<MenuAccordion
-					key={41}
-					name={'Execution'}
-					icon={faBolt}
-					onPress={() =>
-						props.navigation.navigate(
-							'TriggerExecutionSettingsSection',
-							{
-								triggerData: props.trigger
-							}
-						)
-					}
-				/>
+		<KeyboardAwareScrollView
+			style={styles.scroll}
+			contentContainerStyle={styles.scrollContent}>
+			{/* Général sorti du menu : sans carte blanche, en première position, montée
+			    une fois l'entité chargée (le formulaire lit ses valeurs au montage). */}
+			{generalLoaded ? (
+				<View style={generalContainerStyle}>
+					<TriggerGeneralSettingsSection
+						embedded
+						triggerData={triggerRef.current}
+						showErrors={invalidSections.general}
+						navigation={props.navigation}
+					/>
+				</View>
+			) : null}
+			<MenuGroup style={styles.card}>
 				<MenuAccordion
 					key={51}
-					name={'Conditions'}
+					name={i18n.t('common:sections.triggerConditions')}
 					icon={faCheckDouble}
-					onPress={() =>
-						props.navigation.navigate('TriggerConditionsSection', {
-							triggerData: props.trigger
-						})
-					}
-				/>
+					defaultExpanded
+					invalid={invalidSections.conditions}
+					onPress={() => {}}>
+					<ConditionBuilderSection
+						conditions={props.trigger?.conditions}
+						parentId={props.trigger?.id}
+						parentType="TRIGGER"
+						showErrors={invalidSections.conditions}
+						onChange={(conditions: any[]) =>
+							props.updateTrigger({
+								...triggerRef.current,
+								conditions,
+								isModified: true
+							})
+						}
+					/>
+				</MenuAccordion>
+				<MenuAccordion
+					key={41}
+					name={i18n.t('common:sections.actions')}
+					icon={faBolt}
+					invalid={invalidSections.execution}
+					onPress={() => {}}>
+					{/* Son formulaire lit ses valeurs au montage : on attend que
+					    l'entité soit chargée. */}
+					{generalLoaded ? (
+						<TriggerExecutionSettingsSection
+							embedded
+							triggerData={triggerRef.current}
+							showErrors={invalidSections.execution}
+							navigation={props.navigation}
+						/>
+					) : null}
+				</MenuAccordion>
 				<DeleteItemMenu key={61} OnConfirm={_deleteItem} />
-			</View>
-		</View>
+			</MenuGroup>
+		</KeyboardAwareScrollView>
 	);
 }
 
@@ -126,8 +159,11 @@ const COLORS = {
 };
 
 const styles = StyleSheet.create({
-	container: {
-		alignSelf: 'stretch'
+	scroll: {
+		flex: 1
+	},
+	scrollContent: {
+		paddingBottom: 24
 	},
 	card: {
 		alignSelf: 'stretch',
@@ -152,5 +188,6 @@ const mapStateToProps = (state: any) => ({
 export default connect(mapStateToProps, {
 	saveTrigger,
 	loadTrigger,
+	updateTrigger,
 	saveCycle
 })(TriggerSettingsScreen);

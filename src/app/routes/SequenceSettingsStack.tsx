@@ -1,4 +1,5 @@
 import React from 'react';
+import {useTranslation} from 'react-i18next';
 import {
 	StackNavigationOptions,
 	createStackNavigator
@@ -8,10 +9,11 @@ import {store} from '../../module/process/infrasctructure/store/store';
 import SequenceSettingsScreen from '../screens/cycle/settings/sequence/SequenceSettingsScreen';
 import SequenceGeneralSettingsSection from '../screens/cycle/settings/sequence/SequenceGeneralSettingsSection';
 import SequenceSecuritySettingsSection from '../screens/cycle/settings/sequence/SequenceSecuritySettingsSection';
-import SequenceModulesSettingsSection from '../screens/cycle/settings/sequence/SequenceModulesSettingsSection';
+import SequenceActuatorConfigSection from '../screens/cycle/settings/sequence/SequenceActuatorConfigSection';
 import {navigationHeader} from '../components/common/navigationHeaders';
 
 export function SequenceSettingStack() {
+	const {t} = useTranslation('navigation');
 	const options = (title: string) =>
 		({
 			headerTitleAlign: 'center',
@@ -27,22 +29,22 @@ export function SequenceSettingStack() {
 			<Stack.Screen
 				name="SequenceSettingsMenu"
 				component={SequenceSettingsScreen}
-				options={options('Sequence Settings')}
+				options={options(t('sequenceSettings'))}
 			/>
 			<Stack.Screen
 				name="SequenceGeneralSection"
 				component={SequenceGeneralSettingsSection}
-				options={options('General')}
+				options={options(t('general'))}
 			/>
 			<Stack.Screen
 				name="SequenceSecuritySection"
 				component={SequenceSecuritySettingsSection}
-				options={options('Security')}
+				options={options(t('security'))}
 			/>
 			<Stack.Screen
-				name="SequenceModulesSettingsSection"
-				component={SequenceModulesSettingsSection}
-				options={options('Modules')}
+				name="SequenceActuatorConfigSection"
+				component={SequenceActuatorConfigSection}
+				options={options(t('actuatorSettings'))}
 			/>
 		</Stack.Navigator>
 	);

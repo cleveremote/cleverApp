@@ -1,4 +1,4 @@
-import {Platform, ScrollView, Text, TouchableOpacity, View} from 'react-native';
+import {Alert, Platform, ScrollView, Text, TouchableOpacity, View} from 'react-native';
 import React, {useCallback} from 'react';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import Icon from 'react-native-vector-icons/FontAwesome5';
@@ -8,6 +8,8 @@ import {
 } from '../../components/common/RememberMeManager';
 import {useFocusEffect} from '@react-navigation/native';
 import Logo from '../../../../hydrophyto.svg';
+import {useTranslation} from 'react-i18next';
+import {authenticationService} from '../../../module/authentication/domain/services/auth.service';
 
 const hapticOptions = {
 	enableVibrateFallback: false,
@@ -20,7 +22,24 @@ const hapticTriggerType: string = Platform.select({
 }) as string;
 
 export function ProfilesScreen(props: any) {
+	const {t} = useTranslation(['access', 'common']);
 	const [profiles, setProfiles] = React.useState<string[]>([]);
+	// Déconnexion après changement de mot de passe : on passe directement à
+	// la connexion de ce login et de son profil, le nouveau mot de passe
+	// pré-rempli, par-dessus les profils (le
+	// retour y ramène). Lu une fois l'écran monté : avant, la navigation de
+	// la pile n'est pas encore prête et l'action serait perdue.
+	React.useEffect(() => {
+		const pending = authenticationService.takePendingSignin();
+		if (!pending) return;
+		props.navigation.navigate('Signin', {
+			login: pending.login,
+			profile: pending.profile,
+			passwordChanged: true,
+			// Même pré-remplissage qu'au retour de « mot de passe oublié ».
+			resetPassword: pending.password
+		});
+	}, [props.navigation]);
 
 	useFocusEffect(
 		useCallback(() => {
@@ -66,15 +85,37 @@ export function ProfilesScreen(props: any) {
 									marginBottom: 20
 								}}>
 								<TouchableOpacity
-									onLongPress={async () => {
+									onLongPress={() => {
 										ReactNativeHapticFeedback.trigger(
 											'impactMedium',
 											hapticOptions
 										);
-										await deleteProfile(profile);
-										const profiles1 =
-											await getAllProfiles();
-										setProfiles(profiles1);
+										Alert.alert(
+											t('profiles.deleteTitle'),
+											t('profiles.deleteMessage', {
+												profile
+											}),
+											[
+												{
+													text: t('common:cancel'),
+													style: 'cancel'
+												},
+												{
+													text: t(
+														'profiles.deleteConfirm'
+													),
+													style: 'destructive',
+													onPress: async () => {
+														await deleteProfile(
+															profile
+														);
+														const profiles1 =
+															await getAllProfiles();
+														setProfiles(profiles1);
+													}
+												}
+											]
+										);
 									}}
 									onPress={async () => {
 										ReactNativeHapticFeedback.trigger(
@@ -125,11 +166,11 @@ export function ProfilesScreen(props: any) {
 								/>
 							</TouchableOpacity>
 							<Text style={{color: '#32404e', fontSize: 15}}>
-								Add new profil ...
+								{t('profiles.add')}
 							</Text>
 						</View>
 						<Text style={{color: '#32404e', fontSize: 15}}>
-							(To delete long press on profile)
+							{t('profiles.deleteHint')}
 						</Text>
 					</View>
 				</ScrollView>
@@ -137,25 +178,27 @@ export function ProfilesScreen(props: any) {
 
 			<View
 				style={{
-					marginLeft: 40,
-					marginRight: 40,
+					flexDirection: 'row',
 					marginBottom: 20,
 					alignSelf: 'center',
-					alignItems: 'center'
+					alignItems: 'flex-start',
+					justifyContent: 'center'
 				}}>
-				<TouchableOpacity
-					onPress={() => {
-						ReactNativeHapticFeedback.trigger(
-							'impactMedium',
-							hapticOptions
-						);
-						props.navigation.navigate('Device');
-					}}>
-					<Icon name="wifi" size={25} color="#32404e" />
-				</TouchableOpacity>
-				<Text style={{color: '#32404e', fontSize: 15}}>
-					Connectivity settings
-				</Text>
+				<View style={{alignItems: 'center'}}>
+					<TouchableOpacity
+						onPress={() => {
+							ReactNativeHapticFeedback.trigger(
+								'impactMedium',
+								hapticOptions
+							);
+							props.navigation.navigate('ScanBox');
+						}}>
+						<Icon name="qrcode" size={25} color="#32404e" />
+					</TouchableOpacity>
+					<Text style={{color: '#32404e', fontSize: 15}}>
+						{t('profiles.scanBox')}
+					</Text>
+				</View>
 			</View>
 		</View>
 	);

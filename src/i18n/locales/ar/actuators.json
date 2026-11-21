@@ -1,0 +1,68 @@
+{
+	"enum": {
+		"RPI": "RPI",
+		"COM": "COM",
+		"CTRL": "CTRL",
+		"in": "دخل",
+		"out": "خرج",
+		"high": "مرتفع",
+		"low": "منخفض",
+		"none": "لا شيء",
+		"rising": "صاعد",
+		"falling": "هابط",
+		"both": "كلاهما",
+		"PROPORTIONAL": "تناسبي",
+		"ON_OFF": "تشغيل/إيقاف"
+	},
+	"controlLoop": {
+		"mode": {
+			"REGULATION": "تنظيم (نقطة ضبط)",
+			"FOLLOW": "متابعة مقياس الجهد"
+		}
+	},
+	"empty": "لا يوجد مشغل RPI.",
+	"add": "إضافة مشغل RPI ...",
+	"actions": "الإجراءات",
+	"channel": "القناة",
+	"addAction": "إضافة إجراء (أمر جهاز) ...",
+	"regulation": {
+		"enable": "تفعيل التنظيم",
+		"mode": "الوضع",
+		"analogInput": "مقياس الجهد / المدخل التناظري*",
+		"analogInputRequired": "المدخل التناظري مطلوب",
+		"deadband": "النطاق الميت (%)",
+		"readPeriod": "فترة القراءة (مللي ثانية)",
+		"feedbackSensor": "مستشعر التغذية الراجعة*",
+		"feedbackSensorRequired": "مستشعر التغذية الراجعة مطلوب",
+		"setpoint": "نقطة الضبط*",
+		"setpointRequired": "نقطة الضبط مطلوبة",
+		"algorithm": "الخوارزمية",
+		"kP": "kP (الكسب)",
+		"kI": "kI (التكامل)",
+		"kD": "kD (التفاضل)",
+		"advanced": "متقدم",
+		"tolerance": "التفاوت",
+		"maxIterations": "الحد الأقصى للتكرارات",
+		"iterationDelay": "المهلة بين التكرارات (مللي ثانية)",
+		"offHint": "التنظيم متوقف: في التسلسل، القيمة المرسلة إلى هذا الصمام هي نسبة فتحه (%)."
+	},
+	"ctrl": {
+		"minOpening": "الحد الأدنى للفتح (%)",
+		"maxOpening": "الحد الأقصى للفتح (%)",
+		"openingPercent": "الفتح (%)",
+		"fullStrokeMs": "الشوط الكامل (مللي ثانية)",
+		"minOutputValue": "الحد الأدنى لقيمة الخرج",
+		"maxOutputValue": "الحد الأقصى لقيمة الخرج"
+	},
+	"rpi": {
+		"pin": "منفذ RPI*",
+		"pinRequired": "منفذ RPI مطلوب",
+		"direction": "الاتجاه*",
+		"directionRequired": "الاتجاه مطلوب",
+		"edge": "الحافة*",
+		"edgeRequired": "الحافة مطلوبة",
+		"debounce": "مهلة منع الارتداد (مللي ثانية)",
+		"activeLow": "نشط عند المستوى المنخفض",
+		"reconfigureDirection": "إعادة تهيئة الاتجاه"
+	}
+}

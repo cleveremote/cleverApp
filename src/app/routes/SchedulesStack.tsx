@@ -1,4 +1,5 @@
 import React from 'react';
+import {useTranslation} from 'react-i18next';
 import {
 	StackNavigationOptions,
 	createStackNavigator
@@ -9,6 +10,7 @@ import SchedulesScreen from '../screens/cycle/schedules/SchedulesScreen';
 import {ScheduleSettingsStack} from './ScheduleSettingsStack';
 
 export function SchedulesStack() {
+	const {t} = useTranslation('navigation');
 	const options = (title: string) =>
 		({
 			headerTitleAlign: 'center',
@@ -22,7 +24,7 @@ export function SchedulesStack() {
 			<Stack.Screen
 				name="Schedules"
 				component={SchedulesScreen}
-				options={options('Schedules')}
+				options={options(t('schedules'))}
 			/>
 			<Stack.Screen
 				name="ScheduleSettingsStack"

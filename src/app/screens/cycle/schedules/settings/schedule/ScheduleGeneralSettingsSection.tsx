@@ -3,16 +3,20 @@ import {Alert, ScrollView, View} from 'react-native';
 import type {EventArg, NavigationAction} from '@react-navigation/core';
 import {navigationHeader} from '../../../../../components/common/navigationHeaders';
 import {
-	InputForm,
-	SwitchForm,
-	TextAreaForm
-} from '../../../../../components/common/FormComponents';
+	GeneralSettingsFields,
+	generalEmbeddedBoxStyle
+} from '../../../../../components/common/GeneralSettingsFields';
 import {BoxFormStyle} from '../../../../../styles/components/common/boxForm';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import {hapticOptions} from '../../../../../data/cycleTypes';
 import {useForm} from 'react-hook-form';
 import {connect} from 'react-redux';
+import {
+	useValidateOnOpen,
+	useEmbeddedSection
+} from '../../../../../components/common/useSectionSettingsHeader';
 import {updateSchedule} from '../../../../../../module/process/infrasctructure/store/actions/schedule';
+import i18n from 'i18next';
 
 interface ScheduleGeneralFormData {
 	id?: string;
@@ -46,10 +50,15 @@ interface ScheduleGeneralSettingsSectionProps {
 	) => void;
 }
 
-export function ScheduleGeneralSettingsSection(
-	props: ScheduleGeneralSettingsSectionProps
-) {
-	const defaultValues = {...props.route.params?.scheduleData};
+export function ScheduleGeneralSettingsSection(props: any) {
+	const embedded = !!props.embedded;
+	const source = embedded
+		? props.scheduleData
+		: props.route.params?.scheduleData;
+	const parentRef = React.useRef(props.scheduleData);
+	parentRef.current = props.scheduleData;
+
+	const defaultValues = {...source};
 	const [saveUnchangedData, setSaveUnchangedData] = useState(
 		defaultValues.isModified
 	);
@@ -57,9 +66,28 @@ export function ScheduleGeneralSettingsSection(
 	const {
 		control,
 		handleSubmit,
-		reset,
+		watch,
+		getValues,
+		trigger,
 		formState: {errors}
-	} = useForm({defaultValues});
+	} = useForm<any>({defaultValues, mode: 'onChange'});
+
+	useValidateOnOpen(props.route, trigger);
+
+	useEmbeddedSection({
+		embedded,
+		showErrors: props.showErrors,
+		trigger,
+		watch,
+		getValues,
+		stage: data =>
+			props.updateSchedule({
+				...parentRef.current,
+				name: data.name,
+				description: data.description,
+				isModified: true
+			})
+	});
 
 	const onSubmit = (data: ScheduleGeneralFormData) => {
 		if (saveUnchangedData) {
@@ -80,16 +108,16 @@ export function ScheduleGeneralSettingsSection(
 			},
 			_errors => {
 				Alert.alert(
-					'Discard changes?',
-					'Some fields contain invalid or incomplete information. Would you like to discard changes or continue editing?',
+					i18n.t('common:discard.title'),
+					i18n.t('common:discard.invalidMessage'),
 					[
 						{
-							text: 'Continue',
+							text: i18n.t('common:discard.continue'),
 							style: 'cancel',
 							onPress: onContinue
 						},
 						{
-							text: 'Discard',
+							text: i18n.t('common:discard.confirm'),
 							style: 'destructive',
 							onPress: onDiscard
 						}
@@ -100,6 +128,7 @@ export function ScheduleGeneralSettingsSection(
 	};
 
 	useEffect(() => {
+		if (embedded) return;
 		const subscribe = () => {
 			const unsubscribe = props.navigation.addListener(
 				'beforeRemove',
@@ -111,9 +140,10 @@ export function ScheduleGeneralSettingsSection(
 							subscribe();
 						},
 						() => {
-							reset();
 							unsubscribe();
-							subscribe();
+							props.navigation.dispatch(
+								e.data.action
+							);
 						}
 					)
 			);
@@ -138,52 +168,23 @@ export function ScheduleGeneralSettingsSection(
 		const unsubscribe = subscribe();
 		return () => unsubscribe();
 	}, [saveUnchangedData]);
+	const Body: any = embedded ? View : ScrollView;
+	const bodyProps: any = embedded
+		? {}
+		: {automaticallyAdjustKeyboardInsets: true};
+
 	return (
-		<ScrollView automaticallyAdjustKeyboardInsets={true}>
-			<View style={BoxFormStyle.boxForm}>
-				<InputForm
+		<Body {...bodyProps}>
+			<View style={[BoxFormStyle.boxForm, embedded && generalEmbeddedBoxStyle]}>
+				<GeneralSettingsFields
 					control={control}
 					errors={errors}
-					name="name"
-					placeholder="Name*"
-					rules={{required: 'Name is required'}}
-					onChangeText={() => {
-						setSaveUnchangedData(true);
-					}}
+					showErrors={props.showErrors}
+					nameMaxLength={25}
+					onEdit={() => setSaveUnchangedData(true)}
 				/>
-				<TextAreaForm
-					control={control}
-					errors={errors}
-					name="description"
-					placeholder="Description"
-					onChangeText={value => {
-						setSaveUnchangedData(true);
-					}}
-				/>
-				<View style={{flexDirection: 'row', gap: 12}}>
-					<SwitchForm
-						control={control}
-						errors={errors}
-						name="isPaused"
-						placeholder="Set paused"
-						rules={{required: false}}
-						onChangeText={value => {
-							setSaveUnchangedData(true);
-						}}
-					/>
-					<SwitchForm
-						control={control}
-						errors={errors}
-						name="shouldConfirmation"
-						placeholder="Need confirmation"
-						rules={{required: false}}
-						onChangeText={value => {
-							setSaveUnchangedData(true);
-						}}
-					/>
-				</View>
 			</View>
-		</ScrollView>
+		</Body>
 	);
 }
 

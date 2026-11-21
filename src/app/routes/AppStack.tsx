@@ -1,35 +1,38 @@
-import React, {useEffect, useRef} from 'react';
-import messaging from '@react-native-firebase/messaging';
-import {createBottomTabNavigator} from '@react-navigation/bottom-tabs';
-import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
+import React, { useEffect, useRef } from 'react';
+import {useTranslation} from 'react-i18next';
+import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
+import { FontAwesomeIcon } from '@fortawesome/react-native-fontawesome';
 import {
-	faBorderAll,
 	faCircleDot,
+	faDiagramProject,
+	faFlask,
+	faGear,
 	faImage,
 	faImagePortrait,
 	faImages,
 	faLayerGroup,
+	faList,
+	faListCheck,
 	faMap,
-	faPlane,
-	faSyncAlt
+	faPlane
 } from '@fortawesome/free-solid-svg-icons';
-import {SettingsScreen} from '../screens/settings/settings';
-import {AppState} from 'react-native';
-import {authenticationService} from '../../module/authentication/domain/services/auth.service';
-import {socketService} from '../../services/socket';
-import {connect} from 'react-redux';
-import {ParamListBase, RouteProp} from '@react-navigation/native';
-import {CycleStack} from './CycleStack';
-import {SensorStack} from './SensorStack';
+import { AppState, StyleSheet, View } from 'react-native';
+import { authenticationService } from '../../module/authentication/domain/services/auth.service';
+import { socketService } from '../../services/socket';
+import { connect } from 'react-redux';
+import { ParamListBase, RouteProp } from '@react-navigation/native';
+import { CycleStack } from './CycleStack';
+import { SynoptiquesStack } from './SynoptiquesStack';
+import { SensorStack } from './SensorStack';
+import { SettingsStack } from './SettingsStack';
 import {
 	listenerEvents,
 	loadConfiguration,
 	loadPlan
 } from '../../module/process/infrasctructure/store/actions/common';
-import {setIsConnected, setIsServerConnected, setIsBoxConnected} from '../../module/process/infrasctructure/store/actions/state';
-import {NoConnectionScreen} from '../screens/access/no-connexion';
-import {loadValues} from '../../module/process/infrasctructure/store/actions/cycle';
-import {PlanStack} from './PlanStack';
+import { setIsConnected, setIsServerConnected, setIsBoxConnected } from '../../module/process/infrasctructure/store/actions/state';
+import { NoConnectionScreen } from '../screens/access/no-connexion';
+import { loadValues } from '../../module/process/infrasctructure/store/actions/cycle';
 
 type Props = {
 	setIsConnected: (value: any) => void;
@@ -42,14 +45,16 @@ const tabBarIconCfg = (
 	route: RouteProp<ParamListBase, string>
 ) => {
 	let iconName;
-	if (route.name === 'Settings') {
-		iconName = faLayerGroup;
+	if (route.name === 'SettingsStack') {
+		iconName = faGear;
 	} else if (route.name === 'CyclesStack') {
-		iconName = faSyncAlt;
-	} else if (route.name === 'PlanStack') {
-		iconName = faBorderAll;
-	} else {
+		iconName = faList;
+	} else if (route.name === 'SynoptiquesStack') {
+		iconName = faDiagramProject;
+	} else if (route.name === 'SensorsStack') {
 		iconName = faCircleDot;
+	} else {
+		iconName = faFlask;
 	}
 	return (
 		<FontAwesomeIcon
@@ -60,13 +65,19 @@ const tabBarIconCfg = (
 	);
 };
 
+// Créé une seule fois : recréé à chaque rendu, chaque re-rendu d'AppStack
+// remonterait tous les écrans (états locaux, timers de progression…).
+const Tab = createBottomTabNavigator();
+
 export function AppStack(props: any) {
+	const {t} = useTranslation('navigation');
 	const appState = useRef(AppState.currentState);
 	useEffect(() => {
 		if (props.isServerConnected && props.isBoxConnected) {
 			props.listenerEvents();
 			props.loadValues('PROCESS');
-			props.loadConfiguration();
+			// Reconnexion avec des données déjà à l'écran : pas de loader global.
+			props.loadConfiguration(undefined, props.hasConfiguration);
 			props.loadPlan();
 		}
 	}, [props.isServerConnected, props.isBoxConnected]);
@@ -98,7 +109,12 @@ export function AppStack(props: any) {
 							clearTimeout(reconnectTimer);
 							reconnectTimer = null;
 						}
-						props.loadConfiguration();
+						// Le socket a pu être recréé (listeners perdus) sans que
+						// isServerConnected ne change : on les ré-enregistre.
+						props.listenerEvents();
+						// Retour au premier plan : les données sont déjà à
+						// l'écran, on les rafraîchit sans loader global.
+						props.loadConfiguration(undefined, true);
 						props.loadPlan();
 						props.loadValues('PROCESS');
 					}
@@ -110,12 +126,6 @@ export function AppStack(props: any) {
 				}
 			}
 		);
-		//// FCM google
-		const devices = async () => {
-			await messaging().registerDeviceForRemoteMessages();
-			const token = await messaging().getToken();
-		};
-		devices();
 		return () => {
 			subscription.remove();
 			if (reconnectTimer) {
@@ -149,49 +159,67 @@ export function AppStack(props: any) {
 		}
 	};
 
-	const Tab = createBottomTabNavigator();
+	const isOnline = props.isServerConnected && props.isBoxConnected;
+	// Une fois les onglets montés, une coupure (ex. échec de la première
+	// tentative de reconnexion au retour au premier plan) ne les démonte plus :
+	// l'écran « pas de connexion » s'affiche par-dessus et les écrans gardent
+	// leur état.
+	const wasOnline = useRef(false);
+	if (isOnline) {
+		wasOnline.current = true;
+	}
+	if (!props.isConnected) {
+		wasOnline.current = false;
+	}
+
 	return (
 		<>
-			{props.isServerConnected && props.isBoxConnected ? (
+			{isOnline || wasOnline.current ? (
 				<Tab.Navigator
-				safeAreaInsets={{ bottom: 20 }}
-					screenOptions={({route}) => ({
-   tabBarItemStyle: {
-  justifyContent: 'center',
-  alignItems: 'center',
-  paddingBottom: 0,
-  paddingTop: 10,
-},
-tabBarStyle: {
-  justifyContent: 'center',
-},
+					safeAreaInsets={{ bottom: 20 }}
+					screenOptions={({ route }) => ({
+						tabBarItemStyle: {
+							justifyContent: 'center',
+							alignItems: 'center',
+							paddingBottom: 0,
+							paddingTop: 10,
+						},
+						tabBarStyle: {
+							justifyContent: 'center',
+						},
 						tabBarActiveTintColor: '#32404e',
-						tabBarIcon: ({focused}) => tabBarIconCfg(focused, route)
+						tabBarIcon: ({ focused }) => tabBarIconCfg(focused, route)
 					})}>
 					<Tab.Screen
 						name="CyclesStack"
-						options={{headerShown: false, tabBarLabel: 'Cycles'}}
+						options={{ headerShown: false, tabBarLabel: t('tasks') }}
 						component={CycleStack}
 					/>
-					<Tab.Screen
-						name="PlanStack"
-						options={{headerShown: false, tabBarLabel: 'Plan'}}
-						component={PlanStack}
-					/>
-					<Tab.Screen
-						name="Settings"
-						options={{headerShown: false}}
-						component={SettingsScreen}
-					/>
+
 					<Tab.Screen
 						name="SensorsStack"
-						options={{headerShown: false, tabBarLabel: 'Sensors'}}
+						options={{ headerShown: false, tabBarLabel: t('sensors') }}
 						component={SensorStack}
 					/>
+
+					<Tab.Screen
+						name="SynoptiquesStack"
+						options={{ headerShown: false, tabBarLabel: t('synoptics') }}
+						component={SynoptiquesStack}
+					/>
+
+					<Tab.Screen
+						name="SettingsStack"
+						options={{ headerShown: false, tabBarLabel: t('settings') }}
+						component={SettingsStack}
+					/>
 				</Tab.Navigator>
-			) : (
-				noConnectionScreen()
-			)}
+			) : null}
+			{!isOnline ? (
+				<View style={[StyleSheet.absoluteFill, { backgroundColor: 'white' }]}>
+					{noConnectionScreen()}
+				</View>
+			) : null}
 		</>
 	);
 }
@@ -199,7 +227,10 @@ tabBarStyle: {
 const mapStateToProps = (state: any) => ({
 	isConnected: state.status.isConnected,
 	isBoxConnected: state.status.isBoxConnected,
-	isServerConnected: state.status.isServerConnected
+	isServerConnected: state.status.isServerConnected,
+	hasConfiguration: !!(
+		state.root_cycle.cycles?.length || state.root_device.devices?.length
+	)
 });
 
 export default connect(mapStateToProps, {

@@ -1,3 +1,6 @@
+import {newTempId} from '../../../../../services/socket';
+import i18n from 'i18next';
+
 export const loadSequences = (cycle: any) => {
 	return cycle?.sequences || [];
 };
@@ -7,11 +10,12 @@ export const loadSequence = (sequences: any, sequenceId: string) => {
 		return sequences.find((x: any) => x.id === sequenceId);
 	} else {
 		return {
-			id: `${Math.random()}`,
-			name: 'new sequence',
-			description: 'new sequence',
-			maxDuration: 50000,
-			vfd: 50,
+			id: newTempId(),
+			name: i18n.t('common:defaults.newSequence'),
+			description: i18n.t('common:defaults.newSequence'),
+			securityConfig: {
+				maxDuration: 50000
+			},
 			isModified: true
 		};
 	}
@@ -20,10 +24,7 @@ export const loadSequence = (sequences: any, sequenceId: string) => {
 export const updateSequence = (prevSequences: any, sequence: any) => {
 	const previous = [...prevSequences];
 	if (sequence) {
-		const deleteId = sequence?.id.split('_');
-		const index = previous.findIndex(
-			x => x.id === (deleteId[1] || sequence?.id)
-		);
+		const index = previous.findIndex(x => x.id === sequence?.id);
 		if (index > -1) {
 			previous[index] = sequence;
 		} else {

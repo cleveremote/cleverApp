@@ -1,0 +1,92 @@
+{
+	"search": {
+		"placeholder": "Search a sensor",
+		"clear": "Clear search",
+		"noMatch": "No sensor matches the search."
+	},
+	"create": "Create sensor",
+	"theme": "Sensor theme*",
+	"every": {
+		"second_one": "Every second",
+		"second_other": "Every {{count}} seconds",
+		"minute_one": "Every minute",
+		"minute_other": "Every {{count}} minutes",
+		"hour_one": "Every hour",
+		"hour_other": "Every {{count}} hours"
+	},
+	"age": {
+		"justNow": "just now",
+		"minutes_one": "{{count}} min ago",
+		"minutes_other": "{{count}} min ago",
+		"hours_one": "{{count}} h ago",
+		"hours_other": "{{count}} h ago"
+	},
+	"dataSource": {
+		"saveFirst": "Save first",
+		"saveFirstMessage": "Save this sensor before creating its measures.",
+		"createMeasure": "Create measure",
+		"createMeasureMessage": "Create the sensor \"{{name}}\"?",
+		"create": "Create",
+		"noCommand": "No device command linked to this sensor yet. Pick a device and a request in Configuration.",
+		"value": "Value",
+		"updated": "Updated {{age}}",
+		"from": "From",
+		"unknownParent": "Unknown parent",
+		"readInherited": "Read {{frequency}} (inherited)",
+		"device": "Device",
+		"reading": "Reading",
+		"frequency": "Frequency",
+		"notSet": "Not set",
+		"channel": "Channel",
+		"valueRead": "Value read",
+		"measuresProduced": "Measures produced ({{linked}} / {{total}})",
+		"noMeasure": "This reading does not produce any measure yet. Create the ones you want to follow.",
+		"technicalFields_one": "Technical field ({{count}})",
+		"technicalFields_other": "Technical fields ({{count}})",
+		"measureProduced": "Measure produced"
+	},
+	"analog": {
+		"scaling": "Scaling",
+		"signal": {
+			"VOLTAGE": "Voltage (V)",
+			"CURRENT": "Current (mA)",
+			"RAW": "Raw value"
+		},
+		"outOfRange": {
+			"CLAMP": "Clamp to output range",
+			"EXTRAPOLATE": "Extrapolate",
+			"ERROR": "Error"
+		},
+		"fieldRequired": "{{field}} is required",
+		"mustBeNumber": "Must be a number",
+		"signalType": "Signal type*",
+		"signalTypeRequired": "Signal type is required",
+		"inputMin": "Input min",
+		"inputMax": "Input max",
+		"inputMaxDiffers": "Input max must differ from input min",
+		"unit": "Unit*",
+		"unitRequired": "Unit is required",
+		"outputMin": "Output min",
+		"outputMax": "Output max",
+		"outOfRangeLabel": "Out of range*",
+		"outOfRangeRequired": "Out of range policy is required",
+		"invertedHint": "Inverted ranges are allowed (e.g. 4-20 mA → 10-0 bar)."
+	},
+	"config": {
+		"invalidCron": "Invalid cron expression",
+		"type": "Type*",
+		"typeRequired": "Type is required",
+		"isChild": "Is child",
+		"parent": "Parent sensor*",
+		"parentRequired": "Parent sensor is required",
+		"cron": "Cron pattern",
+		"cronRequired": "Cron pattern is required",
+		"forecast": "Forecast data*",
+		"forecastRequired": "Forecast data is required",
+		"request": "Request",
+		"code": "Code",
+		"scale": "Scale",
+		"unit": "Unit",
+		"enabled": "Enabled"
+	}
+}

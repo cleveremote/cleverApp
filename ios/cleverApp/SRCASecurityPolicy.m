@@ -1,4 +1,5 @@
 #import "SRCASecurityPolicy.h"
+#import <React/RCTLog.h>
 
 NS_ASSUME_NONNULL_BEGIN
 
@@ -51,8 +52,14 @@ NS_ASSUME_NONNULL_BEGIN
   bool trusted = SecTrustEvaluateWithError(serverTrust, &error);
   CFRelease(anchors);
 
-  if (!trusted && error) {
-    CFRelease(error);
+  if (!trusted) {
+    if (error) {
+      RCTLogWarn(@"SRCASecurityPolicy: trust evaluation failed for %@: %@",
+                 domain, (__bridge NSError *)error);
+      CFRelease(error);
+    } else {
+      RCTLogWarn(@"SRCASecurityPolicy: trust evaluation failed for %@", domain);
+    }
   }
 
   return trusted;

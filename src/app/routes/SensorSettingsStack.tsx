@@ -1,4 +1,5 @@
 import React from 'react';
+import {useTranslation} from 'react-i18next';
 import {
 	StackNavigationOptions,
 	createStackNavigator
@@ -6,10 +7,12 @@ import {
 import {Provider} from 'react-redux';
 import {store} from '../../module/process/infrasctructure/store/store';
 import SensorGeneralSettingsSection from '../screens/sensor/settings/SensorGeneralSettingsSection';
+import SensorConfigurationSettingsSection from '../screens/sensor/settings/SensorConfigurationSettingsSection';
 import SensorSettingsScreen from '../screens/sensor/settings/SensorSettingsScreen';
 import {navigationHeader} from '../components/common/navigationHeaders';
 
 export function SensorSettingsStack() {
+	const {t} = useTranslation('navigation');
 	const options = (title: string) =>
 		({
 			headerTitleAlign: 'center',
@@ -25,12 +28,17 @@ export function SensorSettingsStack() {
 			<Stack.Screen
 				name="SensorSettingsMenu"
 				component={SensorSettingsScreen}
-				options={options('Sensor Settings')}
+				options={options(t('sensorSettings'))}
 			/>
 			<Stack.Screen
 				name="SensorGeneralSection"
 				component={SensorGeneralSettingsSection}
-				options={options('General')}
+				options={options(t('general'))}
+			/>
+			<Stack.Screen
+				name="SensorConfigurationSection"
+				component={SensorConfigurationSettingsSection}
+				options={options(t('configuration'))}
 			/>
 		</Stack.Navigator>
 	);

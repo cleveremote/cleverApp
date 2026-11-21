@@ -1,27 +1,64 @@
 import React, {useEffect} from 'react';
-import {ScrollView, View} from 'react-native';
+import {View} from 'react-native';
 import {navigationHeader} from '../../../components/common/navigationHeaders';
 import {useForm} from 'react-hook-form';
 import {BoxFormStyle} from '../../../styles/components/common/boxForm';
 import {
-	InputForm,
-	SelectColor,
-	SelectForm
-} from '../../../components/common/FormComponents';
+	GeneralSettingsFields,
+	generalEmbeddedBoxStyle
+} from '../../../components/common/GeneralSettingsFields';
 import {connect} from 'react-redux';
+import {
+	useValidateOnOpen,
+	useEmbeddedSection
+} from '../../../components/common/useSectionSettingsHeader';
 import {updateSensor} from '../../../../module/process/infrasctructure/store/actions/sensor';
+import i18n from 'i18next';
 
 export function SensorGeneralSettingsSection(props: any) {
-	const [sensorData, setSensorData] = React.useState(
-		props.route.params?.sensorData
-	);
+	const embedded = !!props.embedded;
+	const source = embedded ? props.sensorData : props.route.params?.sensorData;
+	const parentRef = React.useRef(props.sensorData);
+	parentRef.current = props.sensorData;
+
+	const [sensorData, setSensorData] = React.useState(source);
 	const [saveUnchangedData, setSaveUnchangedData] = React.useState(false);
-	const defaultValues = {...props.route.params?.sensorData};
+	const defaultValues = {...source};
 	const {
 		control,
 		handleSubmit,
+		watch,
+		getValues,
+		trigger,
 		formState: {errors}
-	} = useForm({defaultValues});
+	} = useForm({defaultValues, mode: 'onChange'});
+
+	useValidateOnOpen(props.route, trigger);
+
+	useEmbeddedSection({
+		embedded,
+		showErrors: props.showErrors,
+		trigger,
+		watch,
+		getValues,
+		stage: data => {
+			let style = data.style;
+			if (typeof style === 'string') style = JSON.parse(style);
+			props.updateSensor({
+				...parentRef.current,
+				style: style
+					? {
+							fontColor: style.fontColor,
+							iconColor: style.iconColor,
+							bgColor: style.bgColor
+					  }
+					: parentRef.current?.style,
+				name: data.name,
+				description: data.description,
+				isModified: true
+			});
+		}
+	});
 
 	const onSubmit = (data: any) => {
 		let style = data.style;
@@ -29,6 +66,7 @@ export function SensorGeneralSettingsSection(props: any) {
 			style = JSON.parse(style);
 		}
 		props.updateSensor({
+			...source,
 			...data,
 			style: {
 				fontColor: style.fontColor,
@@ -41,6 +79,7 @@ export function SensorGeneralSettingsSection(props: any) {
 	};
 
 	useEffect(() => {
+		if (embedded) return;
 		props.navigation.setOptions({
 			headerLeft: () =>
 				navigationHeader(
@@ -51,87 +90,27 @@ export function SensorGeneralSettingsSection(props: any) {
 		});
 	}, [saveUnchangedData]);
 
-	const getModbusTasks = () => {
-		return props.modbusTasks.map((x: any) => ({
-			label: x.label,
-			value: x.id
-		}));
-	};
-	const isScheduled = sensorData?.type === 'SCHEDULED';
 	return (
-		<View style={BoxFormStyle.boxForm}>
-			<SelectColor
+		<View style={[BoxFormStyle.boxForm, embedded && generalEmbeddedBoxStyle]}>
+			<GeneralSettingsFields
 				control={control}
 				errors={errors}
-				name="style"
-				placeholder="Sensor theme*"
-				rules={{required: 'Theme is required'}}
-				style={{...sensorData?.style}}
-				onChangeText={value => {
+				showErrors={props.showErrors}
+				themeStyle={{...sensorData?.style}}
+				themePlaceholder={i18n.t('sensor:theme')}
+				nameMaxLength={250}
+				onThemeChange={value => {
 					setSensorData({...sensorData, style: JSON.parse(value)});
 					setSaveUnchangedData(true);
 				}}
+				onEdit={() => setSaveUnchangedData(true)}
 			/>
-			<ScrollView automaticallyAdjustKeyboardInsets={true}>
-				<InputForm
-					control={control}
-					errors={errors}
-					name="name"
-					placeholder="Name*"
-					rules={{required: 'Name is required'}}
-					onChangeText={value => {
-						setSaveUnchangedData(true);
-					}}
-				/>
-				<InputForm
-					control={control}
-					errors={errors}
-					name="description"
-					placeholder="Description"
-					onChangeText={value => {
-						setSaveUnchangedData(true);
-					}}
-				/>
-				{isScheduled && (
-					<>
-						<SelectForm
-							lstData={getModbusTasks()}
-							control={control}
-							errors={errors}
-							name="taskId"
-							placeholder="tasks"
-							rules={{required: false}}
-							onValueChange={value => {
-								setSaveUnchangedData(true);
-							}}
-						/>
-						<InputForm
-							control={control}
-							errors={errors}
-							name="cronPattern"
-							placeholder="cron pattern"
-							onChangeText={value => {
-								setSaveUnchangedData(true);
-							}}
-						/>
-					</>
-				)}
-				{!isScheduled && (
-					<InputForm
-						control={control}
-						errors={errors}
-						name="unit"
-						placeholder="Unit"
-						disabled={true}
-					/>
-				)}
-			</ScrollView>
 		</View>
 	);
 }
 
 const mapStateToProps = (state: any) => ({
-	modbusTasks: state.root_modbus_task.modbusTasks
+	sensors: state.root_sensor.sensors
 });
 
 export default connect(mapStateToProps, {

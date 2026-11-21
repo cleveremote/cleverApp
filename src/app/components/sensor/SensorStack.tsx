@@ -1,42 +1,90 @@
+import {ELEMENT_HEIGHT, ELEMENT_FONT_SIZE} from '../../styles/metrics';
 import React, {useState} from 'react';
-import {Text, TouchableOpacity, View} from 'react-native';
+import {Pressable, Text, TouchableOpacity, View} from 'react-native';
 import Animated, {FadeInDown} from 'react-native-reanimated';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import Icon from 'react-native-vector-icons/FontAwesome5';
 
 import {hapticOptions, navigationCycleType} from '../../data/cycleTypes';
 import SensorValue from './SensorValue';
+import {
+	DeviceDisconnectedIcon,
+	ExecutableConnectivityDot,
+	WARNING_BORDER,
+	useSensorDeviceName,
+	useUnreachableDevices
+} from '../device/DeviceConnectivity';
+import i18n from 'i18next';
+import {directionalIcon} from '../../../i18n/rtl';
+import {MENU_ICON_STYLE} from '../cycle/cycleStack';
 
 export function SensorStack({
 	cycleData: sensorData,
 	navigation,
 	closeSibillings,
-	current
+	current,
+	isParent = false,
+	isExpanded = true,
+	onToggleExpand,
+	settingsRoute = 'Settings'
 }: Readonly<{
 	cycleData: any;
 	navigation: navigationCycleType;
 	closeSibillings: Function;
 	current: string | undefined;
+	isParent?: boolean;
+	isExpanded?: boolean;
+	onToggleExpand?: () => void;
+	// Route du SensorSettingsStack dans le navigateur courant.
+	settingsRoute?: string;
 }>) {
 	const fontColor = sensorData.style.fontColor;
 	const bgColor = sensorData.style.bgColor;
+	const disconnected = !!useUnreachableDevices(sensorData, 'SENSOR').length;
+	const waiting = sensorData.status === 'WAITTING_CONFIRMATION';
+	// ANALOG : le nom est préfixé par celui du device lu.
+	const deviceName = useSensorDeviceName(sensorData);
+	const displayName =
+		sensorData.type === 'ANALOG' && deviceName
+			? `${deviceName} - ${sensorData.name}`
+			: sensorData.name;
+	// Déconnecté : un tap n'importe où sur la carte (hors menu) ouvre le
+	// détail, à la place du dépliage d'un parent.
+	const [detailsOpen, setDetailsOpen] = useState(false);
 	return (
 		<View>
-			<View
+			<Pressable
+				disabled={!isParent && !disconnected}
+				onPress={() => {
+					if (disconnected) {
+						ReactNativeHapticFeedback.trigger(
+							'impactMedium',
+							hapticOptions
+						);
+						setDetailsOpen(true);
+						return;
+					}
+					ReactNativeHapticFeedback.trigger(
+						'impactLight',
+						hapticOptions
+					);
+					onToggleExpand?.();
+				}}
 				style={{
 					alignSelf: 'stretch',
 					backgroundColor: bgColor,
 					borderRadius: 12,
-					height: 45,
+					height: ELEMENT_HEIGHT,
 					marginHorizontal: 4,
 					marginTop: 4,
 					flex: 1,
-					borderColor:
-						sensorData.status === 'WAITTING_CONFIRMATION'
-							? '#fc8181'
-							: 'black',
-					borderWidth:
-						sensorData.status === 'WAITTING_CONFIRMATION' ? 2 : 0,
+					// Une attente de confirmation prime sur le contour « déconnecté ».
+					borderColor: waiting
+						? '#fc8181'
+						: disconnected
+						? WARNING_BORDER
+						: 'black',
+					borderWidth: waiting || disconnected ? 2 : 0,
 					elevation: 3,
 					shadowColor: '#000',
 					shadowOffset: {width: 0, height: 1},
@@ -51,22 +99,50 @@ export function SensorStack({
 						flex: 1,
 						marginHorizontal: 8
 					}}>
-					<View style={{flex: 2}}>
+					<View
+						style={{
+							flex: 2,
+							flexDirection: 'row',
+							alignItems: 'center',
+							marginLeft: 40,
+							gap: 6
+						}}>
+						{/* Juste après l'icône menu, comme sur une carte de cycle. */}
+						<DeviceDisconnectedIcon
+							item={sensorData}
+							kind="SENSOR"
+							navigation={navigation}
+							open={detailsOpen}
+							onOpenChange={setDetailsOpen}
+						/>
+						<ExecutableConnectivityDot
+							item={sensorData}
+							kind="SENSOR"
+						/>
+
 						<Text
 							style={{
+								flexShrink: 1,
 								fontWeight: 'bold',
 								color: fontColor,
-								fontSize: 15,
-								marginLeft: 40
+								fontSize: ELEMENT_FONT_SIZE
 							}}
 							numberOfLines={1}
 							ellipsizeMode="middle">
-							{sensorData.name}
+							{displayName}
 						</Text>
 					</View>
-					<SensorValue cycleData={sensorData} />
+					{isParent ? (
+						<Icon
+							size={20}
+							name={isExpanded ? 'angle-down' : directionalIcon('angle-right')}
+							color={fontColor}
+						/>
+					) : (
+						<SensorValue cycleData={sensorData} />
+					)}
 				</View>
-			</View>
+			</Pressable>
 
 			<View style={{marginTop: -37, width: 60, marginLeft: 8, zIndex: 1}}>
 				<MenuSensor
@@ -74,6 +150,7 @@ export function SensorStack({
 					cycleData={sensorData}
 					closeSibillings={closeSibillings}
 					current={current}
+					settingsRoute={settingsRoute}
 				/>
 			</View>
 		</View>
@@ -84,12 +161,14 @@ export function MenuSensor({
 	navigation,
 	cycleData,
 	closeSibillings,
-	current
+	current,
+	settingsRoute = 'Settings'
 }: Readonly<{
 	navigation: any;
 	cycleData: any;
 	closeSibillings: Function;
 	current: string | undefined;
+	settingsRoute?: string;
 }>) {
 	const [isOpen, setIsOpen] = useState(false);
 	const onToggle = () => setIsOpen(prev => !prev);
@@ -102,11 +181,11 @@ export function MenuSensor({
 	const menuItems = [
 		{
 			name: 'cog',
-			label: 'Settings',
+			label: i18n.t('cycle:menu.settings'),
 			action: () => {
 				ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
 				closeSibillings(false);
-				navigation.navigate('Settings', {
+				navigation.navigate(settingsRoute, {
 					screen: 'SensorSettingsMenu',
 					params: cycleData
 				});
@@ -128,10 +207,10 @@ export function MenuSensor({
 						}
 						onToggle();
 					}}>
-					<Icon size={30} name="bars" color={iconColor} />
+					<Icon size={30} name="bars" color={iconColor} style={MENU_ICON_STYLE} />
 				</TouchableOpacity>
 			) : (
-				<Icon size={30} name="user-check" color={iconColor} />
+				<Icon size={30} name="user-check" color={iconColor} style={MENU_ICON_STYLE} />
 			)}
 			{isOpen && (
 				<View>

@@ -1,3 +1,6 @@
+import {newTempId} from '../../../../../services/socket';
+import i18n from 'i18next';
+
 export const loadSchedules = (cycle: any) => {
 	return cycle?.schedules || [];
 };
@@ -11,13 +14,14 @@ export const loadSchedule = (
 		return schedules.find((x: any) => x.id === scheduleId);
 	} else if (cycleId) {
 		return {
-			id: `${Math.random()}`,
+			id: newTempId(),
 			cycleId: cycleId,
-			name: 'new schedule',
-			description: 'new schedule',
+			name: i18n.t('common:defaults.newSchedule'),
+			description: i18n.t('common:defaults.newSchedule'),
 			cron: {
 				pattern: '*/30 * * * * *',
-				date: Date.now()
+				// Instant ISO UTC, comme ce que la section de planification émet.
+				date: new Date().toISOString()
 			},
 			shouldConfirmation: true,
 			isPaused: true,
@@ -28,13 +32,16 @@ export const loadSchedule = (
 	}
 };
 
-export const updateSchedule = (prevSchedules: any, schedule: any) => {
-	const previous = [...prevSchedules];
+export const updateSchedule = (
+	prevSchedules: any,
+	schedule: any,
+	tempId?: string
+) => {
+	const previous: any[] = tempId
+		? prevSchedules.filter((x: any) => x.id !== tempId)
+		: [...prevSchedules];
 	if (schedule) {
-		const deleteId = schedule?.id.split('_');
-		const index = previous.findIndex(
-			x => x.id === (deleteId[1] || schedule?.id)
-		);
+		const index = previous.findIndex(x => x.id === schedule?.id);
 		if (index > -1) {
 			previous[index] = schedule;
 		} else {

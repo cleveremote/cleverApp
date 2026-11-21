@@ -1,0 +1,237 @@
+import {ELEMENT_HEIGHT, ELEMENT_FONT_SIZE} from '../../../styles/metrics';
+import React, {useEffect, useRef, useState} from 'react';
+import {
+	ActivityIndicator,
+	Alert,
+	StyleSheet, Text, TouchableOpacity,
+	View
+} from 'react-native';
+import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
+import i18n from 'i18next';
+import {connect} from 'react-redux';
+import {faCog, faMagnifyingGlass} from '@fortawesome/free-solid-svg-icons';
+import {FontAwesomeIcon} from '@fortawesome/react-native-fontawesome';
+import {navigationHeader} from '../../../components/common/navigationHeaders';
+import {elementStack} from '../../../components/cycle/moduleStack';
+import {hapticOptions} from '../../../data/cycleTypes';
+import {
+	DeviceConnectivityDot,
+	deviceRowWarning
+} from '../../../components/device/DeviceConnectivity';
+import {isTempId} from '../../../../services/socket';
+import {discoverDevices} from '../../../../module/process/infrasctructure/store/actions/device';
+
+// Slave devices attached to a master, rendered like the Triggers list, plus a
+// "Discover New Devices" action that asks the box to probe the master's
+// discoveryRegisters and register any newly-found units. Discovery is the only
+// way to add slaves — there is no manual "add new slave" entry.
+//
+// Peut être rendue en écran plein (navigation) ou embarquée inline dans
+// l'accordéon « Slave Devices » du master (`embedded` + `master` en props).
+export function SlaveDevicesSection(props: any) {
+	const embedded = !!props.embedded;
+	const masterRef = useRef(embedded ? props.master : props.route.params.master);
+	masterRef.current = embedded ? props.master : props.route.params.master;
+
+	// Discovery en cours : loader sur le bouton jusqu'à la réponse de la box
+	// (la liste se rafraîchit via ROOT_DEVICES_LOAD). Le socket n'a pas de
+	// timeout, d'où un garde-fou pour ne pas bloquer le bouton indéfiniment.
+	const [discovering, setDiscovering] = useState(false);
+	const discoverTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
+	useEffect(
+		() => () => {
+			if (discoverTimeout.current) clearTimeout(discoverTimeout.current);
+		},
+		[]
+	);
+
+	const startDiscovery = () => {
+		setDiscovering(true);
+		const done = () => {
+			if (discoverTimeout.current) clearTimeout(discoverTimeout.current);
+			discoverTimeout.current = null;
+			setDiscovering(false);
+		};
+		discoverTimeout.current = setTimeout(() => {
+			discoverTimeout.current = null;
+			setDiscovering(false);
+			Alert.alert(
+				i18n.t('devices:discovery.timeout'),
+				i18n.t('devices:connectivity.timeoutMessage')
+			);
+		}, DISCOVERY_TIMEOUT_MS);
+		props.discoverDevices(masterRef.current.id, done);
+	};
+
+	useEffect(() => {
+		if (!embedded) {
+			props.navigation.setOptions({
+				headerLeft: () =>
+					navigationHeader(
+						() => props.navigation.goBack(),
+						'arrow-alt-circle-left',
+						false
+					)
+			});
+		}
+		// Pas de rechargement des devices depuis la box ici : la liste est déjà
+		// chargée par DevicesScreen, et ce composant est remonté à chaque
+		// réouverture de l'accordéon — un reload écraserait les suppressions /
+		// éditions de slaves mises en attente (stageDevice) avant la sauvegarde
+		// du master, et le slave supprimé réapparaîtrait.
+	}, []);
+
+	// Slaves reference their master by id, so a not-yet-persisted (temp id)
+	// master can't own slaves — nudge the user to save it first.
+	const requireSavedMaster = (): boolean => {
+		if (isTempId(masterRef.current?.id)) {
+			Alert.alert(
+				i18n.t('devices:saveMasterFirst'),
+				i18n.t('devices:saveMasterFirstMessage')
+			);
+			return false;
+		}
+		return true;
+	};
+
+	// Slaves are the SLAVE-typed config devices whose `config.masterDeviceId`
+	// references this master. String-coerce both sides so ObjectId/string ids
+	// compare reliably.
+	const masterId = masterRef.current?.id;
+	const slaves = (props.devices ?? []).filter(
+		(d: any) =>
+			d.type === 'SLAVE' &&
+			d.config?.masterDeviceId &&
+			`${d.config.masterDeviceId}` === `${masterId}` &&
+			!d.delete
+	);
+
+	return (
+		<View style={embedded ? styles.embeddedContainer : styles.container}>
+			<View style={embedded ? styles.embeddedCard : styles.card}>
+				{slaves.map((slave: any) =>
+					elementStack(
+						slave,
+						(item: any) => {
+							props.navigation.navigate(
+								'SlaveDeviceSettingsStack',
+								{
+									screen: 'SlaveDeviceSettingsMenu',
+									params: {deviceId: item.id}
+								}
+							);
+						},
+						`${slave.name ?? i18n.t('devices:slaveFallback')}`,
+						{name: faCog, color: styles.icon.color},
+						undefined,
+						undefined,
+						<DeviceConnectivityDot device={slave} />,
+						deviceRowWarning(slave, props.devices, props.connectivity)
+					)
+				)}
+
+				<TouchableOpacity
+					style={[
+						styles.discoverButton,
+						discovering && styles.discoverButtonBusy
+					]}
+					disabled={discovering}
+					onPress={() => {
+						ReactNativeHapticFeedback.trigger(
+							'impactMedium',
+							hapticOptions
+						);
+						if (!requireSavedMaster()) return;
+						startDiscovery();
+					}}>
+					{discovering ? (
+						<ActivityIndicator size="small" color={COLORS.primary} />
+					) : (
+						<FontAwesomeIcon
+							icon={faMagnifyingGlass}
+							size={16}
+							color={COLORS.primary}
+						/>
+					)}
+					<Text style={styles.discoverLabel}>
+						{discovering
+							? i18n.t('devices:discovery.running')
+							: i18n.t('devices:discovery.start')}
+					</Text>
+				</TouchableOpacity>
+			</View>
+		</View>
+	);
+}
+
+const DISCOVERY_TIMEOUT_MS = 10000;
+
+const COLORS = {
+	primary: '#32404e',
+	shadow: '#000',
+	cardBackground: 'white'
+};
+
+const styles = StyleSheet.create({
+	container: {
+		gap: 8,
+		marginVertical: 4,
+		alignSelf: 'stretch',
+		margin: 20
+	},
+	card: {
+		alignSelf: 'stretch',
+		backgroundColor: COLORS.cardBackground,
+		borderRadius: 12,
+		padding: 8,
+		elevation: 3,
+		shadowColor: COLORS.shadow,
+		shadowOffset: {width: 0, height: 1},
+		shadowOpacity: 0.22,
+		shadowRadius: 2.22
+	},
+	// Embarqué dans l'accordéon (déjà une carte blanche) : pas de marge ni
+	// d'ombre, juste un peu de padding autour de la liste et du bouton Discover.
+	embeddedContainer: {
+		alignSelf: 'stretch'
+	},
+	embeddedCard: {
+		alignSelf: 'stretch',
+		backgroundColor: COLORS.cardBackground,
+		padding: 8,
+		paddingBottom: 16
+	},
+	icon: {
+		color: COLORS.primary,
+		fontSize: 30
+	},
+	discoverButton: {
+		marginTop: 20,
+		alignSelf: 'center',
+		flexDirection: 'row',
+		alignItems: 'center',
+		gap: 10,
+		height: ELEMENT_HEIGHT,
+		paddingHorizontal: 14,
+		borderRadius: 12,
+		borderWidth: 2,
+		borderColor: COLORS.primary
+	},
+	discoverButtonBusy: {
+		opacity: 0.7
+	},
+	discoverLabel: {
+		color: COLORS.primary,
+		fontSize: ELEMENT_FONT_SIZE,
+		fontWeight: 'bold'
+	}
+});
+
+const mapStateToProps = (state: any) => ({
+	devices: state.root_device.devices,
+	connectivity: state.root_device.connectivity
+});
+
+export default connect(mapStateToProps, {
+	discoverDevices
+})(SlaveDevicesSection);

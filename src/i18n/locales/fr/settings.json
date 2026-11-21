@@ -1,0 +1,75 @@
+{
+	"menu": {
+		"logout": "déconnexion",
+		"devices": "Équipements"
+	},
+	"language": {
+		"title": "Langue",
+		"system": "Langue du téléphone",
+		"restartTitle": "Redémarrage nécessaire",
+		"restartMessage": "Le sens d'affichage change avec cette langue : l'application va redémarrer.",
+		"restart": "Redémarrer"
+	},
+	"global": {
+		"positionUnavailable": "Position indisponible",
+		"checkGps": "Vérifiez que le GPS est activé et réessayez.",
+		"localCoordinates": "Coordonnées locales",
+		"locationRefused": "Accès à la position refusé",
+		"fillFromGps": "Remplir depuis le GPS du téléphone",
+		"typeCoordinates": "Les coordonnées ne peuvent être que saisies. Touchez ici pour ouvrir les réglages du système.",
+		"longitude": "Longitude*",
+		"longitudeRequired": "La longitude est obligatoire",
+		"longitudeNumber": "La longitude doit être un nombre",
+		"longitudeRange": "La longitude doit être comprise entre -180 et 180",
+		"latitude": "Latitude*",
+		"latitudeRequired": "La latitude est obligatoire",
+		"latitudeNumber": "La latitude doit être un nombre",
+		"latitudeRange": "La latitude doit être comprise entre -90 et 90",
+		"timeZone": "Fuseau horaire",
+		"timeZoneHint": "Déduit des coordonnées par la box. Les horaires des programmations sont exprimés dans ce fuseau.",
+		"modePriority": "Priorité des modes",
+		"modePriorityHint": "Appui long puis glisser un mode.",
+		"modePriorityRequired": "La priorité des modes est obligatoire",
+		"box": "Box",
+		"version": "Version"
+	},
+	"user": {
+		"title": "Compte",
+		"boxId": "Box ID / Login",
+		"security": {
+			"title": "Authentification & Sécurité"
+		},
+		"currentPassword": "Mot de passe actuel",
+		"email": {
+			"title": "Email de récupération",
+			"newEmail": "Nouvelle adresse email de récupération",
+			"success": "L'email de récupération a été modifié.",
+			"failed": "L'email de récupération n'a pas pu être modifié.",
+			"confirmMessage": "Saisissez votre mot de passe actuel pour confirmer le changement.",
+			"verify": "Vérifier l'adresse",
+			"codeSent": "Un code a été envoyé à {{email}}. Il est valable 5 minutes.",
+			"codeExpired": "Le code a expiré.",
+			"verified": "Adresse vérifiée. Validez pour l'enregistrer.",
+			"sendFailed": "Le code n'a pas pu être envoyé à cette adresse."
+		},
+		"password": {
+			"title": "Mot de passe",
+			"success": "Votre mot de passe a été modifié.",
+			"failed": "Le mot de passe n'a pas pu être modifié.",
+			"confirmMessage": "Saisissez votre mot de passe actuel pour confirmer le changement."
+		},
+		"reset": {
+			"title": "Réinitialisation",
+			"data": "Données",
+			"dataHint": "Cycles, programmations, capteurs et historique",
+			"account": "Compte",
+			"accountHint": "Identifiants et email de récupération",
+			"warning": "Cette action est irréversible : les éléments cochés seront effacés sur la box.",
+			"logoutNotice": "Vous serez déconnecté.",
+			"typeLogin": "Saisissez « {{login}} » pour confirmer",
+			"success": "Les données ont été réinitialisées.",
+			"failed": "La réinitialisation a échoué.",
+			"confirmMessage": "Saisissez votre mot de passe actuel pour confirmer la réinitialisation."
+		}
+	}
+}

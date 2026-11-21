@@ -1,5 +1,8 @@
 import { io, Socket } from 'socket.io-client';
 import { initSSL } from './SSLConfig';
+import { pendingRequests } from './pendingRequests';
+import { withErrorAlert } from './responseErrors';
+import { serializeDatesDeep } from '../time/serializeDates';
 
 export type SocketEventCallback = (...args: unknown[]) => void;
 
@@ -22,15 +25,24 @@ class SocketService {
 	): Promise<void> {
 		// Ensure SSL trust is initialized before any connection
 		if (!this.sslReady) {
-			await initSSL();
+			try {
+				await initSSL();
+			} catch (e) {
+				// Without the CA anchor every TLS handshake to the box will fail —
+				// surface it here rather than letting it look like a network error.
+				console.error('initSSL failed:', (e as Error)?.message ?? e);
+				throw e;
+			}
 			this.sslReady = true;
 		}
 
-		// Disconnect any existing connection
-		if (this.socket?.connected) {
+		// Tear down any previous socket, connected or not: one still trying to
+		// connect keeps reconnecting on its own, and ends up connected beside
+		// the new one — with nobody listening to it.
+		if (this.socket) {
+			this.socket.removeAllListeners();
 			this.socket.disconnect();
 		}
-    console.log('extraHeaders', extraHeaders);
 		this.socket = io(url, {
 			forceNew: false,
 			transports: ['websocket'],
@@ -38,13 +50,57 @@ class SocketService {
 			auth: { token },
 			...(extraHeaders ? { extraHeaders } : {})
 		});
+		// Coupure réseau ou côté box : les acks en attente sont perdus.
+		this.socket.on('disconnect', () => pendingRequests.releaseAll());
 	}
 
 	/**
 	 * Emit an event to the server.
+	 * A trailing ack callback marks a request awaiting the box's response: it is
+	 * tracked by `pendingRequests` so the global loader shows until it answers,
+	 * and a `{ res: false }` answer shows its error in a popup.
 	 */
-	emit(event: string, ...args: unknown[]): void {
+	emit(event: string, ...rawArgs: unknown[]): void {
+		if (!this.socket) return;
+		// Every Date leaves as ISO 8601 UTC, whatever the caller passed.
+		const args = rawArgs.map(serializeDatesDeep);
+		const last = args[args.length - 1];
+		if (typeof last === 'function') {
+			args[args.length - 1] = pendingRequests.track(
+				event,
+				withErrorAlert(event, last as (...a: unknown[]) => unknown)
+			);
+		}
+		this.socket.emit(event, ...args);
+	}
+
+	/**
+	 * Same as `emit`, without the global loader: for background refreshes of
+	 * data already on screen, or requests whose screen shows its own loader
+	 * (e.g. a busy button).
+	 */
+	emitSilent(event: string, ...rawArgs: unknown[]): void {
+		const args = rawArgs.map(serializeDatesDeep);
+		const last = args[args.length - 1];
+		if (typeof last === 'function') {
+			args[args.length - 1] = withErrorAlert(
+				event,
+				last as (...a: unknown[]) => unknown
+			);
+		}
 		this.socket?.emit(event, ...args);
+	}
+
+	/**
+	 * Reload of a list: global loader only while the list is still empty (first
+	 * entry on a screen); a refresh of data already on screen stays silent.
+	 */
+	emitRefresh(hasData: boolean, event: string, ...args: unknown[]): void {
+		if (hasData) {
+			this.emitSilent(event, ...args);
+		} else {
+			this.emit(event, ...args);
+		}
 	}
 
 	/**
@@ -72,6 +128,7 @@ class SocketService {
 		if (this.socket?.connected) {
 			this.socket.disconnect();
 		}
+		pendingRequests.releaseAll();
 	}
 
 	/**
@@ -83,6 +140,7 @@ class SocketService {
 			this.socket.disconnect();
 			this.socket = null;
 		}
+		pendingRequests.releaseAll();
 	}
 
 	/**
@@ -100,6 +158,7 @@ class SocketService {
 	reconnect(): void {
 		if (this.socket) {
 			this.socket.disconnect();
+			pendingRequests.releaseAll();
 			this.socket.connect();
 		}
 	}

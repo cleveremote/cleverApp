@@ -1,12 +1,118 @@
-import React, {useState} from 'react';
-import {placeholderColor} from '../../styles/components/common/Input';
+import React, { memo, useEffect, useRef, useState } from 'react';
+import { useTranslation } from 'react-i18next';
+import { Picker } from '@react-native-picker/picker';
+import { faPlay } from '@fortawesome/free-solid-svg-icons';
 import {
-	Modal,
+	Platform,
+	StyleSheet,
 	Text,
-	TextInput,
-	TouchableOpacity,
 	View
 } from 'react-native';
+import { OutlineButton } from '../../screens/access/accessUi';
+import { ModalCard } from './ModalCard';
+import { WheelPicker } from './WheelPicker';
+
+const HOUR = 60 * 60 * 1000;
+const MINUTE = 60 * 1000;
+const pad = (n: number) => String(n).padStart(2, '0');
+// Items construits une seule fois : les recréer à chaque changement de valeur
+// fait re-réconcilier les 84 lignes des roues et retarde le rendu du bouton.
+const toItems = (count: number) =>
+	Array.from({ length: count }, (_, n) => (
+		<Picker.Item key={n} label={pad(n)} value={n} />
+	));
+const HOUR_ITEMS = toItems(24);
+const MINUTE_ITEMS = toItems(60);
+// Même hauteur pour la roue iOS et ses items : sinon la roue (216 par défaut)
+// est rognée et la ligne sélectionnée n'est plus centrée verticalement.
+const PICKER_HEIGHT = 160;
+
+// La roue iOS n'émet onChange qu'une fois arrêtée, sans événement de début de
+// défilement : on la considère « en rotation » dès qu'on la touche, jusqu'à
+// onValueChange. Si elle s'arrête sur la même valeur, rien n'est émis, d'où ce
+// délai de secours après le relâchement (couvre l'inertie d'un lancer).
+const SPIN_SETTLE_FALLBACK = 2000;
+
+// Mémoïsé : changer les heures ne re-rend pas la roue des minutes (et inversement).
+// Exporté pour les autres popups à roues (ex. ModalRangePicker).
+export const DurationColumn = memo(function DurationColumn({
+	label,
+	value,
+	onChange,
+	onSpinningChange,
+	items
+}: {
+	label: string;
+	value: number;
+	onChange: (value: number) => void;
+	onSpinningChange: (spinning: boolean) => void;
+	items: React.ReactElement<{ label: string; value: number }>[];
+}) {
+	const settleTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+	const clearSettleTimer = () => {
+		if (settleTimer.current !== null) {
+			clearTimeout(settleTimer.current);
+			settleTimer.current = null;
+		}
+	};
+
+	useEffect(() => clearSettleTimer, []);
+
+	const onTouchStart = () => {
+		clearSettleTimer();
+		onSpinningChange(true);
+	};
+
+	const onTouchEnd = () => {
+		clearSettleTimer();
+		settleTimer.current = setTimeout(
+			() => onSpinningChange(false),
+			SPIN_SETTLE_FALLBACK
+		);
+	};
+
+	// Sur Android le Picker natif est une liste déroulante (dialog plein
+	// écran) : on le remplace par une roue JS au rendu proche de celle d'iOS,
+	// qui signale elle-même son défilement. Les options sont relues des items.
+	if (Platform.OS !== 'ios') {
+		return (
+			<View style={styles.column}>
+				<Text style={styles.columnLabel}>{label}</Text>
+				<WheelPicker
+					options={items.map(item => item.props)}
+					value={value}
+					onChange={onChange}
+					onSpinningChange={onSpinningChange}
+					color={COLORS.primary}
+				/>
+			</View>
+		);
+	}
+
+	return (
+		<View
+			style={styles.column}
+			onTouchStart={onTouchStart}
+			onTouchEnd={onTouchEnd}
+			onTouchCancel={onTouchEnd}
+		>
+			<Text style={styles.columnLabel}>{label}</Text>
+			<Picker
+				selectedValue={value}
+				onValueChange={v => {
+					clearSettleTimer();
+					onChange(Number(v));
+					onSpinningChange(false);
+				}}
+				style={styles.picker}
+				itemStyle={styles.pickerItem}
+			>
+				{items}
+			</Picker>
+		</View>
+	);
+});
 
 export function ModalOverrideDuration({
 	isOpen,
@@ -17,78 +123,123 @@ export function ModalOverrideDuration({
 	onClose: () => void;
 	onConfirm: (ms: number) => void;
 }) {
-	const [text, setText] = useState('');
+	const { t } = useTranslation();
+	// Durée saisie en heures + minutes, envoyée en ms.
+	const [hours, setHours] = useState(0);
+	const [minutes, setMinutes] = useState(0);
+	// Durée validée, exécutée seulement une fois la modale réellement fermée :
+	// dispatcher pendant l'animation de fermeture (re-render du statut) laisse
+	// sur iOS une fenêtre modale invisible qui bloque tous les touchers.
+	const pendingMs = useRef<number | null>(null);
+	// Roues en cours de rotation : leur valeur n'est pas encore remontée.
+	const [hoursSpinning, setHoursSpinning] = useState(false);
+	const [minutesSpinning, setMinutesSpinning] = useState(false);
+	const ms = hours * HOUR + minutes * MINUTE;
+	const canExecute = ms > 0 && !hoursSpinning && !minutesSpinning;
+
+	const reset = () => {
+		setHours(0);
+		setMinutes(0);
+		setHoursSpinning(false);
+		setMinutesSpinning(false);
+	};
+
+	const flushPending = () => {
+		const value = pendingMs.current;
+		pendingMs.current = null;
+		reset();
+		if (value !== null) {
+			onConfirm(value);
+		}
+	};
+
+	const confirm = () => {
+		pendingMs.current = ms;
+		onClose();
+		// onDismiss n'est fiable que sur iOS ; le Dialog Android n'a pas le
+		// problème, on exécute directement.
+		if (Platform.OS !== 'ios') {
+			flushPending();
+		}
+	};
+
+	const cancel = () => {
+		pendingMs.current = null;
+		reset();
+		onClose();
+	};
+
 	return (
-		<Modal
-			visible={isOpen}
-			transparent
-			animationType="fade"
-			onRequestClose={onClose}>
-			<View
-				style={{
-					flex: 1,
-					justifyContent: 'center',
-					alignItems: 'center',
-					backgroundColor: 'rgba(0,0,0,0.5)'
-				}}>
-				<View
-					style={{
-						backgroundColor: 'white',
-						borderRadius: 12,
-						padding: 20,
-						width: '80%'
-					}}>
-					<Text
-						style={{
-							fontSize: 17,
-							fontWeight: 'bold',
-							marginBottom: 12
-						}}>
-						Override duration
-					</Text>
-					<Text style={{marginBottom: 8}}>
-						please enter duration in (ms) to override default
-						sequences duration
-					</Text>
-					<TextInput
-						defaultValue={text}
-						placeholderTextColor={placeholderColor}
-						onChangeText={newText => setText(newText)}
-						style={{
-							borderWidth: 1,
-							borderColor: '#CBD5E0',
-							borderRadius: 6,
-							paddingHorizontal: 12,
-							paddingVertical: 8,
-							marginBottom: 16
-						}}
-					/>
-					<View
-						style={{
-							flexDirection: 'row',
-							justifyContent: 'flex-end',
-							gap: 8
-						}}>
-						<TouchableOpacity
-							onPress={onClose}
-							style={{paddingVertical: 8, paddingHorizontal: 16}}>
-							<Text style={{color: '#718096'}}>Cancel</Text>
-						</TouchableOpacity>
-						<TouchableOpacity
-							onPress={() => onConfirm(Number(text))}
-							style={{
-								paddingVertical: 8,
-								paddingHorizontal: 16,
-								backgroundColor: '#3182CE',
-								borderRadius: 6
-							}}>
-							<Text style={{color: 'white', fontWeight: 'bold'}}>
-								execute
-							</Text>
-						</TouchableOpacity>
-					</View>
-				</View>
+		<ModalCard
+			isOpen={isOpen}
+			onClose={cancel}
+			onDismiss={flushPending}
+			title={t('overrideDuration.title')}
+			message={t('overrideDuration.message')}
+		>
+			<View style={styles.columns}>
+				<DurationColumn
+					label={t('overrideDuration.hours')}
+					value={hours}
+					onChange={setHours}
+					onSpinningChange={setHoursSpinning}
+					items={HOUR_ITEMS}
+				/>
+				<DurationColumn
+					label={t('overrideDuration.minutes')}
+					value={minutes}
+					onChange={setMinutes}
+					onSpinningChange={setMinutesSpinning}
+					items={MINUTE_ITEMS}
+				/>
 			</View>
-		</Modal>
+			<OutlineButton
+				label={t('execute')}
+				icon={faPlay}
+				disabled={!canExecute}
+				onPress={confirm}
+				style={styles.executeButton}
+			/>
+		</ModalCard>
 	);
 }
+
+const COLORS = {
+	primary: '#32404e'
+};
+
+const styles = StyleSheet.create({
+	columns: {
+		flexDirection: 'row',
+		justifyContent: 'center',
+		alignItems: 'center',
+		marginBottom: 16
+	},
+	column: {
+		flex: 1,
+		alignItems: 'center',
+		justifyContent: 'center'
+	},
+	columnLabel: {
+		fontWeight: 'bold',
+		marginBottom: Platform.OS === 'ios' ? 0 : 8,
+		color: COLORS.primary,
+		textAlign: 'center'
+	},
+
+	picker: {
+		width: '100%',
+		height: PICKER_HEIGHT,
+		justifyContent: 'center'
+	},
+	pickerItem: {
+		height: PICKER_HEIGHT,
+		fontSize: 20,
+		color: COLORS.primary,
+		textAlign: 'center'
+	},
+	// Marge du haut déjà portée par les colonnes.
+	executeButton: {
+		marginTop: 0
+	}
+});

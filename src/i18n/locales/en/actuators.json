@@ -1,0 +1,68 @@
+{
+	"enum": {
+		"RPI": "RPI",
+		"COM": "COM",
+		"CTRL": "CTRL",
+		"in": "in",
+		"out": "out",
+		"high": "high",
+		"low": "low",
+		"none": "none",
+		"rising": "rising",
+		"falling": "falling",
+		"both": "both",
+		"PROPORTIONAL": "Proportional",
+		"ON_OFF": "On/off"
+	},
+	"controlLoop": {
+		"mode": {
+			"REGULATION": "Regulation (setpoint)",
+			"FOLLOW": "Potentiometer follow"
+		}
+	},
+	"empty": "No RPI actuator.",
+	"add": "Add new RPI actuator ...",
+	"actions": "Actions",
+	"channel": "channel",
+	"addAction": "Add action (device command) ...",
+	"regulation": {
+		"enable": "Enable regulation",
+		"mode": "Mode",
+		"analogInput": "Potentiometer / analog input*",
+		"analogInputRequired": "Analog input is required",
+		"deadband": "Deadband (%)",
+		"readPeriod": "Read period (ms)",
+		"feedbackSensor": "Feedback sensor*",
+		"feedbackSensorRequired": "Feedback sensor is required",
+		"setpoint": "Setpoint*",
+		"setpointRequired": "Setpoint is required",
+		"algorithm": "Algorithm",
+		"kP": "kP (gain)",
+		"kI": "kI (integral)",
+		"kD": "kD (derivative)",
+		"advanced": "Advanced",
+		"tolerance": "Tolerance",
+		"maxIterations": "Max iterations",
+		"iterationDelay": "Iteration delay (ms)",
+		"offHint": "Regulation off: in a sequence, the value sent to this valve is its opening (%)."
+	},
+	"ctrl": {
+		"minOpening": "Min opening (%)",
+		"maxOpening": "Max opening (%)",
+		"openingPercent": "Opening (%)",
+		"fullStrokeMs": "Full stroke (ms)",
+		"minOutputValue": "Min output value",
+		"maxOutputValue": "Max output value"
+	},
+	"rpi": {
+		"pin": "RPI pin*",
+		"pinRequired": "RPI pin is required",
+		"direction": "Direction*",
+		"directionRequired": "Direction is required",
+		"edge": "Edge*",
+		"edgeRequired": "Edge is required",
+		"debounce": "Debounce timeout (ms)",
+		"activeLow": "Active low",
+		"reconfigureDirection": "Reconfigure direction"
+	}
+}

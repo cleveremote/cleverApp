@@ -1,4 +1,5 @@
 import React from 'react';
+import {useTranslation} from 'react-i18next';
 import {
 	StackNavigationOptions,
 	createStackNavigator
@@ -6,13 +7,14 @@ import {
 import {Provider} from 'react-redux';
 import {store} from '../../module/process/infrasctructure/store/store';
 import CycleGeneralSettingsSection from '../screens/cycle/settings/cycle/CycleGeneralSettingsSection';
-import CyclePrioritySettingsSection from '../screens/cycle/settings/cycle/CyclePrioritySettingsSection';
 import SeqSettingsSection from '../screens/cycle/settings/cycle/CycleSeqSettingsSection';
+import CycleChildrenSettingsSection from '../screens/cycle/settings/cycle/CycleChildrenSettingsSection';
 import CycleSettingsScreen from '../screens/cycle/settings/cycle/CycleSettingsScreen';
 import {SequenceSettingStack} from './SequenceSettingsStack';
 import {navigationHeader} from '../components/common/navigationHeaders';
 
 export function CycleSettingStack() {
+	const {t} = useTranslation('navigation');
 	const options = (title: string) =>
 		({
 			headerTitleAlign: 'center',
@@ -28,22 +30,22 @@ export function CycleSettingStack() {
 			<Stack.Screen
 				name="CycleSettingsMenu"
 				component={CycleSettingsScreen}
-				options={options('Cycle Settings')}
+				options={options(t('cycleSettings'))}
 			/>
 			<Stack.Screen
 				name="CycleGeneralSection"
 				component={CycleGeneralSettingsSection}
-				options={options('General')}
-			/>
-			<Stack.Screen
-				name="CyclePrioritySection"
-				component={CyclePrioritySettingsSection}
-				options={options('Priority')}
+				options={options(t('general'))}
 			/>
 			<Stack.Screen
 				name="CycleSequenceSection"
 				component={SeqSettingsSection}
-				options={options('Sequences')}
+				options={options(t('sequences'))}
+			/>
+			<Stack.Screen
+				name="CycleChildrenSection"
+				component={CycleChildrenSettingsSection}
+				options={options(t('cycles'))}
 			/>
 			<Stack.Screen
 				name="SequenceSettingsStack"

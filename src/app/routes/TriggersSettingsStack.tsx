@@ -1,4 +1,5 @@
 import React from 'react';
+import {useTranslation} from 'react-i18next';
 import {
 	StackNavigationOptions,
 	createStackNavigator
@@ -6,10 +7,9 @@ import {
 import TriggerSettingsScreen from '../screens/cycle/triggers/settings/trigger/TriggerSettingsScreen';
 import TriggerExecutionSettingsSection from '../screens/cycle/triggers/settings/trigger/TriggerExecutionSettingsSection';
 import TriggerGeneralSettingsSection from '../screens/cycle/triggers/settings/trigger/TriggerGeneralSettingsSection';
-import TriggerConditionsSection from '../screens/cycle/triggers/settings/trigger/TriggerConditionsSection';
-import {ConditionSettingsStack} from './ConditionSettingsStack';
 
 export function TriggerSettingsStack() {
+	const {t} = useTranslation('navigation');
 	const options = (title: string) =>
 		({
 			headerTitleAlign: 'center',
@@ -23,27 +23,17 @@ export function TriggerSettingsStack() {
 			<Stack.Screen
 				name="TriggerSettingsMenu"
 				component={TriggerSettingsScreen}
-				options={options('Trigger Settings')}
+				options={options(t('triggerSettings'))}
 			/>
 			<Stack.Screen
 				name="TriggerGeneralSettingsSection"
 				component={TriggerGeneralSettingsSection}
-				options={options('General')}
+				options={options(t('general'))}
 			/>
 			<Stack.Screen
 				name="TriggerExecutionSettingsSection"
 				component={TriggerExecutionSettingsSection}
-				options={options('Execution')}
-			/>
-			<Stack.Screen
-				name="TriggerConditionsSection"
-				component={TriggerConditionsSection}
-				options={options('Conditions')}
-			/>
-			<Stack.Screen
-				name="ConditionSettingsStack"
-				component={ConditionSettingsStack}
-				options={{headerShown: false}}
+				options={options(t('execution'))}
 			/>
 		</Stack.Navigator>
 	);

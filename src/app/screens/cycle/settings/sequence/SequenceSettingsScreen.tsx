@@ -1,58 +1,115 @@
-import React, {useEffect, useRef} from 'react';
-import {View} from 'react-native';
+import React, {useEffect, useRef, useState} from 'react';
+import {Alert, StyleSheet, View} from 'react-native';
 import {connect} from 'react-redux';
 import {navigationHeader} from '../../../../components/common/navigationHeaders';
 import {
 	DeleteItemMenu,
-	MenuAccordion
+	MenuAccordion,
+	MenuGroup
 } from '../../../../components/common/cycleMenu';
+import {isEmpty, useEntityLoaded} from '../../../../components/common/useSectionSettingsHeader';
+import {SettingsScrollView} from '../../../../components/common/SettingsScrollView';
+import {DescBox} from '../../../../components/common/DescBox';
+import SequenceGeneralSettingsSection from './SequenceGeneralSettingsSection';
+import SequenceSecuritySettingsSection, {
+	isInverterDirectiveInvalid
+} from './SequenceSecuritySettingsSection';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import {
+	faCheckDouble,
 	faEthernet,
-	faGear,
 	faShieldHalved
 } from '@fortawesome/free-solid-svg-icons';
-import {hapticOptions} from '../../../../data/cycleTypes';
+import {
+	hapticOptions,
+	isModuleType,
+	PROPORTIONAL
+} from '../../../../data/cycleTypes';
 import {
 	loadSequence,
-	saveSequence
+	saveSequence,
+	updateSequence
 } from '../../../../../module/process/infrasctructure/store/actions/sequence';
-import {saveCycle} from '../../../../../module/process/infrasctructure/store/actions/cycle';
+import ConditionBuilderSection, {
+	isConditionIncomplete
+} from '../../conditions/ConditionBuilderSection';
+import SequenceActuatorsSettingsSection from './SequenceActuatorsSettingsSection';
+import {generalContainerStyle} from '../../../../components/common/GeneralSettingsFields';
+import i18n from 'i18next';
 
 function SequenceSettingsScreen(props: any) {
+	// Pas d'`id` en params = création → le rond de droite affiche un « + » (Add).
+	const isNew = !props.route.params.item?.id;
 	const isModified = useRef(!props.route.params.item?.id);
 	const sequenceRef = useRef(props.sequence);
 	sequenceRef.current = props.sequence;
+	const generalLoaded = useEntityLoaded(
+		props.sequence,
+		props.route.params.item?.id
+	);
+	// Séquence d'un MODULE : on ne peut ni la supprimer ni retirer ses
+	// actionneurs déjà définis (seulement en ajouter). Le cycle parent est celui
+	// ouvert dans CycleSettingsScreen (slice partagé), vérifié par son id.
+	const isOwnCycle = props.cycle?.id === props.route.params?.cycleId;
+	const isModule = isOwnCycle && isModuleType(props.cycle?.type);
+	// Module PROPORTIONAL : son actuator ne peut être qu'une vanne CTRL, dont
+	// le slider fixe la valeur (customValue).
+	const isProportional = isOwnCycle && props.cycle?.type === PROPORTIONAL;
 
-	const checkChanges = (e: any) => {
-		if (!isModified.current && !sequenceRef.current?.isModified) {
-			return;
-		}
-		saveSequence(sequenceRef.current, true, false);
+	// Intention de sortie déclenchée par les boutons d'entête (voir plus bas).
+	const leaveIntentRef = useRef<'save' | 'cancel' | null>(null);
+
+	// Sections en rouge au clic Save si non conformes (comme les conditions).
+	const [invalidSections, setInvalidSections] = useState({
+		general: false,
+		security: false,
+		conditions: false
+	});
+	const attemptedSaveRef = useRef(false);
+	const computeInvalidSections = (s: any) => ({
+		general: isEmpty(s?.name),
+		security:
+			isEmpty(s?.securityConfig?.maxDuration) ||
+			!!s?.inverterDirectives?.some(isInverterDirectiveInvalid),
+		conditions: !!s?.conditions?.some(
+			(x: any) => !x.delete && isConditionIncomplete(x)
+		)
+	});
+
+	// Validation dès l'accès à l'écran (comme la section Condition General) :
+	// sections invalides mises en évidence immédiatement puis à chaque édition,
+	// sans attendre une tentative de save.
+	// En création, la section General (toujours visible) est vide à l'entrée :
+	// pas de rouge avant la première tentative de save.
+	useEffect(() => {
+		if (isNew && !attemptedSaveRef.current) return;
+		attemptedSaveRef.current = true;
+		setInvalidSections(computeInvalidSections(sequenceRef.current));
+	}, [props.sequence]);
+
+	const hasUnsavedChanges = () => {
+		const conditionsModified = sequenceRef.current?.conditions?.some(
+			(x: any) => !!x.isModified
+		);
+		return (
+			isModified.current ||
+			sequenceRef.current?.isModified ||
+			conditionsModified
+		);
+	};
+
+	const persistSequence = () => {
+		isModified.current = false;
+		props.saveSequence(sequenceRef.current);
 	};
 
 	const _deleteItem = () => {
-		const data = {...props.sequence, id: `deleted_${props.sequence.id}`};
-		saveSequence(data, false, true);
-		const updateSequence = (prevSequences: any, sequence: any) => {
-			const previous = [...prevSequences];
-			if (sequence) {
-				const deleteId = sequence?.id.split('_');
-				const index = previous.findIndex(
-					x => x.id === (deleteId[1] || sequence?.id)
-				);
-				if (index > -1) {
-					previous[index] = sequence;
-				} else {
-					previous.push(sequence);
-				}
-			}
-			return previous;
-		};
-		props.saveCycle({
-			...props.cycle,
-			sequences: updateSequence(props.cycle.sequences, data)
-		});
+		// Marque la séquence supprimée dans le slice puis revient au cycle : la
+		// section embarquée répercute la suppression sur le cycle, dont l'écran de
+		// réglages déclenche le save auto (persistance box) puis purge la liste —
+		// cf. le watcher de CycleSettingsScreen. On ne persiste donc plus le cycle
+		// ici (sinon double sauvegarde).
+		saveSequence({...props.sequence, delete: true}, false, true);
 	};
 
 	const saveSequence = (sequence: any, haptic: boolean, goBack: boolean) => {
@@ -71,24 +128,116 @@ function SequenceSettingsScreen(props: any) {
 	}, []);
 
 	useEffect(() => {
+		const leaveWithSave = () => {
+			ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
+			leaveIntentRef.current = 'save';
+			props.navigation.goBack();
+		};
+		const leaveWithCancel = () => {
+			ReactNativeHapticFeedback.trigger('impactMedium', hapticOptions);
+			leaveIntentRef.current = 'cancel';
+			props.navigation.goBack();
+		};
+		// Rien de modifié : simple bouton retour (ni save ni cancel).
+		const leaveWithBack = () => {
+			props.navigation.goBack();
+		};
+
+		// Entête conditionnelle : save/cancel seulement s'il y a des modifications,
+		// sinon un simple bouton retour à la place du cancel.
+		const dirty = hasUnsavedChanges();
+		const headerRight = () => {
+			if (isNew) {
+				return navigationHeader(leaveWithSave, 'times-circle', true);
+			}
+			return dirty
+				? navigationHeader(leaveWithSave, 'check-circle', false)
+				: null;
+		};
 		props.navigation.setOptions({
 			headerLeft: () =>
-				navigationHeader(
-					() => {
-						ReactNativeHapticFeedback.trigger(
-							'impactMedium',
-							hapticOptions
-						);
-						props.navigation.goBack();
-					},
-					'arrow-alt-circle-left',
-					false
-				)
+				dirty
+					? navigationHeader(leaveWithCancel, 'times-circle', false)
+					: navigationHeader(
+							leaveWithBack,
+							'arrow-alt-circle-left',
+							false
+					  ),
+			headerRight
 		});
-		const listenerUnsubscribe = props.navigation.addListener(
+
+		let listenerUnsubscribe = () => {};
+		listenerUnsubscribe = props.navigation.addListener(
 			'beforeRemove',
 			(e: any) => {
-				checkChanges(e);
+				const intent = leaveIntentRef.current;
+				leaveIntentRef.current = null;
+				const modified = hasUnsavedChanges();
+
+				if (intent === 'save') {
+					attemptedSaveRef.current = true;
+					const invalid = computeInvalidSections(
+						sequenceRef.current
+					);
+					if (invalid.general || invalid.security || invalid.conditions) {
+						setInvalidSections(invalid);
+						ReactNativeHapticFeedback.trigger(
+							'notificationError',
+							hapticOptions
+						);
+						e.preventDefault();
+						return;
+					}
+					setInvalidSections({
+						general: false,
+						security: false,
+						conditions: false
+					});
+					if (modified) persistSequence();
+					return; // laisse la navigation se poursuivre
+				}
+				if (intent === 'cancel') {
+					if (!modified) return;
+					if (
+						!['GO_BACK', 'POP', 'POP_TO_TOP'].includes(
+							e.data.action.type
+						)
+					)
+						return;
+					e.preventDefault();
+					Alert.alert(
+						i18n.t('common:discard.title'),
+						i18n.t('common:discard.message'),
+						[
+							{
+								text: i18n.t('common:discard.continue'),
+								style: 'cancel',
+								onPress: () => {}
+							},
+							{
+								text: i18n.t('common:discard.confirm'),
+								style: 'destructive',
+								onPress: () => {
+									// Remet dans le slice la séquence d'origine
+									// (celle de la liste du cycle) : sinon, à la
+									// réouverture, le formulaire repartirait des
+									// modifications abandonnées.
+									if (props.route.params.item?.id) {
+										props.loadSequence(
+											props.route.params.item.id
+										);
+									}
+									listenerUnsubscribe();
+									props.navigation.dispatch(e.data.action);
+								}
+							}
+						]
+					);
+					return;
+				}
+				// Retour geste/matériel ou suppression : sauvegarde silencieuse
+				// (comportement historique).
+				if (modified) persistSequence();
 			}
 		);
 		isModified.current = props.sequence?.isModified;
@@ -96,7 +245,19 @@ function SequenceSettingsScreen(props: any) {
 	}, [props.sequence]);
 
 	return (
-		<View style={{alignSelf: 'stretch'}}>
+		<SettingsScrollView>
+			{/* Général sorti du menu : sans carte blanche, en première position, montée
+			    une fois l'entité chargée (le formulaire lit ses valeurs au montage). */}
+			{generalLoaded ? (
+				<View style={generalContainerStyle}>
+					<SequenceGeneralSettingsSection
+						embedded
+						sequenceData={sequenceRef.current}
+						showErrors={invalidSections.general}
+						navigation={props.navigation}
+					/>
+				</View>
+			) : null}
 			<View
 				style={{
 					alignSelf: 'stretch',
@@ -111,69 +272,90 @@ function SequenceSettingsScreen(props: any) {
 					shadowRadius: 2.22
 				}}>
 				<View>
-					<View>
-						<MenuAccordion
-							key={21}
-							name={'General'}
-							icon={faGear}
-							onPress={() => {
-								props.navigation.navigate(
-									'SequenceGeneralSection',
-									{
-										sequenceData: props.sequence
-									}
-								);
-							}}
-						/>
+					<MenuGroup>
 						<MenuAccordion
 							key={41}
-							name={'Security'}
+							name={i18n.t('common:sections.security')}
 							icon={faShieldHalved}
-							onPress={() => {
-								props.navigation.navigate(
-									'SequenceSecuritySection',
-									{
-										sequenceData: props.sequence
-									}
-								);
-							}}
-						/>
+							invalid={invalidSections.security}
+							onPress={() => {}}>
+							<SequenceSecuritySettingsSection
+								embedded
+								sequenceData={sequenceRef.current}
+								showErrors={invalidSections.security}
+								navigation={props.navigation}
+							/>
+						</MenuAccordion>
+
+						<MenuAccordion
+							key={55}
+							name={i18n.t('common:sections.preconditions')}
+							icon={faCheckDouble}
+							invalid={invalidSections.conditions}
+							onPress={() => {}}>
+							<DescBox
+								message={i18n.t('cycle:conditions.sequenceDescription')}
+								style={styles.sectionDesc}
+							/>
+							<ConditionBuilderSection
+								conditions={props.sequence?.conditions}
+								parentId={props.sequence?.id}
+								parentType="SEQUENCE"
+								showErrors={invalidSections.conditions}
+								onChange={(conditions: any[]) =>
+									props.updateSequence({
+										...sequenceRef.current,
+										conditions,
+										isModified: true
+									})
+								}
+							/>
+						</MenuAccordion>
 
 						<MenuAccordion
 							key={51}
-							name={'Modules'}
+							name={i18n.t('common:sections.actuators')}
 							icon={faEthernet}
-							onPress={() => {
-								props.navigation.navigate(
-									'SequenceModulesSettingsSection',
-									{
-										sequenceData: props.sequence
-									}
-								);
-							}}
-						/>
+							onPress={() => {}}>
+							<SequenceActuatorsSettingsSection
+								embedded
+								sequenceData={sequenceRef.current}
+								isModule={isModule}
+								isProportional={isProportional}
+								navigation={props.navigation}
+							/>
+						</MenuAccordion>
 
-						<DeleteItemMenu
-							key={61}
-							OnConfirm={() => {
-								_deleteItem();
-							}}
-						/>
-					</View>
+						{!isNew && !isModule && (
+							<DeleteItemMenu
+								key={61}
+								name={i18n.t('common:remove')}
+								confirmTitle={i18n.t('cycle:sequence.removeTitle')}
+								confirmMessage={i18n.t('cycle:sequence.removeMessage')}
+								OnConfirm={() => {
+									_deleteItem();
+								}}
+							/>
+						)}
+					</MenuGroup>
 				</View>
 			</View>
-		</View>
+		</SettingsScrollView>
 	);
 }
 
+const styles = StyleSheet.create({
+	// Aligné sur les marges latérales du constructeur de conditions.
+	sectionDesc: {marginHorizontal: 10, marginTop: 6}
+});
+
 const mapStateToProps = (state: any) => ({
 	sequence: state.cycle_sequence.sequence,
-	cycle: state.root_cycle.cycle,
-	cycles: state.root_cycle.cycles
+	cycle: state.root_cycle.cycle
 });
 
 export default connect(mapStateToProps, {
 	saveSequence,
 	loadSequence,
-	saveCycle
+	updateSequence
 })(SequenceSettingsScreen);

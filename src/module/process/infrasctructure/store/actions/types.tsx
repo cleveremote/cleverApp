@@ -6,6 +6,9 @@ export const MODBUS_CONNECTION_SAVE = 'MODBUS_CONNECTION_SAVE';
 
 /////////////MOSBUS_TASK
 export const MODBUS_TASKS_LOAD = 'MODBUS_TASKS_LOAD';
+export const DEVICE_MODELS_LOAD = 'DEVICE_MODELS_LOAD';
+export const INVERTERS_LOAD = 'INVERTERS_LOAD';
+export const INVERTER_SAVE = 'INVERTER_SAVE';
 export const MODBUS_TASK_LOAD = 'MODBUS_TASK_LOAD';
 export const MODBUS_TASK_UPDATE = 'MODBUS_TASK_UPDATE';
 export const MODBUS_TASK_SAVE = 'MODBUS_TASK_SAVE';
@@ -19,14 +22,18 @@ export const SENSOR_SAVE = 'SENSOR_SAVE';
 
 /////////////Data
 export const DATA_LOAD = 'DATA_LOAD';
+export const EVENTS_LOAD = 'EVENTS_LOAD';
 export const PLAN_LOAD = 'PLAN_LOAD';
+/////////////Group
+export const GROUPS_LOAD = 'GROUPS_LOAD';
+export const GROUP_SAVE = 'GROUP_SAVE';
+
 /////////////Cycle
 export const CYCLE_STATUS = 'CYCLE_STATUS';
 export const CYCLES_LOAD = 'CYCLES_LOAD';
 export const CYCLE_LOAD = 'CYCLE_LOAD';
 export const CYCLE_UPDATE = 'CYCLE_UPDATE';
 export const CYCLE_SAVE = 'CYCLE_SAVE';
-export const CYCLE_EXECUTE = 'CYCLE_EXECUTE';
 
 /////////////Sequence
 export const SEQUENCE_UPDATE = 'SEQUENCE_UPDATE';
@@ -37,7 +44,33 @@ export const SEQUENCES_SAVE = 'SEQUENCES_ORDER';
 
 /////////////Module
 export const MODULE_UPDATE = 'MODULE_UPDATE';
+export const MODULES_GLOBAL_LOAD = 'MODULES_GLOBAL_LOAD';
 export const MODULES_LOAD = 'MODULES_LOAD';
+
+/////////////Device (task cycles only)
+export const DEVICE_UPDATE = 'DEVICE_UPDATE';
+export const DEVICES_LOAD = 'DEVICES_LOAD';
+
+/////////////Device (root list from configuration)
+export const ROOT_DEVICES_LOAD = 'ROOT_DEVICES_LOAD';
+export const ROOT_DEVICE_LOAD = 'ROOT_DEVICE_LOAD';
+export const ROOT_DEVICE_UPDATE = 'ROOT_DEVICE_UPDATE';
+export const ROOT_DEVICE_SAVE = 'ROOT_DEVICE_SAVE';
+// Joignabilité des masters/slaves : relue sur `devices[].connectivity` de la
+// configuration (LOAD) ou poussée par `front/synchronize/device-status`.
+export const DEVICE_CONNECTIVITY_LOAD = 'DEVICE_CONNECTIVITY_LOAD';
+export const DEVICE_CONNECTIVITY_UPDATE = 'DEVICE_CONNECTIVITY_UPDATE';
+
+/////////////Actuator (master typed list + per-sequence module refs)
+export const ACTUATORS_LOAD = 'ACTUATORS_LOAD';
+export const ACTUATOR_LOAD = 'ACTUATOR_LOAD';
+export const ACTUATOR_UPDATE = 'ACTUATOR_UPDATE';
+export const ACTUATOR_SAVE = 'ACTUATOR_SAVE';
+export const CONTROL_LOOPS_LOAD = 'CONTROL_LOOPS_LOAD';
+export const CONTROL_LOOP_UPDATE = 'CONTROL_LOOP_UPDATE';
+export const CONTROL_LOOP_SAVE = 'CONTROL_LOOP_SAVE';
+export const SEQUENCE_MODULE_CONFIGS_LOAD = 'SEQUENCE_MODULE_CONFIGS_LOAD';
+export const SEQUENCE_MODULE_CONFIG_UPDATE = 'SEQUENCE_MODULE_CONFIG_UPDATE';
 
 //////////////Schedule
 export const SCHEDULES_LOAD = 'SCHEDULES_LOAD';
@@ -59,6 +92,12 @@ export const CONDITION_LOAD = 'CONDITION_LOAD';
 export const CONDITION_UPDATE = 'CONDITION_UPDATE';
 export const CONDITION_SAVE = 'CONDITION_SAVE';
 export const CONDITIONS_SAVE = 'CONDITIONS_SAVE';
+
+//////////////Global settings (box-level settings, ex: localCoordinates)
+export const SETTINGS_LOAD = 'SETTINGS_LOAD';
+export const SETTINGS_UPDATE = 'SETTINGS_UPDATE';
+export const SETTINGS_SAVE = 'SETTINGS_SAVE';
+export const ACCOUNT_LOAD = 'ACCOUNT_LOAD';
 
 ////////// new
 export const PROCESS_STATUS = 'PROCESS_STATUS';

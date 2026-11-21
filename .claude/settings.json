@@ -42,7 +42,21 @@
       "WebFetch(domain:react-native-community.github.io)",
       "WebFetch(domain:github.com)",
       "Bash(curl -s https://raw.githubusercontent.com/react-native-community/rn-diff-purge/diffs/diffs/0.73.6..0.74.7.diff)",
-      "Bash(git -C /Users/nya-perso/cleveremote/cleverApp checkout -b feature-mig-0.75)"
+      "Bash(git -C /Users/nya-perso/cleveremote/cleverApp checkout -b feature-mig-0.75)",
+      "Bash(node -e \"const i=require\\('@fortawesome/free-solid-svg-icons'\\); ['faSyncAlt','faFlask','faPlug','faListCheck','faTasks','faToggleOn','faMicrochip','faLayerGroup','faPuzzlePiece','faBorderAll'].forEach\\(n=>console.log\\(n, !!i[n]\\)\\)\")",
+      "Bash(git -c core.quotepath=false status --short)",
+      "Bash(npx eslint *)",
+      "Bash(cd /Users/nya-perso/cleveremote/cleveremote-box && grep -n \"status\\\\|progression\\\\|toJSON\" src/modules/process/domain/models/cycle.model.ts | head -20; echo '=== sequence ==='; grep -n \"status\\\\|progression\\\\|toJSON\" src/modules/process/domain/models/sequence.model.ts | head -20)",
+      "Read(//Users/nya-perso/cleveremote/cleveremote-box/**)",
+      "Bash(npx jest *)",
+      "Bash(echo \"exit:$?\")",
+      "Bash(echo \"=== exit: $? \\(empty grep = no errors in touched files\\) ===\")",
+      "Bash(echo \"exit=$?\")",
+      "Bash(curl -sS -o /dev/null -w \"http=%{http_code} ip=%{remote_ip} tls=%{ssl_verify_result}\\\\n\" https://pi-dev-1.local/updater/getNetworksList)",
+      "Bash(curl -sS -D - -o /dev/null --max-time 8 https://pi-dev-1.local/updater/getNetworksList)",
+      "Bash(echo \"tsc-scan-clean=$?\")",
+      "Bash(node -e \"console.log\\(require\\('./package.json'\\).scripts\\)\")",
+      "Bash(grep -vE \"npm info|^\\\\s*$\")"
     ],
     "additionalDirectories": [
       "/Users/nya/Library/Developer/Xcode/DerivedData/cleverApp-gfbkyyztpeonnddfkjftehjjxboc",

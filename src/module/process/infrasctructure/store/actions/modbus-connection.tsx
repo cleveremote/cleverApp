@@ -8,7 +8,12 @@ import {
 import {ThunkAction} from 'redux-thunk';
 import {AnyAction} from 'redux';
 import {RootState} from '../store';
-import {socketService} from '../../../../../services/socket';
+import {
+	socketService,
+	normalizeIds,
+	denormalizeIds,
+	isTempId
+} from '../../../../../services/socket';
 
 export const updateModbusConnection =
 	(modbusConnection: any): ThunkAction<void, RootState, unknown, AnyAction> =>
@@ -27,7 +32,9 @@ export const loadModbusConnections =
 			(response: any) => {
 				dispatch({
 					type: MODBUS_CONNECTIONS_LOAD,
-					payload: JSON.parse(response.config).modbusconnections
+					payload: normalizeIds(
+						JSON.parse(response.config).modbusconnections
+					)
 				});
 			}
 		);
@@ -49,11 +56,14 @@ export const saveModbusConnection =
 	async dispatch => {
 		socketService.emit(
 			'front/box/sync/modbusconnection',
-			data,
+			denormalizeIds(data),
 			(response: any) => {
 				dispatch({
 					type: MODBUS_CONNECTION_SAVE,
-					payload: response.config
+					payload: normalizeIds(
+						JSON.parse(response.config).modbusconnection
+					),
+					tempId: isTempId(data.id) ? data.id : undefined
 				});
 			}
 		);

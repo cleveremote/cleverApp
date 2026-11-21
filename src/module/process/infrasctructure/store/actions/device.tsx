@@ -1,0 +1,248 @@
+import {
+	ROOT_DEVICE_SAVE,
+	ROOT_DEVICE_LOAD,
+	ROOT_DEVICE_UPDATE,
+	ROOT_DEVICES_LOAD,
+	MODBUS_TASKS_LOAD,
+	DEVICE_CONNECTIVITY_UPDATE
+} from './types';
+
+import {ThunkAction} from 'redux-thunk';
+import {AnyAction} from 'redux';
+import {RootState} from '../store';
+import {
+	socketService,
+	normalizeIds,
+	denormalizeIds
+} from '../../../../../services/socket';
+import {loadConfiguration} from './common';
+import {parseConnectivity} from '../models/deviceConnectivity';
+import {currentLanguage} from '../../../../../i18n/language';
+
+export const updateDevice =
+	(device: any): ThunkAction<void, RootState, unknown, AnyAction> =>
+	dispatch => {
+		dispatch({
+			type: ROOT_DEVICE_UPDATE,
+			payload: device
+		});
+	};
+
+// Soft-save a device into the in-memory `devices` list without hitting the box.
+// Used when a nested slave menu validates its edits: the change must appear in
+// the master's slave list and survive re-entry immediately (no socket round-trip
+// required), while the real box persistence is deferred to the master's save,
+// which pushes every dirty slave. Mirrors how a cycle soft-saves its sequences.
+export const stageDevice =
+	(device: any): ThunkAction<void, RootState, unknown, AnyAction> =>
+	dispatch => {
+		dispatch({
+			type: ROOT_DEVICE_SAVE,
+			payload: device
+		});
+	};
+
+// Re-run on every focus: global loader only while the list is still empty.
+export const loadDevices =
+	(): ThunkAction<void, RootState, unknown, AnyAction> =>
+	async (dispatch, getState) => {
+		socketService.emitRefresh(
+			!!getState().root_device.devices?.length,
+			'front/box/fetch/configuration',
+			{},
+			(response: any) => {
+				const devices = JSON.parse(response.config).devices;
+				dispatch({
+					type: ROOT_DEVICES_LOAD,
+					payload: normalizeIds(devices)
+				});
+			}
+		);
+	};
+
+export const loadDevice =
+	(
+		deviceId: string,
+		defaults?: Record<string, any>
+	): ThunkAction<void, RootState, unknown, AnyAction> =>
+	dispatch => {
+		dispatch({
+			type: ROOT_DEVICE_LOAD,
+			payload: {deviceId, defaults}
+		});
+	};
+
+// Persist a whole device tree in one round-trip: a master carrying its
+// `slaveDevices`, each slave carrying its `comRequests`. `denormalizeIds` walks
+// the nested payload deeply (id -> _id, temp ids dropped), so the parent/child
+// links are expressed by nesting rather than by masterDeviceId/deviceId. The box
+// returns the refreshed full configuration, so we reload both the devices and
+// modbusTasks slices — every client-only `isModified` flag is cleared and temp
+// ids are replaced by the real ones the box assigned. When the tree carries a
+// deleted slave, the whole configuration is reloaded too: the box drops the
+// slave's dependent entities (sensors, modbus tasks...) along with it.
+// La connectivité est un état du box, pas une donnée éditable : elle ne
+// repart pas avec l'arbre sauvegardé.
+const withoutConnectivity = (tree: any) => {
+	if (!tree) return tree;
+	const {connectivity, ...master} = tree;
+	return master.slaveDevices
+		? {
+				...master,
+				slaveDevices: master.slaveDevices.map(
+					({connectivity: _c, ...slave}: any) => slave
+				)
+		  }
+		: master;
+};
+
+export const saveDeviceTree =
+	(
+		tree: any,
+		onSuccess?: () => void
+	): ThunkAction<void, RootState, unknown, AnyAction> =>
+	async dispatch => {
+		socketService.emit(
+			'front/box/sync/device',
+			denormalizeIds(withoutConnectivity(tree)),
+			(response: any) => {
+				// A deleted slave: skip the sync response's snapshot and leave only
+				// once the full configuration reload has landed, so the lists are
+				// replaced a single time with the final state (no flicker).
+				if ((tree?.slaveDevices || []).some((s: any) => !!s.delete)) {
+					dispatch(loadConfiguration(onSuccess));
+					return;
+				}
+				const config = JSON.parse(response.config);
+				dispatch({
+					type: ROOT_DEVICES_LOAD,
+					payload: normalizeIds(config.devices)
+				});
+				dispatch({
+					type: MODBUS_TASKS_LOAD,
+					payload: normalizeIds(config.modbusTasks)
+				});
+				onSuccess?.();
+			}
+		);
+	};
+
+// Ask the box to probe the master's `discoveryRegisters` on the
+// DEFAULT_UNCONFIGURED_UNIT_ID and register any newly-found slave devices.
+// Without `masterId` (Devices screen), the box runs a global discovery.
+// The discovered devices are appended to the current list: entries already
+// known (same id) are kept as-is, so local unsaved edits are not overwritten —
+// discovery only ever adds new devices. A slave discovery (with `masterId`)
+// then reloads the whole configuration, since the box may have created
+// entities tied to the new slaves (sensors, modbus tasks...).
+export const discoverDevices =
+	(
+		masterId?: string,
+		cb?: () => void
+	): ThunkAction<void, RootState, unknown, AnyAction> =>
+	async (dispatch, getState) => {
+		// Le bouton Discover affiche son propre loader : pas de loader global.
+		socketService.emitSilent(
+			'front/box/discover/device',
+			masterId ? {masterId} : {},
+			(response: any) => {
+				// `cb` doit toujours être appelé (il arrête le loader de l'écran),
+				// même si la réponse est une erreur ou un `config` illisible :
+				// une exception ici l'empêcherait d'être exécuté.
+				let reloading = false;
+				try {
+					const raw = response?.config;
+					const config = typeof raw === 'string' ? JSON.parse(raw) : raw;
+					if (config) {
+						const found = normalizeIds(config);
+						const existing = getState().root_device.devices ?? [];
+						const knownIds = new Set(existing.map((d: any) => `${d.id}`));
+						const added = (Array.isArray(found) ? found : [found]).filter(
+							(d: any) => d?.id && !knownIds.has(`${d.id}`)
+						);
+						if (added.length) {
+							dispatch({
+								type: ROOT_DEVICES_LOAD,
+								payload: [...existing, ...added]
+							});
+						}
+						if (masterId) {
+							// Rechargement silencieux, sous le loader du bouton : `cb`
+							// n'est appelé qu'une fois la configuration arrivée.
+							reloading = true;
+							dispatch(loadConfiguration(cb, true));
+						}
+					} else {
+						console.warn('[discoverDevices] unexpected response', response);
+					}
+				} catch (e) {
+					console.warn('[discoverDevices] failed to handle response', e);
+				} finally {
+					if (!reloading) cb?.();
+				}
+			}
+		);
+	};
+
+// Exécute une device command du modèle d'un slave, hors cycle, pour la tester.
+// `params` porte les valeurs saisies dans le formulaire (channel, value,
+// range…), indexées comme dans la définition de la commande (à partir de 0).
+// Pas de loader global : le formulaire affiche le sien. `cb` reçoit la réponse
+// brute de la box (JSON parsé si c'est une chaîne).
+export const executeDeviceCommand =
+	(
+		payload: {deviceId: string; commandId: string; params: Record<string, any>},
+		cb: (response: any) => void
+	): ThunkAction<void, RootState, unknown, AnyAction> =>
+	async () => {
+		socketService.emitSilent(
+			'front/box/execute/device-command',
+			{...denormalizeIds(payload), lang: currentLanguage()},
+			(response: any) => {
+				let parsed = response;
+				if (typeof response === 'string') {
+					try {
+						parsed = JSON.parse(response);
+					} catch {
+						parsed = response;
+					}
+				}
+				cb(normalizeIds(parsed));
+			}
+		);
+	};
+
+// Vérifie la joignabilité des devices (front/box/check/device) :
+// - un master : le master, puis ses slaves s'il répond ;
+// - un slave : d'abord son master, puis le slave si le master répond ;
+// - sans deviceId : tous les masters et leurs slaves.
+// Les états arrivent sur `front/synchronize/device-status` (cf. listenerEvents) ;
+// ceux éventuellement portés par la réponse sont appliqués aussi. Pas de loader
+// global : le bouton affiche le sien, `cb` est toujours appelé.
+export const checkDevices =
+	(
+		deviceId?: string,
+		cb?: (response: any) => void
+	): ThunkAction<void, RootState, unknown, AnyAction> =>
+	async dispatch => {
+		socketService.emitSilent(
+			'front/box/check/device',
+			deviceId ? denormalizeIds({deviceId}) : {},
+			(response: any) => {
+				try {
+					let raw = response?.config ?? response?.data ?? response;
+					if (typeof raw === 'string') raw = JSON.parse(raw);
+					const entries = (Array.isArray(raw) ? raw : [raw])
+						.map(parseConnectivity)
+						.filter(Boolean);
+					if (entries.length) {
+						dispatch({type: DEVICE_CONNECTIVITY_UPDATE, payload: entries});
+					}
+				} catch (e) {
+					console.warn('[checkDevices] failed to handle response', e);
+				} finally {
+					cb?.(response);
+				}
+			}
+		);
+	};

@@ -1,18 +1,23 @@
+import {ELEMENT_HEIGHT} from '../../styles/metrics';
 import React from 'react';
 import {
+	Keyboard,
 	StyleSheet,
 	Text,
 	TextInput,
-	Alert,
 	TouchableOpacity,
 	View
 } from 'react-native';
 import {AppSwitch} from '../../components/common/AppSwitch';
-import {placeholderColor} from '../../styles/components/common/Input';
+import {KeyboardAwareScrollView} from '../../components/common/KeyboardAwareScrollView';
+import {InputStyle, placeholderColor, inputText} from '../../styles/components/common/Input';
 import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
 import {hapticOptions} from '../../data/cycleTypes';
 import Spinner from 'react-native-loading-spinner-overlay';
-import {getSigninData} from '../../components/common/RememberMeManager';
+import {
+	findProfileByLogin,
+	getSigninData
+} from '../../components/common/RememberMeManager';
 import Logo from '../../../../hydrophyto.svg';
 import {connect} from 'react-redux';
 import {
@@ -24,15 +29,74 @@ import {
 	brandLogo,
 	navigationHeader
 } from '../../components/common/navigationHeaders';
+import {useTranslation} from 'react-i18next';
+import {faRightToBracket} from '@fortawesome/free-solid-svg-icons';
+import {authenticationService} from '../../../module/authentication/domain/services/auth.service';
+import {OutlineButton, useLockedUntil} from './accessUi';
+import {ErrorBox} from '../../components/common/ErrorBox';
+import {PasswordInput} from '../../components/common/PasswordInput';
+import {LegalLinks} from '../../components/common/LegalLinks';
 
 export function SignIn(props: any) {
+	const {t} = useTranslation(['access', 'common']);
+	// Identifiant de la box : saisi une seule fois, à la configuration de la
+	// box ou à la création d'un profil. Une fois connu (profil existant ou
+	// arrivée depuis la configuration), il reste en lecture seule.
+	const presetLogin: string = props.route.params?.login ?? '';
+	// Retour après un changement de mot de passe : le profil qui mémorise ce
+	// login est repris tel quel (nom, « se souvenir de moi ») sans relire le
+	// trousseau, qui ne contient que l'ancien mot de passe ; la connexion y
+	// enregistre le nouveau.
+	const passwordChanged = !!props.route.params?.passwordChanged;
+	const changedProfile: string =
+		(passwordChanged && props.route.params?.profile) || '';
+	const [loginLocked, setLoginLocked] = React.useState(!!presetLogin);
 	const [signinData, setSigninData] = React.useState({
-		login: '',
+		login: presetLogin,
 		password: '',
-		rememberCredentials: false,
-		profile: ''
+		rememberCredentials: !!changedProfile,
+		profile: changedProfile
 	});
 	const [isLoading, setIsLoading] = React.useState(false);
+	// Message affiché sous le bouton (plus aucune popup sur cet écran) ; il
+	// disparaît dès que l'utilisateur modifie un champ.
+	const [message, setMessage] = React.useState('');
+	// Compte bloqué par la box après trop d'échecs (`ACCOUNT_LOCKED`) : le
+	// bouton reste désactivé jusqu'à `lockedUntil`. Le blocage est mémorisé par
+	// le service, par identifiant, pour survivre à une navigation.
+	const [lock, setLock] = React.useState<{
+		until: number;
+		message?: string;
+	} | null>(null);
+	const locked = useLockedUntil(lock?.until ?? null);
+	React.useEffect(() => {
+		setLock(
+			signinData.login
+				? authenticationService.getAccountLock(signinData.login)
+				: null
+		);
+	}, [signinData.login]);
+	// Retour de « mot de passe oublié » : le nouveau mot de passe est
+	// pré-rempli, puis retiré des paramètres pour ne pas traîner dans l'état
+	// de navigation.
+	const resetPassword: string | undefined =
+		props.route.params?.resetPassword;
+	React.useEffect(() => {
+		if (!resetPassword) return;
+		setMessage('');
+		setSigninData(data => ({...data, password: resetPassword}));
+		props.navigation.setParams({resetPassword: undefined});
+	}, [resetPassword, props.navigation]);
+	const updateField = (field: Partial<typeof signinData>) => {
+		setMessage('');
+		setSigninData(data => ({...data, ...field}));
+	};
+	// Règles du bouton « Se connecter » : identifiant et mot de passe requis,
+	// et compte non bloqué. Pendant l'appel, il affiche un loader.
+	const missingFields = !signinData.login?.trim() || !signinData.password;
+	const shownMessage = locked
+		? lock?.message || t('common:errors.unexpected')
+		: message;
 	const nav = useNavigation();
 	React.useEffect(() => {
 		nav.setOptions({
@@ -48,11 +112,15 @@ export function SignIn(props: any) {
 			try {
 				const sd = await getSigninData(profile);
 				if (sd) {
-					setSigninData(sd);
-					if (sd.login && sd.password && sd.profile) {
-						//await onLogin(sd);
-					} else {
-						Alert.alert('Required information missing!');
+					const savedLogin = sd.login || presetLogin;
+					setSigninData({...sd, login: savedLogin});
+					if (savedLogin) setLoginLocked(true);
+					if (sd.credentialsError === 'cancelled') {
+						setMessage(t('signIn.credentialsCancelled'));
+					} else if (sd.credentialsError === 'unavailable') {
+						setMessage(t('signIn.credentialsUnavailable'));
+					} else if (!(sd.login && sd.password && sd.profile)) {
+						setMessage(t('signIn.missingInfo'));
 					}
 				}
 			} catch (error) {
@@ -60,12 +128,28 @@ export function SignIn(props: any) {
 			}
 		};
 
-		if (props.route.params?.profile) {
+		if (props.route.params?.profile && !passwordChanged) {
 			fetchCredentials(props.route.params.profile);
 		}
 	}, []);
 
 	const onLogin = async (data: any) => {
+		// Le focus quitte le champ : le clavier se referme pendant l'appel.
+		Keyboard.dismiss();
+		setMessage('');
+		// « Se souvenir de moi » crée (ou renomme) le profil : refusé si un
+		// autre profil utilise déjà ce login.
+		if (data.rememberCredentials) {
+			const owner = await findProfileByLogin(
+				data.login,
+				props.route.params?.profile
+			);
+			if (owner) {
+				ReactNativeHapticFeedback.trigger('notificationError', hapticOptions);
+				setMessage(t('signIn.loginAlreadyUsed', {profile: owner}));
+				return;
+			}
+		}
 		setIsLoading(true);
 		props
 			.login(
@@ -73,11 +157,26 @@ export function SignIn(props: any) {
 				data.password,
 				data.rememberCredentials,
 				data.profile,
-				props.route.params?.profile
+				props.route.params?.profile,
+				data.login
 			)
 			.then((res: any) => {
-				if (res.error) {
-					Alert.alert(res.error);
+				if (res && !res.res) {
+					ReactNativeHapticFeedback.trigger(
+						'notificationError',
+						hapticOptions
+					);
+					// Blocage : son message vit dans `lock` et s'efface seul à
+					// l'échéance ; les autres erreurs restent jusqu'à la saisie.
+					const accountLock = authenticationService.getAccountLock(
+						data.login
+					);
+					setLock(accountLock);
+					setMessage(
+						accountLock
+							? ''
+							: res.error || t('common:errors.unexpected')
+					);
 					setIsLoading(false);
 				}
 			})
@@ -88,7 +187,13 @@ export function SignIn(props: any) {
 	};
 
 	return (
-		<View style={{flex: 1, marginTop: 25}}>
+		// Le champ actif (et l'encadré d'avertissement en dessous) défile
+		// au-dessus du clavier ; un appui hors des champs le referme.
+		<KeyboardAwareScrollView
+			style={{flex: 1}}
+			contentContainerStyle={{paddingTop: 25, paddingBottom: 24}}
+			keyboardDismissMode="on-drag"
+			extraOffset={120}>
 			<View style={{gap: 16, alignItems: 'center'}}>
 				<Spinner
 					visible={isLoading}
@@ -126,59 +231,43 @@ export function SignIn(props: any) {
 										: undefined
 								}
 								style={styles.input}
-								placeholder="Profile"
+								placeholder={t('profile')}
 								placeholderTextColor={placeholderColor}
-								onChangeText={profile => {
-									setSigninData({
-										login: signinData.login,
-										password: signinData.password,
-										rememberCredentials:
-											signinData.rememberCredentials,
-										profile
-									});
-								}}
+								onChangeText={profile => updateField({profile})}
 							/>
 							<TextInput
 								value={
-									signinData.rememberCredentials
+									loginLocked || signinData.rememberCredentials
 										? signinData.login
 										: undefined
 								}
+								editable={!loginLocked}
 								textContentType={'username'}
-								style={styles.input}
-								placeholder="Box id"
+								style={[
+									styles.input,
+									loginLocked && InputStyle.inputDisabled
+								]}
+								placeholder={t('signIn.boxId')}
 								placeholderTextColor={placeholderColor}
-								onChangeText={login => {
-									setSigninData({
-										login,
-										password: signinData.password,
-										rememberCredentials:
-											signinData.rememberCredentials,
-										profile: signinData.profile
-									});
-								}}
+								onChangeText={login => updateField({login})}
 							/>
-							<TextInput
+							<PasswordInput
 								style={styles.input}
-								placeholder="Password"
+								placeholder={t('common:password')}
 								placeholderTextColor={placeholderColor}
-								secureTextEntry={true}
 								textContentType={'newPassword'}
-								value={
-									signinData.rememberCredentials
-										? signinData.password
-										: undefined
-								}
-								onChangeText={password => {
-									setSigninData({
-										login: signinData.login,
-										password,
-										rememberCredentials:
-											signinData.rememberCredentials,
-										profile: signinData.profile
-									});
+								value={signinData.password}
+								onChangeText={password => updateField({password})}
+								returnKeyType={'go'}
+								onSubmitEditing={() => {
+									if (!locked && !missingFields && !isLoading) {
+										onLogin(signinData);
+									}
 								}}
 							/>
+							{shownMessage ? (
+								<ErrorBox message={shownMessage} />
+							) : null}
 
 							<View
 								style={{
@@ -207,69 +296,48 @@ export function SignIn(props: any) {
 										fontSize: 15
 									}}>
 									{' '}
-									Remember me
+									{t('signIn.rememberMe')}
 								</Text>
 							</View>
-							<View
-								style={{
-									marginLeft: 40,
-									marginRight: 40,
-									marginBottom: 20,
-									alignSelf: 'center'
-								}}>
-								{/* <IconButton
-									_pressed={{_icon: {size: 35}}}
-									variant="unstyled"
-									alignSelf="center"
-									size={35}
-									icon={
-										<Icon
-											name={'id-badge'}
-											size={30}
-											color="#32404e"
-										/>
-									}
-									onPress={() => {
-										ReactNativeHapticFeedback.trigger(
-											'impactMedium',
-											hapticOptions
-										);
-										props.navigation.goBack();
-									}}
-								/>
-								<Text
-									style={{
-										color: '#32404e',
-										fontSize: 15
-									}}>
-									back to profiles
-								</Text> */}
-							</View>
-
-							<TouchableOpacity
-								style={{
-									alignSelf: 'stretch',
-									height: 50,
-									backgroundColor: '#32404e',
-									justifyContent: 'center',
-									alignItems: 'center',
-									borderRadius: 6
-								}}
+							<OutlineButton
+								label={t('signIn.submit')}
+								icon={faRightToBracket}
+								style={{marginTop: 4}}
+								busy={isLoading}
+								disabled={locked || missingFields}
 								onPress={async () => {
 									ReactNativeHapticFeedback.trigger(
 										'impactMedium',
 										hapticOptions
 									);
 									await onLogin(signinData);
+								}}
+							/>
+							<TouchableOpacity
+								onPress={() => {
+									Keyboard.dismiss();
+									if (!signinData.login?.trim()) {
+										setMessage(t('signIn.boxIdRequired'));
+										return;
+									}
+									props.navigation.navigate('ForgotPassword', {
+										login: signinData.login.trim()
+									});
 								}}>
-								<Text style={{color: 'white', fontSize: 20}}>
-									{' '}
-									Sign in{' '}
+								<Text
+									style={{
+										color: '#32404e',
+										fontSize: 15,
+										textAlign: 'center',
+										marginTop: 4
+									}}>
+									{t('signIn.forgotPassword')}
 								</Text>
 							</TouchableOpacity>
 						</View>
 					</View>
 				</View>
+				<LegalLinks />
 			</View>
 
 			{/* <VStack
@@ -298,7 +366,7 @@ export function SignIn(props: any) {
 					}}
 				/>
 			</VStack> */}
-		</View>
+		</KeyboardAwareScrollView>
 	);
 }
 
@@ -315,13 +383,12 @@ export default connect(mapStateToProps, {
 
 const styles = StyleSheet.create({
 	input: {
-		height: 50,
-		fontSize: 20,
+		...inputText,
+		height: ELEMENT_HEIGHT,
 		borderWidth: 1,
 		borderColor: '#CBD5E0',
 		borderRadius: 12,
-		paddingHorizontal: 12,
-		color: '#32404e'
+		paddingHorizontal: 12
 	},
 	spinnerTextStyle: {
 		color: '#32404e',

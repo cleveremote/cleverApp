@@ -11,13 +11,15 @@ export const login =
 		password: string,
 		rememberCredentials: boolean,
 		newProfile: string,
-		profile: string
+		profile: string,
+		account: string
 	): ThunkAction<void, RootState, unknown, AnyAction> =>
 	async dispatch => {
 		const res = await authenticationService.Login(user, password);
 		if (res.res) {
 			await saveSigninData(
 				newProfile,
+				account,
 				user,
 				password,
 				rememberCredentials,

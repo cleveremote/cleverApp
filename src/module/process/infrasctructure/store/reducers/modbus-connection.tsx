@@ -46,7 +46,8 @@ export default (state = initialState, action: any) => {
 				...state,
 				modbusConnections: updateModbusConnection(
 					state.modbusConnections,
-					action.payload
+					action.payload,
+					action.tempId
 				)
 			};
 		}

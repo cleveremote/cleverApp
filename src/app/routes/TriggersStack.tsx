@@ -1,4 +1,5 @@
 import React from 'react';
+import {useTranslation} from 'react-i18next';
 import {
 	StackNavigationOptions,
 	createStackNavigator
@@ -9,6 +10,7 @@ import TriggersScreen from '../screens/cycle/triggers/TriggersScreen';
 import {TriggerSettingsStack} from './TriggersSettingsStack';
 
 export function TriggersStack() {
+	const {t} = useTranslation('navigation');
 	const options = (title: string) =>
 		({
 			headerTitleAlign: 'center',
@@ -22,16 +24,15 @@ export function TriggersStack() {
 			<Stack.Screen
 				name="Triggers"
 				component={TriggersScreen}
-				options={options('Triggers')}
+				options={options(t('triggers'))}
 			/>
 			<Stack.Screen
 				name="TriggerSettingsStack"
 				component={TriggerSettingsStack}
 				options={{headerShown: false}}
 			/>
-			{/*<Stack.Screen name="CycleGeneralSection" component={GeneralSettingsSection} options={options('General')} />
-                    <Stack.Screen name="CyclePrioritySection" component={PrioritySettingsSection} options={options('Priority')} />
-                    <Stack.Screen name="CycleSequenceSection" component={SeqSettingsSection} options={options('Sequences')} />
+			{/*<Stack.Screen name="CycleGeneralSection" component={GeneralSettingsSection} options={options(t('general'))} />
+                    <Stack.Screen name="CycleSequenceSection" component={SeqSettingsSection} options={options(t('sequences'))} />
                     */}
 		</Stack.Navigator>
 	);

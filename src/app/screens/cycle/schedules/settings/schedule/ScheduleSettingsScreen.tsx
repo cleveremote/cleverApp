@@ -1,61 +1,45 @@
 import React, {useEffect, useRef} from 'react';
 import {StyleSheet, View} from 'react-native';
 import {connect} from 'react-redux';
-import {navigationHeader} from '../../../../../components/common/navigationHeaders';
 import {
 	DeleteItemMenu,
-	MenuAccordion
+	MenuAccordion,
+	MenuGroup
 } from '../../../../../components/common/cycleMenu';
-import ReactNativeHapticFeedback from 'react-native-haptic-feedback';
-import {faBolt, faGear} from '@fortawesome/free-solid-svg-icons';
-import {hapticOptions} from '../../../../../data/cycleTypes';
+import {SettingsScrollView} from '../../../../../components/common/SettingsScrollView';
+import {
+	useSectionSettingsHeader,
+	isEmpty,
+	useEntityLoaded
+} from '../../../../../components/common/useSectionSettingsHeader';
+import {faCalendarPlus} from '@fortawesome/free-solid-svg-icons';
 import {
 	loadSchedule,
 	saveSchedule,
 	updateSchedule
 } from '../../../../../../module/process/infrasctructure/store/actions/schedule';
 import {saveCycle} from '../../../../../../module/process/infrasctructure/store/actions/cycle';
-
-const serializeSchedule = (schedule: any) => {
-	if (!schedule?.cron?.date || !(schedule.cron.date instanceof Date))
-		return schedule;
-	return {
-		...schedule,
-		cron: {...schedule.cron, date: schedule.cron.date.getTime()}
-	};
-};
+import ScheduleGeneralSettingsSection from './ScheduleGeneralSettingsSection';
+import NewSchedulingSection from './NewSchedulingSection';
+import {generalContainerStyle} from '../../../../../components/common/GeneralSettingsFields';
+import i18n from 'i18next';
 
 export function ScheduleSettingsScreen(props: any) {
-	const isModified = useRef(!props.route.params.item?.id);
-	isModified.current = props.schedule?.isModified;
-
+	const isNew = !props.route.params.schedule?.id;
 	const scheduleRef = useRef(props.schedule);
 	scheduleRef.current = props.schedule;
+	const generalLoaded = useEntityLoaded(
+		props.schedule,
+		props.route.params.schedule?.id
+	);
 
 	const schedulesRef = useRef(props.schedules);
 	schedulesRef.current = props.schedules;
 
-	const checkChanges = (e: any) => {
-		if (!isModified.current && !scheduleRef.current?.isModified) return;
-		e.preventDefault();
-		props.saveSchedule(scheduleRef.current, true, () => {
-			() => console.log('Schedule saved successfully!'); // Callback after saving the schedule
-			props.navigation.dispatch(e.data.action);
-			// props.saveCycle(
-			// 	{
-			// 		...props.route.params.cycle,
-			// 		schedules: schedulesRef.current ?? []
-			// 	},
-			// 	true,
-			// 	() => props.navigation.dispatch(e.data.action)
-			// );
-		});
-	};
-
 	const _deleteItem = () => {
 		scheduleRef.current = {
 			...scheduleRef.current,
-			id: `deleted_${props.schedule.id}`,
+			delete: true,
 			isModified: true
 		};
 		props.navigation.goBack();
@@ -66,61 +50,79 @@ export function ScheduleSettingsScreen(props: any) {
 			props.route.params.schedule?.id,
 			props.route.params.schedule?.cycleId || props.route.params.cycle.id
 		);
-
-		props.navigation.setOptions({
-			headerLeft: () =>
-				navigationHeader(
-					() => {
-						ReactNativeHapticFeedback.trigger(
-							'impactMedium',
-							hapticOptions
-						);
-						props.navigation.goBack();
-					},
-					'arrow-alt-circle-left',
-					false
-				)
-		});
-
-		const unsubscribe = props.navigation.addListener(
-			'beforeRemove',
-			checkChanges
-		);
-		return unsubscribe;
 	}, []);
 
+	const {invalidSections} = useSectionSettingsHeader({
+		navigation: props.navigation,
+		entity: props.schedule,
+		isNew,
+		// Section General toujours visible : pas de rouge à l'entrée en création.
+		deferNewValidation: true,
+		// En modification, valider n'apparaît qu'après un changement.
+		backWhenPristine: true,
+		// Abandon : remet dans le slice l'élément d'origine (celui de la liste),
+		// sinon sa réouverture repartirait des modifications abandonnées.
+		discard: () => {
+			if (props.route.params.schedule?.id) {
+				props.loadSchedule(
+					props.route.params.schedule.id,
+					props.route.params.schedule.cycleId || props.route.params.cycle.id
+				);
+			}
+		},
+		hasChanges: () => !!scheduleRef.current?.isModified,
+		save: onDone => props.saveSchedule(scheduleRef.current, true, onDone),
+		validate: () => ({
+			general: isEmpty(scheduleRef.current?.name),
+			// Exécution valide dès qu'un mode est configuré : cron (pattern) OU
+			// une date planifiée.
+			execution:
+				(isEmpty(scheduleRef.current?.cron?.pattern) &&
+				isEmpty(scheduleRef.current?.cron?.date) &&
+				!scheduleRef.current?.cron?.sunBehavior) ||
+				// Durée du cycle initial remplacée : une durée est requise.
+				(scheduleRef.current?.inheritedDuration === false &&
+					!scheduleRef.current?.duration)
+		})
+	});
+
 	return (
-		<View style={styles.container}>
-			<View style={styles.card}>
-				<MenuAccordion
-					key={21}
-					name={'General'}
-					icon={faGear}
-					onPress={() =>
-						props.navigation.navigate(
-							'ScheduleGeneralSettingsSection',
-							{
-								scheduleData: serializeSchedule(props.schedule)
-							}
-						)
-					}
-				/>
+		<SettingsScrollView>
+			{/* Général sorti du menu : sans carte blanche, en première position, montée
+			    une fois l'entité chargée (le formulaire lit ses valeurs au montage). */}
+			{generalLoaded ? (
+				<View style={generalContainerStyle}>
+					<ScheduleGeneralSettingsSection
+						embedded
+						scheduleData={props.schedule}
+						showErrors={invalidSections.general}
+						navigation={props.navigation}
+					/>
+				</View>
+			) : null}
+			<MenuGroup style={styles.card}>
 				<MenuAccordion
 					key={41}
-					name={'Execution'}
-					icon={faBolt}
-					onPress={() =>
-						props.navigation.navigate(
-							'ScheduleExecutionSettingsSection',
-							{
-								scheduleData: serializeSchedule(props.schedule)
-							}
-						)
-					}
-				/>
+					name={i18n.t('cycle:schedules.newScheduling')}
+					icon={faCalendarPlus}
+					defaultExpanded
+					invalid={invalidSections.execution}
+					onPress={() => {}}>
+					{/* Dépliée par défaut : son formulaire lit ses valeurs au montage,
+					    on attend que l'entité soit chargée. */}
+					{generalLoaded ? (
+						<NewSchedulingSection
+							embedded
+							editInModal
+							scheduleData={props.schedule}
+							showErrors={invalidSections.execution}
+							navigation={props.navigation}
+						/>
+					) : null}
+				</MenuAccordion>
 				<DeleteItemMenu key={61} OnConfirm={_deleteItem} />
-			</View>
-		</View>
+			</MenuGroup>
+		</SettingsScrollView>
 	);
 }
 
